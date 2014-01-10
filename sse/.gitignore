@@ -1,0 +1,17 @@
+fastmin
+fastrand
+fastspin
+mmtest
+nonsse
+quicksgn
+rand_save
+setinsert
+sortspeed
+sse_intersection
+ssetest
+ssetrans
+timebench
+timebench_test
+timos_spin_*
+withsse
+*.txt
