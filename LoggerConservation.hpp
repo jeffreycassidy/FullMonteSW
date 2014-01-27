@@ -40,10 +40,14 @@ class LoggerConservation : public LoggerNull {
 
 class LoggerConservationMT : public LoggerConservation,private boost::mutex {
     public:
+	LoggerConservationMT() : LoggerConservation(),boost::mutex(){}
+	LoggerConservationMT(LoggerConservationMT&& lc_){}
+	LoggerConservationMT(const LoggerConservationMT& lc_) : LoggerConservation(lc_){}
     class ThreadWorker : public LoggerConservation {
         LoggerConservationMT& parent;
         public:
         ThreadWorker(LoggerConservationMT& parent_) : parent(parent_){}
+        ThreadWorker(ThreadWorker&& tw_) : parent(tw_.parent){}
         ~ThreadWorker(){ commit(); }
 
         void commit()

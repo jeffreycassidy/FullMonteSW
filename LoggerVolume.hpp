@@ -1,44 +1,45 @@
 #include "logger.hpp"
+#include "AccumulationArray.hpp"
 
-// LoggerVolume tracks the energy absorbed in each tetrahedral mesh element
+//template<class T>unsigned getID(const T& t)			{ return t.id; }		///< Returns element ID
+//template<class T>double   getEnergy(const T& t)		{ return t.E; }			///< Returns total element energy (absorb/exit)
+//template<class T>unsigned getMaterial(const T& t)	{ return t.matID; }		///< Returns material ID (volume only)
+//template<class T>unsigned getRegion(const T& t)		{ return t.regionID; }	///< Returns region ID (volume only)
+//template<class T>double   getVariance(const T& t)	{ return t.var; }		///< Returns variance estimate
+//template<class T>unsigned getHits(const T& t)		{ return t.hits; }		///< Returns hit count
 
-class LoggerVolume {
-    const TetraMesh& mesh;
+//template<class T>class VolumeArray : public LockableVector<T> {
+//	const TetraMesh& mesh;
+//
+//public:
+//    VolumeArray(VolumeArray&& lv_)        : mesh(lv_.mesh),LockableVector<T>(std::move(lv_)){};
+//    VolumeArray(const TetraMesh& mesh_)    : mesh(mesh_),LockableVector<T>(mesh_.getNt()+1){};
+//
+//        /// Returns a VolumeFluenceMap for the absorption accumulated so far*/
+//        /** The value of asFluence determines whether it returns total energy (false) or fluence as E/V/mu_a (true) */
+//    void fluenceMap(VolumeFluenceMap&,const vector<Material>&,bool asFluence=true);
+//
+//        /// Returns (if available from AccumulatorT) a hit map
+//    void hitMap(map<unsigned,unsigned long long>& m);
+//
+//
+//        /// Provides a way of summarizing to an ostream
+//    //friend ostream& operator<<(ostream&,VolumeArray&);
+//};
 
-    protected:
-    vector<FluenceCountType> counts;
-
-    public:
-    LoggerVolume(LoggerVolume&& lv_) : mesh(lv_.mesh),counts(std::move(lv_.counts)){};
-    LoggerVolume(const TetraMesh& mesh_) : mesh(mesh_),counts(mesh_.getNt()+1){};
-    
-    // get results as a map; optional arg per_area specifies to return fluence (per-area) or total energy per patch
-    void fluenceMap(VolumeFluenceMap&,const vector<Material>&,bool=true);
-    void hitMap(map<unsigned,unsigned long long>& m);
-
-    friend ostream& operator<<(ostream&,LoggerVolume&);
-};
+//! QueuedAccumulatorMT provides a thread-safe accumulator that queues accumulation requests and updates atomically using a mutex
+//! It is templated on the backing store type AccumulatorMT, which must support atomic ops
+//template<class T>VectorST<T> AccumulatorST : public vector<T>,public nullflush,public nulllock {};
 
 
-// LoggerVolumeST (single-thread) overrides eventAbsorb
-class LoggerVolumeST : public LoggerVolume,public LoggerNull {
-    public:
-    LoggerVolumeST(const TetraMesh& mesh_) : LoggerVolume(mesh_){}
+//! Defines the base class/concept for logging volume hits in a tetrahedron
 
-    // log only absorption events
-    inline void eventAbsorb(const Point3,unsigned IDt,double w0,double dw){ counts[IDt] += dw; }
-};
-
-// LoggerVolumeMT (multi-thread) provides access to elements of type ThreadWorker
 //  Each threadworker has a buffer of 1M (1024*1024) absorption events
+
 //  When the buffer is full, it locks a mutex on the absorption map, updates, and unlocks
 
-class LoggerVolumeMT : public LoggerVolume,private boost::mutex {
-    typedef pair<unsigned,FluenceCountType> BufElType;
-    unsigned bufsize;
-
-    public:
-    LoggerVolumeMT(const TetraMesh& mesh_,unsigned bufsize_=1024*1024) : LoggerVolume(mesh_),bufsize(bufsize_){}
+/*
+template<class AccumulatorT=double>class LoggerVolumeMT : public LoggerVolume<AccumulatorT>,private boost::mutex {
 
     class ThreadWorker : private Buffer<BufElType>,public LoggerNull {
 	    using Buffer<BufElType>::atBufferEnd;
@@ -76,20 +77,60 @@ class LoggerVolumeMT : public LoggerVolume,private boost::mutex {
         }
     };
 
-    // create a new thread worker with its own buffer
+    /// Return a ThreadWorker referring to this LoggerVolumeMT
     ThreadWorker getThreadWorkerInstance(unsigned)
     {
         return ThreadWorker(*this,bufsize);
     }
 
     // adds values to the log
-    void addValues(const pair<unsigned,FluenceCountType>* p,const pair<unsigned,FluenceCountType>* p_last)
+    void addValues(const pair<unsigned,AccumulatorT>* p,const pair<unsigned,AccumulatorT>* p_last)
     {
         lock();
         for(; p != p_last; ++p)
 	        counts[p->first] += p->second;
         unlock();
     }
-};
+};*/
 
-ostream& operator<<(ostream&,LoggerVolume&);
+
+
+/*! Basic volume logger.
+ *
+ * Catches eventAbsorb() calls and accumulates weight in the appropriate tetra using template argument Accumulator
+ *
+ * Accumulator requirements:
+ * 	Support operator[] returning some type T
+ * 	T must support operator+= on Weight type
+ * 	Copy-constructible
+ * 	Constructor of type Accumulator(unsigned size,args...)
+ *
+ * Accumulator WorkerThread requirements:
+ * 	Copy-constructible
+ *
+ *
+ *	Examples: vector<T>& (single-thread), QueuedAccumulatorMT (thread-safe)
+ */
+
+template<class Accumulator>class LoggerVolume {
+	Accumulator acc;
+
+public:
+	template<typename... Args>LoggerVolume(const TetraMesh& mesh_,Args... args) : acc(mesh_.getNt()+1,args...){}
+	LoggerVolume(LoggerVolume&& lv_) : acc(std::move(lv_.acc)){}
+	//LoggerVolume(const LoggerVolume& lv_) : acc(lv_.acc){}
+
+	class WorkerThread : public LoggerNull {
+		typename Accumulator::WorkerThread wt;
+	public:
+		WorkerThread(Accumulator& parent_) : wt(parent_.get_worker()){};
+		WorkerThread(const WorkerThread& wt_) : wt(wt_.wt){}
+
+	    inline void eventAbsorb(Point3 p,unsigned IDt,double w0,double dw)
+	    	{ acc[IDt] += dw; }
+	};
+
+	typedef WorkerThread ThreadWorker;
+
+	WorkerThread get_worker() { return WorkerThread(acc);  };
+};

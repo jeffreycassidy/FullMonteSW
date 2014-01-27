@@ -1,6 +1,10 @@
 #include "logger.hpp"
 
-class LoggerEvent {
+/** LoggerEvent counts events as they happen
+ *
+ */
+
+class LoggerEvent : public LoggerNull {
     public:
     unsigned long long Nlaunch,Nabsorb,Nscatter,Nbound,Ntir,Nfresnel,Nrefr,Ninterface,Nexit,Ndie,Nwin;
 
@@ -9,12 +13,6 @@ class LoggerEvent {
     LoggerEvent() : Nlaunch(0),Nabsorb(0),Nscatter(0),Nbound(0),Ntir(0),Nfresnel(0),Nrefr(0),Ninterface(0),
         Nexit(0),Ndie(0),Nwin(0){};
 
-    const LoggerEvent& operator+=(const LoggerEvent& rhs);
-    friend ostream& operator<<(ostream&,const LoggerEvent&);
-};
-
-class LoggerEventST : public LoggerEvent,public LoggerNull {
-    public:
     inline void eventLaunch(const Ray3 r,unsigned IDt,double w){ ++Nlaunch; };   // launch new packet
 
     inline void eventAbsorb(const Point3 p,unsigned IDt,double w0,double dw){ ++Nabsorb; };     // packet absorbed
@@ -30,8 +28,28 @@ class LoggerEventST : public LoggerEvent,public LoggerNull {
     inline void eventExit(const Ray3,int,double){ ++Nexit; };        // exited geometry
     inline void eventDie(double){ ++Ndie; };                                    // lost Russian roulette
     inline void eventRouletteWin(double,double){ ++Nwin; };                     // won roulette
+
+    const LoggerEvent& operator+=(const LoggerEvent& rhs);
+    friend ostream& operator<<(ostream&,const LoggerEvent&);
 };
 
+/*template<class T> LocalCopyMT : public T {
+	T& parent;
+
+public:
+	LocalCopyMT(T&)
+};*/
+
+class LoggerEventMT : public LoggerEvent,public std::mutex {
+public:
+	LoggerEventMT(){}
+	LoggerEventMT(const LoggerEventMT& le_) : LoggerEvent(le_){}
+
+	/// Adds another LoggerEvent, locking the parent reference first
+	const LoggerEventMT& operator+=(const LoggerEvent& rhs){ lock(); LoggerEvent::operator+=(rhs); unlock(); return *this; }
+};
+
+/*
 class LoggerEventMT : public LoggerEvent, private boost::mutex {
     public:
 
@@ -52,4 +70,4 @@ class LoggerEventMT : public LoggerEvent, private boost::mutex {
     };
 
     ThreadWorker getThreadWorkerInstance(unsigned){ return ThreadWorker(*this); }
-};
+};*/

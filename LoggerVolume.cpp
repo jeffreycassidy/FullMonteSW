@@ -2,7 +2,7 @@
 
 ostream& operator<<(ostream& os,const LoggerVolume&){ cout << "Volume logger report" << endl; return os; }
 
-void LoggerVolume::fluenceMap(VolumeFluenceMap& F,const vector<Material>& mat,bool per_volume)
+void VolumeArray::fluenceMap(VolumeFluenceMap& F,const vector<Material>& mat,bool per_volume)
 {
     F.clear();
     map<unsigned,double>::const_iterator m_it=F.begin();
@@ -20,7 +20,7 @@ void LoggerVolume::fluenceMap(VolumeFluenceMap& F,const vector<Material>& mat,bo
     }
 }
 
-void LoggerVolume::hitMap(map<unsigned,unsigned long long>& m)
+void VolumeArray::hitMap(map<unsigned,unsigned long long>& m)
 {
     m.clear();
     map<unsigned,unsigned long long>::iterator m_it=m.begin();

@@ -11,6 +11,7 @@ void writeFileBin(string,const vector<Point<3,double> >&,const map<FaceByPointID
         assert(Fp != mesh.F_p.end());
 
         if (it->first != 0)
+
         {
             const Point<3,double> &A = mesh.P[(*Fp)[0]], &B = mesh.P[(*Fp)[1]], &C = mesh.P[(*Fp)[2]];
             Vector<3,double> AB(A,B), AC(A,C);
@@ -66,7 +67,7 @@ void LoggerSurface::writeFileASCII(string fn,bool printIDs)
     os.close();
 }*/
 
-void LoggerSurface::fluenceMap(SurfaceFluenceMap& F)
+void SurfaceArray::fluenceMap(SurfaceFluenceMap& F)
 {
     F.clear();
 
@@ -79,7 +80,7 @@ void LoggerSurface::fluenceMap(SurfaceFluenceMap& F)
     }
 }
 
-void LoggerSurface::hitMap(map<unsigned,unsigned long long>& m)
+void SurfaceArray::hitMap(map<unsigned,unsigned long long>& m)
 {
     m.clear();
     map<unsigned,unsigned long long>::iterator m_it=m.begin();
@@ -91,7 +92,7 @@ void LoggerSurface::hitMap(map<unsigned,unsigned long long>& m)
             m_it = m.insert(m_it,make_pair(i,getHits(*it)));
 }
 
-void LoggerSurface::resultMap(map<FaceByPointID,double>& m,bool per_area)
+void SurfaceArray::resultMap(map<FaceByPointID,double>& m,bool per_area)
 {
     m.clear();
 

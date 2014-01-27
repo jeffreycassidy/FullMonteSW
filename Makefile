@@ -1,5 +1,5 @@
 # base options only
-GCC_OPTS=-Wall -mfpmath=sse -Wstrict-aliasing=2 -g -msse4 -DSVNVERSION=\"$(VERSION)\" -DSSE -mtune=core2 -march=core2 -fpermissive -std=c++0x -fPIC
+GCC_OPTS=-Wall -mfpmath=sse -Wstrict-aliasing=2 -g -msse4 -DSVNVERSION=\"$(VERSION)\" -DSSE -mtune=core2 -march=core2 -fpermissive -std=c++11 -fPIC
 LIBS=-lboost_program_options -lboost_timer -lpq -lcrypto -lboost_system
 LIBDIRS=-L/usr/local/lib -L/usr/local/lib/boost
 INCLDIRS=-I/usr/local/boost -I/usr/local/include -I. -I/usr/local/include/boost -I/usr/local/include/pgsql
@@ -18,6 +18,12 @@ ifeq ($(OS),Darwin)
 GCC_OPTS += -DPLATFORM_DARWIN
 endif
 
+test: Test_AccumulationArray
+	Test_AccumulationArray
+
+Test_AccumulationArray: Test_AccumulationArray.cpp AccumulationArray.hpp
+	g++ $(GCC_OPTS) $(INCLDIRS) -o $@ $^
+	
 
 all: montecarlo
 

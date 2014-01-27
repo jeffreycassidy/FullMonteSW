@@ -1,6 +1,8 @@
 #include "logger.hpp"
 
-class LoggerSurface {
+// fluence needs mesh, materials, region ID, absorbed energy
+
+/*class LoggerSurface {
     const TetraMesh& mesh;
 
     protected:
@@ -14,43 +16,44 @@ class LoggerSurface {
     void fluenceMap(SurfaceFluenceMap&);
 
     void hitMap(map<unsigned,unsigned long long>& m);
-};
+};*/
 
+//template<class T>class SurfaceArray {
+//	vector<T> s;
+//	const TetraMesh& mesh;
+//
+//public:
+//    SurfaceArray(SurfaceArray&& ls_)        : mesh(ls_.mesh),s(std::move(ls_.s)){};
+//    SurfaceArray(const TetraMesh& mesh_)    : mesh(mesh_),s(mesh_.getNt()+1){};
+//
+//        /// Returns a VolumeFluenceMap for the absorption accumulated so far*/
+//        /** The value of asFluence determines whether it returns total energy (false) or fluence as E/V/mu_a (true) */
+//    void fluenceMap(SurfaceFluenceMap&,bool asFluence=true);
+//
+//        /// Returns (if available from AccumulatorT) a hit map
+//    void hitMap(map<unsigned,unsigned long long>& m);
+//
+//        /// Provides a way of summarizing to an ostream
+//    //friend ostream& operator<<(ostream&,VolumeArray&);
+//};
 
-// LoggerSurfaceST (single-thread version) overrides only the eventExit method to record packets exiting the volume
-class LoggerSurfaceST : public LoggerSurface,public LoggerNull {
-    public:
-    LoggerSurfaceST(const TetraMesh& mesh_) : LoggerSurface(mesh_){}
+template<class Accumulator>class LoggerSurface : public LoggerNull {
+	Accumulator acc;
+public:
 
-    inline void eventExit(const Ray3,int IDf,double w){
-        IDf=abs(IDf);
-		counts[IDf] += w;
-    }
-};
+	/// Copy constructor
+	//LoggerSurface(LoggerSurface& acc_) : acc(acc_){}
+	template<typename... Args>LoggerSurface(const TetraMesh& mesh_,Args... args) : acc(mesh_.getNf()+1,args...){}
+	LoggerSurface(LoggerSurface&& ls_) : acc(std::move(acc)){}
+	LoggerSurface(const LoggerSurface& ls_) : acc(ls_.acc){}
 
-// LoggerSurfaceMT (multi-thread) keeps just one record with a mutex to protect it
-//  This isn't the best solution since locking/unlocking is potentially expensive
-//  However we exit at most once per packet launched vs. ~100-400 absorption events per pkt
+	/// Record the exit event
+	class WorkerThread : public LoggerNull {
+		LoggerSurface& parent;
+	public:
+		WorkerThread(LoggerSurface& parent_) : parent(parent_){}
+		inline void eventExit(const Ray3,int IDf,double w){ parent.acc[abs(IDf)] += w; }
+	};
 
-class LoggerSurfaceMT : public LoggerSurfaceST,private boost::mutex {
-    public:
-    LoggerSurfaceMT(const TetraMesh& mesh_) : LoggerSurfaceST(mesh_){}
-
-    class ThreadWorker : public LoggerNull {
-        LoggerSurfaceMT& parent;
-
-        public:
-        ThreadWorker(LoggerSurfaceMT& parent_) : parent(parent_){}
-        ThreadWorker(const ThreadWorker& tw_) : parent(tw_.parent){}
-
-        inline void commit(){}
-        inline void eventExit(const Ray3 r,int IDf,double w){
-            parent.lock();
-            parent.eventExit(r,IDf,w);
-            parent.unlock();
-        }
-    };
-
-    // Since we protect each access with a mutex, thread worker is just a reference to the LoggerSurfaceMT object
-    ThreadWorker getThreadWorkerInstance(unsigned){ return ThreadWorker(*this); }
+	WorkerThread get_worker() { return WorkerThread(acc); }
 };

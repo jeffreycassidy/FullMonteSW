@@ -9,6 +9,13 @@
 
 #include "progress.hpp"
 
+// Manager should be able to:
+//  report progress
+//  start/stop/pause
+//  return interim results
+//  report time required
+//  estimate completion time
+
 namespace globalopts {
     extern double Npkt;         // number of packets
     extern double prwin;        // Probability of winning roulette
@@ -33,7 +40,6 @@ template<class Logger,class RNG>class Manager;
 
 template<class LoggerType,class RNG>int doOnePacket(const RunConfig& cfg,Packet pkt,
     LoggerType& logger,unsigned IDt,RNG& rng);
-
 
 class RunConfig {
     public:
@@ -82,7 +88,6 @@ template<class Logger,class RNG>class Manager {
         {}
 
     virtual void run(Logger& logger)=0;
-//    boost::timer::cpu_times start(Logger& logger);
 
     virtual unsigned long long getProgressCount() const { return 0; }
 
@@ -97,7 +102,6 @@ template<class Logger,class RNG>class Manager_MT : public Manager<Logger,RNG> {
     static void* threadStartFcn(void*);
 
     typedef Worker<Logger,RNG> WorkerType;
-    typedef typename Logger::ThreadWorker LoggerType;
 
     pair<pthread_t,WorkerType*>* workers;
 
@@ -125,16 +129,21 @@ template<class Logger,class RNG>class Manager_MT : public Manager<Logger,RNG> {
     }
 };
 
+/*
+LoggerMulti<> make_logger_mt(){ return LoggerMulti<>(); }
+LoggerMulti<> make_logger_mt(LoggerMulti<>& lm){ return LoggerMulti<>(); }
+*/
+
 template<class Logger,class RNG>void Manager_MT<Logger,RNG>::run(Logger& logger)
 {
-    typedef typename Logger::ThreadWorker ThreadWorker;
-    ThreadWorker* l[cfg.Nthread];
+	typedef typename Logger::ThreadWorker LoggerThread;
+	LoggerThread* l[cfg.Nthread];
 
     cout << "Running with " << cfg.Nthread << " threads" << endl;
     // create the workers
     for(unsigned i=0;i<cfg.Nthread;++i)
     {
-        l[i] = new ThreadWorker(logger.getThreadWorkerInstance(i));
+        l[i] = new LoggerThread(logger.get_worker());
         workers[i].second = new WorkerType(Manager<Logger,RNG>::cfg,
             *(l[i]),
             Manager<Logger,RNG>::Npacket/cfg.Nthread,
