@@ -20,12 +20,12 @@ using namespace std;
 
 //! QueuedAccumulatorMT provides a thread-safe accumulator that queues accumulation requests and updates atomically using a mutex
 //! It is templated on the backing store type AccumulatorMT, which must support atomic ops
-
+/*
 template<class T>class LockableVector : public std::mutex,public std::vector<T>
 {
 public:
 	LockableVector(unsigned sz_=0) : std::vector<T>(sz_) {};
-};
+};*/
 
 /*
 class nullflush {
@@ -63,6 +63,7 @@ protected:
 public:
 	QueuedAccumulatorMT(QueuedAccumulatorMT&& qa_) : m(),v(qa_.v),default_bufsz(qa_.default_bufsz){}
 	QueuedAccumulatorMT(unsigned sz_,unsigned bufsz_=(1<<20)) : v(sz_),default_bufsz(bufsz_){}
+	QueuedAccumulatorMT(const QueuedAccumulatorMT& qa_) : m(),v(qa_.v.size()),default_bufsz(qa_.default_bufsz){}
 
 	class WorkerThread {
 		/// Master accumulation array

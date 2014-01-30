@@ -52,7 +52,6 @@ class RunConfig {
 
     double wmin,pr_win;
 
-
     // default copy constructor is fine
 
     // prepare sources before creating run config
@@ -129,11 +128,6 @@ template<class Logger,class RNG>class Manager_MT : public Manager<Logger,RNG> {
     }
 };
 
-/*
-LoggerMulti<> make_logger_mt(){ return LoggerMulti<>(); }
-LoggerMulti<> make_logger_mt(LoggerMulti<>& lm){ return LoggerMulti<>(); }
-*/
-
 template<class Logger,class RNG>void Manager_MT<Logger,RNG>::run(Logger& logger)
 {
 	typedef typename Logger::ThreadWorker LoggerThread;
@@ -157,6 +151,7 @@ template<class Logger,class RNG>void Manager_MT<Logger,RNG>::run(Logger& logger)
     {
         pthread_join(workers[i].first,NULL);
         cout << "Joined thread " << workers[i].first << endl;
+        //logger += *(l[i]);
         delete workers[i].second;
         delete l[i];
     }

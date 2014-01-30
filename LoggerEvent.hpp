@@ -1,4 +1,5 @@
 #include "logger.hpp"
+#include <mutex>
 
 /** LoggerEvent counts events as they happen
  *
@@ -12,6 +13,7 @@ class LoggerEvent : public LoggerNull {
 
     LoggerEvent() : Nlaunch(0),Nabsorb(0),Nscatter(0),Nbound(0),Ntir(0),Nfresnel(0),Nrefr(0),Ninterface(0),
         Nexit(0),Ndie(0),Nwin(0){};
+    LoggerEvent(const LoggerEvent&) = delete;
 
     inline void eventLaunch(const Ray3 r,unsigned IDt,double w){ ++Nlaunch; };   // launch new packet
 
@@ -40,13 +42,16 @@ public:
 	LocalCopyMT(T&)
 };*/
 
-class LoggerEventMT : public LoggerEvent,public std::mutex {
+class LoggerEventMT : public LoggerEvent {
 public:
 	LoggerEventMT(){}
-	LoggerEventMT(const LoggerEventMT& le_) : LoggerEvent(le_){}
+	LoggerEventMT(const LoggerEventMT& le_) : LoggerEvent(){}
 
+	typedef LoggerEventMT ThreadWorker;
+
+	ThreadWorker get_worker() { return ThreadWorker(); }
 	/// Adds another LoggerEvent, locking the parent reference first
-	const LoggerEventMT& operator+=(const LoggerEvent& rhs){ lock(); LoggerEvent::operator+=(rhs); unlock(); return *this; }
+	// const LoggerEventMT& operator+=(const LoggerEvent& rhs){ lock(); LoggerEvent::operator+=(rhs); unlock(); return *this; }
 };
 
 /*

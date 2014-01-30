@@ -8,24 +8,24 @@
 //template<class T>double   getVariance(const T& t)	{ return t.var; }		///< Returns variance estimate
 //template<class T>unsigned getHits(const T& t)		{ return t.hits; }		///< Returns hit count
 
-//template<class T>class VolumeArray : public LockableVector<T> {
-//	const TetraMesh& mesh;
-//
-//public:
-//    VolumeArray(VolumeArray&& lv_)        : mesh(lv_.mesh),LockableVector<T>(std::move(lv_)){};
-//    VolumeArray(const TetraMesh& mesh_)    : mesh(mesh_),LockableVector<T>(mesh_.getNt()+1){};
-//
-//        /// Returns a VolumeFluenceMap for the absorption accumulated so far*/
-//        /** The value of asFluence determines whether it returns total energy (false) or fluence as E/V/mu_a (true) */
-//    void fluenceMap(VolumeFluenceMap&,const vector<Material>&,bool asFluence=true);
-//
-//        /// Returns (if available from AccumulatorT) a hit map
-//    void hitMap(map<unsigned,unsigned long long>& m);
-//
-//
-//        /// Provides a way of summarizing to an ostream
-//    //friend ostream& operator<<(ostream&,VolumeArray&);
-//};
+template<class T>class VolumeArray {
+	const TetraMesh& mesh;
+	vector<T> v;
+
+public:
+    VolumeArray(VolumeArray&& lv_)        : mesh(lv_.mesh),v(mesh.getNt()+1){};
+    VolumeArray(const TetraMesh& mesh_)    : mesh(mesh_),v(mesh.getNt()+1){};
+
+        /// Returns a VolumeFluenceMap for the absorption accumulated so far*/
+        /** The value of asFluence determines whether it returns total energy (false) or fluence as E/V/mu_a (true) */
+    void fluenceMap(VolumeFluenceMap&,const vector<Material>&,bool asFluence=true);
+
+        /// Returns (if available from AccumulatorT) a hit map
+    void hitMap(map<unsigned,unsigned long long>& m);
+
+        /// Provides a way of summarizing to an ostream
+    //friend ostream& operator<<(ostream&,VolumeArray&);
+};
 
 //! QueuedAccumulatorMT provides a thread-safe accumulator that queues accumulation requests and updates atomically using a mutex
 //! It is templated on the backing store type AccumulatorMT, which must support atomic ops
@@ -124,10 +124,12 @@ public:
 		typename Accumulator::WorkerThread wt;
 	public:
 		WorkerThread(Accumulator& parent_) : wt(parent_.get_worker()){};
+		WorkerThread(LoggerVolume& lv_) : wt(lv_.get_worker()){}
 		WorkerThread(const WorkerThread& wt_) : wt(wt_.wt){}
+		WorkerThread(WorkerThread&& wt_) : wt(std::move(wt_.wt)){}
 
 	    inline void eventAbsorb(Point3 p,unsigned IDt,double w0,double dw)
-	    	{ acc[IDt] += dw; }
+	    	{ wt[IDt] += dw; }
 	};
 
 	typedef WorkerThread ThreadWorker;

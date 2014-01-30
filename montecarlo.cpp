@@ -69,9 +69,9 @@ using namespace std;
 
 void banner()
 {
-    cout << "FullMonte v0.0" << endl;
-    cout << "$Id: montecarlo.cpp 314 2013-11-01 01:13:27Z jcassidy $ (tree " << SVNVERSION << ')' << endl;
-    cout << "(c) Jeffrey Cassidy, 2012" << endl;
+    cout << "FullMonte v0.9" << endl;
+    //cout << "$Id: montecarlo.cpp 314 2013-11-01 01:13:27Z jcassidy $ (tree " << SVNVERSION << ')' << endl;
+    cout << "(c) Jeffrey Cassidy, 2014" << endl;
     cout << endl;
 }
 
@@ -134,7 +134,7 @@ int main(int argc,char **argv)
 
     boost::shared_ptr<PGConnection> dbconn;
 
-    if (!vm.count("nodbwrite")){
+    //if (!vm.count("nodbwrite")){
         cout << "DB host: " << globalopts::db::host << endl;
         cout << "DB port: " << globalopts::db::port << endl;
         cout << "DB name: " << globalopts::db::name << endl;
@@ -147,7 +147,7 @@ int main(int argc,char **argv)
         {
             cerr << "Failed to connect with error: " << e.msg << endl;
         }
-    }
+    //}
 
     // apply options
     if (vm.count("help"))
@@ -295,7 +295,6 @@ void runSuite(PGConnection* dbconn,unsigned IDflight,unsigned IDsuite)
 void runCaseByID(PGConnection* dbconn,unsigned IDflight,unsigned IDcase,unsigned long long Nk)
 {
     unsigned IDsourcegroup,IDmaterials;
-    unsigned Nthread=globalopts::Nthread;
     vector<Source*> sources;
     vector<Material> materials;
     TetraMesh m;
@@ -407,22 +406,28 @@ if (globalopts::dbwrite)
 #endif
 */
 
-template<typename... Loggers>LoggerMulti<Loggers...> make_multilogger(Loggers&&... l)
+template<typename Logger>Logger make_multilogger(Logger&& h)
 {
-	return LoggerMulti<Loggers...>(std::move(l...));
+	cout << "Boing" << endl;
+	return h;
 }
 
-template<>LoggerMulti<LoggerMulti<>> make_multilogger<LoggerMulti<>>(LoggerMulti<>&& m)
-		{
-	return LoggerNull();
-
-		}
-
-template<>LoggerMulti<> make_multilogger()
+template<typename LoggerH,typename... LoggerTs>LoggerMulti<LoggerH,LoggerTs...> make_multilogger(LoggerH&& h,LoggerTs&&... ts)
 {
-	return LoggerNull();
+	cout << "Bunga" << endl;
+	return LoggerMulti<LoggerH,LoggerTs...>(std::move(h),ts...);
 }
 
+/*template<typename LoggerH,typename... Loggers>LoggerMulti<LoggerH,Loggers...> make_multilogger(LoggerH&& h,Loggers&&... ts)
+{
+	cout << "Bunga" << endl;
+	return make_multilogger(std::move(h),std::move(make_multilogger(ts...)));
+}*/
+
+//LoggerMulti<> make_multilogger()
+//{
+//	return LoggerNull();
+//}
 
 RunResults runSimulation(PGConnection* dbconn,const TetraMesh& mesh,const vector<Material>& materials,Source* source,
     unsigned IDflight,unsigned IDsuite,unsigned caseorder,unsigned long long Nk)
@@ -465,24 +470,17 @@ RunResults runSimulation(PGConnection* dbconn,const TetraMesh& mesh,const vector
 #endif
     		LoggerNull() );*/
 
-    auto logger_empty = make_multilogger();
-    auto logger = make_multilogger(LoggerVolume<QueuedAccumulatorMT<double>>(mesh,1<<20),LoggerNull());
+    //auto logger_empty = make_multilogger();
+    //auto logger = make_multilogger(LoggerVolume<QueuedAccumulatorMT<double>>(mesh,1<<20),LoggerSurface<QueuedAccumulatorMT<double>>(mesh));
+    //auto logger = make_multilogger(LoggerVolume<QueuedAccumulatorMT<double>>(mesh,1<<20),LoggerSurface<QueuedAccumulatorMT<double>>(mesh));
 
-    //auto logger = make_multilogger(LoggerNull());
-
-    //LoggerMulti<LoggerEventMT> le();
-    //LoggerMulti<LoggerVolume<QueuedAccumulatorMT<double>>> lv();
-
-    //LoggerMulti<LoggerNull> logger = make_multilogger(LoggerNull());
-    //auto logger2 = make_multilogger(LoggerNull());
-
-    auto tpl = make_tuple(LoggerVolume<QueuedAccumulatorMT<double>>(mesh));
-
-    		//LoggerMulti<LoggerVolume<QueuedAccumulatorMT<double>>,LoggerSurface<QueuedAccumulatorMT<double>>> logger(LoggerVolume<QueuedAccumulatorMT<double>>(mesh),
-    		//LoggerSurface<QueuedAccumulatorMT<double>>(mesh));
+//    auto logger = make_multilogger(LoggerEventMT(),LoggerSurface<QueuedAccumulatorMT<double>>(mesh));
+    auto logger = make_multilogger(LoggerEventMT(),LoggerConservationMT(),LoggerSurface<QueuedAccumulatorMT<double>>(mesh));
 
     // Run it
     boost::timer::cpu_times t = MonteCarloLoop<RNG_SFMT>(Nk,logger,mesh,materials,*source);
+
+    cout << logger << endl;
 
     cout << "==== Run ID " << runid << " completed" << endl;
 

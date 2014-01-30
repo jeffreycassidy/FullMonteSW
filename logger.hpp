@@ -28,19 +28,69 @@ typedef pair<__m128,__m128> Ray3;
  *
  */
 
-template<typename... Loggers>class LoggerMulti;
+template<typename... LoggerTs>class LoggerMulti;
 
-template<typename Logger,typename... Loggers>class LoggerMulti<Logger,Loggers...> {
-	Logger head;
-	LoggerMulti<Loggers...> tail;
+template<typename... Ts>ostream& operator<<(ostream& os,const LoggerMulti<Ts...>& lm)
+{
+	return os << lm.head << endl << lm.tail;
+}
 
-	typedef typename Logger::ThreadWorker HeadWorker;
-	typedef decltype(tail.get_worker()) TailWorker;
+/*template<typename Logger,typename... Loggers>ostream& operator<<(ostream& os,const LoggerMulti<Logger,Loggers...>& lm)
+	{ return os << lm.head << endl << lm.tail; }*/
+
+class LoggerNull {
+    public:
+	LoggerNull(){}							///< Default constructor does nothing
+	LoggerNull(LoggerNull&& lm_){}		///< Move constructor does nothing
+	LoggerNull(const LoggerNull& lm_){}	///< Copy constructor does nothing
+	LoggerNull& operator=(const LoggerNull& lm_){ return *this; }
+    virtual ~LoggerNull(){}
+
+	//typedef LoggerNull<> HeadWorker;
+	//typedef LoggerNull<> TailWorker;
+
+    inline void eventLaunch(const Ray3 r,unsigned IDt,double w){};
+
+    inline void eventAbsorb(const Point3 p,unsigned IDt,double w0,double dw){};
+    inline void eventScatter(const UVect3 d0,const UVect3 d,double g){};
+
+    inline void eventBoundary(const Point3 p,int,int,int){};        // boundary (same material)
+
+    inline void eventInterface(const Ray3,int,unsigned){};          // found a material interface; possible results are:
+    inline void eventRefract(const Point3,UVect3){};                //      refracted
+    inline void eventReflectInternal(const Point3,const UVect3){};  //      internal reflection
+    inline void eventReflectFresnel(const Point3,UVect3){};         //      fresnel reflection
+
+    // termination events
+    inline void eventExit(const Ray3,int,double){};            // exited geometry
+    inline void eventDie(double){};                                     // lost Russian roulette
+    inline void eventRouletteWin(double,double){};                      // won roulette
+
+    typedef LoggerNull ThreadWorker;
+
+    ThreadWorker getThreadWorkerInstance(unsigned) const { return ThreadWorker(); }
+    LoggerNull get_worker() { return LoggerNull(); }
+
+    const LoggerNull& operator+=(const LoggerNull&){ return *this; }
+    LoggerNull operator+(const LoggerNull&){ return LoggerNull(); }
+};
+
+template<>class LoggerMulti<> : public LoggerNull {};
+//template<>class LoggerMulti<LoggerNull> : public LoggerNull {};
+
+// Triple-argument type
+
+template<typename LoggerH,typename LoggerT>class LoggerMulti<LoggerH,LoggerT> {
+	LoggerH head;
+	LoggerT tail;
+
+	typedef typename LoggerH::ThreadWorker HeadWorker;
+	typedef typename LoggerT::ThreadWorker TailWorker;
 
 public:
 	typedef LoggerMulti<HeadWorker,TailWorker> ThreadWorker;
-	//LoggerMulti(Logger&& head_) : head(std::move(head_)),tail(LoggerMulti<>()){}
-	LoggerMulti(Logger&& head_,Loggers&&... tail_) : head(std::move(head_)),tail(LoggerMulti<Loggers...>(std::move(tail_...))) {};
+	LoggerMulti(LoggerH&& head_,LoggerT&& tail_) : head(std::move(head_)),tail(std::move(tail_)){}
+	LoggerMulti(const LoggerH& head_,const LoggerT& tail_) : head(head_),tail(tail_){}
 	LoggerMulti(LoggerMulti&& lm_) : head(std::move(lm_.head)),tail(std::move(lm_.tail)){}
 
 	virtual ~LoggerMulti(){};
@@ -83,52 +133,80 @@ public:
     const LoggerMulti& operator+=(const LoggerMulti& rhs)
         { head += rhs.head; tail += rhs.tail; return *this; }
 
-    LoggerMulti<HeadWorker,TailWorker> get_worker(){
-    	return LoggerMulti<HeadWorker,TailWorker>(head.get_worker(),tail.get_worker());
+    ThreadWorker get_worker(){
+    	return ThreadWorker(head.get_worker(),tail.get_worker());
     }
+
+    friend ostream& operator<<<>(ostream&,const LoggerMulti&);
+};
+
+template<typename LoggerH,typename... LoggerTs>class LoggerMulti<LoggerH,LoggerTs...> {
+	LoggerH head;
+	LoggerMulti<LoggerTs...> tail;
+
+	typedef typename LoggerH::ThreadWorker HeadWorker;
+	typedef decltype(tail.get_worker()) TailWorker;
+
+public:
+	typedef LoggerMulti<HeadWorker,TailWorker> ThreadWorker;
+	//LoggerMulti(Logger&& head_) : head(std::move(head_)),tail(LoggerMulti<>()){}
+	LoggerMulti(LoggerH&& head_,LoggerTs&&... tail_) : head(std::move(head_)),tail(std::move(LoggerMulti<LoggerTs...>(tail_...))){}
+	//LoggerMulti(const LoggerH& head_) : head(head_){}
+	LoggerMulti(const LoggerH& head_,const LoggerTs&... tail_) : head(head_),tail(tail_...){}
+	//LoggerMulti(Logger&& head_,Loggers&&... tail_) : head(std::move(head_)),tail(LoggerMulti<Loggers...>(std::move(tail_...))) {};
+	LoggerMulti(LoggerMulti&& lm_) : head(std::move(lm_.head)),tail(std::move(lm_.tail)){}
+
+	virtual ~LoggerMulti(){};
+
+    // event handlers
+    inline void eventLaunch(const Ray3 r,unsigned IDt,double w)
+        { head.eventLaunch(r,IDt,w); tail.eventLaunch(r,IDt,w); };
+
+    inline void eventAbsorb(const Point3 p,unsigned IDt,double w0,double dw)
+        { head.eventAbsorb(p,IDt,w0,dw); tail.eventAbsorb(p,IDt,w0,dw); };
+
+    inline void eventScatter(const UVect3 d0,const UVect3 d,double g)
+        { head.eventScatter(d0,d,g); tail.eventScatter(d0,d,g); };
+
+    inline void eventBoundary(const Point3 p,int IDf,int IDts,int IDte)        // boundary (same material)
+        { head.eventBoundary(p,IDf,IDts,IDte); tail.eventBoundary(p,IDf,IDts,IDte); }
+
+    inline void eventInterface(const Ray3 r,int IDf,unsigned a)          // found a material interface; possible results are:
+        { head.eventInterface(r,IDf,a); tail.eventInterface(r,IDf,a); }
+
+    inline void eventRefract(const Point3 p,UVect3 d)                //      refracted
+        { head.eventRefract(p,d); tail.eventRefract(p,d); }
+
+    inline void eventReflectInternal(const Point3 p,const UVect3 d)  //      internal reflection
+        { head.eventReflectInternal(p,d); tail.eventReflectInternal(p,d); }
+
+    inline void eventReflectFresnel(const Point3 p,UVect3 d)         //      fresnel reflection
+        { head.eventReflectFresnel(p,d); tail.eventReflectFresnel(p,d); }
+
+    // termination events
+    inline void eventExit(const Ray3 r,int IDf,double w)            // exited geometry
+        { head.eventExit(r,IDf,w); tail.eventExit(r,IDf,w); }
+
+    inline void eventDie(double w)                                     // lost Russian roulette
+        { head.eventDie(w); tail.eventDie(w); }
+
+    inline void eventRouletteWin(double w0,double w)                      // won roulette
+        { head.eventRouletteWin(w0,w); tail.eventRouletteWin(w0,w); }
+
+    const LoggerMulti& operator+=(const LoggerMulti& rhs)
+        { head += rhs.head; tail += rhs.tail; return *this; }
+
+    ThreadWorker get_worker(){
+    	return ThreadWorker(head.get_worker(),tail.get_worker());
+    }
+
+    friend ostream& operator<<<>(ostream&,const LoggerMulti&);
 
     //template<class H0,class T0>friend ostream& operator<<(ostream&,const LoggerCons<H0,T0>& l);
 };
 
-template<>class LoggerMulti<> {
-    public:
-	LoggerMulti(){}
-	LoggerMulti(LoggerMulti&& lm_){}
-	LoggerMulti(const LoggerMulti& lm_){}
-	LoggerMulti& operator=(const LoggerMulti& lm_){ return *this; }
-    virtual ~LoggerMulti(){}
-
-	typedef LoggerMulti<> HeadWorker;
-	typedef LoggerMulti<> TailWorker;
-
-    inline void eventLaunch(const Ray3 r,unsigned IDt,double w){};
-
-    inline void eventAbsorb(const Point3 p,unsigned IDt,double w0,double dw){};
-    inline void eventScatter(const UVect3 d0,const UVect3 d,double g){};
-
-    inline void eventBoundary(const Point3 p,int,int,int){};        // boundary (same material)
-
-    inline void eventInterface(const Ray3,int,unsigned){};          // found a material interface; possible results are:
-    inline void eventRefract(const Point3,UVect3){};                //      refracted
-    inline void eventReflectInternal(const Point3,const UVect3){};  //      internal reflection
-    inline void eventReflectFresnel(const Point3,UVect3){};         //      fresnel reflection
-
-    // termination events
-    inline void eventExit(const Ray3,int,double){};            // exited geometry
-    inline void eventDie(double){};                                     // lost Russian roulette
-    inline void eventRouletteWin(double,double){};                      // won roulette
-
-    typedef LoggerMulti<> ThreadWorker;
-
-    ThreadWorker getThreadWorkerInstance(unsigned) const { return ThreadWorker(); }
-    LoggerMulti<> get_worker() { return LoggerMulti<>(); }
-
-    const LoggerMulti& operator+=(const LoggerMulti&){ return *this; }
-    LoggerMulti operator+(const LoggerMulti&){ return LoggerMulti(); }
-};
-
 /// The Logger for a null_type is a null logger: no events
-typedef class LoggerMulti<> LoggerNull;
+//typedef class LoggerMulti<> LoggerNull;
 
 /*template<unsigned N,typename Tuple>struct GetWorkers {
     static auto map_it(F& f,const Tuple& t) -> decltype(tuple_cat(TupleMap<N-1,Tuple,F>::map_it(f,t),make_tuple(f(get<N>(t))))){

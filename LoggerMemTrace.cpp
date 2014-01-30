@@ -9,7 +9,7 @@ LoggerMemTrace::~LoggerMemTrace()
 // On launch, write out previous tetra record unless it's the same tetra
 void LoggerMemTrace::eventLaunch(const Ray3,unsigned IDt,double)
 {
-    if (Nabs == -1)
+    if (Nabs == (unsigned)-1)
         Nabs=0;
     else if (IDt_current != IDt)
     {
