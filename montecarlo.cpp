@@ -327,25 +327,7 @@ void runCaseByID(PGConnection* dbconn,unsigned IDflight,unsigned IDcase,unsigned
 // Run results
 //	Min: compute time, return code
 
-//template<class Logger>void logger_print(const Logger& l);
 
-struct print_logger {
-	template<typename T>void operator()(T& t) const { logger_print(t); }
-};
-
-template<typename T>void logger_print(const T& t)
-{
-	cout << "ERROR: I don't know how to print that type" << endl;
-}
-
-template<>void logger_print(const LoggerConservation& lc)
-{
-	cout << "Conservation check: " << endl << lc << endl;
-}
-
-template<>void logger_print(const LoggerEvent& le)
-{
-    cout << le << endl;
     /*res.Nintersection=le.Nbound;
     res.Nabsorb=le.Nabsorb;
     res.Nscatter=le.Nscatter;
@@ -355,7 +337,6 @@ template<>void logger_print(const LoggerEvent& le)
     res.Nwin=le.Nwin;
     res.Nrefr=le.Nrefr;
     res.Ndie=le.Ndie;*/
-}
 
     // get the hit-count maps
 /*    ls.hitMap(surfHit);
@@ -408,26 +389,13 @@ if (globalopts::dbwrite)
 
 template<typename Logger>Logger make_multilogger(Logger&& h)
 {
-	cout << "Boing" << endl;
 	return h;
 }
 
 template<typename LoggerH,typename... LoggerTs>LoggerMulti<LoggerH,LoggerTs...> make_multilogger(LoggerH&& h,LoggerTs&&... ts)
 {
-	cout << "Bunga" << endl;
-	return LoggerMulti<LoggerH,LoggerTs...>(std::move(h),ts...);
+	return LoggerMulti<LoggerH,LoggerTs...>(std::move(h),std::forward<LoggerTs>(ts)...);
 }
-
-/*template<typename LoggerH,typename... Loggers>LoggerMulti<LoggerH,Loggers...> make_multilogger(LoggerH&& h,Loggers&&... ts)
-{
-	cout << "Bunga" << endl;
-	return make_multilogger(std::move(h),std::move(make_multilogger(ts...)));
-}*/
-
-//LoggerMulti<> make_multilogger()
-//{
-//	return LoggerNull();
-//}
 
 RunResults runSimulation(PGConnection* dbconn,const TetraMesh& mesh,const vector<Material>& materials,Source* source,
     unsigned IDflight,unsigned IDsuite,unsigned caseorder,unsigned long long Nk)
@@ -452,30 +420,7 @@ RunResults runSimulation(PGConnection* dbconn,const TetraMesh& mesh,const vector
 
     cout << "==== Run ID " << runid << " starting" << endl;
 
-    /*auto logger=make_tuple(
-#ifdef LOG_VOLUME
-    		LoggerVolume<QueuedAccumulatorMT<double> >(mesh,1<<20),
-#endif
-#ifdef LOG_SURFACE
-    		LoggerSurface<QueuedAccumulatorMT<double> >(mesh,1<<20),
-#endif
-#ifdef LOG_EVENT
-    		LoggerEventMT(),
-#endif
-#ifdef LOG_CONSERVATION
-    		LoggerConservationMT(),
-#endif
-#ifdef LOG_MEMTRACE
-    		LoggerMemTraceMT(),
-#endif
-    		LoggerNull() );*/
-
-    //auto logger_empty = make_multilogger();
-    //auto logger = make_multilogger(LoggerVolume<QueuedAccumulatorMT<double>>(mesh,1<<20),LoggerSurface<QueuedAccumulatorMT<double>>(mesh));
-    //auto logger = make_multilogger(LoggerVolume<QueuedAccumulatorMT<double>>(mesh,1<<20),LoggerSurface<QueuedAccumulatorMT<double>>(mesh));
-
-//    auto logger = make_multilogger(LoggerEventMT(),LoggerSurface<QueuedAccumulatorMT<double>>(mesh));
-    auto logger = make_multilogger(LoggerEventMT(),LoggerConservationMT(),LoggerSurface<QueuedAccumulatorMT<double>>(mesh));
+    auto logger = make_multilogger(LoggerEventMT(),LoggerSurface<QueuedAccumulatorMT<double>>(mesh,1<<20),LoggerVolume<QueuedAccumulatorMT<double>>(mesh,1<<20),LoggerConservationMT());
 
     // Run it
     boost::timer::cpu_times t = MonteCarloLoop<RNG_SFMT>(Nk,logger,mesh,materials,*source);

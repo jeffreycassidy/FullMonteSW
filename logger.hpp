@@ -6,7 +6,7 @@
 #include "graph.hpp"
 #include "newgeom.hpp"
 #include "fluencemap.hpp"
-#include <boost/thread.hpp>
+//#include <boost/thread.hpp>
 
 typedef __m128 Point3;
 typedef __m128 UVect3;
@@ -75,10 +75,8 @@ class LoggerNull {
     LoggerNull operator+(const LoggerNull&){ return LoggerNull(); }
 };
 
-template<>class LoggerMulti<> : public LoggerNull {};
+//template<>class LoggerMulti<> : public LoggerNull {};
 //template<>class LoggerMulti<LoggerNull> : public LoggerNull {};
-
-// Triple-argument type
 
 template<typename LoggerH,typename LoggerT>class LoggerMulti<LoggerH,LoggerT> {
 	LoggerH head;
@@ -133,6 +131,9 @@ public:
     const LoggerMulti& operator+=(const LoggerMulti& rhs)
         { head += rhs.head; tail += rhs.tail; return *this; }
 
+    /*const LoggerMulti& operator+=(const ThreadWorker& rhs)
+            { head += rhs.head; tail += rhs.tail; return *this; }*/
+
     ThreadWorker get_worker(){
     	return ThreadWorker(head.get_worker(),tail.get_worker());
     }
@@ -150,9 +151,9 @@ template<typename LoggerH,typename... LoggerTs>class LoggerMulti<LoggerH,LoggerT
 public:
 	typedef LoggerMulti<HeadWorker,TailWorker> ThreadWorker;
 	//LoggerMulti(Logger&& head_) : head(std::move(head_)),tail(LoggerMulti<>()){}
-	LoggerMulti(LoggerH&& head_,LoggerTs&&... tail_) : head(std::move(head_)),tail(std::move(LoggerMulti<LoggerTs...>(tail_...))){}
+	LoggerMulti(LoggerH&& head_,LoggerTs&&... tail_) : head(std::move(head_)),tail(std::move(LoggerMulti<LoggerTs...>(std::forward<LoggerTs>(tail_)...))){}
 	//LoggerMulti(const LoggerH& head_) : head(head_){}
-	LoggerMulti(const LoggerH& head_,const LoggerTs&... tail_) : head(head_),tail(tail_...){}
+	//LoggerMulti(const LoggerH& head_,const LoggerTs&... tail_) : head(head_),tail(tail_...){}
 	//LoggerMulti(Logger&& head_,Loggers&&... tail_) : head(std::move(head_)),tail(LoggerMulti<Loggers...>(std::move(tail_...))) {};
 	LoggerMulti(LoggerMulti&& lm_) : head(std::move(lm_.head)),tail(std::move(lm_.tail)){}
 
@@ -196,6 +197,9 @@ public:
     const LoggerMulti& operator+=(const LoggerMulti& rhs)
         { head += rhs.head; tail += rhs.tail; return *this; }
 
+    const LoggerMulti& operator+=(const ThreadWorker& rhs){
+    	head += rhs.head; tail += rhs.tail; return *this; }
+
     ThreadWorker get_worker(){
     	return ThreadWorker(head.get_worker(),tail.get_worker());
     }
@@ -228,20 +232,6 @@ template<typename Tuple,class F>struct GetWorkers<0,Tuple,F> {
     return ret;
 }*/
 
-
-/* Example mapper; must have an operator() for each type to be processed
-    Currently has a default which gives identity
-    */
-
-/*struct my_mapper {
-    template<class T>T operator()(T i){ return i; }
-    char*  operator()(char* p){ return p; }
-//    string operator()(int i){ stringstream ss; ss << "s(i):" << i; return ss.str(); }
-//    string operator()(unsigned u){ stringstream ss; ss << "s(u):" << u; return ss.str(); }
-    string operator()(string s){ return s; }
-    string operator()(unsigned long i){ stringstream ss; ss << "s(u):" << i; return ss.str(); }
-    string operator()(double d){ stringstream ss; ss << "s(d):" << setprecision(3) << fixed << d; return ss.str(); }
-};*/
 
 // Buffer is a support class
 

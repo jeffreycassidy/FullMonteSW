@@ -148,3 +148,16 @@ template<>void SurfaceArray<double>::resultMap(map<FaceByPointID,double>& m,bool
 
     ::writeFileVTK(fn,mesh.P,m);
 }*/
+
+
+template<>ostream& operator<<(ostream& os,const LoggerSurface<QueuedAccumulatorMT<double>>& ls)
+{
+	double sumE=0;
+	unsigned i=0;
+	for(auto it=ls.acc.begin(); it != ls.acc.end(); ++it)
+	{
+		sumE += *it;
+		++i;
+	}
+	return os << "Hello from the surface logger; total energy emitted is " << setprecision(4) << sumE << " (" << i << " elements)" << endl;
+}
