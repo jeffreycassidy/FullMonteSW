@@ -112,6 +112,10 @@ template<class AccumulatorT=double>class LoggerVolumeMT : public LoggerVolume<Ac
  *	Examples: vector<T>& (single-thread), QueuedAccumulatorMT (thread-safe)
  */
 
+template<class T>class LoggerVolume;
+
+template<class T>ostream& operator<<(ostream& os,const LoggerVolume<T>& lv);
+
 template<class Accumulator>class LoggerVolume {
 	Accumulator acc;
 
@@ -119,14 +123,17 @@ public:
 	template<typename... Args>LoggerVolume(const TetraMesh& mesh_,Args... args) : acc(mesh_.getNt()+1,args...){}
 	LoggerVolume(LoggerVolume&& lv_) : acc(std::move(lv_.acc)){}
 	//LoggerVolume(const LoggerVolume& lv_) : acc(lv_.acc){}
+	LoggerVolume(const LoggerVolume& lv_) = delete;
 
 	class WorkerThread : public LoggerNull {
 		typename Accumulator::WorkerThread wt;
 	public:
 		WorkerThread(Accumulator& parent_) : wt(parent_.get_worker()){};
-		WorkerThread(LoggerVolume& lv_) : wt(lv_.get_worker()){}
-		WorkerThread(const WorkerThread& wt_) : wt(wt_.wt){}
+		//WorkerThread(LoggerVolume& lv_) : wt(lv_.get_worker()){}
+		//WorkerThread(const WorkerThread& wt_) : wt(wt_.wt){}
+		WorkerThread(const WorkerThread& wt_) = delete;
 		WorkerThread(WorkerThread&& wt_) : wt(std::move(wt_.wt)){}
+		~WorkerThread(){ wt.commit(); }
 
 	    inline void eventAbsorb(Point3 p,unsigned IDt,double w0,double dw)
 	    	{ wt[IDt] += dw; }
@@ -135,4 +142,12 @@ public:
 	typedef WorkerThread ThreadWorker;
 
 	WorkerThread get_worker() { return WorkerThread(acc);  };
+
+	friend ostream& operator<<<>(ostream&,const LoggerVolume&);
 };
+/*
+template<class T>ostream& operator<<(ostream& os,const LoggerVolume<T>& lv)
+{
+	double t=0;
+	return os << "Hello from the volume logger; total energy absorbed is " << t << endl;
+}*/

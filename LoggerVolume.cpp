@@ -2,8 +2,6 @@
 
 typedef double FluenceCountType;
 
-template<class T>ostream& operator<<(ostream& os,const LoggerVolume<T>&){ cout << "Volume logger report" << endl; return os; }
-
 template<>void VolumeArray<double>::fluenceMap(VolumeFluenceMap& F,const vector<Material>& mat,bool per_volume)
 {
     F.clear();
@@ -32,4 +30,16 @@ template<>void VolumeArray<double>::hitMap(map<unsigned,unsigned long long>& m)
     for(vector<FluenceCountType>::const_iterator it=v.begin()+1; it != v.end(); ++it,++IDt)
         if (*it != 0)
             m_it = m.insert(m_it,make_pair(IDt,*it));
+}
+
+template<>ostream& operator<<(ostream& os,const LoggerVolume<QueuedAccumulatorMT<double>>& lv)
+{
+	double sumE=0;
+	unsigned i=0;
+	for(auto it=lv.acc.begin(); it != lv.acc.end(); ++it)
+	{
+		sumE += *it;
+		++i;
+	}
+	return os << "Hello from the volume logger; total energy emitted is " << setprecision(4) << sumE << " (" << i << " elements)" << endl;
 }

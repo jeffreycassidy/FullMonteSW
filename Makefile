@@ -5,8 +5,8 @@ LIBDIRS=-L/usr/local/lib -L/usr/local/lib/boost
 INCLDIRS=-I/usr/local/boost -I/usr/local/include -I. -I/usr/local/include/boost -I/usr/local/include/pgsql
 
 # Switch debug on/off
-#GCC_OPTS += -O0
-GCC_OPTS += -DNDEBUG -O3 #-DVERBOSE_PRINT
+GCC_OPTS += -O0
+#GCC_OPTS += -DNDEBUG -O3 #-DVERBOSE_PRINT
 
 # Enable profiling
 #GCC_OPTS += -pg

@@ -9,11 +9,13 @@ class LoggerEvent : public LoggerNull {
     public:
     unsigned long long Nlaunch,Nabsorb,Nscatter,Nbound,Ntir,Nfresnel,Nrefr,Ninterface,Nexit,Ndie,Nwin;
 
-    void clear(){ *this = LoggerEvent(); }
+    void clear(){ Nlaunch=Nabsorb=Nscatter=Nbound=Ntir=Nfresnel=Nrefr=Ninterface=Nexit=Ndie=Nwin=0; }
 
     LoggerEvent() : Nlaunch(0),Nabsorb(0),Nscatter(0),Nbound(0),Ntir(0),Nfresnel(0),Nrefr(0),Ninterface(0),
         Nexit(0),Ndie(0),Nwin(0){};
     LoggerEvent(const LoggerEvent&) = delete;
+    LoggerEvent(LoggerEvent&& le_) : Nlaunch(0),Nabsorb(0),Nscatter(0),Nbound(0),Ntir(0),Nfresnel(0),Nrefr(0),Ninterface(0),
+            Nexit(0),Ndie(0),Nwin(0){};
 
     inline void eventLaunch(const Ray3 r,unsigned IDt,double w){ ++Nlaunch; };   // launch new packet
 
@@ -35,21 +37,17 @@ class LoggerEvent : public LoggerNull {
     friend ostream& operator<<(ostream&,const LoggerEvent&);
 };
 
-/*template<class T> LocalCopyMT : public T {
-	T& parent;
-
-public:
-	LocalCopyMT(T&)
-};*/
-
 class LoggerEventMT : public LoggerEvent {
 public:
 	LoggerEventMT(){}
-	LoggerEventMT(const LoggerEventMT& le_) : LoggerEvent(){}
+	//LoggerEventMT(const LoggerEventMT& le_) : LoggerEvent(){}
+	LoggerEventMT(const LoggerEventMT&) = delete;
+	LoggerEventMT(LoggerEventMT&& le_) = default;
 
 	typedef LoggerEventMT ThreadWorker;
 
 	ThreadWorker get_worker() { return ThreadWorker(); }
+
 	/// Adds another LoggerEvent, locking the parent reference first
 	// const LoggerEventMT& operator+=(const LoggerEvent& rhs){ lock(); LoggerEvent::operator+=(rhs); unlock(); return *this; }
 };

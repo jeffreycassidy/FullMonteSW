@@ -15,3 +15,10 @@ logtest
 *.o
 *.gch
 *.s
+doxy
+html
+latex
+*.err
+.cproject
+.project
+.settings
