@@ -11,11 +11,9 @@ class LoggerEvent : public LoggerNull {
 
     void clear(){ Nlaunch=Nabsorb=Nscatter=Nbound=Ntir=Nfresnel=Nrefr=Ninterface=Nexit=Ndie=Nwin=0; }
 
-    LoggerEvent() : Nlaunch(0),Nabsorb(0),Nscatter(0),Nbound(0),Ntir(0),Nfresnel(0),Nrefr(0),Ninterface(0),
-        Nexit(0),Ndie(0),Nwin(0){};
+    LoggerEvent(){ clear(); }
     LoggerEvent(const LoggerEvent&) = delete;
-    LoggerEvent(LoggerEvent&& le_) : Nlaunch(0),Nabsorb(0),Nscatter(0),Nbound(0),Ntir(0),Nfresnel(0),Nrefr(0),Ninterface(0),
-            Nexit(0),Ndie(0),Nwin(0){};
+    LoggerEvent(LoggerEvent&& le_){ clear(); }
 
     inline void eventLaunch(const Ray3 r,unsigned IDt,double w){ ++Nlaunch; };   // launch new packet
 
@@ -37,40 +35,27 @@ class LoggerEvent : public LoggerNull {
     friend ostream& operator<<(ostream&,const LoggerEvent&);
 };
 
-class LoggerEventMT : public LoggerEvent {
+class LoggerEventMT : public LoggerEvent, private std::mutex {
 public:
 	LoggerEventMT(){}
-	//LoggerEventMT(const LoggerEventMT& le_) : LoggerEvent(){}
 	LoggerEventMT(const LoggerEventMT&) = delete;
-	LoggerEventMT(LoggerEventMT&& le_) = default;
+	LoggerEventMT(LoggerEventMT&& le_) : LoggerEvent(std::move(le_)),std::mutex(){};
 
-	typedef LoggerEventMT ThreadWorker;
+	class ThreadWorker : public LoggerEvent {
+		LoggerEventMT& parent;
+	public:
+		ThreadWorker(LoggerEventMT& parent_) : parent(parent_){}
+		ThreadWorker(ThreadWorker&& tw_) : parent(tw_.parent),LoggerEvent(std::move(tw_)){}
+		~ThreadWorker(){ commit(); }
 
-	ThreadWorker get_worker() { return ThreadWorker(); }
+		void commit()
+		{
+			parent.lock();
+			parent += *this;
+			clear();
+			parent.unlock();
+		}
+	};
 
-	/// Adds another LoggerEvent, locking the parent reference first
-	// const LoggerEventMT& operator+=(const LoggerEvent& rhs){ lock(); LoggerEvent::operator+=(rhs); unlock(); return *this; }
+	ThreadWorker get_worker() { return ThreadWorker(*this); }
 };
-
-/*
-class LoggerEventMT : public LoggerEvent, private boost::mutex {
-    public:
-
-    // each worker has a copy of the event counter, a reference to the parent, and a commit() method
-    class ThreadWorker : public LoggerEventST {
-        LoggerEventMT& parent;
-        public:
-        ThreadWorker(LoggerEventMT& parent_) : parent(parent_){}
-        ~ThreadWorker() { commit(); }
-
-        void commit()
-        {
-            parent.lock();
-            parent += *this;
-            clear();
-            parent.unlock();
-        }
-    };
-
-    ThreadWorker getThreadWorkerInstance(unsigned){ return ThreadWorker(*this); }
-};*/

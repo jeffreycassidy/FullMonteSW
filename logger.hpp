@@ -75,9 +75,6 @@ class LoggerNull {
     LoggerNull operator+(const LoggerNull&){ return LoggerNull(); }
 };
 
-//template<>class LoggerMulti<> : public LoggerNull {};
-//template<>class LoggerMulti<LoggerNull> : public LoggerNull {};
-
 template<typename LoggerH,typename LoggerT>class LoggerMulti<LoggerH,LoggerT> {
 	LoggerH head;
 	LoggerT tail;
@@ -205,12 +202,7 @@ public:
     }
 
     friend ostream& operator<<<>(ostream&,const LoggerMulti&);
-
-    //template<class H0,class T0>friend ostream& operator<<(ostream&,const LoggerCons<H0,T0>& l);
 };
-
-/// The Logger for a null_type is a null logger: no events
-//typedef class LoggerMulti<> LoggerNull;
 
 /*template<unsigned N,typename Tuple>struct GetWorkers {
     static auto map_it(F& f,const Tuple& t) -> decltype(tuple_cat(TupleMap<N-1,Tuple,F>::map_it(f,t),make_tuple(f(get<N>(t))))){
