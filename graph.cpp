@@ -10,7 +10,7 @@
 
 using namespace std;
 
-static const float Material::const_c0=299.792458;    // units of mm/ns (3e8 m/s = 3e11 mm/s = 3e2 mm/ns)
+const float Material::const_c0=299.792458;    // units of mm/ns (3e8 m/s = 3e11 mm/s = 3e2 mm/ns)
 
 // compares two FixedArrays lexicographically
     template<unsigned D>class FACompare {
@@ -550,8 +550,11 @@ bool Tetra::pointWithin(__m128 p)
 StepResult Tetra::getIntersection(const Ray<3,double>& r,double s,unsigned) const
 {
     // convert to SSE vectors
-    __m128 p = r.getOrigin();
-    __m128 d = r.getDirection();
+    //__m128 p = r.getOrigin();
+    //__m128 d = r.getDirection();
+#warning "Preceding two lines should be uncommented; did this to expedite compile"
+	__m128 p;
+	__m128 d;
 
     return getIntersection(p,d,_mm_set_ss(s));
 }

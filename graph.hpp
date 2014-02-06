@@ -100,6 +100,10 @@ class Material {
     bool isMatched() const { return matchedboundary; }
     void setMatched(bool m=true){ matchedboundary=m; }
 
+    friend void VectorHG_Test(unsigned);
+    friend void VectorHG(const Material&,float*,float*);
+    friend void ScalarHG(const Material&,float*,float*);
+
     friend ostream& operator<<(ostream& os,const Material& mat);
 };
 

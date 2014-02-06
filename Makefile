@@ -13,10 +13,12 @@ GCC_OPTS += -O0
 
 # Check for Mac OS (no POSIX timer)
 OS:=$(shell uname)
-VERSION:=$(shell svnversion -n 2>/dev/null )
 ifeq ($(OS),Darwin)
 GCC_OPTS += -DPLATFORM_DARWIN
 endif
+
+Test_VectorHG: VectorHG.cpp graph.cpp face.cpp newgeom.cpp helpers.cpp
+	g++ -Wall -O3 -L/usr/local/lib -L/usr/local/lib/boost -lboost_timer -lboost_system -mavx -I/usr/local/boost -I/usr/local/include -o $@ $^
 
 test: Test_AccumulationArray
 	Test_AccumulationArray
@@ -64,4 +66,4 @@ exportResult: exportResult.cpp libmontecarlo.so
 	g++ $(GCC_OPTS) $(INCLDIRS) $^ $(LIBS) $(LIBDIRS) -o $@
 
 clean: fm-postgres/clean
-	rm -f *.o sse_int montecarlo blobmaint texwriter
+	rm -f *.o sse_int montecarlo blobmaint texwriter Test_VectorHG

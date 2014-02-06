@@ -1,9 +1,7 @@
 #ifndef INCLUDE_NEWGEOM
 #define INCLUDE_NEWGEOM
 
-#ifdef SSE
 #include "sse.hpp"
-#endif 
 
 #include <math.h>
 #include <iostream>
@@ -34,7 +32,7 @@ template<int D,class T>class FixedArray
 	FixedArray(const FixedArray& P) { copy(P.p,P.p+D,p); };
 	FixedArray(const T* x_)         { if (x_!=NULL){ copy(x_,x_+D,p);   } };
 
-    static bool lexCompare(FixedArray& a,FixedArray& b) { for(unsigned i=0;i<D;++i){ if(a[i] < b[i]) return true; else if (a[i]>b[i]) return false; } }
+    static bool lexCompare(FixedArray& a,FixedArray& b) { for(unsigned i=0;i<D;++i){ if(a[i] < b[i]) return true; else if (a[i]>b[i]) return false; } return false; }
 
 	const FixedArray& operator= (const FixedArray& P)       { copy(P.p,P.p+D,p); return *this; };
 	bool              operator==(const FixedArray& P) const { for(int i=0; i<D; ++i){ if(P[i]!=p[i]){ return(false); } } return true; };

@@ -45,7 +45,7 @@ public:
 		LoggerEventMT& parent;
 	public:
 		ThreadWorker(LoggerEventMT& parent_) : parent(parent_){}
-		ThreadWorker(ThreadWorker&& tw_) : parent(tw_.parent),LoggerEvent(std::move(tw_)){}
+		ThreadWorker(ThreadWorker&& tw_) : LoggerEvent(std::move(tw_)),parent(tw_.parent){}
 		~ThreadWorker(){ commit(); }
 
 		void commit()
