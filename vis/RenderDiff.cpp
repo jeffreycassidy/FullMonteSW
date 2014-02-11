@@ -162,6 +162,8 @@ int main(int argc,char **argv)
         pu *= 0.01;
     }
 
+    try {
+
     SurfaceFluenceMap *surf_a=NULL,*surf_b=NULL;
 
     boost::shared_ptr<PGConnection> dbconn = PGConnect();
@@ -262,6 +264,16 @@ int main(int argc,char **argv)
     props.push_back(scaleBar);
 
     renderScene(props);
+
+    }
+    catch(string& s)
+    {
+        cerr << "Terminated with exception string \"" << s << '"' << endl;
+    }
+/*    catch(...)
+    {
+        cerr << "Terminated with unknown exception type" << endl;
+    }*/
 }
 
 vtkSmartPointer<vtkActor> renderSurface(const TetraMesh& mesh)

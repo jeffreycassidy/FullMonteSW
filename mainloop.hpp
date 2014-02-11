@@ -240,12 +240,6 @@ template<class Logger,class RNG>boost::timer::cpu_times Manager_MT<Logger,RNG>::
     cout << runTimer.format() << endl;
     return runTimer.elapsed();
 }
-/*
-template<class Logger,class RNG>void Manager<Logger,RNG>::run(Logger& logger)
-{
-    Worker<Logger,RNG> w(cfg,logger,Npacket,cfg.seed,this);
-    w.start();
-}*/
 
 template<class Logger,class RNG>void Worker<Logger,RNG>::start()
 {

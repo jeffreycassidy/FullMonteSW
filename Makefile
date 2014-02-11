@@ -63,7 +63,7 @@ montecarlo-trace: graph.o newgeom.o face.o helpers.o source.o montecarlo.cpp Log
 #montecarlo.a: graph.o newgeom.o face.o helpers.o source.o montecarlo.o optics.o logSurface.o io_timos.o progress.o utils/writeFileVTK.o linefile.o fluencemap.o mainloop.o fm-postgres/fm-postgres.o blob.o fmdb.o fm-postgres/fmdbexportcase.o sse.o random.o SFMT.o logConservation.o
 #	ar rcs $@ $^
 
-libmontecarlo.so: graph.o newgeom.o face.o helpers.o source.o montecarlo.o LoggerSurface.o io_timos.o progress.o utils/writeFileVTK.o linefile.o fluencemap.o mainloop.o blob.o fmdb.o sse.o random.o SFMT.o LoggerConservation.o LoggerEvent.o LoggerVolume.o
+libmontecarlo.so: graph.o newgeom.o face.o helpers.o source.o montecarlo.o LoggerSurface.o io_timos.o progress.o utils/writeFileVTK.o linefile.o fluencemap.o mainloop.o blob.o fmdb.o sse.o random.o SFMT.o LoggerConservation.o LoggerEvent.o LoggerVolume.o Material.o
 	g++ -shared -fPIC $^ -Lfm-postgres -lfmpg -o $@
 #	g++ -shared -fPIC $(LIBS) $(LIBDIRS) $^ -o $@
 
