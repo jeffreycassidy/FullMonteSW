@@ -5,6 +5,8 @@
 
 #include "newgeom.hpp"
 
+#include "Material.hpp"
+
 #include <boost/shared_ptr.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 

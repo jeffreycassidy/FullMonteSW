@@ -64,61 +64,12 @@ class Face {
 	friend ostream& operator<<(ostream&,const Face&);
 };
 
-class Material {
-    static const float const_c0;    // units of mm/ns (3e8 m/s = 3e11 mm/s = 3e2 mm/ns)
-    float mu_s, mu_a, mu_p, mu_t, g, n, one_minus_gg, one_plus_gg, recip_2g, albedo, absfrac; // 11x4 = 40B
-    bool matchedboundary,isscattering;          // 2x1B = 2B
-    public:
-
-    __m128 s_prop,s_init;
-
-    Material(double mu_a_=0,double mu_s_=0,double g_=0,double n_=1.0,double mu_p_=0.0,bool matchedboundary_=false) :
-        mu_s(mu_s_),mu_a(mu_a_),mu_p(mu_p_),mu_t(mu_s_+mu_a_+mu_p_),
-        g(g_),n(n_),one_minus_gg(1.0-g_*g_),one_plus_gg(1.0+g_*g_),recip_2g(1.0/2.0/g_),
-        albedo((mu_s_+mu_p_)/(mu_a_+mu_s_+mu_p_)),
-        absfrac(mu_a_/(mu_a_+mu_s_+mu_p_)),
-        matchedboundary(matchedboundary_),
-        isscattering(!(g_ == 1.0 || mu_s_ == 0)),
-        s_prop(_mm_set_ps(0,n_/const_c0,-mu_t,-1)),
-        s_init(_mm_set_ps(0,0,-1,-1/mu_t))
-        {}
-
-    bool isScattering() const { return isscattering; }
-
-    float getParam_g() const { return g; }
-    float getn()       const { return n; }
-    float getMuA()     const { return mu_a; }
-    float getMuS()     const { return mu_s; }
-    float getMuT()     const { return mu_t; }
-    float getg()       const { return g; }
-
-    float getAlbedo()              const { return albedo; }
-    float getAbsorbedFraction()    const { return absfrac; }
-
-	Packet Scatter(Packet pkt,float rnd0,__m128 cosphi_sinphi) const;
-
-    bool isMatched() const { return matchedboundary; }
-    void setMatched(bool m=true){ matchedboundary=m; }
-
-    friend void VectorHG_Test(unsigned);
-    friend void VectorHG(const Material&,float*,float*);
-    friend void ScalarHG(const Material&,float*,float*);
-
-    friend ostream& operator<<(ostream& os,const Material& mat);
-};
-
-inline Packet Material::Scatter(Packet pkt,float rnd0,__m128 cosphi_sinphi) const
+typedef union SSEReg128_t
 {
-    float costheta,P=2*rnd0-1;
+	__m128 vf;
+	float f[4];
+} SSEReg128;
 
-    float t=one_minus_gg/(1+g*P);
-
-    // choose angles: HG function for component along d0, uniform circle for normal components
-    costheta = g==0 ? P : recip_2g * (one_plus_gg-t*t);
-    assert (costheta <= 1.0 && costheta >= -1.0);
-
-    return matspin(pkt,costheta,cosphi_sinphi);
-}
 
     typedef struct { 
         __m128 Pe;          // 4x16B = 64 B

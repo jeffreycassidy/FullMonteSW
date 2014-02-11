@@ -6,14 +6,10 @@
 #include "graph.hpp"
 #include "optics.hpp"
 #include "source.hpp"
-#include "io_timos.hpp"
-
-#include <boost/timer/timer.hpp>
 
 #include "mainloop.hpp"
 
-template<class LoggerType,class RNG>int doOnePacket(const RunConfig& cfg,Packet pkt,
-    LoggerType& logger,unsigned IDt,RNG& rng)
+template<class LoggerType,class RNG>int Worker<LoggerType,RNG>::doOnePacket(Packet pkt,unsigned IDt)
 {
     unsigned Nstep=0;
     StepResult stepResult;
@@ -36,7 +32,6 @@ template<class LoggerType,class RNG>int doOnePacket(const RunConfig& cfg,Packet 
         ++Nstep;
         pkt.s = rng.draw_m128f1_log_u01();
         pkt.s = _mm_mul_ps(pkt.s,currMat.s_init);
-
 
         // attempt hop
         stepResult = currTetra.getIntersection(pkt.p,pkt.d,pkt.s);
@@ -158,7 +153,9 @@ template<class LoggerType,class RNG>int doOnePacket(const RunConfig& cfg,Packet 
         // spin (new direction of travel)
         if (currMat.isScattering() && pkt.w >= cfg.wmin)
         {
-			pkt = currMat.Scatter(pkt,rng.draw_float_u01(),rng.draw_m128f2_uvect());
+			//pkt = currMat.Scatter(pkt,rng.draw_float_u01(),rng.draw_m128f2_uvect());
+        	//pkt = currMat.Scatter(rng,pkt);
+        	pkt = pkt.matspin(pkt,getNextHG(currTetra.matID));
             logger.eventScatter(pkt.d,pkt.d,currMat.getParam_g());
         }
     }

@@ -39,13 +39,6 @@
 #include "fmdb.hpp"
 #include <map>
 
-
-#define LOG_EVENT
-#define LOG_VOLUME
-#define LOG_SURFACE
-//#define LOG_MEMTRACE
-#define LOG_CONSERVATION
-
 void writeHitMap(string fn,const map<unsigned,unsigned long long>& m);
 
 RunResults runSimulation(PGConnection* dbconn,const TetraMesh& mesh,const vector<Material>& materials,Source*,
@@ -58,6 +51,7 @@ namespace globalopts {
     long Nk=0;                 // number of packets as long int
     unsigned Nthread=1;
     unsigned randseed=1;
+    unsigned timerinterval=1;
     string logFN("log.out");   // log filename
     string outpath(".");       // output path, defaults to working dir
     bool dbwrite=true;
@@ -105,6 +99,7 @@ int main(int argc,char **argv)
         ("materials,m",po::value<string>(&fn_materials),"Materials file (TIM-OS .opt type)")
         ("rngseed,r",po::value<unsigned>(&globalopts::randseed),"RNG seed (int)")
         ("threads,t",po::value<unsigned>(&globalopts::Nthread),"Thread count")
+        ("Timer,T",po::value<unsigned>(&globalopts::timerinterval),"Timer interval (seconds; 0=no timer)")
 //        ("outpath,p",po::value<string>(&globalopts::outpath),"Output file path")
         ("nodbwrite","Disable database writes")
         ("flightname,f",po::value<string>(&flightname),"Flight name")

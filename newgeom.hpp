@@ -11,6 +11,8 @@
 #include <utility>
 #include <cassert>
 
+//#include "Packet.hpp"
+
 #include "helpers.hpp"
 
 // newgeom.hpp      Provides all the geometry-related classes (Point, arrays of IDs, etc)
@@ -363,7 +365,7 @@ template<int D,class T>class Ray
 	const Point<D,T>&      getOrigin()    const { return P; }
 	const UnitVector<D,T>& getDirection() const { return d; }
 
-    operator Packet() const;
+    //operator Packet() const;
 
     void setOrigin(Point<3,double> p_){ P=p_; }
 
@@ -447,24 +449,8 @@ inline __m128 to_m128f(UnitVector<3,double> v)
     return _mm_set_ps(0.0,v[2],v[1],v[0]);
 }
 
-class Packet {
-    public:
-    __m128 d,a,b,p;     // 4x16B = 64B
-    __m128 s;           // 16B
-    double w;           // 8B
-
-    Packet() : s(_mm_setzero_ps()),w(1.0){}
-    Packet(const Ray<3,double>& r) : s(_mm_setzero_ps()),w(1.0){ setRay(r); }
-
-    void setRay(const Ray<3,double>& r)
-        { p = to_m128f(r.getOrigin()); setDirection(to_m128f(r.getDirection())); }
-
-    void setDirection(__m128 d_)
-        { d=d_; a=getNormalTo(d_); b=cross(d,a); }
-};
-
 // r0,r1 are the random numbers
-inline Packet matspin(Packet pkt,float costheta,__m128 cosphi_sinphi)
+/*inline Packet matspin(Packet pkt,float costheta,__m128 cosphi_sinphi)
 {
     Packet res=pkt;
 
@@ -528,7 +514,7 @@ inline Packet matspin(Packet pkt,float costheta,__m128 cosphi_sinphi)
     res.b = _mm_add_ps(res.b,_mm_mul_ps(b0,_mm_shuffle_ps(M2,M2,_MM_SHUFFLE(2,2,2,2))));
 
     return res;
-}
+}*/
 
 
 #endif
