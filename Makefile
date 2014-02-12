@@ -18,6 +18,13 @@ ifeq ($(OS),Darwin)
 GCC_OPTS += -DPLATFORM_DARWIN
 endif
 
+default: avx_mathfun_test
+
+avx_compare: avx_compare.cpp avx_mathfun.h
+	g++ -Wall -std=c++11 -mavx -O3 -lboost_system -lboost_timer -L/usr/local/lib -I/usr/local/include -DUSE_SSE2 -o $@ $<
+
+avx_mathfun_test: avx_mathfun.h avx_mathfun_test.c
+	g++ -Wall -std=c++11 -mavx -O3 -o $@ $^
 
 all: montecarlo
 
