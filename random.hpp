@@ -5,6 +5,8 @@
 #include <x86intrin.h>
 #endif
 
+#include <immintrin.h>
+
 #include <pmmintrin.h>
 #include <xmmintrin.h>
 #include <emmintrin.h>
@@ -123,6 +125,11 @@ class RNG_SFMT {
     inline __m128 draw_m128f2_uvect();
     inline __m128 draw_m128f3_uvect();
 
+    inline __m256 draw_m256f8_uvect2();		///< Draws a 256-bit vector of 4 2D unit vectors
+    										///< TODO: Could use improvement to take full advantage of AVX
+    inline __m256 draw_m256f8_pm1();		///< Draws a 256-bit vector of 8 floats in [-1,1)
+    										///< TODO: Could use improvement to take full advantage of AVX
+
     inline const uint64_t* draw_u64_2();
     inline const uint32_t* draw_u32_4();
 };
@@ -163,6 +170,26 @@ inline __m128 RNG_SFMT::draw_m128f4_pm1()
     rnd = _mm_or_ps(rnd,exp);
     rnd = _mm_sub_ps(rnd,offs);
     return rnd;
+}
+
+inline __m256 RNG_SFMT::draw_m256f8_pm1()
+{
+	return _mm256_insertf128_ps(
+			_mm256_castps128_ps256(draw_m128f4_pm1()),
+			draw_m128f4_pm1(),
+			1);
+}
+
+/** Returns four 2D unit vectors by calling draw_m128f2_uvect four times
+ * TODO: Needs fixing!! Can probably do this way faster with sin/cos of uniform random angle
+ */
+
+inline __m256 RNG_SFMT::draw_m256f8_uvect2()
+{
+	return _mm256_insertf128_ps(
+		_mm256_castps128_ps256(_mm_movelh_ps(draw_m128f2_uvect(),draw_m128f2_uvect())),
+		_mm_movelh_ps(draw_m128f2_uvect(),draw_m128f2_uvect()),
+		1);
 }
 
 inline __m128 RNG_SFMT::draw_m128f4_u01()

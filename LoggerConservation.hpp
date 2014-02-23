@@ -1,4 +1,5 @@
 #include "logger.hpp"
+#include <mutex>
 
 // LoggerConservation - checks that energy is conserved by logging total energy:
 //  launched
@@ -17,8 +18,9 @@ class LoggerConservation : public LoggerNull {
     inline void eventDie(double w){ w_die += w; };
     inline void eventRouletteWin(double w0,double w){ w_roulette += w-w0; };
 
-    LoggerConservation() : w_launch(0.0),w_absorb(0.0),w_die(0.0),w_exit(0.0),w_roulette(0.0){}
-    LoggerConservation(string fn) { LoggerConservation(); };
+    LoggerConservation() { clear(); }
+    LoggerConservation(LoggerConservation&& lc_) : LoggerNull(){ clear(); };
+    LoggerConservation(const LoggerConservation&) = delete;
 
     LoggerConservation& operator+=(const LoggerConservation& lc){
         w_launch += lc.w_launch;
@@ -29,7 +31,7 @@ class LoggerConservation : public LoggerNull {
         return *this;
     }
 
-    void clear(){ *this=LoggerConservation(); }
+    void clear(){ w_launch=w_absorb=w_die=w_exit=w_roulette=0; }
 
     friend ostream& operator<<(ostream&,const LoggerConservation&);
 };
@@ -38,12 +40,20 @@ class LoggerConservation : public LoggerNull {
 // LoggerConservationMT: Multithreaded instance of conservation logger
 //  just keeps one set of counters for each thread, then merges through the += operator
 
-class LoggerConservationMT : public LoggerConservation,private boost::mutex {
+class LoggerConservationMT : public LoggerConservation,private std::mutex {
     public:
+	LoggerConservationMT() : LoggerConservation(),std::mutex(){}
+	LoggerConservationMT(LoggerConservationMT&& lc_) : LoggerConservation(std::move(lc_)),std::mutex(){}
+
+	//LoggerConservationMT(const LoggerConservationMT& lc_) : LoggerConservation(lc_){}
+	LoggerConservationMT(const LoggerConservationMT&) = delete;
+
     class ThreadWorker : public LoggerConservation {
         LoggerConservationMT& parent;
         public:
         ThreadWorker(LoggerConservationMT& parent_) : parent(parent_){}
+        ThreadWorker(ThreadWorker&& tw_) : parent(tw_.parent){}
+        ThreadWorker(const ThreadWorker& tw_) : parent(tw_.parent){}
         ~ThreadWorker(){ commit(); }
 
         void commit()
@@ -55,4 +65,5 @@ class LoggerConservationMT : public LoggerConservation,private boost::mutex {
         }
     };
     ThreadWorker getThreadWorkerInstance(unsigned) { return ThreadWorker(*this); }
+    ThreadWorker get_worker() { return ThreadWorker(*this); }
 };

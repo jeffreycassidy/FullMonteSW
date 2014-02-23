@@ -16,3 +16,9 @@ logtest
 *.gch
 *.s
 doxy
+html
+latex
+*.err
+.cproject
+.project
+.settings

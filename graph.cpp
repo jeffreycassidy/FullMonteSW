@@ -8,9 +8,9 @@
 #include "blob.hpp"
 #include "sse.hpp"
 
-using namespace std;
+#include "Material.hpp"
 
-static const float Material::const_c0=299.792458;    // units of mm/ns (3e8 m/s = 3e11 mm/s = 3e2 mm/ns)
+using namespace std;
 
 // compares two FixedArrays lexicographically
     template<unsigned D>class FACompare {
@@ -546,15 +546,18 @@ bool Tetra::pointWithin(__m128 p)
 
     return _mm_movemask_ps(dot) == 0;
 }
-
+/*
 StepResult Tetra::getIntersection(const Ray<3,double>& r,double s,unsigned) const
 {
     // convert to SSE vectors
-    __m128 p = r.getOrigin();
-    __m128 d = r.getDirection();
+    //__m128 p = r.getOrigin();
+    //__m128 d = r.getDirection();
+#warning "Preceding two lines should be uncommented; did this to expedite compile"
+	__m128 p;
+	__m128 d;
 
     return getIntersection(p,d,_mm_set_ss(s));
-}
+}*/
 
 StepResult Tetra::getIntersection(__m128 p,__m128 d,__m128 s) const
 {
@@ -756,10 +759,6 @@ pair<pair<unsigned,int>,Point<3,double> > TetraMesh::getSurfaceElement(const Ray
     return make_pair(make_pair(IDt,IDf),Q);
 }
 
-ostream& operator<<(ostream& os,const Material& mat)
-{
-    return os << "mu_a=" << mat.mu_a << " mu_s=" << mat.mu_s << " g=" << mat.g << " n=" << mat.n;
-}
 
 bool sameOrientation(FaceByPointID f0,FaceByPointID f1)
 {

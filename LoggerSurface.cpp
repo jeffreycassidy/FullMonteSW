@@ -1,6 +1,11 @@
 #include "LoggerSurface.hpp"
 
+typedef double FluenceCountType;
+
 void writeFileBin(string,const vector<Point<3,double> >&,const map<FaceByPointID,double>&);
+
+ostream& operator<<(ostream& os,const LoggerMulti<>&){ return os; }
+
 
 /*void LoggerSurface::collect()
 {
@@ -11,6 +16,7 @@ void writeFileBin(string,const vector<Point<3,double> >&,const map<FaceByPointID
         assert(Fp != mesh.F_p.end());
 
         if (it->first != 0)
+
         {
             const Point<3,double> &A = mesh.P[(*Fp)[0]], &B = mesh.P[(*Fp)[1]], &C = mesh.P[(*Fp)[2]];
             Vector<3,double> AB(A,B), AC(A,C);
@@ -20,6 +26,7 @@ void writeFileBin(string,const vector<Point<3,double> >&,const map<FaceByPointID
         }
     }
 }*/
+
 /*
 void LoggerSurface::writeFileASCII(string fn,bool printIDs)
 {
@@ -66,7 +73,11 @@ void LoggerSurface::writeFileASCII(string fn,bool printIDs)
     os.close();
 }*/
 
-void LoggerSurface::fluenceMap(SurfaceFluenceMap& F)
+
+// this is a temp - should be templated on FluenceCountType
+double getValue(double x){ return x; }
+
+template<>void SurfaceArray<double>::fluenceMap(SurfaceFluenceMap& F,bool asFluence)
 {
     F.clear();
 
@@ -74,32 +85,34 @@ void LoggerSurface::fluenceMap(SurfaceFluenceMap& F)
     for(TetraMesh::boundary_f_const_iterator it=mesh.boundaryFaceBegin(); it != mesh.boundaryFaceEnd(); ++it)
     {
         unsigned IDf = it->first;
-        if (getValue(counts[IDf]) != 0)
-            F[IDf] = getValue(counts[IDf])/mesh.getFaceArea(IDf);
+        if (getValue(s[IDf]) != 0)
+            F[IDf] = getValue(s[IDf])/mesh.getFaceArea(IDf);
     }
 }
 
-void LoggerSurface::hitMap(map<unsigned,unsigned long long>& m)
+unsigned getHits(double x){ return 0; }
+
+template<>void SurfaceArray<double>::hitMap(map<unsigned,unsigned long long>& m)
 {
     m.clear();
     map<unsigned,unsigned long long>::iterator m_it=m.begin();
     unsigned i=1;
-    if(counts.size()<2)
+    if(s.size()<2)
         return;
-    for(vector<FluenceCountType>::const_iterator it=counts.begin()+1; it != counts.end(); ++it,++i)
+    for(vector<FluenceCountType>::const_iterator it=s.begin()+1; it != s.end(); ++it,++i)
         if (getHits(*it) != 0)
             m_it = m.insert(m_it,make_pair(i,getHits(*it)));
 }
 
-void LoggerSurface::resultMap(map<FaceByPointID,double>& m,bool per_area)
+template<>void SurfaceArray<double>::resultMap(map<FaceByPointID,double>& m,bool per_area)
 {
     m.clear();
 
     // copy from vector to map
     for(TetraMesh::boundary_f_const_iterator it=mesh.boundaryFaceBegin(); it != mesh.boundaryFaceEnd(); ++it)
     {
-        if (getValue(counts[it->first]) != 0)
-            m.insert(make_pair(mesh.getFacePointIDs(it->first),getValue(counts[it->first])));
+        if (getValue(s[it->first]) != 0)
+            m.insert(make_pair(mesh.getFacePointIDs(it->first),getValue(s[it->first])));
     }
 
     for(map<FaceByPointID,double>::iterator it=m.begin(); per_area && it != m.end(); ++it)
@@ -135,3 +148,16 @@ void LoggerSurface::resultMap(map<FaceByPointID,double>& m,bool per_area)
 
     ::writeFileVTK(fn,mesh.P,m);
 }*/
+
+
+template<>ostream& operator<<(ostream& os,const LoggerSurface<QueuedAccumulatorMT<double>>& ls)
+{
+	double sumE=0;
+	unsigned i=0;
+	for(auto it=ls.acc.begin(); it != ls.acc.end(); ++it)
+	{
+		sumE += *it;
+		++i;
+	}
+	return os << "Hello from the surface logger; total energy emitted is " << setprecision(4) << sumE << " (" << i << " elements)" << endl;
+}

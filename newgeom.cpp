@@ -152,92 +152,7 @@ UnitVector<3,double> uvectFrom(__m128 v)
     return UnitVector<3,double>(d);
 }
 
-// r0,r1 are the random numbers
-/*Packet matspin(Packet pkt,double costheta,double sintheta,double cosphi,double sinphi)
-{
-    Packet res=pkt;
-    // colums of matrix M (appearance in cout output below is transposed)
-    __m128 M0,M1,M2;
-    const __m128 d0=pkt.d, a0=pkt.a, b0=pkt.b;
-
-    // rows of matrix M
-    M0 = _mm_setr_ps(costheta,sintheta,0,0);
-    M1 = _mm_setr_ps(-sintheta*cosphi,costheta*cosphi,sinphi,0);
-    M2 = _mm_setr_ps(sinphi*sintheta,-sinphi*costheta,cosphi,0);
-
-    res.d = _mm_mul_ps(d0,_mm_shuffle_ps(M0,M0,_MM_SHUFFLE(0,0,0,0)));
-    res.d = _mm_add_ps(res.d,_mm_mul_ps(a0,_mm_shuffle_ps(M1,M1,_MM_SHUFFLE(0,0,0,0))));
-    res.d = _mm_add_ps(res.d,_mm_mul_ps(b0,_mm_shuffle_ps(M2,M2,_MM_SHUFFLE(0,0,0,0))));
-
-    res.a = _mm_mul_ps(d0,_mm_shuffle_ps(M0,M0,_MM_SHUFFLE(1,1,1,1)));
-    res.a = _mm_add_ps(res.a,_mm_mul_ps(a0,_mm_shuffle_ps(M1,M1,_MM_SHUFFLE(1,1,1,1))));
-    res.a = _mm_add_ps(res.a,_mm_mul_ps(b0,_mm_shuffle_ps(M2,M2,_MM_SHUFFLE(1,1,1,1))));
-
-    res.b = _mm_mul_ps(d0,_mm_shuffle_ps(M0,M0,_MM_SHUFFLE(2,2,2,2)));
-    res.b = _mm_add_ps(res.b,_mm_mul_ps(a0,_mm_shuffle_ps(M1,M1,_MM_SHUFFLE(2,2,2,2))));
-    res.b = _mm_add_ps(res.b,_mm_mul_ps(b0,_mm_shuffle_ps(M2,M2,_MM_SHUFFLE(2,2,2,2))));
-
-    return res;
-}*/
-
-// r0,r1 are the random numbers
-/*inline Packet matspin(Packet pkt,float costheta,__m128 cosphi_sinphi)
-{
-    Packet res=pkt;
-    // colums of matrix M (appearance in cout output below is transposed)
-    __m128 M0,M1,M2;
-    const __m128 d0=pkt.d, a0=pkt.a, b0=pkt.b;
-
-    // rows of matrix M
-//    M0 = _mm_setr_ps(costheta,sintheta,0,0);
-//    M1 = _mm_setr_ps(-sintheta*cosphi,costheta*cosphi,sinphi,0);
-//    M2 = _mm_setr_ps(sinphi*sintheta,-sinphi*costheta,cosphi,0);
-
-	__m128 costheta_000 = _mm_set_ss(costheta);
-
-	// calculation from inputs
-	__m128 cost_sint = _mm_sqrt_ss(
-		_mm_sub_ps(
-			_mm_unpacklo_ps(_mm_set_ss(1.0),costheta_000),
-			_mm_mul_ss(costheta_000,costheta_000)));
-
-	__m128 trig = _mm_shuffle_ps(cost_sint,cosphi_sinphi,_MM_SHUFFLE(1,0,0,1));
-
-    // rows of matrix M
-	// "golden" copy
-//    M0 = _mm_setr_ps(costheta,sintheta,0,0);
-//    M1 = _mm_setr_ps(-sintheta*cosphi,costheta*cosphi,sinphi,0);	// 0 sinphi (costheta * cosphi)  (-sintheta * cosphi)
-//    M2 = _mm_setr_ps(sinphi*sintheta,-sinphi*costheta,cosphi,0);	// 0 cosphi (-sinphi * costheta) (sinphi * sintheta)
-
-	__m128 zero = _mm_setzero_ps();
-
-	__m128 strig = _mm_addsub_ps(zero,trig);	// (-sin phi) (cos phi) (-sin theta) (cos theta)
-
-	__m128 prods = _mm_mul_ps(strig,_mm_shuffle_ps(strig,strig,_MM_SHUFFLE(1,0,2,3)));
-		// prods = (sintheta*sinphi) (costheta*cosphi) (-sintheta*cosphi) (-costheta*sinphi)
-
-	__m128 cp_0_sp_0 = _mm_unpackhi_ps(trig,zero);	// (cos phi) 0 (sin phi) 0
-
-	M0 = _mm_movelh_ps(trig,zero);
-	M1 = _mm_shuffle_ps(prods,cp_0_sp_0,_MM_SHUFFLE(3,2,2,1));
-	M2 = _mm_shuffle_ps(prods,cp_0_sp_0,_MM_SHUFFLE(3,0,0,3));
-
-    res.d = _mm_mul_ps(d0,_mm_shuffle_ps(M0,M0,_MM_SHUFFLE(0,0,0,0)));
-    res.d = _mm_add_ps(res.d,_mm_mul_ps(a0,_mm_shuffle_ps(M1,M1,_MM_SHUFFLE(0,0,0,0))));
-    res.d = _mm_add_ps(res.d,_mm_mul_ps(b0,_mm_shuffle_ps(M2,M2,_MM_SHUFFLE(0,0,0,0))));
-
-    res.a = _mm_mul_ps(d0,_mm_shuffle_ps(M0,M0,_MM_SHUFFLE(1,1,1,1)));
-    res.a = _mm_add_ps(res.a,_mm_mul_ps(a0,_mm_shuffle_ps(M1,M1,_MM_SHUFFLE(1,1,1,1))));
-    res.a = _mm_add_ps(res.a,_mm_mul_ps(b0,_mm_shuffle_ps(M2,M2,_MM_SHUFFLE(1,1,1,1))));
-
-    res.b = _mm_mul_ps(d0,_mm_shuffle_ps(M0,M0,_MM_SHUFFLE(2,2,2,2)));
-    res.b = _mm_add_ps(res.b,_mm_mul_ps(a0,_mm_shuffle_ps(M1,M1,_MM_SHUFFLE(2,2,2,2))));
-    res.b = _mm_add_ps(res.b,_mm_mul_ps(b0,_mm_shuffle_ps(M2,M2,_MM_SHUFFLE(2,2,2,2))));
-
-    return res;
-}*/
-
-template<>Ray<3,double>::operator Packet() const
+/*template<>Ray<3,double>::operator Packet() const
 {
     Packet p;
 
@@ -254,4 +169,16 @@ template<>Ray<3,double>::operator Packet() const
     f[2] = d[2];
     p.setDirection(_mm_load_ps(f));
     return p;
-}
+}*/
+
+// Compute dot product
+// D=number of dimensions (1..4); O = output mask
+/*template<unsigned D,unsigned O=0xf>__m128 dot(__m128 a,__m128 b)
+{
+	return _mm_dp_ps(a,b, (((1<<D)-1) << 4)| O);
+}*/
+
+
+//inline float fabs(__m128 x){ return fabs(_mm_cvtss_f32(x)); }
+
+

@@ -1,8 +1,10 @@
 cmake_minimum_required(VERSION 2.6)
 
-LINK_DIRECTORIES( /usr/lib . )
+LINK_DIRECTORIES( /usr/lib . /usr/lib/vtk-5.8)
 
-SET(CMAKE_CXX_FLAGS "-O3 -g -Wall -std=c++0x -msse4 -I/usr/local/include/pgsql -lfmpg -lmontecarlo -I../fm-postgres -I/usr/local/include/boost -I.. -L/usr/local/lib/boost")
+SET(CMAKE_CXX_FLAGS "-O3 -g -Wall -std=c++0x -msse4 -mavx -I/usr/local/include/pgsql -lfmpg -lmontecarlo -I../fm-postgres -I/usr/local/include/boost -I.. -L/usr/local/lib/boost")
+
+INCLUDE_DIRECTORIES("/usr/local/include/pgsql")
 
 PROJECT(SurfaceRender)
 

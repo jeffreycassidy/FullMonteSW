@@ -2,6 +2,7 @@
 #define SOURCE_INCLUDED
 #include "graph.hpp"
 #include "newgeom.hpp"
+#include "Packet.hpp"
 
 #include <boost/iterator/transform_iterator.hpp>
 #include <boost/random/discrete_distribution.hpp>

@@ -1,8 +1,9 @@
-   // simulator ID for database
+// simulator ID for database
 #ifndef DB_DEF_SIMULATOR
 #define DB_DEF_SIMULATOR 2
 #endif
 
+#include "AccumulationArray.hpp"
 #include <iostream>
 #include <vector>
 #include <utility>
@@ -25,6 +26,11 @@
 #include <boost/program_options/errors.hpp>
 #include <boost/timer/timer.hpp>
 
+#include <boost/fusion/sequence.hpp>
+#include <boost/fusion/include/sequence.hpp>
+#include <boost/fusion/algorithm/iteration/for_each.hpp>
+#include <boost/fusion/include/for_each.hpp>
+
 #include "LoggerMemTrace.cpp"
 
 #include "mainloop.cpp"
@@ -32,12 +38,6 @@
 #include "fm-postgres/fmdbexportcase.hpp"
 #include "fmdb.hpp"
 #include <map>
-
-#define LOG_EVENT
-#define LOG_VOLUME
-#define LOG_SURFACE
-//#define LOG_MEMTRACE
-#define LOG_CONSERVATION
 
 void writeHitMap(string fn,const map<unsigned,unsigned long long>& m);
 
@@ -51,6 +51,7 @@ namespace globalopts {
     long Nk=0;                 // number of packets as long int
     unsigned Nthread=1;
     unsigned randseed=1;
+    unsigned timerinterval=1;
     string logFN("log.out");   // log filename
     string outpath(".");       // output path, defaults to working dir
     bool dbwrite=true;
@@ -62,9 +63,9 @@ using namespace std;
 
 void banner()
 {
-    cout << "FullMonte v0.0" << endl;
-    cout << "$Id: montecarlo.cpp 314 2013-11-01 01:13:27Z jcassidy $ (tree " << SVNVERSION << ')' << endl;
-    cout << "(c) Jeffrey Cassidy, 2012" << endl;
+    cout << "FullMonte v0.9" << endl;
+    //cout << "$Id: montecarlo.cpp 314 2013-11-01 01:13:27Z jcassidy $ (tree " << SVNVERSION << ')' << endl;
+    cout << "(c) Jeffrey Cassidy, 2014" << endl;
     cout << endl;
 }
 
@@ -98,6 +99,7 @@ int main(int argc,char **argv)
         ("materials,m",po::value<string>(&fn_materials),"Materials file (TIM-OS .opt type)")
         ("rngseed,r",po::value<unsigned>(&globalopts::randseed),"RNG seed (int)")
         ("threads,t",po::value<unsigned>(&globalopts::Nthread),"Thread count")
+        ("Timer,T",po::value<unsigned>(&globalopts::timerinterval),"Timer interval (seconds; 0=no timer)")
 //        ("outpath,p",po::value<string>(&globalopts::outpath),"Output file path")
         ("nodbwrite","Disable database writes")
         ("flightname,f",po::value<string>(&flightname),"Flight name")
@@ -127,7 +129,7 @@ int main(int argc,char **argv)
 
     boost::shared_ptr<PGConnection> dbconn;
 
-//    if (!vm.count("nodbwrite")){
+    //if (!vm.count("nodbwrite")){
         cout << "DB host: " << globalopts::db::host << endl;
         cout << "DB port: " << globalopts::db::port << endl;
         cout << "DB name: " << globalopts::db::name << endl;
@@ -140,7 +142,7 @@ int main(int argc,char **argv)
         {
             cerr << "Failed to connect with error: " << e.msg << endl;
         }
-//    }
+    //}
 
     // apply options
     if (vm.count("help"))
@@ -160,6 +162,8 @@ int main(int argc,char **argv)
             cerr << "Database exception: " << e.msg << endl;
         }
     }
+
+
 
     globalopts::Nk=globalopts::Npkt;
 
@@ -286,7 +290,6 @@ void runSuite(PGConnection* dbconn,unsigned IDflight,unsigned IDsuite)
 void runCaseByID(PGConnection* dbconn,unsigned IDflight,unsigned IDcase,unsigned long long Nk)
 {
     unsigned IDsourcegroup,IDmaterials;
-    unsigned Nthread=globalopts::Nthread;
     vector<Source*> sources;
     vector<Material> materials;
     TetraMesh m;
@@ -308,6 +311,85 @@ void runCaseByID(PGConnection* dbconn,unsigned IDflight,unsigned IDcase,unsigned
     src->prepare(m);
 
     runSimulation(dbconn,m,materials,src,IDflight,0,0,Nk);
+}
+
+// Run config
+//	Processors, host, nthreads, packets
+//
+// Case
+//	Mesh, sources, materials (possibly w modifiers?)
+//
+// Run results
+//	Min: compute time, return code
+
+
+    /*res.Nintersection=le.Nbound;
+    res.Nabsorb=le.Nabsorb;
+    res.Nscatter=le.Nscatter;
+    res.Ntir=le.Ntir;
+    res.Nfresnel=le.Nfresnel;
+    res.Nexit=le.Nexit;
+    res.Nwin=le.Nwin;
+    res.Nrefr=le.Nrefr;
+    res.Ndie=le.Ndie;*/
+
+    // get the hit-count maps
+/*    ls.hitMap(surfHit);
+if(surfHit.size() > 0)
+{
+	writeHitMap("exit.count.txt",surfHit);
+
+	Blob b = surfHit.toBinary();
+	Oid oid = dbconn->createLargeObject(b);
+	dbconn->execParams("INSERT INTO resultdata(runid,datatype,data_oid,total,bytesize) VALUES ($1,$2,$3,$4,$5)",
+		boost::tuples::make_tuple(runid,3,oid,0,b.getSize()));
+}*/
+
+/*#ifdef LOG_EVENT
+cout << "Total launched: " << le.Nlaunch << endl;
+#endif
+
+#ifdef LOG_SURFACE
+SurfaceFluenceMap surf(&mesh);
+sa.fluenceMap(surf);
+HitMap surfHit;
+cout << "Total exited:   " << surf.getTotalEnergy() << endl;
+if(globalopts::dbwrite)
+    db_writeResult(dbconn,runid,surf);
+#endif
+
+#ifdef LOG_VOLUME
+VolumeFluenceMap vol(&mesh);
+va.fluenceMap(vol,materials);
+HitMap volHit;
+
+// log the volume hits
+va.hitMap(volHit);
+if(volHit.size() > 0)
+{
+    writeHitMap("abs.count.txt",volHit);
+
+    Blob b = volHit.toBinary();
+	Oid oid = dbconn->createLargeObject(b);
+    if (globalopts::dbwrite)
+	    dbconn->execParams("INSERT INTO resultdata(runid,datatype,data_oid,total,bytesize) VALUES ($1,$2,$3,$4,$5)",
+    	    boost::tuples::make_tuple(runid,4,oid,0,b.getSize()));
+}
+cout << "Total absorbed: " << vol.getTotalEnergy() << endl;
+
+if (globalopts::dbwrite)
+    db_writeResult(dbconn,runid,vol);
+#endif
+*/
+
+template<typename Logger>Logger make_multilogger(Logger&& h)
+{
+	return h;
+}
+
+template<typename LoggerH,typename... LoggerTs>LoggerMulti<LoggerH,LoggerTs...> make_multilogger(LoggerH&& h,LoggerTs&&... ts)
+{
+	return LoggerMulti<LoggerH,LoggerTs...>(std::move(h),std::forward<LoggerTs>(ts)...);
 }
 
 RunResults runSimulation(PGConnection* dbconn,const TetraMesh& mesh,const vector<Material>& materials,Source* source,
@@ -333,48 +415,12 @@ RunResults runSimulation(PGConnection* dbconn,const TetraMesh& mesh,const vector
 
     cout << "==== Run ID " << runid << " starting" << endl;
 
-    // Create logger types
-    LoggerNull ln;
-
-#ifdef LOG_SURFACE
-    LoggerSurfaceMT ls(mesh);
-#endif
-#ifdef LOG_VOLUME
-    LoggerVolumeMT  lv(mesh);
-#endif
-#ifdef LOG_EVENT
-    LoggerEventMT   le;
-#endif
-#ifdef LOG_MEMTRACE
-    LoggerMemTraceMT lmt;
-#endif
-#ifdef LOG_CONSERVATION
-    LoggerConservationMT lc;
-#endif
-
-/*
-    LoggerParentCons<LoggerSurfaceMT,LoggerParentCons<LoggerVolumeMT,LoggerParentCons<LoggerEventMT,LoggerMemTraceMT>>> logger( 
-        ls,
-         LoggerParentCons<LoggerVolumeMT,LoggerParentCons<LoggerEventMT,LoggerMemTraceMT>(lv,
-          LoggerParentCons<LoggerEventMT,LoggerMemTraceMT>(le,lmt)
-         )
-        );*/
-
-    LoggerParentCons<LoggerSurfaceMT,LoggerVolumeMT> l1(ls,lv);
-#ifdef LOG_MEMTRACE
-    cout << "** MEMORY TRACING ENABLED" << endl;
-    LoggerParentCons<LoggerEventMT,LoggerMemTraceMT> l2(le,lmt);
-
-    auto logger2=LoggerParentCons<LoggerParentCons<LoggerSurfaceMT,LoggerVolumeMT>,LoggerParentCons<LoggerEventMT,LoggerMemTraceMT> >(l1,l2);
-    auto logger=LoggerParentCons<LoggerConservationMT,LoggerParentCons<LoggerParentCons<LoggerSurfaceMT,LoggerVolumeMT>,LoggerParentCons<LoggerEventMT,LoggerMemTraceMT>>>(lc,logger2);
-#else
-//    auto logger2=LoggerParentCons<LoggerParentCons<LoggerSurfaceMT,LoggerVolumeMT>,LoggerEventMT>(l1,le);
-//    auto logger=LoggerParentCons<LoggerConservationMT,LoggerParentCons<LoggerParentCons<LoggerSurfaceMT,LoggerVolumeMT>,LoggerEventMT>>(lc,logger2);
-	auto logger=LoggerParentCons<LoggerSurfaceMT,LoggerVolumeMT>(ls,lv);
-#endif
+    auto logger = make_multilogger(LoggerEventMT(),LoggerSurface<QueuedAccumulatorMT<double>>(mesh,1<<20),LoggerVolume<QueuedAccumulatorMT<double>>(mesh,1<<20),LoggerConservationMT());
 
     // Run it
     boost::timer::cpu_times t = MonteCarloLoop<RNG_SFMT>(Nk,logger,mesh,materials,*source);
+
+    cout << logger << endl;
 
     cout << "==== Run ID " << runid << " completed" << endl;
 
@@ -388,77 +434,11 @@ RunResults runSimulation(PGConnection* dbconn,const TetraMesh& mesh,const vector
     res.t_user=t.user/1e9;
     res.t_system=t.system/1e9;
 
-    // handle event logger
-#ifdef LOG_CONSERVATION
-    cout << "Conservation check: " << endl;
-    cout << lc << endl << endl;
-#endif
-
-#ifdef LOG_EVENT
-        cout << le << endl;
-        res.Nintersection=le.Nbound;
-	    res.Nabsorb=le.Nabsorb;
-	    res.Nscatter=le.Nscatter;
-        res.Ntir=le.Ntir;
-        res.Nfresnel=le.Nfresnel;
-        res.Nexit=le.Nexit;
-        res.Nwin=le.Nwin;
-        res.Nrefr=le.Nrefr;
-        res.Ndie=le.Ndie;
-#endif
-
-
-        // get the hit-count maps
-/*    ls.hitMap(surfHit);
-	if(surfHit.size() > 0)
-	{
-    	writeHitMap("exit.count.txt",surfHit);
-
-		Blob b = surfHit.toBinary();
-		Oid oid = dbconn->createLargeObject(b);
-		dbconn->execParams("INSERT INTO resultdata(runid,datatype,data_oid,total,bytesize) VALUES ($1,$2,$3,$4,$5)",
-    		boost::tuples::make_tuple(runid,3,oid,0,b.getSize()));
-	}*/
-
-#ifdef LOG_EVENT
-    cout << "Total launched: " << le.Nlaunch << endl;
-#endif
-
-#ifdef LOG_SURFACE
-    SurfaceFluenceMap surf(&mesh);
-	ls.fluenceMap(surf);
-    HitMap surfHit;
-    cout << "Total exited:   " << surf.getTotalEnergy() << endl;
-    if(globalopts::dbwrite)
-        db_writeResult(dbconn,runid,surf);
-#endif
-
-#ifdef LOG_VOLUME
-    VolumeFluenceMap vol(&mesh);
-    lv.fluenceMap(vol,materials);
-    HitMap volHit;
-
-	// log the volume hits
-    lv.hitMap(volHit);
-	if(volHit.size() > 0)
-	{
-        writeHitMap("abs.count.txt",volHit);
-
-	    Blob b = volHit.toBinary();
-    	Oid oid = dbconn->createLargeObject(b);
-        if (globalopts::dbwrite)
-    	    dbconn->execParams("INSERT INTO resultdata(runid,datatype,data_oid,total,bytesize) VALUES ($1,$2,$3,$4,$5)",
-        	    boost::tuples::make_tuple(runid,4,oid,0,b.getSize()));
-	}
-    cout << "Total absorbed: " << vol.getTotalEnergy() << endl;
-
-    if (globalopts::dbwrite)
-        db_writeResult(dbconn,runid,vol);
-#endif
-
     // write results to database
     if(globalopts::dbwrite)
+    {
         db_finishRun(dbconn,runid,res);
+    }
 
     return res;
 }

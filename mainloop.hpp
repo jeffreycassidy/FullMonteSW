@@ -3,11 +3,20 @@
 #include <boost/random/discrete_distribution.hpp>
 #include <boost/timer/timer.hpp>
 
+#include "Material.hpp"
+
 #include <pthread.h>
 
 #include "runresults.hpp"
 
 #include "progress.hpp"
+
+// Manager should be able to:
+//  report progress
+//  start/stop/pause
+//  return interim results
+//  report time required
+//  estimate completion time
 
 namespace globalopts {
     extern double Npkt;         // number of packets
@@ -15,6 +24,7 @@ namespace globalopts {
     extern double wmin;         // Minimum weight for roulette
     extern long Nk;             // number of packets as long int
     extern unsigned Nthread;
+    extern unsigned timerinterval;
     extern unsigned randseed;
     extern string logFN;        // log filename
     extern string outpath;      // output path, defaults to working dir
@@ -34,7 +44,6 @@ template<class Logger,class RNG>class Manager;
 template<class LoggerType,class RNG>int doOnePacket(const RunConfig& cfg,Packet pkt,
     LoggerType& logger,unsigned IDt,RNG& rng);
 
-
 class RunConfig {
     public:
     const TetraMesh&        mesh;
@@ -45,7 +54,6 @@ class RunConfig {
     unsigned Nthread;
 
     double wmin,pr_win;
-
 
     // default copy constructor is fine
 
@@ -82,7 +90,6 @@ template<class Logger,class RNG>class Manager {
         {}
 
     virtual void run(Logger& logger)=0;
-//    boost::timer::cpu_times start(Logger& logger);
 
     virtual unsigned long long getProgressCount() const { return 0; }
 
@@ -97,7 +104,6 @@ template<class Logger,class RNG>class Manager_MT : public Manager<Logger,RNG> {
     static void* threadStartFcn(void*);
 
     typedef Worker<Logger,RNG> WorkerType;
-    typedef typename Logger::ThreadWorker LoggerType;
 
     pair<pthread_t,WorkerType*>* workers;
 
@@ -127,14 +133,14 @@ template<class Logger,class RNG>class Manager_MT : public Manager<Logger,RNG> {
 
 template<class Logger,class RNG>void Manager_MT<Logger,RNG>::run(Logger& logger)
 {
-    typedef typename Logger::ThreadWorker ThreadWorker;
-    ThreadWorker* l[cfg.Nthread];
+	typedef typename Logger::ThreadWorker LoggerThread;
+	LoggerThread* l[cfg.Nthread];
 
     cout << "Running with " << cfg.Nthread << " threads" << endl;
     // create the workers
     for(unsigned i=0;i<cfg.Nthread;++i)
     {
-        l[i] = new ThreadWorker(logger.getThreadWorkerInstance(i));
+        l[i] = new LoggerThread(logger.get_worker());
         workers[i].second = new WorkerType(Manager<Logger,RNG>::cfg,
             *(l[i]),
             Manager<Logger,RNG>::Npacket/cfg.Nthread,
@@ -148,6 +154,7 @@ template<class Logger,class RNG>void Manager_MT<Logger,RNG>::run(Logger& logger)
     {
         pthread_join(workers[i].first,NULL);
         cout << "Joined thread " << workers[i].first << endl;
+        //logger += *(l[i]);
         delete workers[i].second;
         delete l[i];
     }
@@ -163,17 +170,42 @@ template<class Logger,class RNG>class Worker {
     RNG rng;
     Manager_MT<Logger,RNG>* manager;
 
+    static const unsigned HG_BUFFERS=16;	///< Number of distinct g values to buffer
+    static const unsigned HG_BUFSIZE=8;		///< Number of spin vectors to buffer
+
+    float * const hg_buffers[HG_BUFFERS];
+    unsigned hg_next[HG_BUFFERS];
+
     public:
 
-    Worker(const RunConfig& cfg_,ThreadWorker& logger_,unsigned long long Npacket_,unsigned seed_,
-        Manager_MT<Logger,RNG>* manager_) :
+    Worker(const RunConfig& cfg_,ThreadWorker& logger_,unsigned long long Npacket_,unsigned seed_,Manager_MT<Logger,RNG>* manager_) :
         cfg(cfg_),
-        i(0),
         Npacket(Npacket_),
         logger(logger_),
         rng(1024,seed_),
         manager(manager_)
-        {}
+        {
+    		void *p;
+    		posix_memalign(&p,32,HG_BUFFERS*HG_BUFSIZE*4*sizeof(float));
+    		for(unsigned i=0; i<HG_BUFFERS; ++i)
+    		{
+    			((float**)hg_buffers)[i] = (float*)p + 4*HG_BUFSIZE*i;
+    			hg_next[i] = HG_BUFSIZE;
+    		}
+        }
+
+    ~Worker(){ free(hg_buffers[0]); }
+
+    int doOnePacket(Packet pkt,unsigned IDt);
+
+    inline __m128 getNextHG(unsigned matID){
+    	if (hg_next[matID] == HG_BUFSIZE){
+    		cfg.mat[matID].VectorHG(rng.draw_m256f8_pm1(),rng.draw_m256f8_uvect2(),rng.draw_m256f8_uvect2(),hg_buffers[matID]);
+    		hg_next[matID]=0;
+    	}
+
+    	return _mm_load_ps(hg_buffers[matID] + ((hg_next[matID]++)<<2));
+    }
 
     unsigned long long getProgressCount() const { return i; }
 
@@ -195,9 +227,10 @@ template<class Logger,class RNG>boost::timer::cpu_times Manager_MT<Logger,RNG>::
 {
     boost::timer::cpu_timer runTimer;
 
-    NewTimer<MgrProgressUpdate<Logger,RNG> > t(1.0,MgrProgressUpdate<Logger,RNG>(this),false);
+    NewTimer<MgrProgressUpdate<Logger,RNG> > t(double(globalopts::timerinterval),MgrProgressUpdate<Logger,RNG>(this),false);
 
-    t.start();
+    if (globalopts::timerinterval > 0)
+    	t.start();
 
     runTimer.start();
     run(logger);
@@ -207,12 +240,6 @@ template<class Logger,class RNG>boost::timer::cpu_times Manager_MT<Logger,RNG>::
     cout << runTimer.format() << endl;
     return runTimer.elapsed();
 }
-/*
-template<class Logger,class RNG>void Manager<Logger,RNG>::run(Logger& logger)
-{
-    Worker<Logger,RNG> w(cfg,logger,Npacket,cfg.seed,this);
-    w.start();
-}*/
 
 template<class Logger,class RNG>void Worker<Logger,RNG>::start()
 {
@@ -223,7 +250,7 @@ template<class Logger,class RNG>void Worker<Logger,RNG>::start()
     for(i=0;i<Npacket;++i)
     {
         tmp = cfg.source.emit(rng);
-        doOnePacket(cfg,pkt,logger,IDt,rng);
+        doOnePacket(pkt,IDt);
     }
 }
 

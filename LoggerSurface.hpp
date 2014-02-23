@@ -1,6 +1,9 @@
 #include "logger.hpp"
+#include "AccumulationArray.hpp"
 
-class LoggerSurface {
+// fluence needs mesh, materials, region ID, absorbed energy
+
+/*class LoggerSurface {
     const TetraMesh& mesh;
 
     protected:
@@ -14,43 +17,68 @@ class LoggerSurface {
     void fluenceMap(SurfaceFluenceMap&);
 
     void hitMap(map<unsigned,unsigned long long>& m);
+};*/
+
+template<class T>class SurfaceArray {
+	vector<T> s;
+	const TetraMesh& mesh;
+
+public:
+    SurfaceArray(SurfaceArray&& ls_)        : mesh(ls_.mesh),s(std::move(ls_.s)){};
+    SurfaceArray(const TetraMesh& mesh_)    : mesh(mesh_),s(mesh_.getNt()+1){};
+
+        /// Returns a VolumeFluenceMap for the absorption accumulated so far*/
+        /** The value of asFluence determines whether it returns total energy (false) or fluence as E/V/mu_a (true) */
+    void fluenceMap(SurfaceFluenceMap&,bool asFluence=true);
+
+        /// Returns (if available from AccumulatorT) a hit map
+    void hitMap(map<unsigned,unsigned long long>& m);
+
+    void resultMap(map<FaceByPointID,double>& m,bool per_area=true);
+
+        /// Provides a way of summarizing to an ostream
+    //friend ostream& operator<<(ostream&,VolumeArray&);
 };
 
+template<class T>class LoggerSurface;
 
-// LoggerSurfaceST (single-thread version) overrides only the eventExit method to record packets exiting the volume
-class LoggerSurfaceST : public LoggerSurface,public LoggerNull {
-    public:
-    LoggerSurfaceST(const TetraMesh& mesh_) : LoggerSurface(mesh_){}
+template<class T>ostream& operator<<(ostream& os,const LoggerSurface<T>&ls);
+template<>ostream& operator<<(ostream& os,const LoggerSurface<QueuedAccumulatorMT<double>>& ls);
 
-    inline void eventExit(const Ray3,int IDf,double w){
-        IDf=abs(IDf);
-		counts[IDf] += w;
-    }
+template<class Accumulator>class LoggerSurface : public LoggerNull {
+	Accumulator acc;
+public:
+
+	/// Copy constructor
+	//LoggerSurface(LoggerSurface& acc_) : acc(acc_){}
+	template<typename... Args>LoggerSurface(const TetraMesh& mesh_,Args... args) : acc(mesh_.getNf()+1,args...){}
+	LoggerSurface(LoggerSurface&& ls_) : acc(std::move(ls_.acc)){}
+	//LoggerSurface(const LoggerSurface& ls_) : acc(ls_.acc){}
+	LoggerSurface(const LoggerSurface& ls_) = delete;
+
+	/// Record the exit event
+	class WorkerThread : public LoggerNull {
+		typename Accumulator::WorkerThread acc;
+	public:
+		WorkerThread(Accumulator& parent_) : acc(parent_.get_worker()){}
+		//WorkerThread(const WorkerThread& wt_) : acc(wt_.acc){}
+		WorkerThread(const WorkerThread& wt_) = delete;
+		WorkerThread(WorkerThread&& wt_) : acc(std::move(wt_.acc)){}
+		~WorkerThread() { acc.commit(); }
+		inline void eventExit(const Ray3,int IDf,double w){ acc[abs(IDf)] += w; }
+	};
+
+	typedef WorkerThread ThreadWorker;
+
+	LoggerSurface& operator+=(const WorkerThread&){ return *this; }
+
+	WorkerThread get_worker() { return WorkerThread(acc); }
+
+	friend ostream& operator<<<>(ostream& os,const LoggerSurface&);
 };
+/*
+template<class T>ostream& operator<<(ostream& os,const LoggerSurface<T>& ls)
+{
+	return os << "Hello from surface logger!" << endl;
+}*/
 
-// LoggerSurfaceMT (multi-thread) keeps just one record with a mutex to protect it
-//  This isn't the best solution since locking/unlocking is potentially expensive
-//  However we exit at most once per packet launched vs. ~100-400 absorption events per pkt
-
-class LoggerSurfaceMT : public LoggerSurfaceST,private boost::mutex {
-    public:
-    LoggerSurfaceMT(const TetraMesh& mesh_) : LoggerSurfaceST(mesh_){}
-
-    class ThreadWorker : public LoggerNull {
-        LoggerSurfaceMT& parent;
-
-        public:
-        ThreadWorker(LoggerSurfaceMT& parent_) : parent(parent_){}
-        ThreadWorker(const ThreadWorker& tw_) : parent(tw_.parent){}
-
-        inline void commit(){}
-        inline void eventExit(const Ray3 r,int IDf,double w){
-            parent.lock();
-            parent.eventExit(r,IDf,w);
-            parent.unlock();
-        }
-    };
-
-    // Since we protect each access with a mutex, thread worker is just a reference to the LoggerSurfaceMT object
-    ThreadWorker getThreadWorkerInstance(unsigned){ return ThreadWorker(*this); }
-};
