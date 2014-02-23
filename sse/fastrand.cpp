@@ -23,7 +23,7 @@ int main(int argc,char **argv)
     float f[4] __attribute__((aligned(16))) = { 0,0,0,0 } ;
     const unsigned N=10000000;
     const uint32_t *p;
-    RNG_SFMT rng(1024);
+    RNG_SFMT rng(4096);
     __m128 t=_mm_setzero_ps();
 
     __m128 *rand_op = new __m128[N];

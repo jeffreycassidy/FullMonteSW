@@ -64,14 +64,13 @@ class Face {
 	friend ostream& operator<<(ostream&,const Face&);
 };
 
-typedef union SSEReg128_t
+typedef union
 {
 	__m128 vf;
 	float f[4];
 } SSEReg128;
 
-
-    typedef struct { 
+typedef struct { 
         __m128 Pe;          // 4x16B = 64 B
         __m128 distance;
         int IDfe;           // 4B
@@ -88,9 +87,11 @@ struct Tetra {
 
     bool pointWithin(__m128);
 
+    
     StepResult getIntersection(const Ray<3,double>& r,double s,unsigned IDfe=0) const;
     StepResult getIntersection(__m128,__m128,__m128 s) const;
-} __attribute__ ((aligned(64)));
+    
+} __attribute__ ((aligned(64))) ;
 
 class TetraMesh {
     vector<unsigned>            T_m;        // tetra -> material mapping
