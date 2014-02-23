@@ -9,9 +9,10 @@ float  RNG::draw_float_u01(){ return uni01f(rng);  }
 __m128 RNG::draw_m128f3_u01(){ float f[4] = { uni01f(rng),uni01f(rng),uni01f(rng),0 }; return _mm_load_ps(f); }
 __m128 RNG::draw_m128f4_u01(){ float f[4] = { uni01f(rng),uni01f(rng),uni01f(rng),uni01f(rng) }; return _mm_load_ps(f); }
 __m128 RNG::draw_m128f3_uvect(){ return normalize(_mm_sub_ps(draw_m128f3_u01(),_mm_set_ps(0,0.5,0.5,0.5))); }
+#warning "Class RNG still uses defective 3D unit vector generation"
 
 void RNG_SFMT::refill()
 {
     nextRand = randBuf;
-    sfmt_fill_array32(&sfmt,(uint32_t*)randBuf,Nbuf*4);
+    sfmt_fill_array32(&sfmt,(uint32_t*)randBuf,Nbuf);
 }

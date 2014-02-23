@@ -15,11 +15,13 @@
 
 #define SFMT_MEXP 19937
 #include "SFMT.h"
+
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_01.hpp>
 
 #define USE_SSE2
 #include "sse_mathfun.h"
+
 
 // RNG wraps Boost Random Number Generation
 // RNG_SFMT wraps SFMT by Saito and Matsumoto
@@ -65,7 +67,7 @@ class RNG {
 class RNG_SFMT {
     SSEReg * const randBuf,* const lastRand;
     SSEReg *nextRand;
-    unsigned Nbuf;
+    unsigned Nbuf;				///< Number of uint32s stored in buffer
     sfmt_t sfmt;
 
     float       __attribute__((aligned(16))) f_log[4];
@@ -86,8 +88,8 @@ class RNG_SFMT {
     static const uint32_t exp_double_h = 0x3ff00000;
     static const uint32_t exp_double_l = 0x00000000;
 
-    RNG_SFMT(unsigned int Nbuf_=1024,unsigned seed_=1) : randBuf(new SSEReg[Nbuf_]),
-        lastRand(randBuf+Nbuf_),
+    RNG_SFMT(unsigned int Nbuf_=4096,unsigned seed_=1) : randBuf(new SSEReg[Nbuf_/4]),
+        lastRand(randBuf+Nbuf_/4),
         nextRand(randBuf),
         Nbuf(Nbuf_),
         f_count(4),
@@ -95,6 +97,18 @@ class RNG_SFMT {
         i32_count(4),
         f_log_count(4)
         {
+
+    		if (Nbuf % 4 != 0)
+    		{
+    			std::cerr << "Error: RNG_SFMT instantiated with Nbuf not a multiple of 4" << std::endl;
+    			throw std::string("RNG_SFMT: Nbuf is not a multiple of 4");
+    		}
+    		else if (Nbuf < 156)
+    		{
+    			std::cerr << "Error: RNG_SFMT instantiated with Nbuf < 156" << std::endl;
+    			throw std::string("RNG_SFMT: Nbuf is less than 156");
+    		}
+
 		std::cout << "Initialized SFMT RNG with seed of " << seed_ << std::endl;
             sfmt_init_gen_rand(&sfmt,seed_);
             refill();
@@ -234,7 +248,7 @@ __m128 RNG_SFMT::draw_m128f1_log_u01()
     if (f_log_count == 4)
     {
         r = _mm_sub_ps(_mm_set1_ps(1.0),draw_m128f4_u01());     // 1 - [0,1) => (0,1] to avoid -Inf
-        l = log_ps(r);
+        l=log_ps(r);
         _mm_store_ps(f_log,l);
         f_log_count=0;
     }

@@ -155,6 +155,7 @@ template<class Logger,class RNG>void Manager_MT<Logger,RNG>::run(Logger& logger)
         pthread_join(workers[i].first,NULL);
         cout << "Joined thread " << workers[i].first << endl;
         //logger += *(l[i]);
+        //l[i]->commit();
         delete workers[i].second;
         delete l[i];
     }
@@ -182,7 +183,7 @@ template<class Logger,class RNG>class Worker {
         cfg(cfg_),
         Npacket(Npacket_),
         logger(logger_),
-        rng(1024,seed_),
+        rng(4096,seed_),
         manager(manager_)
         {
     		void *p;

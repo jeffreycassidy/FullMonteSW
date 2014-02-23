@@ -44,6 +44,8 @@ public:
     		setG(g_);
         }
 
+    Material& operator=(const Material& m) =default;
+
     bool isScattering() const { return isscattering; }
 
     float getParam_g() const { return hgparams.g; }
