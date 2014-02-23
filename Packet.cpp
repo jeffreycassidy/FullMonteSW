@@ -20,12 +20,12 @@ bool Packet::checkOrthonormalVerbose(float eps) const
 	float dot_aa=dot3(a,a);
 	float dot_bb=dot3(b,b);
 
-	if (fabs(dot3(a,b)) < eps &&
-			fabs(dot3(a,d)) < eps &&
-			fabs(dot3(d,b)) < eps &&
-			fabs(dot3(a,a)-1.0f) < eps &&
-			fabs(dot3(b,b)-1.0f) < eps &&
-			fabs(dot3(d,d)-1.0f) < eps)
+	if (fabs(dot_ab) < eps &&
+			fabs(dot_ad) < eps &&
+			fabs(dot_db) < eps &&
+			fabs(dot_aa-1.0f) < eps &&
+			fabs(dot_bb-1.0f) < eps &&
+			fabs(dot_dd-1.0f) < eps)
 		return true;
 
 	cerr << "Orthonormal test failed:" << endl;

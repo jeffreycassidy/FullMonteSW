@@ -16,7 +16,7 @@ public:
 
 private:
 
-    static const float const_c0;    ///< Speed of light in vacuum (mm/ns) (3e8 m/s = 3e11 mm/s = 3e2 mm/ns)
+    static constexpr float const_c0=299.792458;    ///< Speed of light in vacuum (mm/ns) (3e8 m/s = 3e11 mm/s = 3e2 mm/ns)
     float mu_s, mu_a, mu_p, mu_t, n, albedo, absfrac; // 11x4 = 40B
     HGParams hgparams;
 
@@ -26,7 +26,8 @@ public:
 
     /// Returns a copy of the Henyey-Greenstein parameters (g and related constants)
     const HGParams& getHGParams() const { return hgparams; }
-    //__m128 getHGParamsSSE() const { return _mm_set_ps(one_minus_gg,one_plus_gg,recip_2g,g); }
+
+    __m128 getHGParamsSSE() const { return _mm_set_ps(hgparams.one_minus_gg,hgparams.one_plus_gg,hgparams.recip_2g,hgparams.g); }
 
     __m128 s_prop;		///< Propagation constant
     __m128 s_init;		///< Initial propagation value
@@ -37,7 +38,6 @@ public:
         albedo((mu_s_+mu_p_)/(mu_a_+mu_s_+mu_p_)),
         absfrac(mu_a_/(mu_a_+mu_s_+mu_p_)),
         matchedboundary(matchedboundary_),
-        isscattering(!(g_ == 1.0 || mu_s_ == 0)),
         s_prop(_mm_set_ps(0,n_/const_c0,-mu_t,-1)),
         s_init(_mm_set_ps(0,0,-1,-1/mu_t))
         {
@@ -66,9 +66,8 @@ public:
     	hgparams.one_plus_gg = 1.0+g_*g_;
     	hgparams.one_minus_gg = 1.0-g_*g_;
     	hgparams.recip_2g = 1.0/2.0/g_;
+        isscattering = !(g_ == 1.0 || mu_s == 0);
     }
-
-    Material& operator=(const Material& m);
 
     inline void VectorHG(const float* i_rand,const float* i_uv,float* o) const {
     	VectorHG(_mm256_load_ps(i_rand),_mm256_load_ps(i_uv),_mm256_load_ps(i_uv+8),o);
@@ -253,7 +252,7 @@ public:
  *
  *
  * @param[in] i_rand	Input random numbers (uses 8) - must be U[-1,+1)
- * @param[in] i_uvs		Input unit vectors (8 pairs = 16 floats)
+ * @param[in] uva,uvb	Input unit vectors (8 pairs = 16 floats)
  * @param[out] o_uv		Output values (provides 32 floats: cos/sin x 8)
  */
 
@@ -273,8 +272,12 @@ inline void Material::VectorHG(__m256 i_rand,__m256 uva,__m256 uvb,float* o) con
 		// use approximate reciprocal (error ~1e-11 from Intel)
 		__m256 t = _mm256_mul_ps(v_one_minus_gg,_mm256_rcp_ps(_mm256_add_ps(ones,_mm256_mul_ps(v_g,vcos))));
 
+		// alternative version of above using exact math
+		//__m256 t = _mm256_div_ps(v_one_minus_gg,_mm256_add_ps(ones,_mm256_mul_ps(v_g,vcos)));
+
 		vcos = _mm256_mul_ps(v_recip_2g,_mm256_sub_ps(v_one_plus_gg,_mm256_mul_ps(t,t)));
 
+		// clip to [-1,1]
 		vcos = _mm256_max_ps(_mm256_min_ps(vcos,ones),_mm256_sub_ps(_mm256_setzero_ps(),ones));
 	}
 

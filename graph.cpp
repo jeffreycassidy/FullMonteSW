@@ -12,8 +12,6 @@
 
 using namespace std;
 
-const float Material::const_c0=299.792458;    // units of mm/ns (3e8 m/s = 3e11 mm/s = 3e2 mm/ns)
-
 // compares two FixedArrays lexicographically
     template<unsigned D>class FACompare {
         public:

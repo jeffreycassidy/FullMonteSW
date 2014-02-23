@@ -17,6 +17,8 @@ class Packet {
     Packet() : s(_mm_setzero_ps()),w(1.0){}
     Packet(const Ray<3,double>& r) : s(_mm_setzero_ps()),w(1.0){ setRay(r); }
 
+    Packet& operator=(const Packet& p_) = default;
+
     void setRay(const Ray<3,double>& r)
         { p = to_m128f(r.getOrigin()); setDirection(to_m128f(r.getDirection())); }
 
@@ -55,7 +57,7 @@ class Packet {
     				_mm_dp_ps(b,u,0x74)));
     }
 
-    Packet matspin(Packet pkt,__m128 uv2d);
+    Packet matspin(Packet pkt,__m128 uv2d) const;
 
     /** Check if packet directions are orthonormal within some tolerance.
      * For all pairs \f$(\vect u,\vect v)\;\vect u \ne \vect v\f$, checks that vectors are orthogonal to each other and have unit
@@ -71,7 +73,16 @@ class Packet {
     bool checkOrthonormalVerbose(float eps=1e-5) const;
 };
 
-inline Packet Packet::matspin(Packet pkt,__m128 uv2d)
+
+/** New matrix-spin routine.
+ *
+ * @param pkt	Incoming packet
+ * @param uv2d	Unit vector representing spin: [cos(theta), sin(theta), cos(phi), sin(phi)]
+ *
+ * @return New packet
+ */
+
+inline Packet Packet::matspin(Packet pkt,__m128 uv2d) const
 {
     Packet res=pkt;
 
@@ -90,17 +101,15 @@ inline Packet Packet::matspin(Packet pkt,__m128 uv2d)
 	__m128 zero = _mm_setzero_ps();
 	__m128 strig = _mm_addsub_ps(zero,uv2d);	// (-sin phi) (cos phi) (-sin theta) (cos theta)
 
-    //__m128 strig = uv2d;
-
 	__m128 prods = _mm_mul_ps(
         strig,                                              // -sinp cosp -sint cost
         _mm_shuffle_ps(strig,strig,_MM_SHUFFLE(1,0,2,3)));  // -sint cost cosp  -sinp
     // prods = (sintheta*sinphi) (costheta*cosphi) (-sintheta*cosphi) (-costheta*sinphi)
 
-	__m128 _0_sp_0_cp = _mm_unpackhi_ps(uv2d,_mm_setzero_ps());  // 0 sinp 0 cosp
+	__m128 _0_sp_0_cp = _mm_unpackhi_ps(uv2d,zero);  // 0 sinp 0 cosp
 
     // The following 3 defs are verified to match M0..M2 in comments above
-	M0 = _mm_movelh_ps(uv2d,_mm_setzero_ps());                                  // 0 0 sint cost
+	M0 = _mm_movelh_ps(uv2d,zero);                                  // 0 0 sint cost
 	M1 = _mm_shuffle_ps(prods,_0_sp_0_cp,_MM_SHUFFLE(3,2,2,1));     // 0 sinp cost*cosp -sint*cosp
 	M2 = _mm_shuffle_ps(prods,_0_sp_0_cp,_MM_SHUFFLE(3,0,0,3));     // 0 cosp -cost*sinp sint*sinp
 

@@ -82,7 +82,6 @@ typedef union SSEReg128_t
 
 struct Tetra {
     __m128 nx,ny,nz,C;      // 4 x 16B = 64B
-//    __m128 Fn[4];           // 4x16B = 64B         Don't keep these here; only need occasionally -> transpose as needed
     TetraByFaceID   IDfs;   // 4 x 4B = 16 B
     unsigned adjTetras[4];  // 4 x 4B = 16 B
     unsigned matID;         // 4 B

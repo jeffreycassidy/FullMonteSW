@@ -1,6 +1,6 @@
 #include "Material.hpp"
 
-Material& Material::operator=(const Material& m)
+/*Material& Material::operator=(const Material& m)
 {
 	mu_s = m.mu_s;
 	mu_a = m.mu_a;
@@ -15,7 +15,7 @@ Material& Material::operator=(const Material& m)
 	s_prop = m.s_prop;
 	s_init = m.s_init;
 	return *this;
-}
+}*/
 
 ostream& operator<<(ostream& os,const Material& mat)
 {
