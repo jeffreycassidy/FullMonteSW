@@ -22,3 +22,10 @@ latex
 .cproject
 .project
 .settings
+EmpiricalCDF
+*.avx.txt
+avx_compare
+avx_random
+avx_mathfun_test
+Test_VectorMatSpin
+Test_AccumulationArray

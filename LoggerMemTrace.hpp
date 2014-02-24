@@ -16,7 +16,6 @@ typedef struct {
 
 class LoggerMemTrace : public LoggerNull {
     string fnTetra,fnExit;
-
     ofstream os_tetra,os_exit;
 
     unsigned IDt_current,IDt_next;
@@ -53,19 +52,29 @@ class LoggerMemTrace : public LoggerNull {
 };
 
 class LoggerMemTraceMT {
+	unsigned Nth;
+	string fnroot;
     public:
 
+	LoggerMemTraceMT(string fnroot_) : Nth(0),fnroot(fnroot_){}
+	LoggerMemTraceMT(LoggerMemTraceMT&& lm_) : Nth(lm_.Nth),fnroot(std::move(lm_.fnroot)){}
+	LoggerMemTraceMT(const LoggerMemTraceMT&) = delete;
+
     // ThreadWorker is just a single-thread instance but with a different file name
-    class ThreadWorker : public LoggerMemTrace {
+    class WorkerThread : public LoggerMemTrace {
         public:
-        ThreadWorker(string a,string b) : LoggerMemTrace(a,b){}
+        WorkerThread(string a,string b) : LoggerMemTrace(a,b){}
     };
 
     // thread ## writes to files tetra.trace.##.bin and exit.trace.##.bin
-    ThreadWorker getThreadWorkerInstance(unsigned i){
+    WorkerThread get_worker(){
         stringstream ss_tetra,ss_exit;
-        ss_tetra << "tetra.trace." << i << ".bin";
-        ss_exit  << "exit.trace."  << i << ".bin";
-        return ThreadWorker(ss_tetra.str(),ss_exit.str());
+        ss_tetra << fnroot << ".tetratrace." << Nth << ".bin";
+        ss_exit  << fnroot << ".exittrace."  << Nth << ".bin";
+        ++Nth;
+        return WorkerThread(ss_tetra.str(),ss_exit.str());
     }
+
+    typedef string result_type;
+    result_type getResults() const { return ""; }
 };

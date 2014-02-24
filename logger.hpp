@@ -6,7 +6,6 @@
 #include "graph.hpp"
 #include "newgeom.hpp"
 #include "fluencemap.hpp"
-//#include <boost/thread.hpp>
 
 typedef __m128 Point3;
 typedef __m128 UVect3;
@@ -30,24 +29,23 @@ typedef pair<__m128,__m128> Ray3;
 
 template<typename... LoggerTs>class LoggerMulti;
 
-template<typename... Ts>ostream& operator<<(ostream& os,const LoggerMulti<Ts...>& lm)
+template<typename Ta,typename Tb>ostream& operator<<(ostream& os,const LoggerMulti<Ta,Tb>& lm)
 {
-	return os << lm.head << endl << lm.tail;
+	return os << lm.head.getResults() << endl << lm.tail.getResults() << endl;
 }
 
-/*template<typename Logger,typename... Loggers>ostream& operator<<(ostream& os,const LoggerMulti<Logger,Loggers...>& lm)
-	{ return os << lm.head << endl << lm.tail; }*/
+template<typename... Ts>ostream& operator<<(ostream& os,const LoggerMulti<Ts...>& lm)
+{
+	return os << lm.head.getResults() << endl << lm.tail;
+}
 
 class LoggerNull {
     public:
 	LoggerNull(){}							///< Default constructor does nothing
-	LoggerNull(LoggerNull&& lm_){}		///< Move constructor does nothing
-	LoggerNull(const LoggerNull& lm_){}	///< Copy constructor does nothing
+	LoggerNull(LoggerNull&& lm_){}			///< Move constructor does nothing
+	LoggerNull(const LoggerNull& lm_){}		///< Copy constructor does nothing
 	LoggerNull& operator=(const LoggerNull& lm_){ return *this; }
     virtual ~LoggerNull(){}
-
-	//typedef LoggerNull<> HeadWorker;
-	//typedef LoggerNull<> TailWorker;
 
     inline void eventLaunch(const Ray3 r,unsigned IDt,double w){};
 
@@ -68,7 +66,7 @@ class LoggerNull {
 
     typedef LoggerNull ThreadWorker;
 
-    ThreadWorker getThreadWorkerInstance(unsigned) const { return ThreadWorker(); }
+    //ThreadWorker getThreadWorkerInstance(unsigned) const { return ThreadWorker(); }
     LoggerNull get_worker() { return LoggerNull(); }
 
     const LoggerNull& operator+=(const LoggerNull&){ return *this; }
@@ -204,69 +202,7 @@ public:
     friend ostream& operator<<<>(ostream&,const LoggerMulti&);
 };
 
-/*template<unsigned N,typename Tuple>struct GetWorkers {
-    static auto map_it(F& f,const Tuple& t) -> decltype(tuple_cat(TupleMap<N-1,Tuple,F>::map_it(f,t),make_tuple(f(get<N>(t))))){
-        return tuple_cat(TupleMap<N-1,Tuple,F>::map_it(f,t),make_tuple(f(get<N>(t))));
-    }
-};
 
-template<unsigned N,typename Tuple>struct GetWorkers;
-
-template<typename Tuple,class F>struct GetWorkers<0,Tuple,F> {
-    static auto map_it(F& f,const Tuple& t) -> decltype(make_tuple(f(get<0>(t)))) {
-        return make_tuple(f(get<0>(t)));
-    }
-};*/
-
-/*template<typename Tuple,typename F>auto map_my_tuple(F& f,Tuple& t) -> decltype(TupleMap<tuple_size<Tuple>::value-1,Tuple,F>::map_it(f,t))
-{
-    auto ret = TupleMap<tuple_size<Tuple>::value-1,Tuple,F>::map_it(f,t);
-    return ret;
-}*/
-
-
-// Buffer is a support class
-
-/*
-template<class T>class Buffer {
-    protected:
-    T*          first;
-    T*          last;
-    T*          current;    // always points to a valid place [first.get() .. last-1]
-
-    unsigned N;
-
-    virtual void atBufferEnd(const T*,const T*)=0;
-
-    public:
-
-    Buffer(unsigned N_,bool doInit_) :
-        first(new T[N_]),
-        last(first+N_),
-        current(doInit_ ? last-1 : first),
-        N(N_){}
-
-    Buffer(Buffer&& b_) : first(b_.first),last(b_.last),current(b_.current),N(b_.N){
-        b_.first = b_.current = NULL;
-        b_.N = 0;
-    }
-
-    virtual ~Buffer() { delete[] first; }
-
-	void flush() { atBufferEnd(first,current); current=first; }
-
-    // get next available slot; if at last slot, flush buffer and go back to start
-    T* getNext(){
-        if (current == last-1)
-        {
-            atBufferEnd(first,last);
-            current=first;
-        }
-		else
-			++current;
-        return current;
-    }
-};*/
 
 
 #endif

@@ -1,5 +1,10 @@
 #include "Packet.hpp"
 
+/** Checks if the packet is orthonormal to within a tolerance epsilon (eps)
+ * @param	eps		Tolerance for checking
+ * @returns	True if packet is OK.
+ */
+
 bool Packet::checkOrthonormal(float eps) const
 {
 	return (
@@ -10,6 +15,13 @@ bool Packet::checkOrthonormal(float eps) const
 			fabs(dot3(b,b)-1.0f) < eps &&
 			fabs(dot3(d,d)-1.0f) < eps);
 }
+
+
+/** Checks if packet is orthonormal and produces output on stderr giving details if not.
+ *
+ * @param	eps		Tolerance for checking (def 1e-5)
+ * @returns True if packet is OK.
+ */
 
 bool Packet::checkOrthonormalVerbose(float eps) const
 {

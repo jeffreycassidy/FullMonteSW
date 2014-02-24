@@ -153,8 +153,6 @@ template<class LoggerType,class RNG>int Worker<LoggerType,RNG>::doOnePacket(Pack
         // spin (new direction of travel)
         if (currMat.isScattering() && pkt.w >= cfg.wmin)
         {
-			//pkt = currMat.Scatter(pkt,rng.draw_float_u01(),rng.draw_m128f2_uvect());
-        	//pkt = currMat.Scatter(rng,pkt);
         	pkt = pkt.matspin(pkt,getNextHG(currTetra.matID));
             logger.eventScatter(pkt.d,pkt.d,currMat.getParam_g());
         }

@@ -3,22 +3,43 @@
 #include <immintrin.h>
 #include "newgeom.hpp"
 
+// TODO: Relocate this somewhere more appropriate
+/** Computes the dot product of two 3D float vectors (__m128) using _mm_dp_ps.
+ * @param	a,b		Vectors to compute
+ * @returns A scalar float holding the result.
+ */
+
 inline float dot3(__m128 a,__m128 b)
 {
 	return _mm_cvtss_f32(_mm_dp_ps(a,b,0x71));
 }
 
+/** Represents a photon packet traversing the medium
+ *
+ * TODO: Add variance estimator in w
+ * TODO: Incorporate roulette logic
+ * TODO: Fold in age counter from mainloop
+ */
+
 class Packet {
     public:
-    __m128 d,a,b,p;     // 4x16B = 64B
-    __m128 s;           // 16B
-    double w;           // 8B
+    __m128 d;			///< Direction of propagation
+    __m128 a;			///< Azimuthal auxiliary vector
+    __m128 b;			///< Azimuthal auxiliary vector
+    __m128 p;     		///< Position [x, y, z, 0]
+    __m128 s;           ///< Dimensionless step length remaining (?)
+    double w;           ///< Packet weight (double used in accumulation)
 
+
+    /// Initialize a brand-new packet with no step length to go, and unit weight
     Packet() : s(_mm_setzero_ps()),w(1.0){}
+
+    /// Initialize a new packet with a given position and direction
     Packet(const Ray<3,double>& r) : s(_mm_setzero_ps()),w(1.0){ setRay(r); }
 
     Packet& operator=(const Packet& p_) = default;
 
+    /// Sets the packet position and direction using a Ray<3,double>
     void setRay(const Ray<3,double>& r)
         { p = to_m128f(r.getOrigin()); setDirection(to_m128f(r.getDirection())); }
 
@@ -28,14 +49,12 @@ class Packet {
      *
      * @param d_ New direction
      */
-
     void setDirection(__m128 d_)
         { d=d_; a=getNormalTo(d_); b=cross(d,a); }
 
     /** Sets the direction for the packet using (x,y,z) float input constants
      * @param dx,dy,dz	New direction vector (must be unit)
      */
-
     void setDirection(float dx,float dy,float dz)
     {
     	d = _mm_set_ps(0,dz,dy,dx);
@@ -57,6 +76,8 @@ class Packet {
     				_mm_dp_ps(b,u,0x74)));
     }
 
+
+    /// Calculate a spin using the matrix representation
     Packet matspin(Packet pkt,__m128 uv2d) const;
 
     /** Check if packet directions are orthonormal within some tolerance.
@@ -74,7 +95,7 @@ class Packet {
 };
 
 
-/** New matrix-spin routine.
+/** "New" matrix-spin routine using SSE instructions.
  *
  * @param pkt	Incoming packet
  * @param uv2d	Unit vector representing spin: [cos(theta), sin(theta), cos(phi), sin(phi)]

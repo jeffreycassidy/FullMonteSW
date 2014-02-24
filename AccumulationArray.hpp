@@ -7,44 +7,21 @@
 
 using namespace std;
 
-// absorption array needs to support operator[]
-// items returned by operator[] need to implement +=
-//
-// a vector<double> is the simplest instance:
-//	double& operator[]
-//
-// returns type double:
-//	double& operator+=(double)
-//
-// can also do vector<HitCounter>
-
-//! QueuedAccumulatorMT provides a thread-safe accumulator that queues accumulation requests and updates atomically using a mutex
-//! It is templated on the backing store type AccumulatorMT, which must support atomic ops
-
-/*
-class nullflush {
-public:
-	inline void flush(){};
-};
-
-class nulllock {
-public:
-	inline void lock(){};
-	inline void unlock(){};
-};
-*/
-//template<class T>VectorST<T> SimpleVector : public vector<T>,public nullflush,public nulllock {};
-
 /** QueuedAccumulatorMT
- * Requirements:
+ * Must:
  *   Copy-constructible (new independent buffer, reference to same master buffer)
- *   operator[] to access elements
+ *   T& operator[](unsigned) to access elements
+ *   T needs to support +=(double)
  *   flush() to force write-out
+ *   Automatically flush the buffer on destruction
+ *   Take first constructor argument as size
+ *   Have type WorkerThread
+ *   Have WorkerThread get_worker()
+ *   Have typedef ElementType
  *
- * Automatically flushes the buffer on destruction
- *
- * Uses a LockableVector<T> as the backing store
-*/
+ * Should not be:
+ * 	copy-constructible
+ */
 
 template<class T>class QueuedAccumulatorMT {
 	std::mutex m;
@@ -55,13 +32,19 @@ protected:
 	T& operator[](unsigned i){ return v[i]; }
 
 public:
-	// Overwriting the default_bufsz for a bit here...
-	//QueuedAccumulatorMT(QueuedAccumulatorMT&& qa_) : m(),v(qa_.v),default_bufsz(qa_.default_bufsz){}
-	//QueuedAccumulatorMT(unsigned sz_,unsigned bufsz_=(1<<20)) : v(sz_),default_bufsz(bufsz_){}
-	QueuedAccumulatorMT(QueuedAccumulatorMT&& qa_) : m(),v(std::move(qa_.v)),default_bufsz(1<<10){}
+	/** Create a new QueuedAccumulatorMT.
+	 * @param sz_		Accumulator size (number of elements)
+	 * @param bufsz_	Buffer size (number of slots in worker thread accumulator buffer before merging with master results)
+	 */
 	QueuedAccumulatorMT(unsigned sz_,unsigned bufsz_=(1<<20)) : v(sz_),default_bufsz(1<<10){}
-	//QueuedAccumulatorMT(const QueuedAccumulatorMT& qa_) : m(),v(qa_.v.size()),default_bufsz(qa_.default_bufsz){}
+
+	/// Move constructor: create new mutex (non-movable), move vector contents and copy default buffer size
+	QueuedAccumulatorMT(QueuedAccumulatorMT&& qa_) : m(),v(std::move(qa_.v)),default_bufsz(1<<10){}
+
+	/// Copy constructor deleted because mutex should not be copied
 	QueuedAccumulatorMT(const QueuedAccumulatorMT&) =delete;
+
+	typedef T ElementType;
 
 	class WorkerThread {
 		/// Master accumulation array
@@ -83,10 +66,7 @@ public:
 		WorkerThread(QueuedAccumulatorMT& master_,unsigned bufsz_=0) : master(master_),bufsz(bufsz_ == 0 ? master_.default_bufsz : bufsz_),
 				q_start(new BufElType[bufsz]),q_curr(q_start-1),q_end(q_start+bufsz),i_last(-1){}
 
-		/// References the same master but allocates a new buffer
-		//WorkerThread(const WorkerThread& acc_) : master(acc_.master),bufsz(acc_.bufsz),
-		//		q_start(new BufElType[bufsz]),q_curr(q_start-1),q_end(q_start+bufsz),i_last(-1){}
-
+		/// Copy constructor deleted; inefficient since it requires allocation of buffer space
 		WorkerThread(const WorkerThread&) = delete;
 
 		/// Move constructor; steals resources and sets pointers NULL to inhibit flush/delete
@@ -96,7 +76,7 @@ public:
 		}
 
 		/// Flushes the buffer and deletes it
-		~WorkerThread(){ flush(); delete q_start; }
+		~WorkerThread(){ commit(); delete q_start; }
 
 		/// Returns a reference to an accumulation buffer for the given index i
 		T& operator[](unsigned i){
@@ -104,7 +84,7 @@ public:
 			{
 				if (++q_curr == q_end)
 				{
-					flush();
+					commit();
 					q_curr++;
 				}
 				q_curr->second=0;
@@ -113,11 +93,8 @@ public:
 			return q_curr->second;
 		}
 
-		/// Flush commits all current values to the array and returns to the empty state
-
-		void commit(){ flush(); }
-		void flush()
-		{
+		/// Commit all buffered updates atomically
+		void commit(){
 			double sum=0;
 			// commit atomically to shared accumulator
 			if (q_start != NULL){
@@ -136,12 +113,16 @@ public:
 		}
 	};
 
+	/// Public access is const
 	const T& operator[](unsigned i) const { return v[i]; }
 
 	typedef typename vector<T>::const_iterator const_iterator;
 
-	const_iterator begin() const { return v.begin(); }
-	const_iterator end()   const { return v.end(); }
+	const_iterator begin() const { return v.begin(); }		///< Iterator to beginning
+	const_iterator end()   const { return v.end(); }		///< Itererator to end
+
+	const vector<T>& getResults() const { return v; }
+	vector<T> getResults() { return v; }
 
 	/// Return a worker thread object
 	WorkerThread get_worker(unsigned bufsz_=0) { return WorkerThread(*this,default_bufsz); };

@@ -7,6 +7,12 @@
 
 // Blob = Binary Large OBject
 //  Just a bunch of bytes as a Boost shared array, with a method provided to compute SHA1 hash
+// TODO: Base64 output iterator
+// TODO: Make SHA1 a dynamically-loaded library?
+// TODO: Integrate better with Postgres library
+// TODO: XML writer?
+// TODO: Iterators
+// TODO: Check if all conversions use proper alignment (ie no padding)
 
 class Blob 
 {

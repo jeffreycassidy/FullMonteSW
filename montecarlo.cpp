@@ -26,11 +26,6 @@
 #include <boost/program_options/errors.hpp>
 #include <boost/timer/timer.hpp>
 
-#include <boost/fusion/sequence.hpp>
-#include <boost/fusion/include/sequence.hpp>
-#include <boost/fusion/algorithm/iteration/for_each.hpp>
-#include <boost/fusion/include/for_each.hpp>
-
 #include "LoggerMemTrace.cpp"
 
 #include "mainloop.cpp"
@@ -45,6 +40,22 @@ RunResults runSimulation(PGConnection* dbconn,const TetraMesh& mesh,const vector
     unsigned IDflight,unsigned IDsuite,unsigned caseorder,unsigned long long Nk);
 
 namespace po=boost::program_options;
+
+/* Problem definition (things that will change the expected answer)
+ *
+ * geometry
+ * materials
+ * sources
+ */
+
+/* run configuration (things that will not change the expected answer)
+ *
+ * packet count
+ * threads
+ * hosts
+ * wmin (will change the variance)
+ *
+ */
 
 namespace globalopts {
     double Npkt;               // number of packets
@@ -64,7 +75,6 @@ using namespace std;
 void banner()
 {
     cout << "FullMonte v0.9" << endl;
-    //cout << "$Id: montecarlo.cpp 314 2013-11-01 01:13:27Z jcassidy $ (tree " << SVNVERSION << ')' << endl;
     cout << "(c) Jeffrey Cassidy, 2014" << endl;
     cout << endl;
 }
@@ -321,17 +331,6 @@ void runCaseByID(PGConnection* dbconn,unsigned IDflight,unsigned IDcase,unsigned
 //
 // Run results
 //	Min: compute time, return code
-
-
-    /*res.Nintersection=le.Nbound;
-    res.Nabsorb=le.Nabsorb;
-    res.Nscatter=le.Nscatter;
-    res.Ntir=le.Ntir;
-    res.Nfresnel=le.Nfresnel;
-    res.Nexit=le.Nexit;
-    res.Nwin=le.Nwin;
-    res.Nrefr=le.Nrefr;
-    res.Ndie=le.Ndie;*/
 
     // get the hit-count maps
 /*    ls.hitMap(surfHit);

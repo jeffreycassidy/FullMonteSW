@@ -32,14 +32,14 @@ template<>void VolumeArray<double>::hitMap(map<unsigned,unsigned long long>& m)
             m_it = m.insert(m_it,make_pair(IDt,*it));
 }
 
-template<>ostream& operator<<(ostream& os,const LoggerVolume<QueuedAccumulatorMT<double>>& lv)
+template<>ostream& operator<<(ostream& os,const VolumeArray<double>& va)
 {
 	double sumE=0;
 	unsigned i=0;
-	for(auto it=lv.acc.begin(); it != lv.acc.end(); ++it)
+	for(auto it=va.begin(); it != va.end(); ++it)
 	{
 		sumE += *it;
 		++i;
 	}
-	return os << "Hello from the volume logger; total energy emitted is " << setprecision(4) << sumE << " (" << i << " elements)" << endl;
+	return os << "Volume array total energy is " << setprecision(4) << sumE << " (" << i << " elements)" << endl;
 }

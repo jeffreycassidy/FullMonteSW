@@ -2,23 +2,30 @@
 #define MATERIAL_INCLUDED
 #include <immintrin.h>
 #include <iostream>
+#include <cassert>
 
-#include "Packet.hpp"
+/** Describes material properties and provides facilities for calculating scattering and reflection/refraction at interfaces.
+ * TODO: Incorporate reflection/refraction?
+ * TODO: Fix nasty sign convention in propagation vector
+ * TODO: Clean up redundant matrix-spin code
+ *
+ */
 
 class Material {
 public:
-    typedef struct {
-    	float g;
-    	float one_minus_gg;
-    	float one_plus_gg;
-    	float recip_2g;
+    typedef class {
+    public:
+    	float g;				///< g=E[cos(theta)]
+    	float one_minus_gg;		///< 1-g^2
+    	float one_plus_gg;		///< 1+g^2
+    	float recip_2g;			///< 1/2g
     } HGParams;
 
 private:
 
-    static constexpr float const_c0=299.792458;    ///< Speed of light in vacuum (mm/ns) (3e8 m/s = 3e11 mm/s = 3e2 mm/ns)
-    float mu_s, mu_a, mu_p, mu_t, n, albedo, absfrac; // 11x4 = 40B
-    HGParams hgparams;
+    static constexpr float const_c0=299.792458;    		///< Speed of light in vacuum (mm/ns) (3e8 m/s = 3e11 mm/s = 3e2 mm/ns)
+    float mu_s, mu_a, mu_p, mu_t, n, albedo, absfrac;
+    HGParams hgparams;									///< Henyey-Greenstein parameter g and pre-calculated constants
 
     bool matchedboundary,isscattering;          // 2x1B = 2B
 public:
@@ -27,10 +34,20 @@ public:
     /// Returns a copy of the Henyey-Greenstein parameters (g and related constants)
     const HGParams& getHGParams() const { return hgparams; }
 
-    __m128 getHGParamsSSE() const { return _mm_set_ps(hgparams.one_minus_gg,hgparams.one_plus_gg,hgparams.recip_2g,hgparams.g); }
+    /// Returns a __m128 vector holding the Henyey-Greenstein parameters [g, 1/2g, 1+g^2, 1-g^2]
+    __m128 getHGParamsSSE() const
+    	{ return _mm_set_ps(hgparams.one_minus_gg,hgparams.one_plus_gg,hgparams.recip_2g,hgparams.g); }
 
-    __m128 s_prop;		///< Propagation constant
-    __m128 s_init;		///< Initial propagation value
+    __m128 s_prop;		///< Propagation constant (to be multiplied by physical step length) [ -1, -mu_t, n/c0, 0 ]
+
+	/** Initial propagation vector value.
+	 * Has elements [ physical step remaining, dimensionless step remaining, time elapsed, X ]
+	 * Values are [ -1/mu_t, -1, 0, 0 ] such that when multiplied by dimensionless step length gives an s_prop vector
+	 *
+	 * NOTE: Embedded negative signs in the first two elements are because log of a U[0,1) random variable is negative
+	 */
+    __m128 s_init;
+
 
     Material(double mu_a_=0,double mu_s_=0,double g_=0,double n_=1.0,double mu_p_=0.0,bool matchedboundary_=false) :
         mu_s(mu_s_),mu_a(mu_a_),mu_p(mu_p_),mu_t(mu_s_+mu_a_+mu_p_),
@@ -44,25 +61,27 @@ public:
     		setG(g_);
         }
 
+    /// Default operator=
     Material& operator=(const Material& m) =default;
 
+    /// Returns true if the material scatters light
     bool isScattering() const { return isscattering; }
 
-    float getParam_g() const { return hgparams.g; }
-    float getn()       const { return n; }
-    float getMuA()     const { return mu_a; }
-    float getMuS()     const { return mu_s; }
-    float getMuT()     const { return mu_t; }
-    float getg()       const { return hgparams.g; }
+    float getParam_g() const { return hgparams.g; }		///< Returns the g parameter
+    float getg()       const { return hgparams.g; }		///< Returns the g parameter TODO: Remove this; redundant
+    float getn()       const { return n; }				///< Returns the refractive index
+    float getMuA()     const { return mu_a; }			///< Returns the absorption coefficient
+    float getMuS()     const { return mu_s; }			///< Returns the scattering coefficient
+    float getMuT()     const { return mu_t; }			///< Returns the transport mean free path
 
-    float getAlbedo()              const { return albedo; }
-    float getAbsorbedFraction()    const { return absfrac; }
+    float getAlbedo()              const { return albedo; }		///< Returns the albedo mu_s/(mu_s+mu_a)
+    float getAbsorbedFraction()    const { return absfrac; }	///< Returns the absorbed fraction 1-albedo
 
-	Packet Scatter(Packet pkt,float rnd0,__m128 cosphi_sinphi) const;
+    bool isMatched() const { return matchedboundary; }			///< Returns true if it's a matched boundary
+    void setMatched(bool m=true){ matchedboundary=m; }			///< Sets whether this is treated as a matched boundary
 
-    bool isMatched() const { return matchedboundary; }
-    void setMatched(bool m=true){ matchedboundary=m; }
 
+    /// Sets the g parameter and associated pre-calculated constants
     void setG(float g_){
     	hgparams.g=g_;
     	hgparams.one_plus_gg = 1.0+g_*g_;
@@ -71,59 +90,48 @@ public:
         isscattering = !(g_ == 1.0 || mu_s == 0);
     }
 
+    /** Evaluates the Henyey-Greenstein function 8x in parallel using AVX instructions (wrapper).
+     * @param i_rand		Pointer to 8 random U [-1,+1) floats (8 floats, 32B aligned)
+     * @param i_uv			Pointer to 8 random 2D unit vectors (2x8 floats, 32B aligned)
+     * @param[out] o		Output location, 32 random floats (4x8 floats < cos(theta), sin(theta), cos(phi), sin(phi) > ) (32B aligned)
+     */
+
     inline void VectorHG(const float* i_rand,const float* i_uv,float* o) const {
     	VectorHG(_mm256_load_ps(i_rand),_mm256_load_ps(i_uv),_mm256_load_ps(i_uv+8),o);
     }
 
+    /// Evaluates the Henyey-Greenstein function 8x in parallel using AVX instructions.
     inline void VectorHG(__m256 i_rand,__m256 uva,__m256 uvb,float* o) const;
 
+    /// Evaluates Henyey-Greenstein ICDF for a scalar float U [-1,1) random number, returning cos(theta)
+    inline float ScalarHG(float rnd) const {
+    	float costheta;
+    	if (hgparams.g != 0)
+    	{
+    		float t=hgparams.one_minus_gg/(1+hgparams.g*rnd);
+    		costheta=hgparams.recip_2g * (hgparams.one_plus_gg-t*t);
+    	}
+    	else
+    		costheta=rnd;
+    	assert(costheta <= 1.0 && costheta >= -1.0);
+    	return costheta;
+    }
+
+    // this used to be in Scatter
+    //return matspin(pkt,costheta,cosphi_sinphi);
+
+    /// Evaluates Henyey-Greenstein ICDF for a scalar float U[0,1) random number, returning cos(theta)
+    inline float ScalarHG_U01(float rnd) const { return ScalarHG(2.0*rnd-1.0); }
+
+    /// Old scalar scattering calculation.
+    //Packet Scatter(Packet pkt,float rnd0,__m128 cosphi_sinphi) const;
+
+    /// Helper function to print to an ostream
     friend std::ostream& operator<<(std::ostream& os,const Material& mat);
 };
 
-/*inline Packet Material::Scatter(Packet pkt,float rnd0,__m128 cosphi_sinphi) const
-{
-    float costheta,P=2*rnd0-1;
-
-    float t=one_minus_gg/(1+g*P);
-
-    // choose angles: HG function for component along d0, uniform circle for normal components
-    costheta = g==0 ? P : recip_2g * (one_plus_gg-t*t);
-    assert (costheta <= 1.0 && costheta >= -1.0);
-
-    return matspin(pkt,costheta,cosphi_sinphi);
-}*/
-
-
-// r0,r1 are the random numbers
-/*Packet matspin(Packet pkt,double costheta,double sintheta,double cosphi,double sinphi)
-{
-    Packet res=pkt;
-    // colums of matrix M (appearance in cout output below is transposed)
-    __m128 M0,M1,M2;
-    const __m128 d0=pkt.d, a0=pkt.a, b0=pkt.b;
-
-    // rows of matrix M
-    M0 = _mm_setr_ps(costheta,sintheta,0,0);
-    M1 = _mm_setr_ps(-sintheta*cosphi,costheta*cosphi,sinphi,0);
-    M2 = _mm_setr_ps(sinphi*sintheta,-sinphi*costheta,cosphi,0);
-
-    res.d = _mm_mul_ps(d0,_mm_shuffle_ps(M0,M0,_MM_SHUFFLE(0,0,0,0)));
-    res.d = _mm_add_ps(res.d,_mm_mul_ps(a0,_mm_shuffle_ps(M1,M1,_MM_SHUFFLE(0,0,0,0))));
-    res.d = _mm_add_ps(res.d,_mm_mul_ps(b0,_mm_shuffle_ps(M2,M2,_MM_SHUFFLE(0,0,0,0))));
-
-    res.a = _mm_mul_ps(d0,_mm_shuffle_ps(M0,M0,_MM_SHUFFLE(1,1,1,1)));
-    res.a = _mm_add_ps(res.a,_mm_mul_ps(a0,_mm_shuffle_ps(M1,M1,_MM_SHUFFLE(1,1,1,1))));
-    res.a = _mm_add_ps(res.a,_mm_mul_ps(b0,_mm_shuffle_ps(M2,M2,_MM_SHUFFLE(1,1,1,1))));
-
-    res.b = _mm_mul_ps(d0,_mm_shuffle_ps(M0,M0,_MM_SHUFFLE(2,2,2,2)));
-    res.b = _mm_add_ps(res.b,_mm_mul_ps(a0,_mm_shuffle_ps(M1,M1,_MM_SHUFFLE(2,2,2,2))));
-    res.b = _mm_add_ps(res.b,_mm_mul_ps(b0,_mm_shuffle_ps(M2,M2,_MM_SHUFFLE(2,2,2,2))));
-
-    return res;
-}*/
-
-// r0,r1 are the random numbers
-/*inline Packet matspin(Packet pkt,float costheta,__m128 cosphi_sinphi)
+/* TODO: Dispose of this old code.
+inline Packet matspin(Packet pkt,float costheta,__m128 cosphi_sinphi)
 {
     Packet res=pkt;
     // colums of matrix M (appearance in cout output below is transposed)
@@ -151,9 +159,6 @@ public:
 //    M1 = _mm_setr_ps(-sintheta*cosphi,costheta*cosphi,sinphi,0);	// 0 sinphi (costheta * cosphi)  (-sintheta * cosphi)
 //    M2 = _mm_setr_ps(sinphi*sintheta,-sinphi*costheta,cosphi,0);	// 0 cosphi (-sinphi * costheta) (sinphi * sintheta)
 
-	__m128 zero = _mm_setzero_ps();
-
-	__m128 strig = _mm_addsub_ps(zero,trig);	// (-sin phi) (cos phi) (-sin theta) (cos theta)
 
 	__m128 prods = _mm_mul_ps(strig,_mm_shuffle_ps(strig,strig,_MM_SHUFFLE(1,0,2,3)));
 		// prods = (sintheta*sinphi) (costheta*cosphi) (-sintheta*cosphi) (-costheta*sinphi)
@@ -174,73 +179,6 @@ public:
 
     res.b = _mm_mul_ps(d0,_mm_shuffle_ps(M0,M0,_MM_SHUFFLE(2,2,2,2)));
     res.b = _mm_add_ps(res.b,_mm_mul_ps(a0,_mm_shuffle_ps(M1,M1,_MM_SHUFFLE(2,2,2,2))));
-    res.b = _mm_add_ps(res.b,_mm_mul_ps(b0,_mm_shuffle_ps(M2,M2,_MM_SHUFFLE(2,2,2,2))));
-
-    return res;
-}*/
-
-// r0,r1 are the random numbers
-/*inline Packet matspin(Packet pkt,float costheta,__m128 cosphi_sinphi)
-{
-    Packet res=pkt;
-
-    // SSE naming conventions
-    //                                      0   1 2 3
-    // Names are from 3..0, eg. 000_cost = cost 0 0 0
-    // Note this would be _mm_set_ps(0,0,0,cost)
-
-    // Trying to conform to MSDN docs
-    //                          3 2 1 0
-    //  _mm_set_ps(a,b,c,d) =   a b c d
-
-    // colums of matrix M (appearance in cout output below is transposed)
-    __m128 M0,M1,M2;
-    const __m128 d0=pkt.d, a0=pkt.a, b0=pkt.b;
-
-    // _000_cost = 0 0 0 cost
-	__m128 _000_cost = _mm_set_ss(costheta);
-
-	__m128 _00_cost_sint = _mm_sqrt_ss(
-		_mm_sub_ps(
-			_mm_unpacklo_ps(_mm_set_ss(1.0),_000_cost),     // 0    0   cost    1.0
-			_mm_mul_ss(_000_cost,_000_cost)));              // 0    0   0       cost^2
-	// _00_cost_sint = 0 0 cost sint
-
-	__m128 trig = _mm_shuffle_ps(_00_cost_sint,cosphi_sinphi,_MM_SHUFFLE(1,0,0,1));
-    // trig =   sinp    cosp    sint    cost
-
-    // rows of matrix M
-//    M0 = _mm_setr_ps(costheta,sintheta,0,0);
-//    M1 = _mm_setr_ps(-sintheta*cosphi,costheta*cosphi,sinphi,0);	// 0 sinphi (costheta * cosphi)  (-sintheta * cosphi)
-//    M2 = _mm_setr_ps(sinphi*sintheta,-sinphi*costheta,cosphi,0);	// 0 cosphi (-sinphi * costheta) (sinphi * sintheta)
-
-	__m128 zero = _mm_setzero_ps();
-	__m128 strig = _mm_addsub_ps(zero,trig);	// (-sin phi) (cos phi) (-sin theta) (cos theta)
-
-	__m128 prods = _mm_mul_ps(
-        strig,                                              // -sinp cosp -sint cost
-        _mm_shuffle_ps(strig,strig,_MM_SHUFFLE(1,0,2,3)));  // -sint cost cosp  -sinp
-    // prods = (sintheta*sinphi) (costheta*cosphi) (-sintheta*cosphi) (-costheta*sinphi)
-
-	__m128 _0_sp_0_cp = _mm_unpackhi_ps(trig,zero);  // 0 sinp 0 cosp
-
-    // The following 3 defs are verified to match M0..M2 in comments above
-	M0 = _mm_movelh_ps(trig,zero);                                  // 0 0 sint cost
-	M1 = _mm_shuffle_ps(prods,_0_sp_0_cp,_MM_SHUFFLE(3,2,2,1));     // 0 sinp cost*cosp -sint*cosp
-	M2 = _mm_shuffle_ps(prods,_0_sp_0_cp,_MM_SHUFFLE(3,0,0,3));     // 0 cosp -cost*sinp sint*sinp
-
-    // d = cos(theta)*d0 - sin(theta)*cos(phi)*a0 + sin(theta)*sin(phi)*b0
-    res.d = _mm_mul_ps(d0,_mm_shuffle_ps(M0,M0,_MM_SHUFFLE(0,0,0,0)));
-    res.d = _mm_add_ps(res.d,_mm_mul_ps(a0,_mm_shuffle_ps(M1,M1,_MM_SHUFFLE(0,0,0,0))));
-    res.d = _mm_add_ps(res.d,_mm_mul_ps(b0,_mm_shuffle_ps(M2,M2,_MM_SHUFFLE(0,0,0,0))));
-
-    // a = sin(theta)*d0 +cos(theta)*cos(phi)*a0 - cos(theta)*sin(phi)*b0
-    res.a = _mm_mul_ps(d0,_mm_shuffle_ps(M0,M0,_MM_SHUFFLE(1,1,1,1)));
-    res.a = _mm_add_ps(res.a,_mm_mul_ps(a0,_mm_shuffle_ps(M1,M1,_MM_SHUFFLE(1,1,1,1))));
-    res.a = _mm_add_ps(res.a,_mm_mul_ps(b0,_mm_shuffle_ps(M2,M2,_MM_SHUFFLE(1,1,1,1))));
-
-    // b = sin(phi)*a0 + cos(phi)*b0
-    res.b = _mm_mul_ps(a0,_mm_shuffle_ps(M1,M1,_MM_SHUFFLE(2,2,2,2)));
     res.b = _mm_add_ps(res.b,_mm_mul_ps(b0,_mm_shuffle_ps(M2,M2,_MM_SHUFFLE(2,2,2,2))));
 
     return res;
@@ -292,7 +230,7 @@ inline void Material::VectorHG(__m256 i_rand,__m256 uva,__m256 uvb,float* o) con
 
 	// Interleave to get cos(theta) sin(theta) cos(phi) sin(phi)
 
-	// Note: this permutes the values in i_uv; if i_uv[0..7] are ABCDEFGH then will give ABEFCDGH
+	// Note: this permutes the values in uva/uvb; if i_uv[0..7] are ABCDEFGH then will give ABEFCDGH
 	// watch out for this when debugging - may cause confusion but is valid since they're random numbers (order doesn't matter)
 
 	_mm256_store_ps(o,   _mm256_shuffle_ps(vl,uva,_MM_SHUFFLE(1,0,1,0)));
