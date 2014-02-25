@@ -191,10 +191,8 @@ template<int D,class T>class Point : public FixedArray<D,T>
 	Point(const Point& P_) : FixedArray<D,T>(P_){};
 	Point(const T* p_)     : FixedArray<D,T>(p_){};
 
-#ifdef SSE
     operator __m128() const { return _mm_set_ps(0.0,p[2],p[1],p[0]); }
     void set(__m128 r){ float f[4]; _mm_store_ps(f,r); for(unsigned i=0;i<3;++i){ p[i]=f[i]; } }
-#endif
 
 	Point operator+(const Vector<D,T>& v) const { Point t; for(unsigned i=0;i<D;++i){ t[i]=p[i]+v[i]; } return t; }
 	Point operator-(const Vector<D,T>& v) const { Point t; for(unsigned i=0;i<D;++i){ t[i]=p[i]-v[i]; } return t; }

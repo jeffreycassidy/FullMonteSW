@@ -56,7 +56,7 @@ public:
         absfrac(mu_a_/(mu_a_+mu_s_+mu_p_)),
         matchedboundary(matchedboundary_),
         s_prop(_mm_set_ps(0,n_/const_c0,-mu_t,-1)),
-        s_init(_mm_set_ps(0,0,-1,-1/mu_t))
+        s_init(_mm_set_ps(0,0,1,1/mu_t))
         {
     		setG(g_);
         }
@@ -98,6 +98,10 @@ public:
 
     inline void VectorHG(const float* i_rand,const float* i_uv,float* o) const {
     	VectorHG(_mm256_load_ps(i_rand),_mm256_load_ps(i_uv),_mm256_load_ps(i_uv+8),o);
+    }
+
+    inline void VectorHG(__m256 i_rand,std::pair<__m256,__m256> uv,float* o) const {
+    	VectorHG(i_rand,uv.first,uv.second,o);
     }
 
     /// Evaluates the Henyey-Greenstein function 8x in parallel using AVX instructions.

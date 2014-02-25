@@ -7,6 +7,8 @@
 #include <boost/iterator/transform_iterator.hpp>
 #include <boost/random/discrete_distribution.hpp>
 
+#include "RandomAVX.hpp"
+
 #include "sse.hpp"
 
 // Source classes (isotropic point, directed face, isotropic volume, directed point (pencil beam)
@@ -15,7 +17,7 @@
 
 typedef __m128 UnitVectorType;
 
-typedef RNG_SFMT RNG_Type;
+typedef RNG_SFMT_AVX RNG_Type;
 
 class Source {
     double w;

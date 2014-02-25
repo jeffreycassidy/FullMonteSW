@@ -1,5 +1,5 @@
 # base options only
-GCC_OPTS=-Wall -mfpmath=sse -Wstrict-aliasing=2 -g -mavx -DSSE -fpermissive -std=c++11 -fPIC
+GCC_OPTS=-Wall -mfpmath=sse -Wstrict-aliasing=2 -g -mavx -std=c++11 -DSSE -fPIC -fabi-version=6
 LIBS=-lboost_program_options -lboost_timer -lpq -lcrypto -lboost_system
 LIBDIRS=-L/usr/local/lib -L/usr/local/lib/boost
 INCLDIRS=-I/usr/local/boost -I/usr/local/include -I. -I/usr/local/include/boost -I/usr/local/include/pgsql
@@ -16,6 +16,9 @@ OS:=$(shell uname)
 ifeq ($(OS),Darwin)
 GCC_OPTS += -DPLATFORM_DARWIN
 endif
+
+Testing: Testing.cpp SFMT.h SFMT.c RandomAVX.hpp 
+	g++ -Wall -std=c++11 -mavx -g -O3 -lboost_system -lboost_timer -fabi-version=6 -L/usr/local/lib -I/usr/local/include -DUSE_SSE2 -o $@ $<
 
 default: avx_mathfun_test
 
@@ -65,7 +68,7 @@ SFMT.o: SFMT.c SFMT*.h
 
 montecarlo: graph.o newgeom.o face.o helpers.o source.o montecarlo.o LoggerSurface.o io_timos.o progress.o utils/writeFileVTK.o \
 	linefile.o fluencemap.o mainloop.o fm-postgres/fm-postgres.o blob.o fmdb.o fm-postgres/fmdbexportcase.o sse.o random.o SFMT.o \
-	LoggerConservation.o LoggerEvent.o LoggerVolume.o Material.o Packet.o
+	LoggerConservation.o LoggerEvent.o LoggerVolume.o Material.o Packet.o RandomAVX.o
 	g++ $(GCC_OPTS) $^ $(LIBS) $(LIBDIRS) -o $@
 	
 montecarlo-trace: graph.o newgeom.o face.o helpers.o source.o montecarlo.cpp LoggerSurface.o io_timos.o progress.o utils/writeFileVTK.o linefile.o fluencemap.o mainloop.o fm-postgres/fm-postgres.o blob.o fmdb.o fm-postgres/fmdbexportcase.o sse.o random.o SFMT.o LoggerConservation.o LoggerEvent.o LoggerVolume.o

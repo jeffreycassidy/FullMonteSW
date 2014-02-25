@@ -11,7 +11,7 @@
 
 template<class LoggerType,class RNG>int Worker<LoggerType,RNG>::doOnePacket(Packet pkt,unsigned IDt)
 {
-    unsigned Nstep=0;
+    unsigned Nstep=0,Nhit;
     StepResult stepResult;
     Tetra currTetra = cfg.mesh.getTetra(IDt);
     Material currMat = cfg.mat[currTetra.matID];
@@ -30,15 +30,14 @@ template<class LoggerType,class RNG>int Worker<LoggerType,RNG>::doOnePacket(Pack
     {
         // draw a hop length; pkt.s = { physical distance, MFPs to go, time, 0 }
         ++Nstep;
-        pkt.s = rng.draw_m128f1_log_u01();
-        pkt.s = _mm_mul_ps(pkt.s,currMat.s_init);
+        pkt.s = _mm_mul_ps(rng.draw_m128f1_exp(),currMat.s_init);
 
         // attempt hop
         stepResult = currTetra.getIntersection(pkt.p,pkt.d,pkt.s);
         pkt.p      = stepResult.Pe;
 
         // loop while hitting a face in current step
-        while (stepResult.hit)
+        for(Nhit=0; stepResult.hit && Nhit < 1000; ++Nhit)
         {
             // extremely rarely, this can be a problem; we get no match in the getIntersection routine
             if(stepResult.idx > 3)
@@ -136,6 +135,8 @@ template<class LoggerType,class RNG>int Worker<LoggerType,RNG>::doOnePacket(Pack
             stepResult=currTetra.getIntersection(pkt.p,pkt.d,pkt.s);
             pkt.p   = stepResult.Pe;
         }
+        if (Nhit == 1000)
+        	cerr << "Terminated due to unusual number of interface hits" << endl;
 
         // stopped hitting faces: do drop/spin
         dw = currMat.getAbsorbedFraction()*pkt.w;

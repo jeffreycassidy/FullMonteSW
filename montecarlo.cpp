@@ -19,7 +19,6 @@
 
 #include "graph.hpp"
 #include "source.hpp"
-#include "random.hpp"
 #include "io_timos.hpp"
 #include <signal.h>
 #include <boost/program_options.hpp>
@@ -34,6 +33,8 @@
 #include "fmdb.hpp"
 #include <map>
 
+#include "RandomAVX.hpp"
+
 void writeHitMap(string fn,const map<unsigned,unsigned long long>& m);
 
 RunResults runSimulation(PGConnection* dbconn,const TetraMesh& mesh,const vector<Material>& materials,Source*,
@@ -46,9 +47,9 @@ namespace po=boost::program_options;
  * geometry
  * materials
  * sources
- */
-
-/* run configuration (things that will not change the expected answer)
+ *
+ *
+ * run configuration (things that will not change the expected answer)
  *
  * packet count
  * threads
@@ -417,7 +418,7 @@ RunResults runSimulation(PGConnection* dbconn,const TetraMesh& mesh,const vector
     auto logger = make_multilogger(LoggerEventMT(),LoggerSurface<QueuedAccumulatorMT<double>>(mesh,1<<20),LoggerVolume<QueuedAccumulatorMT<double>>(mesh,1<<20),LoggerConservationMT());
 
     // Run it
-    boost::timer::cpu_times t = MonteCarloLoop<RNG_SFMT>(Nk,logger,mesh,materials,*source);
+    boost::timer::cpu_times t = MonteCarloLoop<RNG_SFMT_AVX>(Nk,logger,mesh,materials,*source);
 
     cout << logger << endl;
 

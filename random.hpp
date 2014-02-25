@@ -41,25 +41,6 @@ typedef union SSEReg_t {
     uint64_t i64[2];
 } SSEReg;
 
-class RNG {
-    boost::random::mt19937 rng;
-    boost::random::uniform_01<double> uni01d;
-    boost::random::uniform_01<float>  uni01f;
-    public:
-    // requirements for Boost RNG concept
-    typedef boost::random::mt19937::result_type result_type;
-    result_type min() const { return rng.min(); }
-    result_type max() const { return rng.max(); }
-    result_type operator()(){ return rng(); } 
-
-
-    inline double draw_double_u01();
-    inline float  draw_float_u01();
-    inline __m128 draw_m128f3_u01();
-    inline __m128 draw_m128f4_u01();
-    inline __m128 draw_m128f3_uvect();
-};
-
 
 // The size of array (32b words) generated must be at least 624 and a multiple of 4
 // Nbuf must be at least 156
@@ -70,12 +51,12 @@ class RNG_SFMT {
     unsigned Nbuf;				///< Number of uint32s stored in buffer
     sfmt_t sfmt;
 
-    float       __attribute__((aligned(16))) f_log[4];
+    float       __attribute__((aligned(16))) f_exp[4];
     float       __attribute__((aligned(16))) f[4];
     double      __attribute__((aligned(16))) d[2];
     SSEReg i32;
 
-    unsigned char f_count,d_count,i32_count,f_log_count;
+    unsigned char f_count,d_count,i32_count,f_exp_count;
 
     void refill();
     inline SSEReg  draw();
@@ -95,7 +76,7 @@ class RNG_SFMT {
         f_count(4),
         d_count(2),
         i32_count(4),
-        f_log_count(4)
+        f_exp_count(4)
         {
 
     		if (Nbuf % 4 != 0)
@@ -120,8 +101,6 @@ class RNG_SFMT {
     result_type max() const { return std::numeric_limits<uint32_t>::max(); }
     result_type operator()(){ return draw_uint32(); } 
 
-    void refill_log_u01();
-
     inline uint32_t draw_uint32();
     inline double draw_double_u01();
     inline float  draw_float_u01();
@@ -129,7 +108,7 @@ class RNG_SFMT {
     inline __m128 draw_m128f4_u01();
     inline __m128 draw_m128f1_u01();
 
-    inline __m128 draw_m128f1_log_u01();
+    inline __m128 draw_m128f1_exp();
 
     inline __m128d draw_m128d1_u01();
     inline __m128d draw_m128d2_u01();
@@ -242,17 +221,17 @@ const uint32_t* RNG_SFMT::draw_u32_4()
     return (nextRand++)->i32;
 }*/
 
-__m128 RNG_SFMT::draw_m128f1_log_u01()
+__m128 RNG_SFMT::draw_m128f1_exp()
 {
     __m128 r,l;
-    if (f_log_count == 4)
+    if (f_exp_count == 4)
     {
         r = _mm_sub_ps(_mm_set1_ps(1.0),draw_m128f4_u01());     // 1 - [0,1) => (0,1] to avoid -Inf
-        l=log_ps(r);
-        _mm_store_ps(f_log,l);
-        f_log_count=0;
+        l = _mm_sub_ps(_mm_setzero_ps(),log_ps(r));				// -log(r) to get positive
+        _mm_store_ps(f_exp,l);
+        f_exp_count=0;
     }
-    return _mm_load1_ps(f_log+(f_log_count++));
+    return _mm_load1_ps(f_exp+(f_exp_count++));
 }
 
 // Return a single float
