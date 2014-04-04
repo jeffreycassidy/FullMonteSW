@@ -1,9 +1,9 @@
 #ifndef INCLUDE_NEWGEOM
 #define INCLUDE_NEWGEOM
 
-#ifdef SSE
 #include "sse.hpp"
-#endif 
+
+#include <array>
 
 #include <math.h>
 #include <iostream>
@@ -132,6 +132,8 @@ class FaceByPointID : public FixedArrayID<3,unsigned> {
 	FaceByPointID(const FixedArrayID<3,unsigned>& t_) : FixedArrayID<3,unsigned>(t_){};
 	FaceByPointID(unsigned a,unsigned b,unsigned c){ p[0]=a; p[1]=b; p[2]=c; }
 
+    operator array<unsigned long,3>() const { array<unsigned long,3> t; t[0]=p[0]; t[1]=p[1]; t[2]=p[2]; return t; }
+
     // flips the orientation of the face [A,B,C] -> [A,C,B]
     FaceByPointID flip() const { return FaceByPointID(p[0],p[2],p[1]); }
 };
@@ -195,13 +197,13 @@ template<int D,class T>class Point : public FixedArray<D,T>
 	Point(const Point& P_) : FixedArray<D,T>(P_){};
 	Point(const T* p_)     : FixedArray<D,T>(p_){};
 
-#ifdef SSE
     operator __m128() const { return _mm_set_ps(0.0,p[2],p[1],p[0]); }
     void set(__m128 r){ float f[4]; _mm_store_ps(f,r); for(unsigned i=0;i<3;++i){ p[i]=f[i]; } }
-#endif
 
 	Point operator+(const Vector<D,T>& v) const { Point t; for(unsigned i=0;i<D;++i){ t[i]=p[i]+v[i]; } return t; }
 	Point operator-(const Vector<D,T>& v) const { Point t; for(unsigned i=0;i<D;++i){ t[i]=p[i]-v[i]; } return t; }
+
+    operator array<double,3>() const { array<double,3> t; t[0]=p[0]; t[1]=p[1]; t[2]=p[2]; return t; }
 };
 
 template<int D,class T>std::ostream& operator<<(std::ostream& os,const FixedArray<D,T>& P)

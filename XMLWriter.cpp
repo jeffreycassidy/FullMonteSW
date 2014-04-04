@@ -1,7 +1,8 @@
+#include "graph.hpp"
+
 #include <boost/archive/iterators/base64_from_binary.hpp>
 #include <boost/archive/iterators/insert_linebreaks.hpp>
 #include <boost/archive/iterators/transform_width.hpp>
-//#include <boost/archive/iterators/ostream_iterator.hpp>
 #include <sstream>
 #include <iostream>
 #include <string>
@@ -24,6 +25,7 @@ typedef boost::archive::iterators::insert_linebreaks<
 #include <xercesc/util/XMLUni.hpp>
 #include <xercesc/dom/DOM.hpp>
 #include <xercesc/framework/StdOutFormatTarget.hpp>
+#include <xercesc/framework/LocalFileFormatTarget.hpp>
 #include <xercesc/dom/DOMNodeIterator.hpp>
 #include <xercesc/dom/DOMNodeFilter.hpp>
 
@@ -35,6 +37,20 @@ class NullFilter : public DOMNodeFilter {
 public:
 	virtual FilterAction acceptNode(const DOMNode*) const { return FILTER_ACCEPT; }
 };
+
+class TempXMLString {
+	XMLCh* ch;
+
+public:
+	TempXMLString(string str_) : ch(XMLString::transcode(str_.c_str())){};
+	TempXMLString(const char* s_) : ch(XMLString::transcode(s_)){}
+	TempXMLString() : ch(NULL){}
+
+	~TempXMLString(){ XMLString::release(&ch); }
+
+	operator const XMLCh*() const { return ch; }
+};
+
 
 void writePolyData(XMLFormatTarget* fmtTarget);
 
@@ -67,6 +83,8 @@ int main(int argc,char **argv)
 	XMLFormatTarget* myFmtTarget = new StdOutFormatTarget();
 	DOMLSOutput* op = ((DOMImplementationLS*)impl)->createLSOutput();
 	op->setByteStream(myFmtTarget);
+
+    XMLFormatTarget* fileFmtTarget = new LocalFileFormatTarget(TempXMLString("output.xml"));
 
 	DOMElement* el = doc->getDocumentElement();
 
@@ -105,32 +123,20 @@ int main(int argc,char **argv)
 	cout << "=================================================" << endl;
 	cout << "New XML file:" << endl;
 
-	//XMLFormatTarget* myFmtTarget = new StdOutFormatTarget();
 	writePolyData(myFmtTarget);
 
-	delete myFmtTarget;
+    writePolyData(fileFmtTarget);
+
 	doc->release();
 
 	XMLPlatformUtils::Terminate();
 }
 
-/*class TempXMLString {
-	XMLCh* ch;
-
-public:
-	TempXMLString(string str_) : ch(XMLString::transcode(str_.c_str())){};
-	TempXMLString(const char* s_) : ch(XMLString::transcode(s_)){}
-	TempXMLString() : ch(NULL){}
-
-	~TempXMLString(){ XMLString::release(&ch); }
-
-	operator const XMLCh*() const { return ch; }
-};*/
 
 class XMLStringTranscoder {
 	list<XMLCh*> p_list;
 
-	char tmp[256];
+	char tmp[256];          // used for sprintf call using variadic arguments
 
 public:
 
@@ -144,6 +150,8 @@ public:
 
 void writePolyData(XMLFormatTarget* fmtTarget)
 {
+    unsigned Nt=256;
+    unsigned Np=1024;
 	XMLStringTranscoder transcoder;
 
 	// File-dependent parts
@@ -159,17 +167,21 @@ void writePolyData(XMLFormatTarget* fmtTarget)
 
 	DOMElement* el = doc->getDocumentElement();
 	el->setAttribute(transcoder("type"),vtktype);
+    el->setAttribute(transcoder("version"),transcoder("0.1"));
+//    el->setAttribute(transcoder("byte_order"),transcoder("little_endian"));
 
-//	DOMNode* comm=doc->createComment(transcoder("Created by FOOBAR"));
-//	el->appendChild(comm);
+    DOMElement* polydata = doc->createElement(vtktype);
+    el->appendChild(polydata);
 
 	DOMElement* piece=doc->createElement(transcoder("Piece"));
-	el->appendChild(piece);
-	piece->setAttribute(transcoder("NumberOfPoints"),transcoder("%d",10));
-	piece->setAttribute(transcoder("NumberOfPolys"),transcoder("%d",69));
+
+	piece->setAttribute(transcoder("NumberOfPoints"),transcoder("%d",Np));
+	piece->setAttribute(transcoder("NumberOfPolys"),transcoder("%d",Nt));
 	piece->setAttribute(transcoder("NumberOfVerts"),transcoder("0"));
 	piece->setAttribute(transcoder("NumberOfLines"),transcoder("0"));
 	piece->setAttribute(transcoder("NumberOfStrips"),transcoder("0"));
+	polydata->appendChild(piece);
+
 
 	// Point data (coordinates)
 	DOMElement* pts=doc->createElement(transcoder("Points"));
@@ -177,12 +189,23 @@ void writePolyData(XMLFormatTarget* fmtTarget)
 
 	DOMElement *pts_data=doc->createElement(transcoder("DataArray"));
 	pts_data->setAttribute(transcoder("NumberOfComponents"),transcoder("%d",3));
-	pts_data->setAttribute(transcoder("type"),transcoder("float32"));
+	pts_data->setAttribute(transcoder("type"),transcoder("Float32"));
 	pts_data->setAttribute(transcoder("format"),transcoder("ascii"));
-	pts_data->setTextContent(transcoder("Points X Y Z W"));
+
+    // Transcode a whole lot of floats
+    {
+        stringstream ss;
+        ss << endl;
+        for(unsigned i=0;i<Np;++i)
+            ss << (0.1+i) << ' ' << (0.2+i) << ' ' << (0.3+i) << endl;
+    
+        XMLCh* xmls = XMLString::transcode(ss.str().c_str());
+        pts_data->setTextContent(xmls);
+    }
 	pts->appendChild(pts_data);
 
-	// PolyData -> Polys
+
+    // Here are the polygons
 	DOMElement *polys = doc->createElement(transcoder("Polys"));
 	piece->appendChild(polys);
 
@@ -190,12 +213,17 @@ void writePolyData(XMLFormatTarget* fmtTarget)
 	DOMElement *polys_conn = doc->createElement(transcoder("DataArray"));
 	polys_conn->setAttribute(transcoder("Name"),transcoder("connectivity"));
 	polys_conn->setAttribute(transcoder("type"),transcoder("Int32"));
-
 	{
-		unsigned Nf=20;
 		stringstream ss;
-		for(unsigned i=0;i<Nf;++i)
-			ss << 10*i << ' ' << 10*i+1 << ' ' << 10*i+2 << (i%10==9 ? '\n':' ');
+        ss << endl;
+		for(unsigned i=0;i<Nt;++i)
+        {
+			ss << 10*i << ' ' << 10*i+1 << ' ' << 10*i+2 << ' ' << 10*i+3;
+            if (i%10==9)
+                ss << endl;
+            else
+                ss << ' ';
+        }
 		polys_conn->setTextContent(transcoder(ss.str()));
 	}
 	polys->appendChild(polys_conn);
@@ -205,18 +233,25 @@ void writePolyData(XMLFormatTarget* fmtTarget)
 	polys_offs->setAttribute(transcoder("Name"),transcoder("offsets"));
 	polys_offs->setAttribute(transcoder("type"),transcoder("Int32"));
 
-	stringstream ss;
-	unsigned Nf=20;					// Nf should be a parameter
-	for(unsigned i=0;i<Nf;++i)		// offset points to end of index-list
-		ss << 3*i+2 << (i%10==9 ? '\n' : ' ');
-	polys_offs->setTextContent(transcoder(ss.str()));
-
-	polys->appendChild(polys_offs);
-
-	// PolyData -> CellData
+    {
+    	stringstream ss;
+        ss << endl;
+    	for(unsigned i=0;i<Nt;++i)		// offset points to end of index-list for each element
+        {
+	    	ss << 4*i+3;
+            if (i%10==9)
+                ss << endl;
+            else
+                ss << ' ';
+        }
+        ss << endl;
+    	polys_offs->setTextContent(transcoder(ss.str()));
+    
+	    polys->appendChild(polys_offs);
+    }
 
 	// CellData types: VTK_TRIANGLE=5, VTK_TETRA=10, VTK_POLY_LINE=4
-	DOMElement *cell_data = doc->createElement(transcoder("CellData"));
+/*	DOMElement *cell_data = doc->createElement(transcoder("CellData"));
 	cell_data->setAttribute(transcoder("Scalars"),transcoder("Emittance"));		// specifies the active data set
 	piece->appendChild(cell_data);
 
@@ -224,21 +259,12 @@ void writePolyData(XMLFormatTarget* fmtTarget)
 	data_emittance->setAttribute(transcoder("Name"),transcoder("Emittance"));
 	cell_data->appendChild(data_emittance);
 
-	// Cell data
-
-	// Types could be Scalars, Vectors, Normals, Tensors, TCoords
-
-	// Points
-
-	// Polys
-
-
 	DOMNode* n = doc->createElement(vtktype);
 	el->appendChild(n);
 
 	if(!doc)
 		cerr << "Error: null document" << endl;
-
+*/
 	try{
 		ls->write(doc,op);
 	}

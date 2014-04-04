@@ -18,6 +18,33 @@ ifeq ($(OS),Darwin)
 GCC_OPTS += -DPLATFORM_DARWIN
 endif
 
+test-ExtractBoundary: Test_ExtractBoundary
+	./Test_ExtractBoundary
+
+Test_ExtractBoundary: Test_ExtractBoundary.cpp
+	g++ -Wall -O3 -std=c++11 -mavx -msse4 -I/usr/local/include -I/usr/local/include/pgsql -I. -I/usr/local/include/boost -lboost_program_options -lboost_system -lpq -lmontecarlo -lfmpg -g -L/usr/local/lib/boost -L. $^ -o $@
+
+test-PointMapper: Test_PointMapper
+	./Test_PointMapper
+
+Test_PointMapper: Test_PointMapper.cpp
+	g++ -Wall -O3 -std=c++11 -mavx -I/usr/local/include -g $^ -o $@
+
+
+test: XMLExport
+	./XMLExport
+	vtk vtk_testXML.tcl
+
+testXML: XMLWriter
+	./XMLWriter
+	vtk vtk_testXML.tcl
+
+XMLWriter: XMLWriter.cpp
+	g++ -Wall -O3 -std=c++11 -g $^ -lxerces-c -o $@
+
+XMLExport: XMLExport.cpp
+	g++ -Wall -O3 -std=c++11 -I/usr/local/include/pgsql -I/usr/local/include/boost -I. -mavx -g -L. -lpq -lcrypto -lmontecarlo -lfmpg -lxerces-c $^ -o $@
+
 
 all: montecarlo
 
@@ -46,9 +73,6 @@ montecarlo: graph.o newgeom.o face.o helpers.o source.o montecarlo.o LoggerSurfa
 
 montecarlo-trace: graph.o newgeom.o face.o helpers.o source.o montecarlo.cpp LoggerSurface.o io_timos.o progress.o utils/writeFileVTK.o linefile.o fluencemap.o mainloop.o fm-postgres/fm-postgres.o blob.o fmdb.o fm-postgres/fmdbexportcase.o sse.o random.o SFMT.o LoggerConservation.o LoggerEvent.o LoggerVolume.o
 	g++ $(GCC_OPTS) -DLOG_MEMTRACE $^ $(INCLDIRS) $(LIBS) $(LIBDIRS) -o $@
-
-#montecarlo.a: graph.o newgeom.o face.o helpers.o source.o montecarlo.o optics.o logSurface.o io_timos.o progress.o utils/writeFileVTK.o linefile.o fluencemap.o mainloop.o fm-postgres/fm-postgres.o blob.o fmdb.o fm-postgres/fmdbexportcase.o sse.o random.o SFMT.o logConservation.o
-#	ar rcs $@ $^
 
 libmontecarlo.so: graph.o newgeom.o face.o helpers.o source.o montecarlo.o LoggerSurface.o io_timos.o progress.o utils/writeFileVTK.o linefile.o fluencemap.o mainloop.o blob.o fmdb.o sse.o random.o SFMT.o LoggerConservation.o LoggerEvent.o LoggerVolume.o
 	g++ -shared -fPIC $^ -Lfm-postgres -lfmpg -o $@
