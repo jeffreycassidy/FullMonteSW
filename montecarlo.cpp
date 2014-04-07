@@ -63,8 +63,7 @@ using namespace std;
 void banner()
 {
     cout << "FullMonte v0.0" << endl;
-    cout << "$Id: montecarlo.cpp 314 2013-11-01 01:13:27Z jcassidy $ (tree " << SVNVERSION << ')' << endl;
-    cout << "(c) Jeffrey Cassidy, 2012" << endl;
+    cout << "(c) Jeffrey Cassidy, 2014" << endl;
     cout << endl;
 }
 

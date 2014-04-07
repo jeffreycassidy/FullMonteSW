@@ -1,5 +1,5 @@
 # base options only
-GCC_OPTS=-Wall -mfpmath=sse -Wstrict-aliasing=2 -g -msse4 -DSVNVERSION=\"$(VERSION)\" -DSSE -mtune=core2 -march=core2 -fpermissive -std=c++0x -fPIC
+GCC_OPTS=-Wall -mfpmath=sse -Wstrict-aliasing=2 -g -msse4 -fpermissive -std=c++11 -fPIC
 LIBS=-lboost_program_options -lboost_timer -lpq -lcrypto -lboost_system
 LIBDIRS=-L/usr/local/lib -L/usr/local/lib/boost
 INCLDIRS=-I/usr/local/boost -I/usr/local/include -I. -I/usr/local/include/boost -I/usr/local/include/pgsql
@@ -68,13 +68,13 @@ SFMT.o: SFMT.c SFMT*.h
 %.o: %.cpp *.hpp
 	g++ $(GCC_OPTS) $(INCLDIRS) -fPIC -c $*.cpp -o $@
 
-montecarlo: graph.o newgeom.o face.o helpers.o source.o montecarlo.o LoggerSurface.o io_timos.o progress.o utils/writeFileVTK.o linefile.o fluencemap.o mainloop.o fm-postgres/fm-postgres.o blob.o fmdb.o fm-postgres/fmdbexportcase.o sse.o random.o SFMT.o LoggerConservation.o LoggerEvent.o LoggerVolume.o
+montecarlo: graph.o newgeom.o face.o helpers.o source.o montecarlo.o LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o mainloop.o fm-postgres/fm-postgres.o blob.o fmdb.o fm-postgres/fmdbexportcase.o sse.o random.o SFMT.o LoggerConservation.o LoggerEvent.o LoggerVolume.o
 	g++ $(GCC_OPTS) $^ $(LIBS) $(LIBDIRS) -o $@
 
-montecarlo-trace: graph.o newgeom.o face.o helpers.o source.o montecarlo.cpp LoggerSurface.o io_timos.o progress.o utils/writeFileVTK.o linefile.o fluencemap.o mainloop.o fm-postgres/fm-postgres.o blob.o fmdb.o fm-postgres/fmdbexportcase.o sse.o random.o SFMT.o LoggerConservation.o LoggerEvent.o LoggerVolume.o
+montecarlo-trace: graph.o newgeom.o face.o helpers.o source.o montecarlo.cpp LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o mainloop.o fm-postgres/fm-postgres.o blob.o fmdb.o fm-postgres/fmdbexportcase.o sse.o random.o SFMT.o LoggerConservation.o LoggerEvent.o LoggerVolume.o
 	g++ $(GCC_OPTS) -DLOG_MEMTRACE $^ $(INCLDIRS) $(LIBS) $(LIBDIRS) -o $@
 
-libmontecarlo.so: graph.o newgeom.o face.o helpers.o source.o montecarlo.o LoggerSurface.o io_timos.o progress.o utils/writeFileVTK.o linefile.o fluencemap.o mainloop.o blob.o fmdb.o sse.o random.o SFMT.o LoggerConservation.o LoggerEvent.o LoggerVolume.o
+libmontecarlo.so: graph.o newgeom.o face.o helpers.o source.o montecarlo.o LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o mainloop.o blob.o fmdb.o sse.o random.o SFMT.o LoggerConservation.o LoggerEvent.o LoggerVolume.o
 	g++ -shared -fPIC $^ -Lfm-postgres -lfmpg -o $@
 #	g++ -shared -fPIC $(LIBS) $(LIBDIRS) $^ -o $@
 
@@ -82,4 +82,4 @@ exportResult: exportResult.cpp libmontecarlo.so
 	g++ $(GCC_OPTS) $(INCLDIRS) $^ $(LIBS) $(LIBDIRS) -o $@
 
 clean: fm-postgres/clean
-	rm -f *.o sse_int montecarlo blobmaint texwriter
+	rm -f *.o *.a *.so sse_int montecarlo blobmaint texwriter
