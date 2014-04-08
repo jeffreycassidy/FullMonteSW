@@ -1,5 +1,5 @@
 # base options only
-GCC_OPTS=-Wall -std=c++11 -mfpmath=sse -fPIC -g -mavx -msse4 $(EXTRA_OPTS) -DSSE -DSVNVERSION=\"$(VERSION)\" -fabi-version=6
+GCC_OPTS=-Wall -mfpmath=sse -fPIC -g -std=c++11 -mavx $(EXTRA_OPTS) -fabi-version=6
 LIBS=-lboost_program_options -lboost_system -lboost_iostreams -lpq
 LIBDIRS=-L/usr/local/lib -L/usr/local/lib/boost -L.
 INCLDIRS=-I/usr/local/boost -I/usr/local/include -I/usr/local/include/boost -I/usr/local/include/pgsql -I..

@@ -19,6 +19,8 @@
 #include "blob.hpp"
 //#include "random.hpp"
 
+class MeshMapper;
+
 using namespace std;
 
 class Face {
@@ -93,6 +95,8 @@ struct Tetra {
     
 } __attribute__ ((aligned(64))) ;
 
+
+
 class TetraMesh {
     vector<unsigned>            T_m;        // tetra -> material mapping
     vector<unsigned>            T_r;        // tetra -> region mapping
@@ -101,7 +105,7 @@ class TetraMesh {
 	vector<TetraByPointID>      T_p;        // tetra -> 4 point IDs
     vector<FaceByPointID>       F_p;        // face ID -> 3 point IDs
 	vector<Face>			    F;          // faces (with normals and constants)
-	vector<pair<int,int> >      vecFaceID_Tetra;
+	vector<pair<int,int> >      vecFaceID_Tetra;        // for each face f, vecFaceID_Tetra[f] gives the tetras adjacent to the face
     vector<Tetra>               tetras;     // new SSE-friendly data structure
 
     // boundary data structures; map with key=volume-set ID, value=surface-set ID
@@ -259,6 +263,8 @@ class TetraMesh {
     // functions for saving tetramesh representations
     pair<unsigned,boost::shared_array<const uint8_t> > tetrasAsBinary() const;
     pair<unsigned,boost::shared_array<const uint8_t> > pointsAsBinary() const;
+
+    friend MeshMapper listSurface(TetraMesh*);
 };
 
 

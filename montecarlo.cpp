@@ -75,7 +75,7 @@ using namespace std;
 
 void banner()
 {
-    cout << "FullMonte v0.9" << endl;
+    cout << "FullMonte v0.0" << endl;
     cout << "(c) Jeffrey Cassidy, 2014" << endl;
     cout << endl;
 }

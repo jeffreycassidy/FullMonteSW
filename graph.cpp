@@ -10,21 +10,7 @@
 
 #include "Material.hpp"
 
-using namespace std;
-
-// compares two FixedArrays lexicographically
-    template<unsigned D>class FACompare {
-        public:
-        bool operator()(const FixedArray<D,double>&a,const FixedArray<D,double>&b){
-            for(unsigned i=0;i<D;++i){
-                if(a[i] < b[i])
-                    return true;
-                else if (a[i] > b[i])
-                    return false;
-            }
-            return false;
-        }
-    };
+//const float Material::const_c0=299.792458;    // units of mm/ns (3e8 m/s = 3e11 mm/s = 3e2 mm/ns)
 
 // constructor: loads a file of specified type & converts to internal representation
 TetraMesh::TetraMesh(string fn,TetraFileType type)
@@ -203,7 +189,8 @@ bool TetraMesh::readFileMatlabTP(string fn)
     TetraByPointID IDps;
 	for (vector<TetraByPointID>::iterator it=T_p.begin()+1; it != T_p.end(); ++it,++i)
 	{
-		is >> IDps >> T_m[i];
+		is >> IDps;
+		is >> T_m[i];
         *it=IDps.getSort();
         tetraMap.insert(make_pair(*it,i));
 		max_m = max(max_m,T_m[i]);

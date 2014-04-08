@@ -100,14 +100,15 @@ uint64_t fromNetworkOrder_blah(uint64_t b)   { return ntohl((uint64_t)(b >> 32))
 
 template<>void unpackPGVariable(const char* p,string& s){ s.assign(p); }
 template<>void unpackPGVariable(const char* p,boost::tuples::null_type&){}
-template<>void unpackPGVariable(const char* p,FaceByPointID& d){ unpackPGVariable(p,(FixedArray<3,unsigned>&)d); }
+template<>void unpackPGVariable(const char* p,FaceByPointID& d){ unpackPGVariable(p,(array<unsigned,3>&)d); }
+template<>void unpackPGVariable(const char* p,Point<3,double>& P){ unpackPGVariable(p,(array<double,3>&)P); }
 
 void unpackPGRow(const PGConnection::ResultType&,boost::tuples::null_type,unsigned,unsigned){}
 void unpackPGRow(const uint8_t* p,boost::tuples::null_type){}
 
 template<>void packPGVariable(const char* const& s, uint8_t* p){ copy(s,s+strlen(s)+1,p); }
 template<>void packPGVariable(const string& s,uint8_t* p){ copy(s.begin(),s.end()+1,p); }
-template<>void packPGVariable(const FaceByPointID& d,uint8_t* p){ packPGVariable((const FixedArray<3,unsigned>&)d,p); }
+template<>void packPGVariable(const FaceByPointID& d,uint8_t* p){ packPGVariable((const array<unsigned,3>&)d,p); }
 
 PGConnection::PGConnection(const string& connstr) : conn(NULL)
 {

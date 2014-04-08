@@ -156,3 +156,37 @@ TetraMesh* exportMesh(PGConnection& dbconn, unsigned IDc)
 
     return m;
 }
+
+
+/** Exports a result dataset
+ *
+ * @param conn Database connection pointer
+ * @param IDr	Run ID to export
+ * @param dType	Datatype (1=surface, 2=volume)
+ * @param mesh	Associated mesh
+ */
+
+FluenceMapBase* exportResultSet(PGConnection* conn,unsigned IDr,unsigned dType,const TetraMesh* mesh=NULL)
+{
+    unsigned long long packets;
+    FluenceMapBase* data;
+
+    Oid data_oid;
+
+    PGConnection::ResultType res = conn->execParams("SELECT data_oid,launch FROM resultdata JOIN runresults ON runresults.runid=resultdata.runid WHERE resultdata.runid=$1 AND datatype=$2;",
+        boost::tuples::make_tuple(IDr,dType));
+    unpackSinglePGRow(res,boost::tuples::tie(data_oid,packets));
+
+//    cout << "Run " << globalopts::runs[0] << ": " << packets_a << " launched" << endl;
+
+    switch(dType){
+        case 1: data = new SurfaceFluenceMap(mesh); break;
+        case 2: data = new VolumeFluenceMap(mesh);  break;
+        default: throw string("Error in exportResultSet: invalid datatype");
+    }
+
+    Blob b = conn->loadLargeObject(data_oid);
+    data->fromBinary(b,packets);
+
+    return data;
+}

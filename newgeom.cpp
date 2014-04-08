@@ -70,12 +70,13 @@ bool PointInTriangle(Point<3,double> P,UnitVector<3,double> d,Point<3,double> T[
 
 FaceByPointID TetraByPointID::getFace(unsigned faceNum)
 {
-	unsigned tmp[3] = { p[0],p[1],p[2] };
+	unsigned tmp[3];
+	copy(begin(),end(),tmp);
 	switch(faceNum){
 		case 0: break;
-		case 1: tmp[1]=p[2]; tmp[2]=p[3]; break;
-		case 2: tmp[1]=p[3]; tmp[2]=p[1]; break;
-		case 3: tmp[0]=p[1]; tmp[1]=p[3]; break;
+		case 1: tmp[1]=(*this)[2]; tmp[2]=(*this)[3]; break;
+		case 2: tmp[1]=(*this)[3]; tmp[2]=(*this)[1]; break;
+		case 3: tmp[0]=(*this)[1]; tmp[1]=(*this)[3]; break;
 		default: assert(0);
 	}
 	return FaceByPointID(tmp);
@@ -84,10 +85,10 @@ FaceByPointID TetraByPointID::getFace(unsigned faceNum)
 unsigned TetraByPointID::getOppositePoint(unsigned faceNum) const
 {
 	switch(faceNum){
-		case 0: return p[3];
-		case 1: return p[1];
-		case 2: return p[2];
-		case 3: return p[0]; 
+		case 0: return (*this)[3];
+		case 1: return (*this)[1];
+		case 2: return (*this)[2];
+		case 3: return (*this)[0];
 		default: assert(0); 
 	}
     return -1;
@@ -182,3 +183,43 @@ UnitVector<3,double> uvectFrom(__m128 v)
 //inline float fabs(__m128 x){ return fabs(_mm_cvtss_f32(x)); }
 
 
+std::ostream& operator<<(std::ostream& os,const FaceByPointID& F)
+{
+	os << '(';
+	for(int i=0; i<3; ++i){ os << F[i] << (i<2? ',' : ')'); }
+	return os;
+}
+
+
+std::istream& operator>>(std::istream& is,TetraByPointID& P)
+{
+	is >> std::skipws;
+	bool paren=false;
+
+	if(is.peek()=='('){ paren=true; is.ignore(1); }
+	for(int i=0; i<4; ++i){ is >> P[i]; if(i < 3 && is.peek()==','){ is.ignore(1); } }
+	if (paren){ is.ignore(1); }
+	return is;
+}
+
+std::istream& operator>>(std::istream& is,FaceByPointID& F)
+{
+	is >> std::skipws;
+	bool paren=false;
+
+	if(is.peek()=='('){ paren=true; is.ignore(1); }
+	for(int i=0; i<3; ++i){ is >> F[i]; if(i < 3 && is.peek()==','){ is.ignore(1); } }
+	if (paren){ is.ignore(1); }
+	return is;
+}
+
+std::ostream& operator<<(std::ostream& os,TetraByPointID& T)
+{
+	return os << "Tetra <" << T[0] << ',' << T[1] << ',' << T[2] << ',' << T[3] << '>';
+}
+
+
+std::ostream& operator<<(std::ostream& os,FaceByPointID& F)
+{
+	return os << "Face <" << F[0] << ',' << F[1] << ',' << F[2] << '>';
+}
