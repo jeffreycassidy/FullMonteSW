@@ -10,7 +10,19 @@
 
 #include "fluencemap.hpp"
 
-MeshMapper listSurface(TetraMesh* M);
+MeshMapper listSurface(const TetraMesh* M,unsigned region);
+
+void writeSurface(const TetraMesh* M,unsigned region)
+{
+	MeshMapper mm = listSurface(M,region);
+	DOMDocument *doc = xml_createVTKFileDoc();
+	DOMElement* el = doc->getDocumentElement();
+	xml_createVTKSurfaceMesh(el,&mm);
+	stringstream ss;
+	ss << "output.surface" << region << ".xml";
+	xml_writeFile(ss.str(),doc);
+	doc->release();
+}
 
 int main(int argc,char **argv)
 {
@@ -19,7 +31,7 @@ int main(int argc,char **argv)
     TetraMesh *M = exportMesh(*(dbconn.get()),1);
 
     // do the mapping
-    MeshMapper mm = listSurface(M);
+    MeshMapper mm = listSurface(M,0);
 
     // get surface fluence results
     FluenceMapBase *phi = exportResultSet(dbconn.get(),1234,1,M);
@@ -32,15 +44,17 @@ int main(int argc,char **argv)
 	xml_writeFile("output.xml",doc);
 	doc->release();
 
-
 	DOMDocument *doc2 = xml_createVTKFileDoc();
 	DOMElement* el2 = doc2->getDocumentElement();
 	xml_createVTKSurfaceMesh(el2,&mm,&phi_v);
 	xml_writeFile("output_stripped.xml",doc2);
 	doc2->release();
+
+	for(unsigned i=0;i<18M->;++i)
+		writeSurface(M,i);
 }
 
-MeshMapper listSurface(TetraMesh* M)
+MeshMapper listSurface(const TetraMesh* M,unsigned region)
 {
     unsigned i=1,j=0;
 
@@ -51,7 +65,7 @@ MeshMapper listSurface(TetraMesh* M)
     for(auto it = M->vecFaceID_Tetra.begin()+1; it != M->vecFaceID_Tetra.end(); ++it,++i)
     {
     	// check if the face touches the outside world
-        if (it->first==0 || it->second == 0)
+        if (M->T_m[it->first] != M->T_m[it->second] && (M->T_m[it->first]==region || M->T_m[it->second] == region))
         {
         	// mark face
             Fmap[i] = ++j;
@@ -62,7 +76,7 @@ MeshMapper listSurface(TetraMesh* M)
         }
     }
     unsigned Nps = count(Pmap.begin()+1,Pmap.end(),1);
-    cout << "Found " << j << " surface faces, " << Nps << " surface points (of a total " << Pmap.size() << ")" << endl;
+    cout << "Region code " << region << ": Found " << j << " surface faces, " << Nps << " surface points (of a total " << Pmap.size() << ")" << endl;
 
     j=0;
     for(unsigned long& pm : Pmap)
@@ -73,7 +87,4 @@ MeshMapper listSurface(TetraMesh* M)
     cout << "  Output " << j << " points" << endl;
 
     return mm;
-
-    //for(auto it : vector_index_adaptor<unsigned long,unsigned long>(Fmap,0U))
-        //cout << it.get<0>() << ": " << it.get<1>() << endl;
 }

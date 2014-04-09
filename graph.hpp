@@ -264,7 +264,7 @@ class TetraMesh {
     pair<unsigned,boost::shared_array<const uint8_t> > tetrasAsBinary() const;
     pair<unsigned,boost::shared_array<const uint8_t> > pointsAsBinary() const;
 
-    friend MeshMapper listSurface(TetraMesh*);
+    friend MeshMapper listSurface(const TetraMesh*,unsigned);
 };
 
 

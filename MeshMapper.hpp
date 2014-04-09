@@ -18,47 +18,6 @@ using namespace std;
 #include <boost/iterator/transform_iterator.hpp>
 #include <boost/iterator/filter_iterator.hpp>
 
-#ifdef USE_DUMMY
-
-typedef array<unsigned long,3> FaceByPointID_;
-typedef array<unsigned long,4> TetraByPointID_;
-
-class TetraMeshDummy {
-
-    public:
-    vector<array<double,3>> P;
-    vector<FaceByPointID_> F;
-    vector<TetraByPointID_> T_p;
-
-    TetraMeshDummy(unsigned n_=0) : P(n_){}
-
-    typedef vector<array<double,3> >::const_iterator point_const_iterator;
-    typedef vector<FaceByPointID_>::const_iterator face_id_const_iterator;
-    typedef vector<TetraByPointID_>::const_iterator tetra_const_iterator;
-
-    unsigned getNp() const { return P.size()-1; }
-    unsigned getNf() const { return F.size()-1; }
-    unsigned getNt() const { return T_p.size()-1; }
-
-    point_const_iterator pointBegin() const { return P.begin()+1; }
-    point_const_iterator pointEnd()   const { return P.end(); }
-
-    face_id_const_iterator faceIDBegin() const { return F.begin()+1; }
-    face_id_const_iterator faceIDEnd() const { return F.end(); }
-
-    tetra_const_iterator tetraIDBegin() const { return T_p.begin()+1; }
-    tetra_const_iterator tetraIDEnd()   const { return T_p.end();     }
-};
-
-typedef TetraMeshDummy TetraMesh;
-
-#else
-
-typedef FaceByPointID FaceByPointID_;
-typedef TetraByPointID TetraByPointID_;
-
-#endif
-
 template<class Payload>class LookupNonZero {
     const vector<unsigned long>& lut;
     public:
@@ -136,7 +95,7 @@ template<class T>class Lookup<boost::tuple<unsigned long,T>,boost::tuple<unsigne
 
 // typedefs to do face & tetra remapping
 typedef Lookup<boost::tuple<unsigned long,FaceByPointID>,boost::tuple<unsigned long,FaceByPointID> > FaceRemap;
-typedef Lookup<boost::tuple<unsigned long,TetraByPointID_>,boost::tuple<unsigned long,TetraByPointID_> > TetraRemap;
+typedef Lookup<boost::tuple<unsigned long,TetraByPointID>,boost::tuple<unsigned long,TetraByPointID> > TetraRemap;
 
 template<class Idx,class ItemIterator>boost::zip_iterator<boost::tuple<boost::counting_iterator<Idx>,ItemIterator> >
     make_indexed_iterator(ItemIterator it,Idx i0_=0)
@@ -187,6 +146,7 @@ class MeshMapper {
 	unsigned getNf() const { return Nf; }
 	unsigned getNt() const { return Nt; }
 
+	// TODO: Could save a bit of time by using forwarding/move semantics for the vectors here
 	MeshMapper(const TetraMesh& M_,const vector<unsigned long>& Pmap_,const vector<unsigned long>& Fmap_,const vector<unsigned long>& Tmap_) :
 		Pmap(Pmap_),Fmap(Fmap_),Tmap(Tmap_),M(M_),
 		Np(count_if(Pmap_.begin(),Pmap_.end(),nonzero<unsigned>)),
@@ -246,7 +206,7 @@ class MeshMapper {
         typedef boost::zip_iterator<
             boost::tuple<
                 boost::counting_iterator<unsigned long>,
-                vector<FaceByPointID_>::const_iterator> > numbered_point_iterator;
+                vector<FaceByPointID>::const_iterator> > numbered_point_iterator;
 
         // filter out those which map to zero
         typedef boost::filter_iterator<
@@ -290,11 +250,11 @@ class MeshMapper {
         typedef boost::zip_iterator<
             boost::tuple<
                 boost::counting_iterator<unsigned long>,
-                vector<TetraByPointID_>::const_iterator> > numbered_tetra_iterator;
+                vector<TetraByPointID>::const_iterator> > numbered_tetra_iterator;
 
         // filter out those which map to zero
         typedef boost::filter_iterator<
-            LookupNonZero<TetraByPointID_>,
+            LookupNonZero<TetraByPointID>,
             numbered_tetra_iterator> filtered_iterator;
 
         typedef boost::transform_iterator<
@@ -304,16 +264,16 @@ class MeshMapper {
         const_iterator begin() const {
                 return const_iterator(
                     filtered_iterator(
-                        LookupNonZero<TetraByPointID_>(Tmap),
-                        make_indexed_iterator<unsigned long,vector<TetraByPointID_>::const_iterator> (M.tetraIDBegin(), 1UL)),
+                        LookupNonZero<TetraByPointID>(Tmap),
+                        make_indexed_iterator<unsigned long,vector<TetraByPointID>::const_iterator> (M.tetraIDBegin(), 1UL)),
                     TetraRemap(Pmap));
         }
 
         const_iterator end() const {
                 return const_iterator(
                     filtered_iterator(
-                        LookupNonZero<TetraByPointID_>(Tmap),
-                        make_indexed_iterator<unsigned long,vector<TetraByPointID_>::const_iterator> (M.tetraIDEnd(), M.getNt()+1)),
+                        LookupNonZero<TetraByPointID>(Tmap),
+                        make_indexed_iterator<unsigned long,vector<TetraByPointID>::const_iterator> (M.tetraIDEnd(), M.getNt()+1)),
                     TetraRemap(Pmap));
             }
     };
@@ -345,7 +305,6 @@ class MeshMapper {
     const PointMapper& points=pm;
     const TetraMapper& tetras=tm;
     const FaceMapper&  faces=fm;
-
 };
 
 template<class T,unsigned long N>ostream& operator<<(ostream& os,const array<T,N>& a)
