@@ -34,8 +34,11 @@ int main(int argc,char **argv)
     MeshMapper mm = listSurface(M,0);
 
     // get surface fluence results
-    FluenceMapBase *phi = exportResultSet(dbconn.get(),1234,1,M);
+    FluenceMapBase *phi = exportResultSet(dbconn.get(),2887,1,M);
     vector<double> phi_v = phi->toVector(M->getNf());
+
+    VolumeFluenceMap *phi_vol = (VolumeFluenceMap*)exportResultSet(dbconn.get(),2887,2,M);
+    vector<double> phi_vv = phi_vol->toVector(M->getNt()+1);
 
     // Create output document DOM model
     DOMDocument* doc = xml_createVTKFileDoc();
@@ -50,8 +53,12 @@ int main(int argc,char **argv)
 	xml_writeFile("output_stripped.xml",doc2);
 	doc2->release();
 
-	for(unsigned i=0;i<18M->;++i)
+	for(unsigned i=0;i<18;++i)
 		writeSurface(M,i);
+
+	doc = xml_createVTKFileDoc();
+	xml_createVTKVolumeMesh(doc,M,&phi_vv);
+	xml_writeFile("volume_mesh.xml",doc);
 }
 
 MeshMapper listSurface(const TetraMesh* M,unsigned region)

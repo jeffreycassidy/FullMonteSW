@@ -88,7 +88,7 @@ DOMNode* xml_createVTKSurfaceMesh(DOMElement* el,const MeshMapper* M,const vecto
 		cout << "Point permutation has size " << perm.size() << endl;
 
 		// write it
-		xml_createVTKSurfaceScalarData(piece,"Emittance",
+		xml_createVTKCellScalarData(piece,"Emittance",
 			boost::make_permutation_iterator(data->begin(),perm.begin()),
 			boost::make_permutation_iterator(data->end()  ,perm.end())  );
 	}
@@ -99,6 +99,32 @@ DOMNode* xml_createVTKSurfaceMesh(DOMElement* el,const MeshMapper* M,const vecto
 }
 
 
+/** Creates a DOM XML representation of a VTK tracer output from TetraMesh M.
+ *
+ */
+
+DOMNode* xml_createVTKTracer(DOMElement* el,const vector<array<float,3>>& points,const vector<unsigned long>& offsets)
+{
+	DOMDocument* doc = el->getOwnerDocument();
+
+    // PolyData section
+    DOMElement* polydata = doc->createElement(XMLAutoTranscoder("UnstructuredGrid"));
+
+    // PolyData -> Piece section
+	DOMElement* piece=doc->createElement(XMLAutoTranscoder("Piece"));
+
+	polydata->appendChild(piece);
+
+	// write the points under this piece
+	xml_writePoints(piece,points.begin(),points.end());
+
+	// write the polydata (triangular faces) now
+	xml_writePolyLines(piece,offsets.begin(),offsets.end());
+
+	el->appendChild(polydata);
+
+    return polydata;
+}
 
 /** Writes a DOMDocument out to a file
  * @param fn File name
@@ -134,4 +160,29 @@ void xml_writeFile(string fn,DOMDocument* doc)
 	cout << "  Done" << endl;
 
 	delete fileFmtTarget;
+}
+
+DOMNode* xml_createVTKVolumeMesh(DOMDocument* doc,const TetraMesh* M,const vector<double>* data)
+{
+    // PolyData section
+	DOMElement* el = doc->getDocumentElement();
+    DOMElement* celldata = doc->createElement(XMLAutoTranscoder("UnstructuredGrid"));
+
+    // PolyData -> Piece section
+	DOMElement* piece=doc->createElement(XMLAutoTranscoder("Piece"));
+
+	celldata->appendChild(piece);
+
+	// write the points under this piece
+	xml_writePoints(piece,M->pointBegin(),M->pointEnd());
+
+	// write the celldata (triangular faces) now
+	xml_writeTetras(piece,M->tetraIDBegin(),M->tetraIDEnd());
+
+	if (data)
+		xml_createVTKCellScalarData(piece,"Fluence",data->begin()+1,data->end());
+
+	el->appendChild(celldata);
+
+    return celldata;
 }

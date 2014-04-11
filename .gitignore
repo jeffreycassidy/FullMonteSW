@@ -31,3 +31,4 @@ Test_VectorMatSpin
 Test_AccumulationArray
 Testing
 *.xml
+tracer.*.bin

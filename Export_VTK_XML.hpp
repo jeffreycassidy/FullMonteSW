@@ -13,13 +13,20 @@ using namespace xercesc;
 DOMDocument* xml_createVTKFileDoc();
 DOMNode* xml_createVTKSurfaceMesh(DOMElement* doc,const TetraMesh* M);
 DOMNode* xml_createVTKSurfaceMesh(DOMElement* el,const MeshMapper* M,const vector<double>* data=NULL);
+DOMNode* xml_createVTKTracer(DOMElement* el,const vector<array<float,3>>& points,const vector<unsigned long>& offsets);
+
+DOMNode* xml_createVTKVolumeMesh(DOMDocument* doc,const TetraMesh* M,const vector<double>*data=NULL);
 
 void xml_writeFile(string fn,DOMDocument* doc);
+
+template<class Iterator>DOMNode* xml_writePolyLines(DOMElement* piece,Iterator begin,Iterator end);
+
+template<class TetraIterator>DOMNode* xml_writeTetras(DOMElement* piece,TetraIterator begin,TetraIterator end);
 
 template<class Iterator>DOMNode* xml_writePolys(DOMElement* piece,Iterator begin,Iterator end);
 template<class Iterator>DOMNode* xml_writePoints(DOMElement* piece,Iterator begin,Iterator end);
 
-template<class Iterator>DOMNode* xml_createVTKSurfaceScalarData(DOMElement* el,string dataname,Iterator begin,Iterator end);
+template<class Iterator>DOMNode* xml_createVTKCellScalarData(DOMElement* el,string dataname,Iterator begin,Iterator end);
 
 class GlobalXMLState {
 	bool initialized;
@@ -113,12 +120,12 @@ template<class Iterator>DOMNode* xml_writePoints(DOMElement* piece,Iterator begi
  *
  */
 
-template<class Iterator>DOMNode* xml_createVTKSurfaceScalarData(DOMElement* el,string dataname,Iterator begin,Iterator end)
+template<class Iterator>DOMNode* xml_createVTKCellScalarData(DOMElement* el,string dataname,Iterator begin,Iterator end)
 {
 	DOMDocument* doc = el->getOwnerDocument();
 
 	DOMElement* celldata = doc->createElement(XMLAutoTranscoder("CellData"));
-	celldata->setAttribute(XMLAutoTranscoder("Scalars"),XMLAutoTranscoder("Emittance"));
+	celldata->setAttribute(XMLAutoTranscoder("Scalars"),XMLAutoTranscoder(dataname));
 
 	el->appendChild(celldata);
 
@@ -143,7 +150,7 @@ template<class Iterator>DOMNode* xml_createVTKSurfaceScalarData(DOMElement* el,s
     	XMLCh* xmls = XMLString::transcode(ss.str().c_str());
     	dataarray->setTextContent(xmls);
     }
-    dataarray->setAttribute(XMLAutoTranscoder("NumberOfPoints"),XMLAutoTranscoder("%d",N));
+    //dataarray->setAttribute(XMLAutoTranscoder("NumberOfPoints"),XMLAutoTranscoder("%d",N));
 
     celldata->appendChild(dataarray);
 
@@ -213,6 +220,167 @@ template<class Iterator>DOMNode* xml_writePolys(DOMElement* piece,Iterator begin
 		polys->appendChild(polys_offs);
 	}
 	piece->setAttribute(XMLAutoTranscoder("NumberOfPolys"),XMLAutoTranscoder("%d",Nf));
+
+	return piece;
+}
+
+
+
+
+/** Writes out a set of VTK PolyLines using an Iterator range.
+ * If the Iterator gives sequence i_0 i_1 i_2 .. i_N, then connectivity is the N ranges [i_0,i_1) [i_1,i_2) ... [i_N-1,i_N)
+ *
+ * @tparam Iterator Iterator which dereferences to the end offset of each polyline
+ */
+
+template<class Iterator>DOMNode* xml_writePolyLines(DOMElement* piece,Iterator begin,Iterator end)
+{
+	DOMDocument* doc=piece->getOwnerDocument();
+
+	// Here are the Lines
+	DOMElement *cells = doc->createElement(XMLAutoTranscoder("Cells"));
+	piece->appendChild(cells);
+
+	// PolyData -> Piece -> Lines -> DataArray (offsets)
+	DOMElement *cells_offs = doc->createElement(XMLAutoTranscoder("DataArray"));
+	cells_offs->setAttribute(XMLAutoTranscoder("Name"),XMLAutoTranscoder("offsets"));
+	cells_offs->setAttribute(XMLAutoTranscoder("type"),XMLAutoTranscoder("Int32"));
+	unsigned long Nl=0,Np=0;
+
+	{
+		stringstream ss;
+		ss << endl;
+		for(auto it = begin; it != end; ++it,++Nl)
+		{
+			ss << *it;
+			if (Nl % 10 == 9)
+				ss << endl;
+			else
+				ss << ' ';
+			Np=*it;
+		}
+		ss << endl;
+		cells_offs->setTextContent(XMLAutoTranscoder(ss.str()));
+		cells->appendChild(cells_offs);
+	}
+
+	// PolyData -> Piece -> Polys -> DataArray (connectivity)
+	DOMElement *cells_conn = doc->createElement(XMLAutoTranscoder("DataArray"));
+	cells_conn->setAttribute(XMLAutoTranscoder("Name"),XMLAutoTranscoder("connectivity"));
+	cells_conn->setAttribute(XMLAutoTranscoder("type"),XMLAutoTranscoder("Int32"));
+
+	{
+		stringstream ss;
+		ss << endl;
+		for(unsigned long o=0; o<Np; ++o)
+		{
+			ss << o;
+			if (o%10==9)
+				ss << endl;
+			else
+				ss << ' ';
+		}
+		cells_conn->setTextContent(XMLAutoTranscoder(ss.str()));
+	}
+	cells->appendChild(cells_conn);
+
+	// PolyData -> Piece -> Polys -> DataArray (connectivity)
+	DOMElement *cells_types = doc->createElement(XMLAutoTranscoder("DataArray"));
+	cells_types->setAttribute(XMLAutoTranscoder("Name"),XMLAutoTranscoder("types"));
+	cells_types->setAttribute(XMLAutoTranscoder("type"),XMLAutoTranscoder("Int32"));
+
+	{
+		stringstream ss;
+		ss << endl;
+		for(unsigned long o=0; o<Nl; ++o)
+		{
+			ss << '4';			// VTK_POLY_LINE=4
+			if (o%10==9)
+				ss << endl;
+			else
+				ss << ' ';
+		}
+		cells_types->setTextContent(XMLAutoTranscoder(ss.str()));
+	}
+	cells->appendChild(cells_types);
+
+	piece->setAttribute(XMLAutoTranscoder("NumberOfCells"),XMLAutoTranscoder("%d",Nl));
+
+	return piece;
+}
+
+
+/** Writes out a set of VTK Tetras using an Iterator range.
+ * Iterator must dereference to a TetraByPointID, and the corresponding point array must have been provided
+ *
+ * @tparam TetraIterator Iterator which dereferences to TetraByPointID
+ */
+
+template<class TetraIterator>DOMNode* xml_writeTetras(DOMElement* piece,TetraIterator begin,TetraIterator end)
+{
+	DOMDocument* doc=piece->getOwnerDocument();
+
+	// Here are the Lines
+	DOMElement *cells = doc->createElement(XMLAutoTranscoder("Cells"));
+	piece->appendChild(cells);
+
+	// CellData -> Piece -> Cells -> DataArray (connectivity)
+	DOMElement *cells_conn = doc->createElement(XMLAutoTranscoder("DataArray"));
+	cells_conn->setAttribute(XMLAutoTranscoder("Name"),XMLAutoTranscoder("connectivity"));
+	cells_conn->setAttribute(XMLAutoTranscoder("type"),XMLAutoTranscoder("Int32"));
+
+	unsigned long Nt=0;
+	{
+		stringstream ss;
+		ss << endl;
+		for(TetraIterator it=begin; it != end; ++it,++Nt)
+			ss << (*it)[0]-1 << ' ' << (*it)[1]-1 << ' ' << (*it)[2]-1 << ' ' << (*it)[3]-1 << endl;
+		cells_conn->setTextContent(XMLAutoTranscoder(ss.str()));
+	}
+	cells->appendChild(cells_conn);
+
+	// CellData -> Piece -> Cells -> DataArray (offsets)
+	DOMElement *cells_offs = doc->createElement(XMLAutoTranscoder("DataArray"));
+	cells_offs->setAttribute(XMLAutoTranscoder("Name"),XMLAutoTranscoder("offsets"));
+	cells_offs->setAttribute(XMLAutoTranscoder("type"),XMLAutoTranscoder("Int32"));
+
+	{
+		stringstream ss;
+		ss << endl;
+		for(unsigned i=0; i<Nt; ++i)
+		{
+			ss << (4*(i+1));
+			if (Nt % 10 == 9)
+				ss << endl;
+			else
+				ss << ' ';
+		}
+		ss << endl;
+		cells_offs->setTextContent(XMLAutoTranscoder(ss.str()));
+		cells->appendChild(cells_offs);
+	}
+
+	// CellData -> Piece -> Cells -> DataArray (connectivity)
+	DOMElement *cells_types = doc->createElement(XMLAutoTranscoder("DataArray"));
+	cells_types->setAttribute(XMLAutoTranscoder("Name"),XMLAutoTranscoder("types"));
+	cells_types->setAttribute(XMLAutoTranscoder("type"),XMLAutoTranscoder("Int32"));
+
+	{
+		stringstream ss;
+		ss << endl;
+		for(unsigned long o=0; o<Nt; ++o)
+		{
+			ss << "10";			// VTK_TETRA=10
+			if (o%10==9)
+				ss << endl;
+			else
+				ss << ' ';
+		}
+		cells_types->setTextContent(XMLAutoTranscoder(ss.str()));
+	}
+	cells->appendChild(cells_types);
+
+	piece->setAttribute(XMLAutoTranscoder("NumberOfCells"),XMLAutoTranscoder("%d",Nt));
 
 	return piece;
 }
