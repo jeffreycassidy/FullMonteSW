@@ -2,9 +2,12 @@
 #define SOURCE_INCLUDED
 #include "graph.hpp"
 #include "newgeom.hpp"
+#include "Packet.hpp"
 
 #include <boost/iterator/transform_iterator.hpp>
 #include <boost/random/discrete_distribution.hpp>
+
+#include "RandomAVX.hpp"
 
 #include "sse.hpp"
 
@@ -14,7 +17,7 @@
 
 typedef __m128 UnitVectorType;
 
-typedef RNG_SFMT RNG_Type;
+typedef RNG_SFMT_AVX RNG_Type;
 
 class Source {
     double w;

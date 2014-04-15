@@ -3,7 +3,6 @@
 #include "graph.hpp"
 #include <limits>
 #include <sstream>
-#include "random.hpp"
 
 string PencilBeamSource::timos_str(unsigned long long Np) const
 {
@@ -199,7 +198,7 @@ bool PointSource::prepare(const TetraMesh& m)
 pair<Point<3,double>,unsigned> VolumeSource::getOrigin(RNG_Type& rng) const
 {
     double p[3],src[3];
-    double rnd[3] = { rng.draw_double_u01(), rng.draw_double_u01(), rng.draw_double_u01() };
+    double rnd[3] = { rng.draw_float_u01(), rng.draw_float_u01(), rng.draw_float_u01() };
     if (rnd[0]+rnd[1] > 1.0)
     {
         rnd[0] = 1.0-rnd[0];

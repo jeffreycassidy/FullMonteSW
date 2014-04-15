@@ -58,31 +58,6 @@ namespace globalopts {
     vector<unsigned> runs;
 };
 
-FluenceMapBase* exportResultSet(PGConnection* conn,unsigned IDr,unsigned dType,const TetraMesh* mesh=NULL)
-{
-    unsigned long long packets;
-    FluenceMapBase* data;
-
-    Oid data_oid;
-
-    PGConnection::ResultType res = conn->execParams("SELECT data_oid,launch FROM resultdata JOIN runresults ON runresults.runid=resultdata.runid WHERE resultdata.runid=$1 AND datatype=$2;",
-        boost::tuples::make_tuple(IDr,dType));
-    unpackSinglePGRow(res,boost::tuples::tie(data_oid,packets));
-
-//    cout << "Run " << globalopts::runs[0] << ": " << packets_a << " launched" << endl;
-
-    switch(dType){
-        case 1: data = new SurfaceFluenceMap(mesh); break;
-        case 2: data = new VolumeFluenceMap(mesh);  break;
-        default: throw string("Error in exportResultSet: invalid datatype");
-    }
-
-    Blob b = conn->loadLargeObject(data_oid);
-    data->fromBinary(b,packets);
-
-    return data;
-}
-
 void renderScene(const list<vtkSmartPointer<vtkProp> >& props);
 vtkSmartPointer<vtkActor> renderSurface(const TetraMesh& mesh);
 vtkSmartPointer<vtkActor> renderFluence(const TetraMesh& mesh,SurfaceFluenceMap& surf,bool logScale,pair<double,double> range,bool=false);
@@ -161,6 +136,8 @@ int main(int argc,char **argv)
         pl *= 0.01;
         pu *= 0.01;
     }
+
+    try {
 
     SurfaceFluenceMap *surf_a=NULL,*surf_b=NULL;
 
@@ -262,6 +239,16 @@ int main(int argc,char **argv)
     props.push_back(scaleBar);
 
     renderScene(props);
+
+    }
+    catch(string& s)
+    {
+        cerr << "Terminated with exception string \"" << s << '"' << endl;
+    }
+/*    catch(...)
+    {
+        cerr << "Terminated with unknown exception type" << endl;
+    }*/
 }
 
 vtkSmartPointer<vtkActor> renderSurface(const TetraMesh& mesh)

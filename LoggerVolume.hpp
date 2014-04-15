@@ -1,95 +1,83 @@
 #include "logger.hpp"
+#include "AccumulationArray.hpp"
 
-// LoggerVolume tracks the energy absorbed in each tetrahedral mesh element
+//template<class T>unsigned getID(const T& t)			{ return t.id; }		///< Returns element ID
+//template<class T>double   getEnergy(const T& t)		{ return t.E; }			///< Returns total element energy (absorb/exit)
+//template<class T>unsigned getMaterial(const T& t)	{ return t.matID; }		///< Returns material ID (volume only)
+//template<class T>unsigned getRegion(const T& t)		{ return t.regionID; }	///< Returns region ID (volume only)
+//template<class T>double   getVariance(const T& t)	{ return t.var; }		///< Returns variance estimate
+//template<class T>unsigned getHits(const T& t)		{ return t.hits; }		///< Returns hit count
 
-class LoggerVolume {
-    const TetraMesh& mesh;
+template<class T>class VolumeArray {
+	const TetraMesh& mesh;
+	vector<T> v;
 
-    protected:
-    vector<FluenceCountType> counts;
+public:
+    VolumeArray(VolumeArray&& lv_)        : mesh(lv_.mesh),v(mesh.getNt()+1){};
+    VolumeArray(const TetraMesh& mesh_)    : mesh(mesh_),v(mesh.getNt()+1){};
+    VolumeArray(const TetraMesh& mesh_,vector<T>&& v_) : mesh(mesh_),v(std::move(v_)){}
 
-    public:
-    LoggerVolume(LoggerVolume&& lv_) : mesh(lv_.mesh),counts(std::move(lv_.counts)){};
-    LoggerVolume(const TetraMesh& mesh_) : mesh(mesh_),counts(mesh_.getNt()+1){};
-    
-    // get results as a map; optional arg per_area specifies to return fluence (per-area) or total energy per patch
-    void fluenceMap(VolumeFluenceMap&,const vector<Material>&,bool=true);
+    /// Returns a VolumeFluenceMap for the absorption accumulated so far*/
+    /** The value of asFluence determines whether it returns total energy (false) or fluence as E/V/mu_a (true) */
+    void fluenceMap(VolumeFluenceMap&,const vector<Material>&,bool asFluence=true);
+
+    /// Returns (if available from AccumulatorT) a hit map
     void hitMap(map<unsigned,unsigned long long>& m);
 
-    friend ostream& operator<<(ostream&,LoggerVolume&);
+    typename vector<T>::const_iterator begin() const { return v.begin(); }
+    typename vector<T>::const_iterator end()   const { return v.end(); }
+
+        /// Provides a way of summarizing to an ostream
+    //friend ostream& operator<<(ostream&,VolumeArray&);
 };
 
+/*! Basic volume logger.
+ *
+ * Catches eventAbsorb() calls and accumulates weight in the appropriate tetra using template argument Accumulator
+ *
+ * Accumulator requirements:
+ * 	Support operator[] returning some type T
+ * 	T must support operator+= on Weight type
+ * 	Copy-constructible
+ * 	Constructor of type Accumulator(unsigned size,args...)
+ *
+ * Accumulator WorkerThread requirements:
+ * 	Copy-constructible
+ *
+ *
+ *	Examples: vector<T>& (single-thread), QueuedAccumulatorMT (thread-safe)
+ */
 
-// LoggerVolumeST (single-thread) overrides eventAbsorb
-class LoggerVolumeST : public LoggerVolume,public LoggerNull {
-    public:
-    LoggerVolumeST(const TetraMesh& mesh_) : LoggerVolume(mesh_){}
+template<class T>class LoggerVolume;
+template<class T>ostream& operator<<(ostream& os,const VolumeArray<T>& lv);
 
-    // log only absorption events
-    inline void eventAbsorb(const Point3,unsigned IDt,double w0,double dw){ counts[IDt] += dw; }
+template<class Accumulator>class LoggerVolume {
+	Accumulator acc;
+	const TetraMesh& mesh;
+
+public:
+	template<typename... Args>LoggerVolume(const TetraMesh& mesh_,Args... args) : acc(mesh_.getNt()+1,args...),mesh(mesh_){}
+	LoggerVolume(LoggerVolume&& lv_) : acc(std::move(lv_.acc)),mesh(lv_.mesh){}
+	LoggerVolume(const LoggerVolume& lv_) = delete;
+
+	class WorkerThread : public LoggerNull {
+		typename Accumulator::WorkerThread wt;
+	public:
+		WorkerThread(Accumulator& parent_) : wt(parent_.get_worker()){};
+		WorkerThread(const WorkerThread& wt_) = delete;
+		WorkerThread(WorkerThread&& wt_) : wt(std::move(wt_.wt)){}
+		~WorkerThread(){ wt.commit(); }
+
+	    inline void eventAbsorb(Point3 p,unsigned IDt,double w0,double dw)
+	    	{ wt[IDt] += dw; }
+	};
+
+	typedef WorkerThread ThreadWorker;
+
+	WorkerThread get_worker() { return WorkerThread(acc);  };
+
+	typedef VolumeArray<typename Accumulator::ElementType> result_type ;
+
+	result_type getResults() const { return result_type(mesh,vector<typename Accumulator::ElementType>(acc.getResults())); }
 };
 
-// LoggerVolumeMT (multi-thread) provides access to elements of type ThreadWorker
-//  Each threadworker has a buffer of 1M (1024*1024) absorption events
-//  When the buffer is full, it locks a mutex on the absorption map, updates, and unlocks
-
-class LoggerVolumeMT : public LoggerVolume,private boost::mutex {
-    typedef pair<unsigned,FluenceCountType> BufElType;
-    unsigned bufsize;
-
-    public:
-    LoggerVolumeMT(const TetraMesh& mesh_,unsigned bufsize_=1024*1024) : LoggerVolume(mesh_),bufsize(bufsize_){}
-
-    class ThreadWorker : private Buffer<BufElType>,public LoggerNull {
-	    using Buffer<BufElType>::atBufferEnd;
-        LoggerVolumeMT& parent;
-        unsigned ID_last;
-        virtual void atBufferEnd(const BufElType* begin,const BufElType* end){ parent.addValues(begin,end); ID_last=-1; }
-
-        public:
-
-        ThreadWorker(LoggerVolumeMT& parent_,unsigned N_) : Buffer<BufElType>(N_,false),parent(parent_),ID_last(-1){};
-        ThreadWorker(ThreadWorker&& tw_) : Buffer<BufElType>(std::move(tw_)),parent(tw_.parent),ID_last(tw_.ID_last){}
-        ~ThreadWorker() { flush(); }
-
-        inline void eventAbsorb(Point3 p,unsigned IDt,double w0,double dw)
-        {
-            if (ID_last == IDt)
-				current->second += dw;
-            else
-            {
-                BufElType *tmp = ((ID_last == -1) ? current : getNext());
-                tmp->first=ID_last=IDt;
-                tmp->second=dw;
-            }
-        };
-
-        void flush()
-        {
-            atBufferEnd(first,current);
-            current=first;
-        }
-
-        void commit()
-        {
-            flush();
-        }
-    };
-
-    // create a new thread worker with its own buffer
-    ThreadWorker getThreadWorkerInstance(unsigned)
-    {
-        return ThreadWorker(*this,bufsize);
-    }
-
-    // adds values to the log
-    void addValues(const pair<unsigned,FluenceCountType>* p,const pair<unsigned,FluenceCountType>* p_last)
-    {
-        lock();
-        for(; p != p_last; ++p)
-	        counts[p->first] += p->second;
-        unlock();
-    }
-};
-
-ostream& operator<<(ostream&,LoggerVolume&);

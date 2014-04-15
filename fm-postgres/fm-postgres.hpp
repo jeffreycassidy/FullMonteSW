@@ -23,6 +23,10 @@
 
 #include "../newgeom.hpp"
 
+#include <array>
+
+using namespace std;
+
 #include "blob.hpp"
 
 using namespace std;
@@ -127,21 +131,14 @@ template<>struct pgTypeInfo<int> {
     typedef union { pg_representation pg; int native; } pg_representation_union;
 };
 
-template<int D>struct pgTypeInfo<Point<D,double> > {
+template<unsigned long D>struct pgTypeInfo<Point<D,double> > {
     static const Oid        type_oid=1022;
     static const unsigned   type_length=(pgTypeInfo<double>::type_length+4)*D + 20;
     static const unsigned   type_format=1;
 };
 
-/*
-template<int D,class T>struct pgTypeInfo<FixedArray<D,T> >{
-    static const Oid        type_oid=pgTypeInfo<Point<D,T> >::type_oid;
-    static const unsigned   type_length=pgTypeInfo<Point<D,T> >::type_length;
-    static const unsigned   type_format=pgTypeInfo<Point<D,T> >::type_format;
-};*/
-
 template<class T>unsigned           getPGVarLength(const T&){ return pgTypeInfo<T>::type_length; }
-template<int D,class T>unsigned     getPGVarLength(const FixedArray<D,T>& a){ return 20+D*(pgTypeInfo<T>::type_length+4); }
+template<unsigned D,class T>unsigned     getPGVarLength(const array<T,D>& a){ return 20+D*(pgTypeInfo<T>::type_length+4); }
 template<int D,class T>unsigned     getPGVarLength(const Point<D,T>& p){ return 20+D*(pgTypeInfo<T>::type_length+4); }
 
 template<class T>typename pgTypeInfo<T>::pg_representation toNetworkOrder(T);
@@ -174,7 +171,9 @@ template<class T>T fromNetworkOrder(const uint8_t* p)
 }
 
 template<class T>       void unpackPGVariable(const char*,T&);
-template<int D,class T> void unpackPGVariable(const char*,FixedArray<D,T>&);
+template<unsigned long D,class T> void unpackPGVariable(const char*,array<T,D>&);
+//template<unsigned long D,class T>void unpackPGVariable(const char* p,Point<D,T>& d){ unpackPGVariable(p,(array<T,D>&)d); }
+template<> void unpackPGVariable(const char* p,Point<3,double>& P);
 template<>void unpackPGVariable(const char* p,string& s);
 template<>void unpackPGVariable(const char* p,boost::tuples::null_type&);
 
@@ -187,16 +186,16 @@ template<class T>void packPGVariable(const T&,uint8_t*);
 
 template<>void packPGVariable(const char* const& s, uint8_t* p);
 template<>void packPGVariable(const string& s,uint8_t* p);
-template<int D,class T>void packPGVariable(const FixedArray<D,T>&,uint8_t* p);
+template<unsigned long D,class T>void packPGVariable(const array<T,D>&,uint8_t* p);
 template<>void packPGVariable(const FaceByPointID& d,uint8_t* p);
-template<int D,class T>void packPGVariable(const Point<D,T>& d,uint8_t* p){ packPGVariable((const FixedArray<D,T>&)d,p); }
+template<unsigned long D,class T>void packPGVariable(const Point<D,T>& d,uint8_t* p){ packPGVariable((const array<T,D>&)d,p); }
 
 template<class T>void       packPGVariable(const T& t,uint8_t* p)
 {
     *reinterpret_cast<typename pgTypeInfo<T>::pg_representation*>(p) = toNetworkOrder(t); 
 }
 
-template<int D,class T>void packPGVariable(const FixedArray<D,T>& a,uint8_t* p)
+template<unsigned long D,class T>void packPGVariable(const array<T,D>& a,uint8_t* p)
 {
     *reinterpret_cast<uint32_t*>(p)    = toNetworkOrder(uint32_t(1));
     *reinterpret_cast<uint32_t*>(p+4)  = toNetworkOrder(uint32_t(0));
@@ -246,15 +245,6 @@ template<class H,class T>void packPGTuple(const boost::tuples::cons<H,T>& t,uint
     *paramValues=paramData;
     packPGTuple(t.get_tail(),paramData+getPGVarLength(head),paramOids+1,paramValues+1,paramFormats+1,paramLengths+1);
 }
-
-/* Used this for debug testing only (unpacking a char* buf)
-template<class T>void unpackPGRow(const uint8_t*,T&);
-void unpackPGRow(const uint8_t*,boost::tuples::null_type);
-template<class T>void unpackPGRow(const uint8_t* p,T& t)
-{
-    unpackPGVariable((const char*)p,t.get_head());
-    unpackPGRow(p+pgTypeInfo<typename T::head_type>::type_length,t.get_tail());
-}*/
 
 class PGConnection {
     int server_ver;
@@ -326,9 +316,8 @@ template<class H,class T>void unpackPGRow(const PGConnection::ResultType& res,bo
 }
 
 template<>void unpackPGVariable(const char* p,FaceByPointID& d);
-template<int D,class T>void unpackPGVariable(const char* p,Point<D,T>& d){ unpackPGVariable(p,(FixedArray<D,T>&)d); }
 
-template<int D,class T>void unpackPGVariable(const char* p,FixedArray<D,T>& d){
+template<unsigned long D,class T>void unpackPGVariable(const char* p,array<T,D>& d){
     uint32_t    Ndim    = fromNetworkOrder(*(uint32_t*)p);
 //    uint32_t    hasnull = fromNetworkOrder(*(uint32_t*)(p+4));
     Oid         typeoid = fromNetworkOrder(*(uint32_t*)(p+8));
@@ -336,7 +325,7 @@ template<int D,class T>void unpackPGVariable(const char* p,FixedArray<D,T>& d){
 //    uint32_t    dim0lb  = fromNetworkOrder(*(uint32_t*)(p+16));
 
     if (Ndim != 1)
-        cerr << "Invalid Ndim (" << Ndim << ", expecting 1) while unpacking FixedArray" << endl;
+        cerr << "Invalid Ndim (" << Ndim << ", expecting 1) while unpacking array" << endl;
 
     if (typeoid != pgTypeInfo<T>::type_oid)
         cerr << "Invalid Oid (" << typeoid << ", expecting " << pgTypeInfo<T>::type_oid << ')' << endl;

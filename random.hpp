@@ -5,6 +5,8 @@
 #include <x86intrin.h>
 #endif
 
+#include <immintrin.h>
+
 #include <pmmintrin.h>
 #include <xmmintrin.h>
 #include <emmintrin.h>
@@ -13,11 +15,13 @@
 
 #define SFMT_MEXP 19937
 #include "SFMT.h"
+
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_01.hpp>
 
 #define USE_SSE2
 #include "sse_mathfun.h"
+
 
 // RNG wraps Boost Random Number Generation
 // RNG_SFMT wraps SFMT by Saito and Matsumoto
@@ -37,25 +41,6 @@ typedef union SSEReg_t {
     uint64_t i64[2];
 } SSEReg;
 
-class RNG {
-    boost::random::mt19937 rng;
-    boost::random::uniform_01<double> uni01d;
-    boost::random::uniform_01<float>  uni01f;
-    public:
-    // requirements for Boost RNG concept
-    typedef boost::random::mt19937::result_type result_type;
-    result_type min() const { return rng.min(); }
-    result_type max() const { return rng.max(); }
-    result_type operator()(){ return rng(); } 
-
-
-    inline double draw_double_u01();
-    inline float  draw_float_u01();
-    inline __m128 draw_m128f3_u01();
-    inline __m128 draw_m128f4_u01();
-    inline __m128 draw_m128f3_uvect();
-};
-
 
 // The size of array (32b words) generated must be at least 624 and a multiple of 4
 // Nbuf must be at least 156
@@ -63,15 +48,15 @@ class RNG {
 class RNG_SFMT {
     SSEReg * const randBuf,* const lastRand;
     SSEReg *nextRand;
-    unsigned Nbuf;
+    unsigned Nbuf;				///< Number of uint32s stored in buffer
     sfmt_t sfmt;
 
-    float       __attribute__((aligned(16))) f_log[4];
+    float       __attribute__((aligned(16))) f_exp[4];
     float       __attribute__((aligned(16))) f[4];
     double      __attribute__((aligned(16))) d[2];
     SSEReg i32;
 
-    unsigned char f_count,d_count,i32_count,f_log_count;
+    unsigned char f_count,d_count,i32_count,f_exp_count;
 
     void refill();
     inline SSEReg  draw();
@@ -84,15 +69,27 @@ class RNG_SFMT {
     static const uint32_t exp_double_h = 0x3ff00000;
     static const uint32_t exp_double_l = 0x00000000;
 
-    RNG_SFMT(unsigned int Nbuf_=1024,unsigned seed_=1) : randBuf(new SSEReg[Nbuf_]),
-        lastRand(randBuf+Nbuf_),
+    RNG_SFMT(unsigned int Nbuf_=4096,unsigned seed_=1) : randBuf(new SSEReg[Nbuf_/4]),
+        lastRand(randBuf+Nbuf_/4),
         nextRand(randBuf),
         Nbuf(Nbuf_),
         f_count(4),
         d_count(2),
         i32_count(4),
-        f_log_count(4)
+        f_exp_count(4)
         {
+
+    		if (Nbuf % 4 != 0)
+    		{
+    			std::cerr << "Error: RNG_SFMT instantiated with Nbuf not a multiple of 4" << std::endl;
+    			throw std::string("RNG_SFMT: Nbuf is not a multiple of 4");
+    		}
+    		else if (Nbuf < 156)
+    		{
+    			std::cerr << "Error: RNG_SFMT instantiated with Nbuf < 156" << std::endl;
+    			throw std::string("RNG_SFMT: Nbuf is less than 156");
+    		}
+
 		std::cout << "Initialized SFMT RNG with seed of " << seed_ << std::endl;
             sfmt_init_gen_rand(&sfmt,seed_);
             refill();
@@ -104,8 +101,6 @@ class RNG_SFMT {
     result_type max() const { return std::numeric_limits<uint32_t>::max(); }
     result_type operator()(){ return draw_uint32(); } 
 
-    void refill_log_u01();
-
     inline uint32_t draw_uint32();
     inline double draw_double_u01();
     inline float  draw_float_u01();
@@ -113,7 +108,7 @@ class RNG_SFMT {
     inline __m128 draw_m128f4_u01();
     inline __m128 draw_m128f1_u01();
 
-    inline __m128 draw_m128f1_log_u01();
+    inline __m128 draw_m128f1_exp();
 
     inline __m128d draw_m128d1_u01();
     inline __m128d draw_m128d2_u01();
@@ -122,6 +117,11 @@ class RNG_SFMT {
 
     inline __m128 draw_m128f2_uvect();
     inline __m128 draw_m128f3_uvect();
+
+    inline __m256 draw_m256f8_uvect2();		///< Draws a 256-bit vector of 4 2D unit vectors
+    										///< TODO: Could use improvement to take full advantage of AVX
+    inline __m256 draw_m256f8_pm1();		///< Draws a 256-bit vector of 8 floats in [-1,1)
+    										///< TODO: Could use improvement to take full advantage of AVX
 
     inline const uint64_t* draw_u64_2();
     inline const uint32_t* draw_u32_4();
@@ -165,6 +165,26 @@ inline __m128 RNG_SFMT::draw_m128f4_pm1()
     return rnd;
 }
 
+inline __m256 RNG_SFMT::draw_m256f8_pm1()
+{
+	return _mm256_insertf128_ps(
+			_mm256_castps128_ps256(draw_m128f4_pm1()),
+			draw_m128f4_pm1(),
+			1);
+}
+
+/** Returns four 2D unit vectors by calling draw_m128f2_uvect four times
+ * TODO: Needs fixing!! Can probably do this way faster with sin/cos of uniform random angle
+ */
+
+inline __m256 RNG_SFMT::draw_m256f8_uvect2()
+{
+	return _mm256_insertf128_ps(
+		_mm256_castps128_ps256(_mm_movelh_ps(draw_m128f2_uvect(),draw_m128f2_uvect())),
+		_mm_movelh_ps(draw_m128f2_uvect(),draw_m128f2_uvect()),
+		1);
+}
+
 inline __m128 RNG_SFMT::draw_m128f4_u01()
 {
     __m128 rnd = draw().m128_f;
@@ -201,17 +221,17 @@ const uint32_t* RNG_SFMT::draw_u32_4()
     return (nextRand++)->i32;
 }*/
 
-__m128 RNG_SFMT::draw_m128f1_log_u01()
+__m128 RNG_SFMT::draw_m128f1_exp()
 {
     __m128 r,l;
-    if (f_log_count == 4)
+    if (f_exp_count == 4)
     {
         r = _mm_sub_ps(_mm_set1_ps(1.0),draw_m128f4_u01());     // 1 - [0,1) => (0,1] to avoid -Inf
-        l = log_ps(r);
-        _mm_store_ps(f_log,l);
-        f_log_count=0;
+        l = _mm_sub_ps(_mm_setzero_ps(),log_ps(r));				// -log(r) to get positive
+        _mm_store_ps(f_exp,l);
+        f_exp_count=0;
     }
-    return _mm_load1_ps(f_log+(f_log_count++));
+    return _mm_load1_ps(f_exp+(f_exp_count++));
 }
 
 // Return a single float

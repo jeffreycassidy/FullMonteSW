@@ -1,56 +1,99 @@
 #include "logger.hpp"
+#include "AccumulationArray.hpp"
 
-class LoggerSurface {
-    const TetraMesh& mesh;
+/** Holds quantities accumulated over a surface, using sequential IDs ranging [0,N).
+ * @tparam T	Type to be accumulated; must support operator[](unsigned), operator+=(double) and operator+=(T)
+ */
 
-    protected:
-    vector<FluenceCountType> counts;
+template<class T>class SurfaceArray {
+	const TetraMesh& mesh;
+	vector<T> s;
 
-    public:
-    LoggerSurface(const TetraMesh& mesh_) : mesh(mesh_),counts(mesh_.getNf()+1){};
-    
-    // get results as a map; optional arg per_area specifies to return fluence (per-area) or total energy per patch
-    void resultMap(map<FaceByPointID,double>& m,bool per_area=true);
-    void fluenceMap(SurfaceFluenceMap&);
+public:
+    SurfaceArray(SurfaceArray&& ls_)        : mesh(ls_.mesh),s(std::move(ls_.s)){};
+    SurfaceArray(const TetraMesh& mesh_)    : mesh(mesh_),s(mesh_.getNt()+1){};
+    SurfaceArray(const TetraMesh& mesh_,vector<T>&& s_) : mesh(mesh_),s(std::move(s_)){};
+    SurfaceArray(const TetraMesh& mesh_,const vector<T>& s_) : mesh(mesh_),s(s_){};
 
+    /// Returns a VolumeFluenceMap for the absorption accumulated so far
+    /** The value of asFluence determines whether it returns total energy (false) or fluence as E/V/mu_a (true) */
+    void fluenceMap(SurfaceFluenceMap&,bool asFluence=true);
+
+    /// Returns a hit map TODO: Improve this comment and check how the function works
     void hitMap(map<unsigned,unsigned long long>& m);
-};
 
+    void resultMap(map<FaceByPointID,double>& m,bool per_area=true);
 
-// LoggerSurfaceST (single-thread version) overrides only the eventExit method to record packets exiting the volume
-class LoggerSurfaceST : public LoggerSurface,public LoggerNull {
-    public:
-    LoggerSurfaceST(const TetraMesh& mesh_) : LoggerSurface(mesh_){}
+    typename vector<T>::const_iterator begin() const { return s.begin(); }
+    typename vector<T>::const_iterator end()   const { return s.end(); }
 
-    inline void eventExit(const Ray3,int IDf,double w){
-        IDf=abs(IDf);
-		counts[IDf] += w;
+    // Provides a way of summarizing to an ostream
+    friend ostream& operator<<(ostream& os,const SurfaceArray& sa){
+    	double sumE=0;
+    	unsigned i=0;
+    	for(auto it=sa.begin(); it != sa.end(); ++it)
+    	{
+    		sumE += *it;
+    		++i;
+    	}
+    	return os << "Surface array total energy is " << setprecision(4) << sumE << " (" << i << " elements)" << endl;
     }
 };
 
-// LoggerSurfaceMT (multi-thread) keeps just one record with a mutex to protect it
-//  This isn't the best solution since locking/unlocking is potentially expensive
-//  However we exit at most once per packet launched vs. ~100-400 absorption events per pkt
+template<class T>ostream& operator<<(ostream& os,const SurfaceArray<T>&ls);
+template<>ostream& operator<<(ostream& os,const SurfaceArray<double>& ls);
 
-class LoggerSurfaceMT : public LoggerSurfaceST,private boost::mutex {
-    public:
-    LoggerSurfaceMT(const TetraMesh& mesh_) : LoggerSurfaceST(mesh_){}
+/** Handles logging of surface exit events.
+ *
+ * @tparam 	Accumulator		Must support the AccumulatorConcept.
+ */
 
-    class ThreadWorker : public LoggerNull {
-        LoggerSurfaceMT& parent;
+template<class Accumulator>class LoggerSurface {
+	Accumulator acc;
+	const TetraMesh& mesh;
+public:
 
-        public:
-        ThreadWorker(LoggerSurfaceMT& parent_) : parent(parent_){}
-        ThreadWorker(const ThreadWorker& tw_) : parent(tw_.parent){}
+	typedef vector<typename Accumulator::ElementType> results_type;
 
-        inline void commit(){}
-        inline void eventExit(const Ray3 r,int IDf,double w){
-            parent.lock();
-            parent.eventExit(r,IDf,w);
-            parent.unlock();
-        }
-    };
+	/** Construct and associate with a tetrahedral mesh.
+	 * @param mesh_		Associated mesh, used to get the number of
+	 * @param args...	Arguments to be passed through to the constructor for the underlying Accumulator type
+	 */
 
-    // Since we protect each access with a mutex, thread worker is just a reference to the LoggerSurfaceMT object
-    ThreadWorker getThreadWorkerInstance(unsigned){ return ThreadWorker(*this); }
+	template<typename... Args>LoggerSurface(const TetraMesh& mesh_,Args... args) : acc(mesh_.getNf()+1,args...),mesh(mesh_){}
+	LoggerSurface(LoggerSurface&& ls_) : acc(std::move(ls_.acc)),mesh(ls_.mesh){}
+
+	/// Copy constructor deleted - no need for it
+	LoggerSurface(const LoggerSurface& ls_) = delete;
+
+	class WorkerThread : public LoggerNull {
+		typename Accumulator::WorkerThread acc;
+	public:
+		/// Construct from an Accumulator by getting a worker thread from the parent
+		WorkerThread(Accumulator& parent_) : acc(parent_.get_worker()){}
+
+		/// Move constructor by simply moving the accumulator
+		WorkerThread(WorkerThread&& wt_) : acc(std::move(wt_.acc)){}
+
+		/// Copy constructor deleted
+		WorkerThread(const WorkerThread& wt_) = delete;
+
+		/// Commit results back to parent before deleting
+		~WorkerThread() { acc.commit(); }
+
+		/// Record exit event by accumulating weight to the appropriate surface entry
+		inline void eventExit(const Ray3,int IDf,double w){ acc[abs(IDf)] += w; }
+	};
+
+	typedef WorkerThread ThreadWorker;
+
+	/// Merge a worker thread's partial results
+	LoggerSurface& operator+=(const WorkerThread& wt_){ wt_.commit(); return *this; }
+
+	/// Return a worker thread
+	WorkerThread get_worker() { return WorkerThread(acc); }
+
+	typedef SurfaceArray<typename Accumulator::ElementType> result_type;
+
+	result_type getResults() const { return result_type(mesh,acc.getResults()); }
 };

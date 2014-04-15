@@ -3,11 +3,20 @@
 #include <boost/random/discrete_distribution.hpp>
 #include <boost/timer/timer.hpp>
 
+#include "Material.hpp"
+
 #include <pthread.h>
 
 #include "runresults.hpp"
 
 #include "progress.hpp"
+
+// Manager should be able to:
+//  report progress
+//  start/stop/pause
+//  return interim results
+//  report time required
+//  estimate completion time
 
 namespace globalopts {
     extern double Npkt;         // number of packets
@@ -15,6 +24,7 @@ namespace globalopts {
     extern double wmin;         // Minimum weight for roulette
     extern long Nk;             // number of packets as long int
     extern unsigned Nthread;
+    extern unsigned timerinterval;
     extern unsigned randseed;
     extern string logFN;        // log filename
     extern string outpath;      // output path, defaults to working dir
@@ -34,7 +44,6 @@ template<class Logger,class RNG>class Manager;
 template<class LoggerType,class RNG>int doOnePacket(const RunConfig& cfg,Packet pkt,
     LoggerType& logger,unsigned IDt,RNG& rng);
 
-
 class RunConfig {
     public:
     const TetraMesh&        mesh;
@@ -45,7 +54,6 @@ class RunConfig {
     unsigned Nthread;
 
     double wmin,pr_win;
-
 
     // default copy constructor is fine
 
@@ -82,7 +90,6 @@ template<class Logger,class RNG>class Manager {
         {}
 
     virtual void run(Logger& logger)=0;
-//    boost::timer::cpu_times start(Logger& logger);
 
     virtual unsigned long long getProgressCount() const { return 0; }
 
@@ -97,7 +104,6 @@ template<class Logger,class RNG>class Manager_MT : public Manager<Logger,RNG> {
     static void* threadStartFcn(void*);
 
     typedef Worker<Logger,RNG> WorkerType;
-    typedef typename Logger::ThreadWorker LoggerType;
 
     pair<pthread_t,WorkerType*>* workers;
 
@@ -111,8 +117,9 @@ template<class Logger,class RNG>class Manager_MT : public Manager<Logger,RNG> {
 
     unsigned long long getProgressCount() const {
         unsigned long long sum=0;
-        for(unsigned i=0;i<cfg.Nthread && workers[i].second;++i)
-            sum += workers[i].second->getProgressCount();
+        for(unsigned i=0;i<cfg.Nthread;++i)
+        	if (workers[i].second)
+        		sum += workers[i].second->getProgressCount();
         return sum;
     }
     boost::timer::cpu_times start(Logger& logger);
@@ -120,36 +127,54 @@ template<class Logger,class RNG>class Manager_MT : public Manager<Logger,RNG> {
     string getDetails() const {
         stringstream ss;
         for(unsigned i=0;i<cfg.Nthread && workers[i].second;++i)
-            ss << workers[i].second->getProgressCount() << " ";
+        	if (workers[i].second)
+        		ss << workers[i].second->getProgressCount() << " ";
         return ss.str();
     }
 };
 
 template<class Logger,class RNG>void Manager_MT<Logger,RNG>::run(Logger& logger)
 {
-    typedef typename Logger::ThreadWorker ThreadWorker;
-    ThreadWorker* l[cfg.Nthread];
+	typedef typename Logger::ThreadWorker LoggerThread;
+	LoggerThread* l[cfg.Nthread];
 
     cout << "Running with " << cfg.Nthread << " threads" << endl;
     // create the workers
+
+    cout << "INFO: Nthread=" << cfg.Nthread << " alignof(WorkerType)=" << alignof(WorkerType) << " sizeof(WorkerType)=" << sizeof(WorkerType) << endl;
+
+    void *p;
+    posix_memalign(&p,32,cfg.Nthread*sizeof(WorkerType));
+    if (p==NULL)
+    	throw std::bad_alloc();
+
     for(unsigned i=0;i<cfg.Nthread;++i)
     {
-        l[i] = new ThreadWorker(logger.getThreadWorkerInstance(i));
-        workers[i].second = new WorkerType(Manager<Logger,RNG>::cfg,
-            *(l[i]),
-            Manager<Logger,RNG>::Npacket/cfg.Nthread,
-            Manager<Logger,RNG>::cfg.seed+100*i,
-            this);
-
-        pthread_create(&workers[i].first,NULL,threadStartFcn,workers[i].second);
+    	try {
+    		l[i] = new LoggerThread(logger.get_worker());
+    		workers[i].second = new ((WorkerType*)p + i) WorkerType(Manager<Logger,RNG>::cfg,
+    				*(l[i]),
+    				Manager<Logger,RNG>::Npacket/cfg.Nthread,
+    				Manager<Logger,RNG>::cfg.seed+100*i,
+    				this);
+            pthread_create(&workers[i].first,NULL,threadStartFcn,workers[i].second);
+    	}
+    	catch (string s)
+    	{
+    		cerr << "Thread creation failed with exception \"" << s << "\"; terminating" << endl;
+    		workers[i].second=NULL;
+    	}
     }
 
     for(unsigned i=0;i<cfg.Nthread;++i)
     {
-        pthread_join(workers[i].first,NULL);
-        cout << "Joined thread " << workers[i].first << endl;
-        delete workers[i].second;
-        delete l[i];
+    	if (workers[i].second)
+    	{
+    		pthread_join(workers[i].first,NULL);
+    		cout << "Joined thread " << workers[i].first << endl;
+    		workers[i].second->~WorkerType();
+            delete l[i];
+    	}
     }
     delete[] workers;
 }
@@ -160,25 +185,51 @@ template<class Logger,class RNG>class Worker {
     unsigned long long i,Npacket;
     typedef typename Logger::ThreadWorker ThreadWorker;
     ThreadWorker& logger;
-    RNG rng;
     Manager_MT<Logger,RNG>* manager;
+
+    static const unsigned HG_BUFFERS=16;	///< Number of distinct g values to buffer
+    static const unsigned HG_BUFSIZE=8;		///< Number of spin vectors to buffer
+
+    float * hg_buffers[HG_BUFFERS];			// should be float * const but GCC whines about not being initialized
+    unsigned hg_next[HG_BUFFERS];
+
+    RNG rng;
 
     public:
 
-    Worker(const RunConfig& cfg_,ThreadWorker& logger_,unsigned long long Npacket_,unsigned seed_,
-        Manager_MT<Logger,RNG>* manager_) :
+    Worker(const RunConfig& cfg_,ThreadWorker& logger_,unsigned long long Npacket_,unsigned seed_,Manager_MT<Logger,RNG>* manager_) :
         cfg(cfg_),
-        i(0),
         Npacket(Npacket_),
         logger(logger_),
-        rng(1024,seed_),
+        rng(4096,seed_),
         manager(manager_)
-        {}
+        {
+    		void *p;
+    		posix_memalign(&p,32,HG_BUFFERS*HG_BUFSIZE*4*sizeof(float));
+    		for(unsigned i=0; i<HG_BUFFERS; ++i)
+    		{
+    			hg_buffers[i] = (float*)p + 4*HG_BUFSIZE*i;
+    			hg_next[i] = HG_BUFSIZE;
+    		}
+        }
+
+    ~Worker(){ free(hg_buffers[0]); }
+
+    int doOnePacket(Packet pkt,unsigned IDt);
+
+    inline __m128 getNextHG(unsigned matID){
+    	if (hg_next[matID] == HG_BUFSIZE){
+    		cfg.mat[matID].VectorHG(rng.draw_m256f8_pm1(),rng.draw_m256f8_uvect2(),hg_buffers[matID]);
+    		hg_next[matID]=0;
+    	}
+
+    	return _mm_load_ps(hg_buffers[matID] + ((hg_next[matID]++)<<2));
+    }
 
     unsigned long long getProgressCount() const { return i; }
 
     void start();
-};
+} __attribute__((aligned(32)));
 
 template<class Logger,class RNG>class MgrProgressUpdate {
     const Manager<Logger,RNG>* p;
@@ -195,9 +246,10 @@ template<class Logger,class RNG>boost::timer::cpu_times Manager_MT<Logger,RNG>::
 {
     boost::timer::cpu_timer runTimer;
 
-    NewTimer<MgrProgressUpdate<Logger,RNG> > t(1.0,MgrProgressUpdate<Logger,RNG>(this),false);
+    NewTimer<MgrProgressUpdate<Logger,RNG> > t(double(globalopts::timerinterval),MgrProgressUpdate<Logger,RNG>(this),false);
 
-    t.start();
+    if (globalopts::timerinterval > 0)
+    	t.start();
 
     runTimer.start();
     run(logger);
@@ -207,12 +259,6 @@ template<class Logger,class RNG>boost::timer::cpu_times Manager_MT<Logger,RNG>::
     cout << runTimer.format() << endl;
     return runTimer.elapsed();
 }
-/*
-template<class Logger,class RNG>void Manager<Logger,RNG>::run(Logger& logger)
-{
-    Worker<Logger,RNG> w(cfg,logger,Npacket,cfg.seed,this);
-    w.start();
-}*/
 
 template<class Logger,class RNG>void Worker<Logger,RNG>::start()
 {
@@ -223,7 +269,7 @@ template<class Logger,class RNG>void Worker<Logger,RNG>::start()
     for(i=0;i<Npacket;++i)
     {
         tmp = cfg.source.emit(rng);
-        doOnePacket(cfg,pkt,logger,IDt,rng);
+        doOnePacket(pkt,IDt);
     }
 }
 
@@ -231,10 +277,16 @@ template<class Logger,class RNG>void Worker<Logger,RNG>::start()
 template<class Logger,class RNG>void* Manager_MT<Logger,RNG>::threadStartFcn(void* arg)
 {
     Worker<Logger,RNG>* w = (Worker<Logger,RNG>*) arg;
-    pthread_t tid=pthread_self();
-    cout << "Thread " << tid << " launched to compute " << w->Npacket << " packets" << endl;
-    w->start();
-    cout << "Thread " << tid << " terminated" << endl;
+    try {
+    	pthread_t tid=pthread_self();
+    	cout << "Thread " << tid << " launched to compute " << w->Npacket << " packets" << endl;
+    	w->start();
+    	cout << "Thread " << tid << " terminated" << endl;
+    }
+    catch(string s){
+    	cerr << "Caught exception string \"" << s << "\"; terminating thread" << endl;
+    	throw string("Fatal worker-thread error");
+    }
     return NULL;
 }
 

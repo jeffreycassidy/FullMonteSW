@@ -17,7 +17,9 @@
 
 #include "newgeom.hpp"
 #include "blob.hpp"
-#include "random.hpp"
+//#include "random.hpp"
+
+class MeshMapper;
 
 using namespace std;
 
@@ -64,59 +66,13 @@ class Face {
 	friend ostream& operator<<(ostream&,const Face&);
 };
 
-class Material {
-    static const float const_c0;    // units of mm/ns (3e8 m/s = 3e11 mm/s = 3e2 mm/ns)
-    float mu_s, mu_a, mu_p, mu_t, g, n, one_minus_gg, one_plus_gg, recip_2g, albedo, absfrac; // 11x4 = 40B
-    bool matchedboundary,isscattering;          // 2x1B = 2B
-    public:
-
-    __m128 s_prop,s_init;
-
-    Material(double mu_a_=0,double mu_s_=0,double g_=0,double n_=1.0,double mu_p_=0.0,bool matchedboundary_=false) :
-        mu_s(mu_s_),mu_a(mu_a_),mu_p(mu_p_),mu_t(mu_s_+mu_a_+mu_p_),
-        g(g_),n(n_),one_minus_gg(1.0-g_*g_),one_plus_gg(1.0+g_*g_),recip_2g(1.0/2.0/g_),
-        albedo((mu_s_+mu_p_)/(mu_a_+mu_s_+mu_p_)),
-        absfrac(mu_a_/(mu_a_+mu_s_+mu_p_)),
-        matchedboundary(matchedboundary_),
-        isscattering(!(g_ == 1.0 || mu_s_ == 0)),
-        s_prop(_mm_set_ps(0,n_/const_c0,-mu_t,-1)),
-        s_init(_mm_set_ps(0,0,-1,-1/mu_t))
-        {}
-
-    bool isScattering() const { return isscattering; }
-
-    float getParam_g() const { return g; }
-    float getn()       const { return n; }
-    float getMuA()     const { return mu_a; }
-    float getMuS()     const { return mu_s; }
-    float getMuT()     const { return mu_t; }
-    float getg()       const { return g; }
-
-    float getAlbedo()              const { return albedo; }
-    float getAbsorbedFraction()    const { return absfrac; }
-
-	Packet Scatter(Packet pkt,float rnd0,__m128 cosphi_sinphi) const;
-
-    bool isMatched() const { return matchedboundary; }
-    void setMatched(bool m=true){ matchedboundary=m; }
-
-    friend ostream& operator<<(ostream& os,const Material& mat);
-};
-
-inline Packet Material::Scatter(Packet pkt,float rnd0,__m128 cosphi_sinphi) const
+typedef union
 {
-    float costheta,P=2*rnd0-1;
+	__m128 vf;
+	float f[4];
+} SSEReg128;
 
-    float t=one_minus_gg/(1+g*P);
-
-    // choose angles: HG function for component along d0, uniform circle for normal components
-    costheta = g==0 ? P : recip_2g * (one_plus_gg-t*t);
-    assert (costheta <= 1.0 && costheta >= -1.0);
-
-    return matspin(pkt,costheta,cosphi_sinphi);
-}
-
-    typedef struct { 
+typedef struct { 
         __m128 Pe;          // 4x16B = 64 B
         __m128 distance;
         int IDfe;           // 4B
@@ -127,16 +83,19 @@ inline Packet Material::Scatter(Packet pkt,float rnd0,__m128 cosphi_sinphi) cons
 
 struct Tetra {
     __m128 nx,ny,nz,C;      // 4 x 16B = 64B
-//    __m128 Fn[4];           // 4x16B = 64B         Don't keep these here; only need occasionally -> transpose as needed
     TetraByFaceID   IDfs;   // 4 x 4B = 16 B
     unsigned adjTetras[4];  // 4 x 4B = 16 B
     unsigned matID;         // 4 B
 
     bool pointWithin(__m128);
 
+    
     StepResult getIntersection(const Ray<3,double>& r,double s,unsigned IDfe=0) const;
     StepResult getIntersection(__m128,__m128,__m128 s) const;
-} __attribute__ ((aligned(64)));
+    
+} __attribute__ ((aligned(64))) ;
+
+
 
 class TetraMesh {
     vector<unsigned>            T_m;        // tetra -> material mapping
@@ -146,7 +105,7 @@ class TetraMesh {
 	vector<TetraByPointID>      T_p;        // tetra -> 4 point IDs
     vector<FaceByPointID>       F_p;        // face ID -> 3 point IDs
 	vector<Face>			    F;          // faces (with normals and constants)
-	vector<pair<int,int> >      vecFaceID_Tetra;
+	vector<pair<int,int> >      vecFaceID_Tetra;        // for each face f, vecFaceID_Tetra[f] gives the tetras adjacent to the face
     vector<Tetra>               tetras;     // new SSE-friendly data structure
 
     // boundary data structures; map with key=volume-set ID, value=surface-set ID
@@ -304,6 +263,8 @@ class TetraMesh {
     // functions for saving tetramesh representations
     pair<unsigned,boost::shared_array<const uint8_t> > tetrasAsBinary() const;
     pair<unsigned,boost::shared_array<const uint8_t> > pointsAsBinary() const;
+
+    friend MeshMapper listSurface(const TetraMesh*,unsigned);
 };
 
 

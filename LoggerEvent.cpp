@@ -16,28 +16,28 @@ const LoggerEvent& LoggerEvent::operator+=(const LoggerEvent& rhs)
     return *this;
 }
 
-ostream& operator<<(ostream& os,const LoggerEvent& le)
+ostream& operator<<(ostream& os,const EventCount& ec)
 {
-    os << "Launched: " << le.Nlaunch << endl;
+    os << "Launched: " << ec.Nlaunch << endl;
 
-    os << "Boundary (same):      " << le.Nbound << endl;
-    os << "Boundary (different): " << le.Ninterface << endl;
-    os << "  TIR:     " << le.Ntir << endl;
-    os << "  Fresnel: " << le.Nfresnel << endl;
-    os << "  Refract: " << le.Nrefr << endl;
-    os << "  Balance (bound - [TIR + fresnel + refract]): " << le.Ninterface-le.Ntir-le.Nfresnel-le.Nrefr << endl;
+    os << "Boundary (same):      " << ec.Nbound << endl;
+    os << "Boundary (different): " << ec.Ninterface << endl;
+    os << "  TIR:     " << ec.Ntir << endl;
+    os << "  Fresnel: " << ec.Nfresnel << endl;
+    os << "  Refract: " << ec.Nrefr << endl;
+    os << "  Balance (bound - [TIR + fresnel + refract]): " << ec.Ninterface-ec.Ntir-ec.Nfresnel-ec.Nrefr << endl;
 
-    os << "Absorption: " << le.Nabsorb << endl;
-    os << "Scatter:    " << le.Nscatter << endl;
+    os << "Absorption: " << ec.Nabsorb << endl;
+    os << "Scatter:    " << ec.Nscatter << endl;
 
     os << "Roulette results" << endl;
-    os << "  Win:  " << le.Nwin << endl;
-    os << "  Lose: " << le.Ndie << endl;
+    os << "  Win:  " << ec.Nwin << endl;
+    os << "  Lose: " << ec.Ndie << endl;
 
     os << "End results" << endl;
-    os << "Died:   " << le.Ndie << endl;
-    os << "Exited: " << le.Nexit << endl;
-    os << "Balance ([launch] - [die + exit]): " << le.Nlaunch-le.Ndie-le.Nexit << endl;
+    os << "Died:   " << ec.Ndie << endl;
+    os << "Exited: " << ec.Nexit << endl;
+    os << "Balance ([launch] - [die + exit]): " << ec.Nlaunch-ec.Ndie-ec.Nexit << endl;
 
     return os;
 }

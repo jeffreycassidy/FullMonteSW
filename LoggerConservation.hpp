@@ -1,15 +1,39 @@
 #include "logger.hpp"
+#include <mutex>
 
-// LoggerConservation - checks that energy is conserved by logging total energy:
-//  launched
-//  absorbed
-//  expired through roulette (w_die)
-//  exiting volume
-//  added by roulette wins (w_roulette)
+/** Tracks overall photon-packet conservation statistics.
+ * Provides basic facilities to initialize, copy, accumulate, and print to ostream. *
+ */
 
-class LoggerConservation : public LoggerNull {
-    double w_launch,w_absorb,w_die,w_exit,w_roulette;
+struct ConservationCounts {
+    double w_launch;			///< Amount of energy launched (generally 1.0 * Npackets)
+    double w_absorb;			///< Amount of energy absorbed
+    double w_die;				///< Amount of energy terminated in roulette
+    double w_exit;				///< Amount of energy exiting
+    double w_roulette;			///< Amount of energy added by winning roulette
 
+    /// Initialize to zero
+    ConservationCounts(){ clear(); }
+
+    /// Copy values from another ConservationCounts element
+    ConservationCounts(const ConservationCounts& cc_) = default;
+
+    /// Clear all elements to zero
+    void clear(){ w_launch=w_absorb=w_die=w_exit=w_roulette=0; }
+
+    /// Add another ConservationCounts
+    ConservationCounts& operator+=(const ConservationCounts&);
+
+    /// Output to ostream&
+    friend ostream& operator<<(ostream&,const ConservationCounts&);
+};
+
+
+/** Single-threaded conservation tracker.
+ *
+ */
+
+class LoggerConservation : private ConservationCounts,public LoggerNull {
     public:
     inline void eventLaunch(Ray3 r,unsigned IDt,double w) { w_launch += w; };
     inline void eventAbsorb(Point3 p,unsigned IDt,double w0,double dw) { w_absorb += dw; };
@@ -17,42 +41,64 @@ class LoggerConservation : public LoggerNull {
     inline void eventDie(double w){ w_die += w; };
     inline void eventRouletteWin(double w0,double w){ w_roulette += w-w0; };
 
-    LoggerConservation() : w_launch(0.0),w_absorb(0.0),w_die(0.0),w_exit(0.0),w_roulette(0.0){}
-    LoggerConservation(string fn) { LoggerConservation(); };
+    /// Initialize to zero
+    LoggerConservation() =default;
 
-    LoggerConservation& operator+=(const LoggerConservation& lc){
-        w_launch += lc.w_launch;
-        w_absorb += lc.w_absorb;
-        w_die    += lc.w_die;
-        w_exit   += lc.w_exit;
-        w_roulette += lc.w_roulette;
-        return *this;
-    }
+    /// Moves another conservation counter by copying its values and then resetting them
+    LoggerConservation(LoggerConservation&& lc_) : ConservationCounts(lc_){ lc_.clear(); }
 
-    void clear(){ *this=LoggerConservation(); }
+    /// Copy constructor is not used
+    LoggerConservation(const LoggerConservation&) = delete;
 
-    friend ostream& operator<<(ostream&,const LoggerConservation&);
+    typedef ConservationCounts result_type;
+
+    /// Return a copy of the current conservation counts
+    result_type getResults() const { return *this; }
+
+    /// Allow multi-threaded variant to access the clear() function of ConservationCounts
+    friend class LoggerConservationMT;
 };
 
 
-// LoggerConservationMT: Multithreaded instance of conservation logger
-//  just keeps one set of counters for each thread, then merges through the += operator
+/** Multi-threaded conservation tracker.
+ * Accumulates locally using a single-threaded LoggerConservation, then merges atomically to parent using a mutex.
+ */
 
-class LoggerConservationMT : public LoggerConservation,private boost::mutex {
+class LoggerConservationMT : public LoggerConservation,private std::mutex {
     public:
+	LoggerConservationMT() = default;
+	LoggerConservationMT(LoggerConservationMT&& lc_) : LoggerConservation(std::move(lc_)),std::mutex(){}
+
+	/// Should not be copy-constructible due to mutex
+	LoggerConservationMT(const LoggerConservationMT&) = delete;
+
     class ThreadWorker : public LoggerConservation {
+		/// Reference to the parent LoggerConservationMT
         LoggerConservationMT& parent;
         public:
+
+        ///
         ThreadWorker(LoggerConservationMT& parent_) : parent(parent_){}
+
+        /// Move constructor for initialization
+        ThreadWorker(ThreadWorker&& tw_) : parent(tw_.parent){}
+
+        /// No need for copy constructor
+        ThreadWorker(const ThreadWorker& tw_) = delete;
+
+        /// Commit before destroying
         ~ThreadWorker(){ commit(); }
 
+        /// Commit atomically using mutex
         void commit()
         {
             parent.lock();
-            parent += *this;
+            (ConservationCounts&)parent += *this;
             parent.unlock();
             clear();
         }
     };
-    ThreadWorker getThreadWorkerInstance(unsigned) { return ThreadWorker(*this); }
+
+    /// Return a new worker
+    ThreadWorker get_worker() { return ThreadWorker(*this); }
 };
