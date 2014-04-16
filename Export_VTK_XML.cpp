@@ -99,7 +99,7 @@ DOMNode* xml_createVTKSurfaceMesh(DOMElement* el,const MeshMapper* M,const vecto
 }
 
 
-/** Creates a DOM XML representation of a VTK tracer output from TetraMesh M.
+/** Creates a DOM XML representation of a VTK tracer output from a points/offsets array
  *
  */
 
@@ -119,12 +119,14 @@ DOMNode* xml_createVTKTracer(DOMElement* el,const vector<array<float,3>>& points
 	xml_writePoints(piece,points.begin(),points.end());
 
 	// write the polydata (triangular faces) now
-	xml_writePolyLines(piece,offsets.begin(),offsets.end());
+	xml_writeCells(piece,4,offsets.begin(),offsets.end());
 
 	el->appendChild(polydata);
 
     return polydata;
 }
+
+
 
 /** Writes a DOMDocument out to a file
  * @param fn File name

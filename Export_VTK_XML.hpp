@@ -19,7 +19,7 @@ DOMNode* xml_createVTKVolumeMesh(DOMDocument* doc,const TetraMesh* M,const vecto
 
 void xml_writeFile(string fn,DOMDocument* doc);
 
-template<class Iterator>DOMNode* xml_writePolyLines(DOMElement* piece,Iterator begin,Iterator end);
+template<class Iterator>DOMNode* xml_writeCells(DOMElement* piece,Iterator begin,Iterator end);
 
 template<class TetraIterator>DOMNode* xml_writeTetras(DOMElement* piece,TetraIterator begin,TetraIterator end);
 
@@ -227,13 +227,16 @@ template<class Iterator>DOMNode* xml_writePolys(DOMElement* piece,Iterator begin
 
 
 
-/** Writes out a set of VTK PolyLines using an Iterator range.
+/** Writes out a set of VTK Cells using an Iterator range.
  * If the Iterator gives sequence i_0 i_1 i_2 .. i_N, then connectivity is the N ranges [i_0,i_1) [i_1,i_2) ... [i_N-1,i_N)
  *
- * @tparam Iterator Iterator which dereferences to the end offset of each polyline
+ * @param celltype VTK cell ID (VTK_VERTEX=1, VTK_POLY_VERTEX=2, VTK_LINE=3, VTK_POLY_LINE=4, VTK_TETRA=10
+ * @param begin,end Iterator range for offsets
+ *
+ * @tparam Iterator Iterator which dereferences to the end offset of each cell
  */
 
-template<class Iterator>DOMNode* xml_writePolyLines(DOMElement* piece,Iterator begin,Iterator end)
+template<class Iterator>DOMNode* xml_writeCells(DOMElement* piece,unsigned celltype,Iterator begin,Iterator end)
 {
 	DOMDocument* doc=piece->getOwnerDocument();
 
@@ -294,7 +297,7 @@ template<class Iterator>DOMNode* xml_writePolyLines(DOMElement* piece,Iterator b
 		ss << endl;
 		for(unsigned long o=0; o<Nl; ++o)
 		{
-			ss << '4';			// VTK_POLY_LINE=4
+			ss << celltype;
 			if (o%10==9)
 				ss << endl;
 			else
@@ -384,3 +387,61 @@ template<class TetraIterator>DOMNode* xml_writeTetras(DOMElement* piece,TetraIte
 
 	return piece;
 }
+
+
+
+/** Creates a DOM XML representation of a VTK tracer output from a points/offsets array
+ *
+ */
+
+template<class PointIterator,class OffsetIterator>DOMNode* xml_createVTKTracer
+	(DOMElement* el,PointIterator pointBegin,PointIterator pointEnd,OffsetIterator offsetBegin,OffsetIterator offsetEnd)
+{
+	DOMDocument* doc = el->getOwnerDocument();
+
+    // PolyData section
+    DOMElement* polydata = doc->createElement(XMLAutoTranscoder("UnstructuredGrid"));
+
+    // PolyData -> Piece section
+	DOMElement* piece=doc->createElement(XMLAutoTranscoder("Piece"));
+
+	polydata->appendChild(piece);
+
+	// write the points under this piece
+	xml_writePoints(piece,pointBegin,pointEnd);
+
+	xml_writeCells(piece,4,offsetBegin,offsetEnd);
+
+	el->appendChild(polydata);
+
+    return polydata;
+}
+
+
+/** Creates a DOM XML representation of a VTK tracer output from a points/offsets array
+ *
+ */
+
+template<class PointIterator,class OffsetIterator>DOMNode* xml_createVTKPolyVertex
+	(DOMElement* el,PointIterator pointBegin,PointIterator pointEnd,OffsetIterator offsetBegin,OffsetIterator offsetEnd)
+{
+	DOMDocument* doc = el->getOwnerDocument();
+
+    // PolyData section
+    DOMElement* polydata = doc->createElement(XMLAutoTranscoder("UnstructuredGrid"));
+
+    // PolyData -> Piece section
+	DOMElement* piece=doc->createElement(XMLAutoTranscoder("Piece"));
+
+	polydata->appendChild(piece);
+
+	// write the points under this piece
+	xml_writePoints(piece,pointBegin,pointEnd);
+
+	xml_writeCells(piece,2,offsetBegin,offsetEnd);
+
+	el->appendChild(polydata);
+
+    return polydata;
+}
+

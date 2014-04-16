@@ -82,7 +82,7 @@ static const __m256 _ps_min_norm_pos = _mm256_castsi256_ps(_mm256_set1_epi32(0x0
 //_PS_CONST_TYPE(min_norm_pos, int, 0x00800000);
 
 //_PS_CONST_TYPE(mant_mask, int, 0x7f800000);
-static const __m256 _ps_mant_mask = _mm256_castsi256_ps(_mm256_set1_epi32(0x7f800000));
+//static const __m256 _ps_mant_mask = _mm256_castsi256_ps(_mm256_set1_epi32(0x7f800000));
 
 static const __m256 _ps_inv_mant_mask = _mm256_castsi256_ps(_mm256_set1_epi32(~0x7f800000));
 //_PS_CONST_TYPE(inv_mant_mask, int, ~0x7f800000);
@@ -163,7 +163,7 @@ _PI32_CONST(1, 1);
 _PI32_CONST(inv1, ~1);
 _PI32_CONST(2, 2);
 _PI32_CONST(4, 4);
-_PI32_CONST(0x7f, 0x7f);
+//_PI32_CONST(0x7f, 0x7f);
 
 _PS_CONST(cephes_SQRTHF, 0.707106781186547524);
 _PS_CONST(cephes_log_p0, 7.0376836292E-2);
@@ -250,7 +250,7 @@ _PS_CONST(cephes_log_q2, 0.693359375);
 */
 inline __m256 log_ps(__m256 x) {
 //#ifdef USE_SSE2
-  __m256i emm0;
+  //__m256i emm0;
 //#else
 //  v2si mm0, mm1;
 //#endif
@@ -351,19 +351,19 @@ inline __m256 log_ps(__m256 x) {
   return x;
 }
 
-_PS_CONST(exp_hi,	88.3762626647949f);
-_PS_CONST(exp_lo,	-88.3762626647949f);
+//_PS_CONST(exp_hi,	88.3762626647949f);
+//_PS_CONST(exp_lo,	-88.3762626647949f);
 
-_PS_CONST(cephes_LOG2EF, 1.44269504088896341);
-_PS_CONST(cephes_exp_C1, 0.693359375);
-_PS_CONST(cephes_exp_C2, -2.12194440e-4);
+//_PS_CONST(cephes_LOG2EF, 1.44269504088896341);
+//_PS_CONST(cephes_exp_C1, 0.693359375);
+//_PS_CONST(cephes_exp_C2, -2.12194440e-4);
 
-_PS_CONST(cephes_exp_p0, 1.9875691500E-4);
-_PS_CONST(cephes_exp_p1, 1.3981999507E-3);
-_PS_CONST(cephes_exp_p2, 8.3334519073E-3);
-_PS_CONST(cephes_exp_p3, 4.1665795894E-2);
-_PS_CONST(cephes_exp_p4, 1.6666665459E-1);
-_PS_CONST(cephes_exp_p5, 5.0000001201E-1);
+//_PS_CONST(cephes_exp_p0, 1.9875691500E-4);
+//_PS_CONST(cephes_exp_p1, 1.3981999507E-3);
+//_PS_CONST(cephes_exp_p2, 8.3334519073E-3);
+//_PS_CONST(cephes_exp_p3, 4.1665795894E-2);
+//_PS_CONST(cephes_exp_p4, 1.6666665459E-1);
+//_PS_CONST(cephes_exp_p5, 5.0000001201E-1);
 
 //
 //inline v4sf exp_ps(v4sf x) {

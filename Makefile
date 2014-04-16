@@ -94,11 +94,8 @@ SFMT.o: SFMT.c SFMT*.h
 montecarlo: graph.o newgeom.o face.o helpers.o source.o montecarlo.o LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o mainloop.o fm-postgres/fm-postgres.o blob.o fmdb.o fm-postgres/fmdbexportcase.o sse.o random.o RandomAVX.o SFMT.o LoggerConservation.o LoggerEvent.o LoggerVolume.o
 	g++ $(GCC_OPTS) $^ $(LIBS) $(LIBDIRS) -o $@
 	
-montecarlo-tracer: graph.o newgeom.o face.o helpers.o source.o montecarlo.cpp LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o mainloop.o fm-postgres/fm-postgres.o blob.o fmdb.o fm-postgres/fmdbexportcase.o sse.o random.o RandomAVX.o SFMT.o LoggerConservation.o LoggerEvent.o LoggerVolume.o
+montecarlo-tracer: graph.o newgeom.o face.o helpers.o source.o montecarlo.cpp LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o mainloop.o fm-postgres/fm-postgres.o blob.o fmdb.o fm-postgres/fmdbexportcase.o sse.o random.o RandomAVX.o SFMT.o LoggerConservation.o LoggerEvent.o LoggerVolume.o TracerStep.o
 	g++ $(GCC_OPTS) -DTRACER $(INCLDIRS) $^ $(LIBS) $(LIBDIRS) -o $@
-
-montecarlo-trace: graph.o newgeom.o face.o helpers.o source.o montecarlo.cpp LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o mainloop.o fm-postgres/fm-postgres.o blob.o fmdb.o fm-postgres/fmdbexportcase.o sse.o RandomAVX.o SFMT.o LoggerConservation.o LoggerEvent.o LoggerVolume.o
-	g++ $(GCC_OPTS) -DLOG_MEMTRACE $^ $(INCLDIRS) $(LIBS) $(LIBDIRS) -o $@
 
 libmontecarlo.so: graph.o newgeom.o face.o helpers.o source.o montecarlo.o LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o mainloop.o blob.o fmdb.o sse.o random.o RandomAVX.o SFMT.o LoggerConservation.o LoggerEvent.o LoggerVolume.o
 	g++ -shared -fPIC $^ -Lfm-postgres -lfmpg -o $@
