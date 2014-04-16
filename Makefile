@@ -105,6 +105,12 @@ exportResult: exportResult.cpp libmontecarlo.so
 	
 ReadTracer: ReadTracer.cpp
 	g++ -Wall -O3 -g -std=c++11 -mavx -lxerces-c $< Export_VTK_XML.cpp -o $@
+	
+GetFluence: GetFluence.cpp
+	g++ -Wall -O3 -g -std=c++11 -mavx -fabi-version=6 -L. -L/usr/local/lib/boost -lfmpg -lpq -lboost_system -lboost_program_options -lboost_timer -lmontecarlo $(INCLDIRS) $< -o $@
+
+test_serialize: test_serialize.cpp
+	g++ -Wall -O3 -g -std=c++11 -L/usr/local/lib/boost -lboost_serialization $< -o $@
 
 clean: fm-postgres/clean
 	rm -f *.o sse_int montecarlo blobmaint texwriter Test_VectorHG *.a *.so

@@ -12,8 +12,8 @@ using namespace std;
 
 
 
-/** Filter adaptor; makes any container T
- * @tparam T			Container type
+/** Filter adaptor; makes any container T with a filter usable for, eg, range-based iteration
+ * @tparam T			Container type; min requirements begin,end,cbegin,cend,iterator,const_iterator
  * @tparam Predicate	Predicate type; must have bool operator(const El&)
  */
 
@@ -29,12 +29,18 @@ public:
 
 	iterator begin() { return boost::make_filter_iterator(pred,obj.begin(),obj.end()); }
 	iterator end()   { return boost::make_filter_iterator(pred,obj.end());   }
+
+	const_iterator cbegin() { return boost::make_filter_iterator(pred,obj.cbegin(),obj.cend()); }
+	const_iterator cend()   { return boost::make_filter_iterator(pred,obj.cend());   }
+
 };
 
 template<class Predicate,class T>filter_adaptor<Predicate,T> make_filter_adaptor(Predicate pred_,T& obj_)
 {
 	return filter_adaptor<Predicate,T>(pred_,obj_);
 }
+
+
 
 int main(int argc,char **argv)
 {

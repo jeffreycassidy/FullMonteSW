@@ -36,6 +36,15 @@ private:
     	writeEvent(a,w_,e,t_);
     }
 
+    static bool IsAccumulate(const TracerStep& s){
+    	switch(s.event){
+    	case Launch:
+    	case Absorb:
+    	case Exit:
+    		return true;
+    	}
+    	return false;
+    }
     inline void writeEvent(const Point<3,double>& P,float w_,TracerStep::EventType e,float t_=0.0){
     	array<float,3> a;
     	a[0]=P[0];
