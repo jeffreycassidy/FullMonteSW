@@ -22,6 +22,15 @@ Testing: Testing.cpp SFMT.h SFMT.c RandomAVX.hpp
 
 default: avx_mathfun_test
 
+GeompackFile.o: Geompack/GeompackFile.cpp Geompack/GeompackFile.hpp
+	g++ -Wall -DBOOST_RESULT_OF_USE_DECLTYPE -g -std=c++11 -O3 -I/usr/local/boost -c -o $@ $<
+	
+Test_GeompackFile.o: Geompack/Test_GeompackFile.cpp Geompack/GeompackFile.hpp
+	g++ -Wall -DBOOST_RESULT_OF_USE_DECLTYPE -g -std=c++11 -O3 -I/usr/local/boost -c -o $@ $<
+	
+Test_GeompackFile: GeompackFile.o Test_GeompackFile.o
+	g++ -Wall -g -std=c++11 -O3 $^ -o $@
+
 Test_VectorMatSpin: VectorMatSpin.cpp graph.cpp face.cpp newgeom.cpp helpers.cpp Packet.o
 	g++ -Wall -g -std=c++11 -O0 -L/usr/local/lib -L/usr/local/lib/boost -lm -lboost_timer -lboost_system -mavx -I/usr/local/boost -I/usr/local/include -o $@ $^
 

@@ -98,7 +98,7 @@ bar SetLookupTable lut
 # create renderer and go
 vtkRenderer ren
 ren AddActor meshactor
-ren AddActor restactor
+#ren AddActor restactor
 ren AddActor bar
 vtkRenderWindow renwin
 renwin AddRenderer ren
