@@ -448,9 +448,7 @@ RunResults runSimulation(PGConnection* dbconn,const TetraMesh& mesh,const vector
 
     // write results to database
     if(globalopts::dbwrite)
-    {
         db_finishRun(dbconn,runid,res);
-    }
 
     return res;
 }

@@ -11,6 +11,9 @@ struct ConservationCounts {
     double w_die;				///< Amount of energy terminated in roulette
     double w_exit;				///< Amount of energy exiting
     double w_roulette;			///< Amount of energy added by winning roulette
+    double w_abnormal;			///< Amount of energy terminated due to abnormal circumstances
+    double w_time;				///< Amount of energy terminated due to time gate expiry
+    double w_nohit;				///< Amount of energy terminated for failure to find an intersecting face
 
     /// Initialize to zero
     ConservationCounts(){ clear(); }
@@ -19,7 +22,7 @@ struct ConservationCounts {
     ConservationCounts(const ConservationCounts& cc_) = default;
 
     /// Clear all elements to zero
-    void clear(){ w_launch=w_absorb=w_die=w_exit=w_roulette=0; }
+    void clear(){ w_launch=w_absorb=w_die=w_exit=w_roulette=w_time=w_abnormal=w_nohit=0; }
 
     /// Add another ConservationCounts
     ConservationCounts& operator+=(const ConservationCounts&);
@@ -40,6 +43,11 @@ class LoggerConservation : private ConservationCounts,public LoggerNull {
     inline void eventExit(Ray3 r,int IDf,double w) { w_exit += w; };
     inline void eventDie(double w){ w_die += w; };
     inline void eventRouletteWin(double w0,double w){ w_roulette += w-w0; };
+
+    inline void eventAbnormal(const Packet& pkt,unsigned,unsigned){ w_abnormal += pkt.w; }
+
+    inline void eventNoHit(const Packet& pkt,const Tetra&){ w_nohit += pkt.w; }
+    inline void eventTimeGate(const Packet& pkt){ w_time += pkt.w; }
 
     /// Initialize to zero
     LoggerConservation() =default;

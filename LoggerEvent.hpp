@@ -6,8 +6,8 @@
  */
 
 struct EventCount {
-    unsigned long long Nlaunch,Nabsorb,Nscatter,Nbound,Ntir,Nfresnel,Nrefr,Ninterface,Nexit,Ndie,Nwin,Nabnormal;
-    void clear(){ Nlaunch=Nabsorb=Nscatter=Nbound=Ntir=Nfresnel=Nrefr=Ninterface=Nexit=Ndie=Nwin=Nabnormal=0; }
+    unsigned long long Nlaunch,Nabsorb,Nscatter,Nbound,Ntir,Nfresnel,Nrefr,Ninterface,Nexit,Ndie,Nwin,Nabnormal,Ntime,Nnohit;
+    void clear(){ Nlaunch=Nabsorb=Nscatter=Nbound=Ntir=Nfresnel=Nrefr=Ninterface=Nexit=Ndie=Nwin=Nabnormal=Ntime=Nnohit=0; }
 };
 
 ostream& operator<<(ostream& os,const EventCount&);

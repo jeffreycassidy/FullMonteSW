@@ -66,12 +66,11 @@ inline pair<float,float> absorb(const Packet& pkt,const Material& mat,const Tetr
 
 template<class LoggerType,class RNG>int Worker<LoggerType,RNG>::doOnePacket(Packet pkt,unsigned IDt)
 {
-    unsigned Nstep=0,Nhit;
+    unsigned Nhit,Nstep;
     StepResult stepResult;
     Tetra currTetra = cfg.mesh.getTetra(IDt);
     Material currMat = cfg.mat[currTetra.matID];
 
-	double dw,w0;
     float f_tmp[4] __attribute__((aligned(16)));
     float &n1 = f_tmp[0];
     float &n2 = f_tmp[1];
@@ -81,10 +80,9 @@ template<class LoggerType,class RNG>int Worker<LoggerType,RNG>::doOnePacket(Pack
     logger.eventLaunch(make_pair(pkt.p,pkt.d),IDt,1.0);
 
     // start another hop
-    do
+    for(Nstep=0; Nstep < cfg.Nstep_max; ++Nstep)
     {
         // draw a hop length; pkt.s = { physical distance, MFPs to go, time, 0 }
-        ++Nstep;
         pkt.s = _mm_mul_ps(rng.draw_m128f1_exp(),currMat.s_init);
 
         // attempt hop
@@ -199,33 +197,19 @@ template<class LoggerType,class RNG>int Worker<LoggerType,RNG>::doOnePacket(Pack
         	return -2;
         }
 
+
+
         // Absorption process
+        double dw,w0=pkt.w;
         tie(pkt.w,dw) = absorb(pkt,currMat,currTetra);
 
         if (dw != 0.0)
         	logger.eventAbsorb(pkt.p,IDt,pkt.w,dw);
 
 
-        /*// do roulette
-        if (pkt.w < cfg.wmin && rng.draw_float_u01() < cfg.pr_win)
-        {
-            w0=pkt.w;
-            pkt.w /= cfg.pr_win;
-            logger.eventRouletteWin(w0,pkt.w);
-        }
-
-        // spin (new direction of travel)
-        if (currMat.isScattering() && pkt.w >= cfg.wmin)
-        {
-        	pkt = pkt.matspin(pkt,getNextHG(currTetra.matID));
-            logger.eventScatter(pkt.d,pkt.d,currMat.getParam_g());
-        }*/
-
-
         // Termination logic
-
         TerminationResult term;
-        double dw;
+        w0=pkt.w;
 
         tie(term,dw)=terminationCheck(cfg,rng,pkt,currMat,currTetra);
 
@@ -254,7 +238,6 @@ template<class LoggerType,class RNG>int Worker<LoggerType,RNG>::doOnePacket(Pack
     	if (scatter(pkt,*this,currMat,currTetra))
     		logger.eventScatter(pkt.d,pkt.d,currMat.getParam_g());
     }
-    while (Nstep <= cfg.Nstep_max);
 
     // should only fall through to here in abnormal circumstances (too many steps)
     cerr << "Abnormal condition: packet retired after " << Nstep << " steps" << endl;
