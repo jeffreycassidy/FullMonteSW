@@ -11,7 +11,7 @@ using namespace std;
 #include <boost/range.hpp>
 #include <boost/bind.hpp>
 
-template<class PointRange,class Sizes,class CellRange>void writeXML_cells(string fn,PointRange P,Sizes S,CellRange C);
+template<class PointRange,class Sizes,class CellRange>void writeXML_cells(string fn,PointRange P,Sizes S,CellRange C,unsigned cell_type=10);
 
 namespace boost {
 	template<>struct range_difference<GeompackMesh::Tetra>{
@@ -41,9 +41,6 @@ int main(int argc,char **argv)
 				std::bind<unsigned>(std::minus<unsigned>(),std::placeholders::_1,1U)));
 
 	cout << "First tetra vertices are: ";
-
-	//copy(boost::begin(t),boost::end(t),ostream_iterator<unsigned>(cout," "));
-	//cout << endl;
 
 	cout << "There are " << boost::distance(make_transform_adaptor(GM.getVTKTetraCells(),boost::size<GeompackMesh::Tetra>)) << " offset-size entries" << endl;
 	cout << "There are " << boost::distance(make_iiterator_adaptor(GM.getVTKTetraCells(),GeompackMesh::GetVertices)) << " connectivity entries" << endl;
@@ -98,21 +95,6 @@ int main(int argc,char **argv)
 		else
 			cout << s << endl;
 
-	/*
-
-	xml_WriteDataArray(cout,"lazy_scan_transformer",make_transform_adaptor(
-			make_transform_adaptor(GM.getVTKTetraCells(),boost::size<GeompackMesh::Tetra>),
-			make_lazy_scan<unsigned long>(std::plus<unsigned long>())));
-	*/
-
-/*	auto r = make_transform_adaptor(GM.getVTKTetraCells(),boost::size<GeompackMesh::Tetra>);
-
-	for(cell_difference cd : make_transform_adaptor(
-										r,
-										make_lazy_scan<cell_difference>(std::plus<cell_difference>())))
-		cout << cd << endl;*/
-
-
 	return 0;
 }
 
@@ -120,7 +102,7 @@ int main(int argc,char **argv)
  * Cell types: polyline (4), tetra (10)
  */
 
-template<class PointRange,class Sizes,class CellRange>void writeXML_cells(string fn,PointRange P,Sizes S,CellRange C,unsigned cell_type=10)
+template<class PointRange,class Sizes,class CellRange>void writeXML_cells(string fn,PointRange P,Sizes S,CellRange C,unsigned cell_type)
 	{
 		unsigned long Nc = boost::distance(S);
 		typedef unsigned cell_difference;
