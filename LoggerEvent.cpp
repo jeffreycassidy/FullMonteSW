@@ -13,6 +13,7 @@ const LoggerEvent& LoggerEvent::operator+=(const LoggerEvent& rhs)
     Nexit       += rhs.Nexit;
     Ndie        += rhs.Ndie;
     Nwin        += rhs.Nwin;
+    Nabnormal	+= rhs.Nabnormal;
     return *this;
 }
 
@@ -35,8 +36,9 @@ ostream& operator<<(ostream& os,const EventCount& ec)
     os << "  Lose: " << ec.Ndie << endl;
 
     os << "End results" << endl;
-    os << "Died:   " << ec.Ndie << endl;
-    os << "Exited: " << ec.Nexit << endl;
+    os << "Died:    " << ec.Ndie << endl;
+    os << "Exited:  " << ec.Nexit << endl;
+    os << "Abnormal:" << ec.Nabnormal << endl;
     os << "Balance ([launch] - [die + exit]): " << ec.Nlaunch-ec.Ndie-ec.Nexit << endl;
 
     return os;

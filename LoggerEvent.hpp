@@ -6,8 +6,8 @@
  */
 
 struct EventCount {
-    unsigned long long Nlaunch,Nabsorb,Nscatter,Nbound,Ntir,Nfresnel,Nrefr,Ninterface,Nexit,Ndie,Nwin;
-    void clear(){ Nlaunch=Nabsorb=Nscatter=Nbound=Ntir=Nfresnel=Nrefr=Ninterface=Nexit=Ndie=Nwin=0; }
+    unsigned long long Nlaunch,Nabsorb,Nscatter,Nbound,Ntir,Nfresnel,Nrefr,Ninterface,Nexit,Ndie,Nwin,Nabnormal;
+    void clear(){ Nlaunch=Nabsorb=Nscatter=Nbound=Ntir=Nfresnel=Nrefr=Ninterface=Nexit=Ndie=Nwin=Nabnormal=0; }
 };
 
 ostream& operator<<(ostream& os,const EventCount&);
@@ -37,6 +37,8 @@ class LoggerEvent : public LoggerNull,private EventCount {
     inline void eventExit(const Ray3,int,double){ ++Nexit; };        // exited geometry
     inline void eventDie(double){ ++Ndie; };                                    // lost Russian roulette
     inline void eventRouletteWin(double,double){ ++Nwin; };                     // won roulette
+
+    inline void eventAbnormal(const Packet&,unsigned,unsigned){ ++Nabnormal; }
 
     const result_type& getResults() const { return *this; };
     result_type getResults(){ return *this; }

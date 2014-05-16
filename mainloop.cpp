@@ -9,6 +9,61 @@
 
 #include "mainloop.hpp"
 
+enum TerminationResult { Continue=0, RouletteWin, RouletteLose, TimeGate, Other=-1  };
+
+    /**
+     * Conducts termination check (including roulette).
+     *
+     * @param rng Random-number generator
+     * @param mat Material
+     * @param region Region
+     *
+     * @returns pair<RouletteResult,double> = < result, dw> where dw is change in packet weight due to roulette
+     *
+     * @tparam RNG
+     */
+
+typedef Tetra Region;
+
+template<class RNG>pair<TerminationResult,double> terminationCheck(const RunConfig& cfg,RNG& rng,Packet& pkt,const Material& mat,const Region& region)
+{
+    // do roulette
+	double w0=pkt.w;
+    if (pkt.w < cfg.wmin)
+    {
+    	if (rng.draw_float_u01() < cfg.pr_win)
+    	{
+    		pkt.w /= cfg.pr_win;
+    		return make_pair(RouletteWin,pkt.w-w0);
+    	}
+    	else
+    		return make_pair(RouletteLose,-pkt.w);
+    }
+    else
+    	return make_pair(Continue,0.0);
+}
+
+
+/** would be nice to hoist the Henyey-Greenstein RNG out of the worker into the RNG class (or Material class?) */
+
+template<class Worker>inline bool scatter(Packet& pkt,Worker& wkr,const Material& mat,const Region& region)
+{
+	if (!mat.isScattering())
+		return false;
+
+	__m128 spinmatrix = wkr.getNextHG(region.matID);
+	pkt = pkt.matspin(pkt,spinmatrix);
+	return true;
+}
+
+inline pair<float,float> absorb(const Packet& pkt,const Material& mat,const Tetra& tet)
+{
+	float w0=pkt.w;
+	float dw=w0*mat.getAbsorbedFraction();
+	return make_pair(w0-dw,dw);
+}
+
+
 template<class LoggerType,class RNG>int Worker<LoggerType,RNG>::doOnePacket(Packet pkt,unsigned IDt)
 {
     unsigned Nstep=0,Nhit;
@@ -37,12 +92,14 @@ template<class LoggerType,class RNG>int Worker<LoggerType,RNG>::doOnePacket(Pack
         pkt.p      = stepResult.Pe;
 
         // loop while hitting a face in current step
-        for(Nhit=0; stepResult.hit && Nhit < 1000; ++Nhit)
+        for(Nhit=0; stepResult.hit && Nhit < cfg.Nhit_max; ++Nhit)
         {
             // extremely rarely, this can be a problem; we get no match in the getIntersection routine
             if(stepResult.idx > 3)
             {
                 cerr << "Abnormal condition: stepResult.idx=" << stepResult.idx << ", IDte=" << stepResult.IDte << endl;
+                cerr << "  Terminating packet" << endl;
+                logger.eventNoHit(pkt,currTetra);
                 return -1;
             }
             pkt.s = _mm_add_ps(pkt.s,_mm_mul_ps(stepResult.distance,currMat.s_prop));
@@ -135,15 +192,21 @@ template<class LoggerType,class RNG>int Worker<LoggerType,RNG>::doOnePacket(Pack
             stepResult=currTetra.getIntersection(pkt.p,pkt.d,pkt.s);
             pkt.p   = stepResult.Pe;
         }
-        if (Nhit == 1000)
+        if (Nhit >= cfg.Nhit_max)
+        {
         	cerr << "Terminated due to unusual number of interface hits" << endl;
+            logger.eventAbnormal(pkt,Nstep,Nhit);
+        	return -2;
+        }
 
-        // stopped hitting faces: do drop/spin
-        dw = currMat.getAbsorbedFraction()*pkt.w;
-        logger.eventAbsorb(pkt.p,IDt,pkt.w,dw);
-        pkt.w -= dw;
+        // Absorption process
+        tie(pkt.w,dw) = absorb(pkt,currMat,currTetra);
 
-        // do roulette
+        if (dw != 0.0)
+        	logger.eventAbsorb(pkt.p,IDt,pkt.w,dw);
+
+
+        /*// do roulette
         if (pkt.w < cfg.wmin && rng.draw_float_u01() < cfg.pr_win)
         {
             w0=pkt.w;
@@ -156,15 +219,47 @@ template<class LoggerType,class RNG>int Worker<LoggerType,RNG>::doOnePacket(Pack
         {
         	pkt = pkt.matspin(pkt,getNextHG(currTetra.matID));
             logger.eventScatter(pkt.d,pkt.d,currMat.getParam_g());
+        }*/
+
+
+        // Termination logic
+
+        TerminationResult term;
+        double dw;
+
+        tie(term,dw)=terminationCheck(cfg,rng,pkt,currMat,currTetra);
+
+        switch(term){
+        case Continue:								// Continues, no roulette
+        	break;
+
+        case RouletteWin:							// Wins at roulette, dw > 0
+        	logger.eventRouletteWin(w0,pkt.w);
+        	break;
+
+        case RouletteLose:							// Loses at roulette, dw < 0
+        	logger.eventDie(pkt.w);
+        	return 0;
+        	break;
+
+        case TimeGate:								// Expires due to time gate
+        	logger.eventTimeGate(pkt);
+        	return 1;
+        	break;
+
+        default:
+        	break;
         }
+
+    	if (scatter(pkt,*this,currMat,currTetra))
+    		logger.eventScatter(pkt.d,pkt.d,currMat.getParam_g());
     }
-    while (pkt.w >= cfg.wmin && Nstep <= 10000);
-    if(Nstep > 10000)
-    {
-        cerr << "Abnormal condition: packet retired after 10000 steps" << endl;
-        cerr << "p=" << pkt.p << " d=" << pkt.d << " a=" << pkt.a << " b=" << pkt.b << endl;
-        cerr << "IDt=" << IDt << " |d|=" << norm(pkt.d) << endl;
-    }
-    logger.eventDie(pkt.w);
-    return 0;
+    while (Nstep <= cfg.Nstep_max);
+
+    // should only fall through to here in abnormal circumstances (too many steps)
+    cerr << "Abnormal condition: packet retired after " << Nstep << " steps" << endl;
+    cerr << "p=" << pkt.p << " d=" << pkt.d << " a=" << pkt.a << " b=" << pkt.b << endl;
+    cerr << "IDt=" << IDt << " |d|=" << norm(pkt.d) << endl;
+    logger.eventAbnormal(pkt,Nstep,Nhit);
+    return -1;
 }

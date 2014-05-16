@@ -3,6 +3,7 @@
 #include <immintrin.h>
 #include <iostream>
 #include <cassert>
+#include "Packet.hpp"
 
 /** Describes material properties and provides facilities for calculating scattering and reflection/refraction at interfaces.
  * TODO: Incorporate reflection/refraction?

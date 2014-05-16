@@ -24,8 +24,8 @@ inline float dot3(__m128 a,__m128 b)
 class Packet {
     public:
     __m128 d;			///< Direction of propagation
-    __m128 a;			///< Azimuthal auxiliary vector
-    __m128 b;			///< Azimuthal auxiliary vector
+    __m128 a;			///< Azimuthal auxiliary vector 1
+    __m128 b;			///< Azimuthal auxiliary vector 2
     __m128 p;     		///< Position [x, y, z, 0]
     __m128 s;           ///< Dimensionless step length remaining (?)
     double w;           ///< Packet weight (double used in accumulation)
