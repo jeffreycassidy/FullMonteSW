@@ -70,6 +70,9 @@ public:
 
 	    inline void eventAbsorb(Point3 p,unsigned IDt,double w0,double dw)
 	    	{ wt[IDt] += dw; }
+
+	    inline void eventAbsorb(const Packet& pkt,unsigned IDt,double dw)
+	    	{ wt[IDt] += dw; }
 	};
 
 	typedef WorkerThread ThreadWorker;

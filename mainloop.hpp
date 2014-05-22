@@ -55,6 +55,8 @@ class RunConfig {
 
     double wmin,pr_win;
 
+    unsigned Nstep_max=10000,Nhit_max=1000;
+
     // default copy constructor is fine
 
     // prepare sources before creating run config

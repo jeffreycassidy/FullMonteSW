@@ -24,6 +24,15 @@ Testing: Testing.cpp SFMT.h SFMT.c RandomAVX.hpp
 
 default: avx_mathfun_test
 
+GeompackFile.o: Geompack/GeompackFile.cpp Geompack/GeompackFile.hpp
+	g++ -Wall -DBOOST_RESULT_OF_USE_DECLTYPE -g -std=c++11 -O3 -I/usr/local/boost -c -o $@ $<
+	
+Test_GeompackFile.o: Geompack/Test_GeompackFile.cpp Geompack/GeompackFile.hpp
+	g++ -Wall -DBOOST_RESULT_OF_USE_DECLTYPE -g -std=c++11 -O3 -I/usr/local/boost -c -o $@ $<
+	
+Test_GeompackFile: GeompackFile.o Test_GeompackFile.o
+	g++ -Wall -g -std=c++11 -O3 $^ -o $@
+
 Test_VectorMatSpin: VectorMatSpin.cpp graph.cpp face.cpp newgeom.cpp helpers.cpp Packet.o
 	g++ -Wall -g -std=c++11 -O0 -L/usr/local/lib -L/usr/local/lib/boost -lm -lboost_timer -lboost_system -mavx -I/usr/local/boost -I/usr/local/include -o $@ $^
 
@@ -95,15 +104,24 @@ SFMT.o: SFMT.c SFMT*.h
 
 montecarlo: graph.o newgeom.o face.o helpers.o source.o montecarlo.o LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o mainloop.o fm-postgres/fm-postgres.o blob.o fmdb.o fm-postgres/fmdbexportcase.o sse.o random.o RandomAVX.o SFMT.o LoggerConservation.o LoggerEvent.o LoggerVolume.o
 	g++ $(GCC_OPTS) $^ $(LIBS) $(LIBDIRS) -o $@
-
-montecarlo-trace: graph.o newgeom.o face.o helpers.o source.o montecarlo.cpp LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o mainloop.o fm-postgres/fm-postgres.o blob.o fmdb.o fm-postgres/fmdbexportcase.o sse.o RandomAVX.o SFMT.o LoggerConservation.o LoggerEvent.o LoggerVolume.o
-	g++ $(GCC_OPTS) -DLOG_MEMTRACE $^ $(INCLDIRS) $(LIBS) $(LIBDIRS) -o $@
+	
+montecarlo-tracer: graph.o newgeom.o face.o helpers.o source.o montecarlo.cpp LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o mainloop.o fm-postgres/fm-postgres.o blob.o fmdb.o fm-postgres/fmdbexportcase.o sse.o random.o RandomAVX.o SFMT.o LoggerConservation.o LoggerEvent.o LoggerVolume.o TracerStep.o
+	g++ $(GCC_OPTS) -DTRACER $(INCLDIRS) $^ $(LIBS) $(LIBDIRS) -o $@
 
 libmontecarlo.so: graph.o newgeom.o face.o helpers.o source.o montecarlo.o LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o mainloop.o blob.o fmdb.o sse.o random.o RandomAVX.o SFMT.o LoggerConservation.o LoggerEvent.o LoggerVolume.o
 	g++ -shared -fPIC $^ -Lfm-postgres -lfmpg -o $@
 
 exportResult: exportResult.cpp libmontecarlo.so
 	g++ $(GCC_OPTS) $(INCLDIRS) $^ $(LIBS) $(LIBDIRS) -o $@
+	
+ReadTracer: ReadTracer.cpp
+	g++ -Wall -O3 -g -std=c++11 -mavx -lxerces-c $< Export_VTK_XML.cpp -o $@
+	
+GetFluence: GetFluence.cpp
+	g++ -Wall -O3 -g -std=c++11 -mavx -fabi-version=6 -L. -L/usr/local/lib/boost -lfmpg -lpq -lboost_system -lboost_program_options -lboost_timer -lmontecarlo $(INCLDIRS) $< -o $@
+
+test_serialize: test_serialize.cpp
+	g++ -Wall -O3 -g -std=c++11 -L/usr/local/lib/boost -lboost_serialization $< -o $@
 
 clean: fm-postgres/clean
 	rm -f *.o sse_int montecarlo blobmaint texwriter Test_VectorHG *.a *.so

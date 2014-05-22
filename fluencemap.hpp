@@ -80,9 +80,6 @@ template<>class AreaMult<FaceByPointID> : public PointIDLookup<FaceByPointID> {
         { return make_pair(p.first,p.second*mesh.getFaceArea(p.first)); }
 };
 
-//template<>double AreaMult<TetraByPointID>::getArea(unsigned IDt) const { return mesh.getTetraVolume(IDt); }
-//template<>double  AreaMult<FaceByPointID>::getArea(unsigned IDf) const { return mesh.getFaceArea(IDf); }
-
 //template<class A,class B>const B& getFirst(const pair<A,B>&  p){ return p.first;  }
 template<class A,class B>const B& getSecond(const pair<A,B>& p){ return p.second; }
 
@@ -107,6 +104,8 @@ class FluenceMapBase {
     FluenceMapBase(const map<unsigned,double>& F_,const TetraMesh* mesh_,unsigned long long packets_=0) : F(F_),packets(packets_),mesh(mesh_){}
 
     void loadASCII(const string& fn,unsigned long long packets_=0);
+
+    unsigned getNNZ() const { return F.size(); }
 
     void clear(){ F.clear(); }
     unsigned size(){ return F.size(); }

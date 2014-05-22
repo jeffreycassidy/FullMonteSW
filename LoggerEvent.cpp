@@ -13,6 +13,9 @@ const LoggerEvent& LoggerEvent::operator+=(const LoggerEvent& rhs)
     Nexit       += rhs.Nexit;
     Ndie        += rhs.Ndie;
     Nwin        += rhs.Nwin;
+    Nabnormal	+= rhs.Nabnormal;
+    Ntime       += rhs.Ntime;
+    Nnohit      += rhs.Nnohit;
     return *this;
 }
 
@@ -35,9 +38,12 @@ ostream& operator<<(ostream& os,const EventCount& ec)
     os << "  Lose: " << ec.Ndie << endl;
 
     os << "End results" << endl;
-    os << "Died:   " << ec.Ndie << endl;
-    os << "Exited: " << ec.Nexit << endl;
-    os << "Balance ([launch] - [die + exit]): " << ec.Nlaunch-ec.Ndie-ec.Nexit << endl;
+    os << "Died:       " << ec.Ndie << endl;
+    os << "Exited:     " << ec.Nexit << endl;
+    os << "Abnormal:   " << ec.Nabnormal << endl;
+    os << "Time gated: " << ec.Ntime << endl;
+    os << "No hit:     " << ec.Nnohit << endl;
+    os << "Balance ([launch] - [die + exit]): " << ec.Nlaunch-ec.Ndie-ec.Nexit-ec.Ntime-ec.Nabnormal-ec.Nnohit << endl;
 
     return os;
 }

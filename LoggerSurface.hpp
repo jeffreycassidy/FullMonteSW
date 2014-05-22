@@ -1,5 +1,6 @@
 #include "logger.hpp"
 #include "AccumulationArray.hpp"
+#include "Packet.hpp"
 
 /** Holds quantities accumulated over a surface, using sequential IDs ranging [0,N).
  * @tparam T	Type to be accumulated; must support operator[](unsigned), operator+=(double) and operator+=(T)
@@ -83,6 +84,7 @@ public:
 
 		/// Record exit event by accumulating weight to the appropriate surface entry
 		inline void eventExit(const Ray3,int IDf,double w){ acc[abs(IDf)] += w; }
+		inline void eventExit(const Packet& pkt,int IDf){ acc[abs(IDf)] += pkt.w; }
 	};
 
 	typedef WorkerThread ThreadWorker;

@@ -27,6 +27,10 @@
 
 #include "LoggerMemTrace.cpp"
 
+#ifdef TRACER
+#include "LoggerTracer.hpp"
+#endif
+
 #include "mainloop.cpp"
 #include "fm-postgres/fm-postgres.hpp"
 #include "fm-postgres/fmdbexportcase.hpp"
@@ -415,7 +419,15 @@ RunResults runSimulation(PGConnection* dbconn,const TetraMesh& mesh,const vector
 
     cout << "==== Run ID " << runid << " starting" << endl;
 
-    auto logger = make_multilogger(LoggerEventMT(),LoggerSurface<QueuedAccumulatorMT<double>>(mesh,1<<20),LoggerVolume<QueuedAccumulatorMT<double>>(mesh,1<<20),LoggerConservationMT());
+    auto logger = make_multilogger(
+    		LoggerEventMT(),
+#ifdef TRACER
+    		LoggerTracerMT(),
+#else
+    		LoggerSurface<QueuedAccumulatorMT<double>>(mesh,1<<20),
+    		LoggerVolume<QueuedAccumulatorMT<double>>(mesh,1<<20),
+#endif
+    		LoggerConservationMT());
 
     // Run it
     boost::timer::cpu_times t = MonteCarloLoop<RNG_SFMT_AVX>(Nk,logger,mesh,materials,*source);
@@ -436,9 +448,7 @@ RunResults runSimulation(PGConnection* dbconn,const TetraMesh& mesh,const vector
 
     // write results to database
     if(globalopts::dbwrite)
-    {
         db_finishRun(dbconn,runid,res);
-    }
 
     return res;
 }

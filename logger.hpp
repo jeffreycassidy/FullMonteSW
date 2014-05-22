@@ -64,6 +64,11 @@ class LoggerNull {
     inline void eventDie(double){};                                     // lost Russian roulette
     inline void eventRouletteWin(double,double){};                      // won roulette
 
+    inline void eventAbnormal(const Packet&,unsigned,unsigned){};
+
+    inline void eventTimeGate(const Packet&){};						// Exceeded time gate
+    inline void eventNoHit(const Packet&,const Tetra&){};			// No hit in intersection
+
     typedef LoggerNull ThreadWorker;
 
     //ThreadWorker getThreadWorkerInstance(unsigned) const { return ThreadWorker(); }
@@ -125,6 +130,15 @@ public:
 
     const LoggerMulti& operator+=(const LoggerMulti& rhs)
         { head += rhs.head; tail += rhs.tail; return *this; }
+
+    inline void eventAbnormal(const Packet& pkt,unsigned Nstep,unsigned Nhit)
+    	{ head.eventAbnormal(pkt,Nstep,Nhit); tail.eventAbnormal(pkt,Nstep,Nhit); };
+
+    inline void eventTimeGate(const Packet& pkt)
+    	{ head.eventTimeGate(pkt); tail.eventTimeGate(pkt); };						// Exceeded time gate
+
+    inline void eventNoHit(const Packet& pkt,const Tetra& tet)
+    	{ head.eventNoHit(pkt,tet); tail.eventNoHit(pkt,tet); };			// No hit in intersection
 
     /*const LoggerMulti& operator+=(const ThreadWorker& rhs)
             { head += rhs.head; tail += rhs.tail; return *this; }*/
