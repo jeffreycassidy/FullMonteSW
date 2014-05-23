@@ -1,57 +1,62 @@
 grammar pinnacle;
 
-
 options {
 	language=C; 
 	output=AST;
 	ASTLabelType=pANTLR3_BASE_TREE;
 }
 
-start	:	roi_file
-	;
+tokens {
+	POINT;
+	PROP;
+}
 
-roi_file
-	:	file_stamp roi*
+
+
+start
+	:	file_stamp^ roi*
 	;
 
 file_stamp
-	:	FILESTAMP! '='! '{'! prop* '}'! ';'!
+	:	FILESTAMP^ '='! '{'! prop* '}'! ';'!
 	;
 	
 surface_mesh
-	:	SURFACEMESH! '='! '{'! (prop|vertices|triangles)* '}'! ';'!
+	:	SURFACEMESH^ '='! '{'! (prop|vertices|triangles)* '}'! ';'!
 	;
 	
 triangles 
-	:	TRIANGLES '='! '{'! '}'! ';'!
+	:	TRIANGLES^ '='! '{'! '}'! ';'!
 	;
 	
-vertices:	VERTICES '='! '{'! '}'! ';'!
+vertices:	VERTICES^ '='! '{'! '}'! ';'!
 	;
 	
 	
 mean_mesh
-	:	MEANMESH! '='! '{'! (prop|vertices|triangles)* '}'! ';'!
+	:	MEANMESH^ '='! '{'! (prop|vertices|triangles)* '}'! ';'!
 	;
-	
-	
 	
 roi
-	: ROI! '='! '{'! (prop | curve|surface_mesh|mean_mesh)* '}'! ';'! { printf("Roi found at line \%d",$ROI->line); }
+	: TOK_ROI^ '='! '{'! (prop | curve|surface_mesh|mean_mesh)* '}'! ';'!
 	;
 	
-curve	:	CURVE! '='! '{'! prop* points '}'! ';'!
+curve	:	CURVE^ '='! '{'! prop* points '}'! ';'!
 	;
 	
-prop	:	ID '='! FLOAT ';'! { printf("  \%s -> \%s\n",$ID->getText($ID)->chars,$ID->getText($ID)->chars); }
-	|	ID '='! INT ';'!  { printf("  \%s -> \%s\n",$ID->getText($ID)->chars,$ID->getText($INT)->chars); }
-	|	ID LITERAL  { printf("  \%s -> \%s\n",$ID->getText($ID)->chars,$ID->getText($LITERAL)->chars); }
+//	 { printf("  \%s -> \%s\n",$ID->getText($ID)->chars,$ID->getText($ID)->chars); }
+//  { printf("  \%s -> \%s\n",$ID->getText($ID)->chars,$ID->getText($INT)->chars); }
+// { printf("  \%s -> \%s\n",$ID->getText($ID)->chars,$ID->getText($LITERAL)->chars); }
+
+prop	:	ID '=' FLOAT ';' -> ^(PROP ID FLOAT)
+	|	ID '=' INT ';' -> ^(PROP ID INT)
+	|	ID LITERAL -> ^(PROP ID LITERAL)
 	;
 	
 points	:	POINTS! '='! '{'! point3* '}'! ';'!
 	;
 	
-point3	:	FLOAT FLOAT FLOAT
+point3	:	FLOAT FLOAT FLOAT -> ^(POINT FLOAT FLOAT FLOAT)
 	;
 	
 TRIANGLES
@@ -76,7 +81,7 @@ FILESTAMP
 	:	'f' 'i' 'l' 'e' '_' 's' 't' 'a' 'm' 'p'
 	;
 
-ROI	:	'r' 'o' 'i'
+TOK_ROI	:	'r' 'o' 'i'
 	;
 	
 CURVE	:	'c' 'u' 'r' 'v' 'e'

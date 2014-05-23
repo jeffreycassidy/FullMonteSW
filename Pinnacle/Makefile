@@ -1,13 +1,13 @@
-GCC_OPTS=-Wall -O3 -I/usr/include/antlr3.x.x
+GCC_OPTS=-Wall -std=c++11 -O0 -g -I/usr/include/antlr3.x.x
 ANTLR=java -jar /usr/local/antlrv3/antlr-3.5.2-complete-no-st3.jar
 
-default: test
+all: Test_Pinnacle
 
-test: parser
-	parser stub.txt
+test: Test_Pinnacle
+	Test_Pinnacle stub.txt
 
-bigtest: parser
-	parser plan_HN.roi
+bigtest: Test_Pinnacle
+	Test_Pinnacle plan_HN.roi
 
 pinnacleLexer.c pinnacleLexer.h pinnacleParser.c pinnacleParser.h: pinnacle.g
 	$(ANTLR) $^
@@ -20,8 +20,13 @@ pinnacleParser.o: pinnacleParser.c pinnacleParser.h
 
 parser_main.o: parser_main.cpp pinnacleLexer.h pinnacleParser.h
 	g++ $(GCC_OPTS) $< -c
+	
+%.o: %.cpp
+	g++ $(GCC_OPTS) $< -c
+	
+PinnacleFile.o: PinnacleFile.hpp
 
-parser: pinnacleLexer.o pinnacleParser.o parser_main.o
+Test_Pinnacle: pinnacleLexer.o pinnacleParser.o PinnacleFile.o PinnacleObject.o Test_Pinnacle.o
 	g++ -o $@ $^ -lantlr3c
 
 clean:
