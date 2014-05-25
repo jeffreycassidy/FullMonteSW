@@ -1,0 +1,8 @@
+output
+parser
+pinnacle.tokens
+pinnacleLexer.*
+pinnacleParser.*
+sub.txt
+
+Test_Pinnacle
