@@ -24,9 +24,12 @@ parser_main.o: parser_main.cpp pinnacleLexer.h pinnacleParser.h
 %.o: %.cpp
 	g++ $(GCC_OPTS) $< -c
 	
+PinnacleROI.o: PinnacleROI.cpp PinnacleROI.hpp
+	g++ $(GCC_OPTS) $< -c
+
 PinnacleFile.o: PinnacleFile.hpp
 
-Test_Pinnacle: pinnacleLexer.o pinnacleParser.o PinnacleFile.o PinnacleObject.o Test_Pinnacle.o
+Test_Pinnacle: pinnacleLexer.o pinnacleParser.o PinnacleFile.o PinnacleObject.o Test_Pinnacle.o PinnacleROI.o PinnacleCurve.o
 	g++ -o $@ $^ -lantlr3c
 
 clean:

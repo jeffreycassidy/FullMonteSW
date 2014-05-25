@@ -142,7 +142,7 @@ bool TreeWalker::handlePoint(pANTLR3_BASE_TREE tree,unsigned indent)
 		sscanf((const char*)child_tok->getText(child_tok)->chars,"%lf",&a[i]);
 	}
 
-	cout << setw(indent+1) << ' ' << "Point: " << a << endl;
+	//cout << setw(indent+1) << ' ' << "Point: " << a << endl;
 
 	current_curve->addpoint(a);
 	return true;
@@ -203,7 +203,7 @@ int TreeWalker::run(pANTLR3_BASE_TREE tree,unsigned indent)
 		return r;
 	}
 	else
-		cout << "NOT A TOKEN!" << endl;
+		cerr << "NOT A TOKEN!" << endl;
 	return 0;
 }
 
@@ -214,32 +214,17 @@ void File::printDetails() const
 	cout << "There are " << rois.size() << " ROIs defined; details: " << endl;
 
 	for(const ROI& r : rois)
+	{
+		cout << "  [" << setw(4) << i++ << "] ";
 		r.printDetails();
-/*
-	cout << "There are " << pointvec_list.size() << " point vectors with lengths: " << endl;
-	for(const vector<array<double,3>>& v : pointvec_list)
-		cout << v.size() << endl;
-
-	cout << endl << "There are " << propmap_list.size() << " property maps with sizes: " << endl;
-	for(const map<string,string>& m : propmap_list)
-		cout << m.size() << endl;
-
-
-	i=0;
-	for(const vector<array<double,3>>& v : pointvec_list)
-	{
-		cout << setfill('*') << setw(80) << "" << endl << "** Point vector " << i++ << endl;
-		for(const array<double,3>& a : v)
-			cout << a << endl;
 	}
+}
 
-	i=0;
-	for(const map<string,string>& m : propmap_list)
-	{
-		cout << setfill('*') << setw(80) << "" << endl << "** Property map " << i++ << endl;
-		for(const pair<string,string>& s : m)
-			cout << s.first << " => " << s.second << endl;
-	}*/
+
+void File::export_VTK_Curves(string fn_) const
+{
+	//ls
+	//make_iiterator_adaptor(rois,mem_fn(&ROI::getCurve));
 
 }
 
