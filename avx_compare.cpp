@@ -44,6 +44,14 @@ int main(int argc,char **argv)
 	const float *i;
 	float *o;
 
+	// bench the SSE version
+	{
+		boost::timer::auto_cpu_timer t;
+		for(i=p_in,o=p_sse; i < p_in+N; i+=4,o+=8)
+			sse::sincos_ps(*(__m128*)i,(__m128*)o,(__m128*)(o+4));
+	}
+
+	// bench the AVX version
 	cout << "Alignof(__m256)=" << alignof(__m256) << endl;
 
 

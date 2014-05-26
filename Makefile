@@ -17,6 +17,8 @@ ifeq ($(OS),Darwin)
 GCC_OPTS += -DPLATFORM_DARWIN
 endif
 
+default: avx_mathfun_test
+
 Testing: Testing.cpp SFMT.h SFMT.c RandomAVX.hpp 
 	g++ -Wall -std=c++11 -mavx -g -O3 -lboost_system -lboost_timer -fabi-version=6 -L/usr/local/lib -I/usr/local/include -DUSE_SSE2 -o $@ $<
 
