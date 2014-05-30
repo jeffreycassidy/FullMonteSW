@@ -45,10 +45,6 @@ typedef boost::adjacency_list<boost::vecS,boost::vecS,boost::undirectedS,
 		boost::no_property> PointGraph;
 
 
-
-//typedef property<vertex_roi_id_t,unsigned> TROIProperty;
-//typedef property<edge_roi_id_t,unsigned> FROIProperty;
-
 typedef boost::adjacency_list<boost::vecS,boost::vecS,boost::undirectedS,
 		TetraProperty,								// tetras are vertices
 		FaceProperty,								// faces are edges
@@ -76,6 +72,8 @@ public:
 	vtkSmartPointer<vtkUnstructuredGrid> getVTKMeshPolygons() const;
 
 	vtkSmartPointer<vtkUnstructuredGrid> getVTKMeshTetras() const;
+
+	vtkSmartPointer<vtkUnstructuredGrid> getVTKTetraData_Types() const;
 
 	vtkSmartPointer<vtkPolyData> getVTKCurveLines() const;
 	vtkSmartPointer<vtkPolyData> getVTKMeshLines() const;

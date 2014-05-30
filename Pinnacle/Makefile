@@ -28,7 +28,8 @@ PinnacleROI.o: PinnacleROI.cpp PinnacleROI.hpp
 	g++ $(GCC_OPTS) $< -c
 
 Test_Pinnacle: pinnacleLexer.o pinnacleParser.o PinnacleFile.o PinnacleObject.o Test_Pinnacle.o PinnacleROI.o PinnacleCurve.o PinnacleVTK.o PinnacleGraph.o
-	g++ -o $@ $^ -lantlr3c -L/usr/local/lib -lvtkCommonCore-6.1 -lvtkRenderingCore-6.1 -lvtkCommonDataModel-6.1 -lvtkRenderingOpenGL-6.1 -lvtkInteractionStyle-6.1 -lvtkCommonExecutionModel-6.1 -lvtkFiltersCore-6.1
+	g++ -o $@ $^ -lantlr3c -L/usr/local/lib -lvtkCommonCore-6.1 -lvtkRenderingCore-6.1 -lvtkCommonDataModel-6.1 -lvtkRenderingOpenGL-6.1 -lvtkInteractionStyle-6.1 -lvtkCommonExecutionModel-6.1 -lvtkFiltersCore-6.1 \
+	-lvtkInteractionWidgets-6.1 -lvtkFiltersGeneral-6.1 -lvtkRenderingAnnotation-6.1 -lvtkRenderingFreeType-6.1 -lvtkfreetype-6.1 -lvtkRenderingFreeTypeOpenGL-6.1
 
 clean:
 	rm -f parser pinnacleParser.h pinnacleParser pinnacleLexer.c pinnacleLexer.h *.o 

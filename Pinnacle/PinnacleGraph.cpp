@@ -9,6 +9,8 @@
 
 #include <vtkPoints.h>
 #include <vtkCellArray.h>
+#include <vtkCellData.h>
+#include <vtkUnsignedCharArray.h>
 
 #include <boost/range.hpp>
 
@@ -108,7 +110,6 @@ MeshGraph::MeshGraph(const Pinnacle::File& pf,const vector<unsigned>& slices,con
 			}
 		}
 		++IDr;
-
 	}
 
 	system("qdelaunay Qt i < delaunay_in.txt > delaunay_out.txt");
@@ -132,42 +133,25 @@ MeshGraph::MeshGraph(const Pinnacle::File& pf,const vector<unsigned>& slices,con
 		stringstream ss(str);
 		ss >> IDps[0] >> IDps[1] >> IDps[2] >> IDps[3];
 
+		// internal data structure is 0-based with a null point in position 0; qdelaunay is 0-based without the null point passed
 		++IDps[0];
 		++IDps[1];
 		++IDps[2];
 		++IDps[3];
 
-		//cout << "Read: " << IDps << endl;
-
 		// sort ascending for map matching
 		sort(IDps.begin(),IDps.end());
 
 		// add to map
-		//if(IDps[0] && IDps[1] && IDps[2] && IDps[3])
-			tets.insert(make_pair(IDps,0));
+		tets.insert(make_pair(IDps,0));
 
 		// add to edge map if not already there
-		/*if(IDps[0])
-		{
-			if (IDps[1])*/
-				add_if_not_present(IDps[0],IDps[1],pg);
-
-			//if (IDps[2])
-				add_if_not_present(IDps[0],IDps[2],pg);
-
-			//if (IDps[3])
-				add_if_not_present(IDps[0],IDps[3],pg);
-		/*}
-		if (IDps[1])
-		{
-			if(IDps[2])*/
-				add_if_not_present(IDps[1],IDps[2],pg);
-
-			//if(IDps[3])
-				add_if_not_present(IDps[1],IDps[3],pg);
-		//}
-		//if (IDps[2] && IDps[3])
-			add_if_not_present(IDps[2],IDps[3],pg);
+		add_if_not_present(IDps[0],IDps[1],pg);
+		add_if_not_present(IDps[0],IDps[2],pg);
+		add_if_not_present(IDps[0],IDps[3],pg);
+		add_if_not_present(IDps[1],IDps[2],pg);
+		add_if_not_present(IDps[1],IDps[3],pg);
+		add_if_not_present(IDps[2],IDps[3],pg);
 
 		// check for failed conversion
 		if (ss.fail())
@@ -303,6 +287,11 @@ bool MeshGraph::checkGraph(const TetraGraph& tg,bool exc_)
 				throw string("");
 		}
 	}
+
+	cout << "Tetra connectivity histogram:" << endl;
+	for(unsigned i=0;i<5;++i)
+		cout << "  " << i << ": " << idhist[i] << endl;
+	cout << "  >4: 0" << endl;
 	return isOK;
 }
 
@@ -441,6 +430,8 @@ vtkSmartPointer<vtkUnstructuredGrid> MeshGraph::getVTKMeshTetras() const
 	return tets;
 }
 
+
+
 /*vtkSmartPointer<vtkUnstructuredGrid> MeshGraph::getVTKMeshPolygons() const
 {
 	vtkSmartPointer<vtkUnstructuredGrid> polys = vtkUnstructuredGrid::New();
@@ -453,4 +444,49 @@ vtkSmartPointer<vtkPolyData> MeshGraph::getVTKMeshLines() const
 	data->SetPoints(getVTKPoints());
 	data->SetLines(getVTKMeshPolys());
 	return data;
+}
+
+/** Return an array of tetra types. *
+ *
+ * Values:
+ * 0		Unknown/unassigned
+ * 128		Tetra on boundary (degree < 4)
+ */
+
+vtkSmartPointer<vtkUnstructuredGrid> MeshGraph::getVTKTetraData_Types() const
+{
+	vtkSmartPointer<vtkUnstructuredGrid> tets = getVTKMeshTetras();
+	vtkCellData *cd=tets->GetCellData();
+
+	unsigned Np = num_vertices(tg);
+
+	vtkSmartPointer<vtkUnsignedCharArray> ia = vtkUnsignedCharArray::New();
+	ia->SetNumberOfComponents(1);
+	ia->SetNumberOfTuples(Np);
+	ia->SetName("Tetra Types");
+
+	unsigned Nbound=0,Nother=0;
+
+	auto p = vertices(tg);
+	for(auto v = p.first; v != p.second; ++v)
+	{
+		if(out_degree(*v,tg) < 4)
+		{
+			ia->SetTuple1(*v,1);
+			++Nbound;
+		}
+		else {
+			ia->SetTuple1(*v,0);
+			++Nother;
+		}
+	}
+
+	cout << "Found following tetra types:" << endl;
+	cout << "  Boundary: " << Nbound << endl;
+	cout << "  Other:    " << Nother << endl;
+
+	cd->SetScalars(ia);
+	cout << "Active scalars set to " << cd->SetActiveScalars("Tetra Types") << endl;
+
+	return tets;
 }

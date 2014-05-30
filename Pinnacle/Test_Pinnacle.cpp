@@ -21,8 +21,21 @@
 #include <vtkInteractorStyleSwitch.h>
 #include <vtkTriangleFilter.h>
 #include <vtkPolyDataMapper.h>
+#include <vtkScalarBarActor.h>
+
+#include <vtkCellData.h>
+
+#include <vtkLookupTable.h>
 
 #include <vtkTubeFilter.h>
+
+#include <vtkPlane.h>
+#include <vtkImplicitPlaneRepresentation.h>
+#include <vtkImplicitPlaneWidget2.h>
+#include <vtkCallbackCommand.h>
+#include <vtkClipPolyData.h>
+
+#include <vtkClipDataSet.h>
 
 #include <thread>
 
@@ -42,6 +55,9 @@ public:
 	void waitUntilDone(){ t.join(); }
 
 	void AddActor(vtkSmartPointer<vtkActor> a){ ren->AddActor(a); }
+	void AddActor2D(vtkSmartPointer<vtkActor2D> a){ ren->AddActor2D(a); }
+	void AddProp(vtkSmartPointer<vtkProp> p){ ren->AddActor(p); }
+	void AddWidget(vtkSmartPointer<vtkInteractorObserver> w){ w->SetInteractor(iren); w->On(); }
 };
 
 #include <vtkAutoInit.h>
@@ -85,6 +101,17 @@ using namespace std;
 
 void writeXML_Curves(string fn,const Pinnacle::File& F);
 void writeXML_Sets(string fn,const Pinnacle::File& F);
+
+pair<vtkSmartPointer<vtkPlane>,vtkSmartPointer<vtkImplicitPlaneRepresentation>> callbackdata;
+
+void callback_plane_widget_update(vtkObject*,unsigned long eid,void* clientdata,void *calldata)
+{
+	pair<vtkSmartPointer<vtkPlane>,vtkSmartPointer<vtkImplicitPlaneRepresentation>>& p =
+			*(pair<vtkSmartPointer<vtkPlane>,vtkSmartPointer<vtkImplicitPlaneRepresentation>>*)clientdata;
+
+	cout << "Plane widget was updated" << endl;
+	p.second->GetPlane(p.first);
+}
 
 int main(int argc,char **argv)
 {
@@ -141,7 +168,7 @@ int main(int argc,char **argv)
 	// graph rep
 
 	vector<unsigned> slices;
-	for(unsigned i=80;i<82;++i)
+	for(unsigned i=80;i<95;++i)
 		slices.push_back(i);
 	/*slices.push_back(83);
 	slices.push_back(84);
@@ -177,18 +204,29 @@ int main(int argc,char **argv)
 	vtkSmartPointer<vtkPolyDataMapper> curveMapper = vtkPolyDataMapper::New();
 	curveMapper->SetInputData(curveTubeFilter->GetOutput());
 	curveMapper->ScalarVisibilityOff();
-	curveMapper->Update();
 
 
+	// clipping plane
+	vtkSmartPointer<vtkPlane> clipPlane = vtkPlane::New();
 
+	// clipping plane visualization
+	vtkSmartPointer<vtkImplicitPlaneRepresentation> planeRep = vtkImplicitPlaneRepresentation::New();
+	planeRep->SetPlaceFactor(1.25);
+	planeRep->OutlineTranslationOff();
 
 	// now for the triangulation lines
 	vtkSmartPointer<vtkPolyData> meshData = M.getVTKMeshLines();
 
+	vtkSmartPointer<vtkClipPolyData> meshClipper = vtkClipPolyData::New();
+	meshClipper->SetInputData(meshData);
+	meshClipper->GenerateClippedOutputOff();
+	meshClipper->SetClipFunction(clipPlane);
+	meshClipper->SetValue(0.0);
+
+
 	vtkSmartPointer<vtkPolyDataMapper> meshMapper = vtkPolyDataMapper::New();
-	meshMapper->SetInputData(meshData);
+	meshMapper->SetInputConnection(meshClipper->GetOutputPort());
 	meshMapper->ScalarVisibilityOff();
-	meshMapper->Update();
 
 	vtkSmartPointer<vtkActor> meshActor = vtkActor::New();
 	meshActor->SetMapper(meshMapper);
@@ -198,18 +236,51 @@ int main(int argc,char **argv)
 
 
 	// and the solid tetrahedra
-	vtkSmartPointer<vtkUnstructuredGrid> tetData = M.getVTKMeshTetras();
+	vtkSmartPointer<vtkUnstructuredGrid> tetData = M.getVTKTetraData_Types();
+
+	vtkSmartPointer<vtkClipDataSet> tetClipper = vtkClipDataSet::New();
+	tetClipper->SetInputData(tetData);
+	tetClipper->GenerateClippedOutputOff();
+	tetClipper->SetClipFunction(clipPlane);
+	tetClipper->SetValue(0.0);
 
 	vtkSmartPointer<vtkDataSetMapper> tetMapper = vtkDataSetMapper::New();
-	tetMapper->SetInputData(tetData);
-	tetMapper->ScalarVisibilityOff();
+	tetMapper->SetInputConnection(tetClipper->GetOutputPort());
+	tetMapper->ScalarVisibilityOn();
+	tetMapper->SetColorModeToMapScalars();
+	tetMapper->UseLookupTableScalarRangeOn();
 	tetMapper->Update();
+	tetMapper->SetScalarModeToUseCellFieldData();
+	tetMapper->SelectColorArray("Tetra Types");
+
+	unsigned Ncd=tetClipper->GetOutput()->GetCellData()->GetNumberOfArrays();
+	cout << "  Scalar mode: " << tetMapper->GetScalarModeAsString() << endl;
+	cout << "  Colour mode: " << tetMapper->GetColorModeAsString() << endl;
+
+	cout << "Found " << Ncd << " CellData arrays" << endl;
+
+	for(unsigned i=0;i<Ncd;++i)
+		cout << "  Array " << i << ": " << tetClipper->GetOutput()->GetCellData()->GetArrayName(i) << endl;
+
+	cout << "Colouring by array \"" << tetMapper->GetArrayName() << "\" (ID " << tetMapper->GetArrayId() << ")" << endl;
+
+	vtkSmartPointer<vtkLookupTable> lut = vtkLookupTable::New();
+	lut->IndexedLookupOn();
+	lut->SetNumberOfTableValues(2);
+	lut->Build();
+
+
+	lut->SetTableValue(0,0.0,0.0,1.0,1.0);			// blue if unassigned
+	lut->SetAnnotation(vtkVariant(0),"Unassigned tetra");
+
+	lut->SetTableValue(1,1.0,0.0,0.0,1.0);		// red if outer
+	lut->SetAnnotation(vtkVariant(1),"Boundary tetra");
+
+	lut->SetNanColor(1.0,1.0,0.0,1.0);				// yellow for invalid
+	tetMapper->SetLookupTable(lut);
 
 	vtkSmartPointer<vtkActor> tetActor = vtkActor::New();
 	tetActor->SetMapper(tetMapper);
-	tetActor->GetProperty()->SetOpacity(0.5);
-	tetActor->GetProperty()->SetColor(0.0,1.0,0.0);
-	tetActor->GetProperty()->SetRepresentationToSurface();
 
 
 	// actor to visualize curves
@@ -218,9 +289,35 @@ int main(int argc,char **argv)
 	curveActor->GetProperty()->SetOpacity(1.0);
 	curveActor->GetProperty()->SetColor(1.0,1.0,1.0);
 
+
+
+	callbackdata = make_pair(clipPlane,planeRep);
+
 	vw.AddActor(curveActor);
-	vw.AddActor(meshActor);
+	//vw.AddActor(meshActor);
 	vw.AddActor(tetActor);
+
+	planeRep->PlaceWidget(meshActor->GetBounds());
+
+
+	// clipping plane widget
+	vtkSmartPointer<vtkCallbackCommand> planeWidgetCallback = vtkCallbackCommand::New();
+	planeWidgetCallback->SetCallback(callback_plane_widget_update);
+	planeWidgetCallback->SetClientData(&callbackdata);
+
+	vtkSmartPointer<vtkImplicitPlaneWidget2> planeWidget = vtkImplicitPlaneWidget2::New();
+	planeWidget->SetRepresentation(planeRep);
+	planeWidget->AddObserver(vtkCommand::InteractionEvent,planeWidgetCallback);
+	vw.AddProp(planeRep);
+	vw.AddWidget(planeWidget);
+
+	vtkSmartPointer<vtkScalarBarActor> scale = vtkScalarBarActor::New();
+	scale->SetLookupTable(lut);
+	scale->SetOrientationToVertical();
+	scale->SetTitle("Title");
+
+	//vw.AddActor2D(scale);
+
 	vw.start();
 	//cout << "Hello" << endl;
 	//vw.waitUntilDone();
@@ -269,7 +366,7 @@ void writeXML_Curves(string fn,const Pinnacle::File& F)
 
 	int status;
 
-	cout << "Typeid of *begin(points_iiterator): " << abi::__cxa_demangle(typeid(*begin(points_iiterator)).name(),0,0,&status) << endl;
+	//cout << "Typeid of *begin(points_iiterator): " << abi::__cxa_demangle(typeid(*begin(points_iiterator)).name(),0,0,&status) << endl;
 
 	ofstream os(fn.c_str());
 	{
@@ -335,7 +432,7 @@ void writeXML_Sets(string fn,const Pinnacle::File& F)
 
 	int status;
 
-	cout << "Typeid of *begin(points_iiterator): " << abi::__cxa_demangle(typeid(*begin(points_iiterator)).name(),0,0,&status) << endl;
+	//cout << "Typeid of *begin(points_iiterator): " << abi::__cxa_demangle(typeid(*begin(points_iiterator)).name(),0,0,&status) << endl;
 
 	ofstream os(fn.c_str());
 	{

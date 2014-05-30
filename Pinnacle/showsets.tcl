@@ -1,3 +1,5 @@
+package require vtk
+
 set fn "sets.xml"
 
 vtkXMLUnstructuredGridReader reader

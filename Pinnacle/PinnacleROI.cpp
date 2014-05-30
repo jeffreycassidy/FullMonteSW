@@ -69,7 +69,7 @@ void ROI::exportCurves(string fn_) const
 
 	auto Nps = make_transform_adaptor(curves,mem_fn(&Curve::getNPoints));
 	copy(begin(Nps),end(Nps),ostream_iterator<unsigned>(os," "));
-	cout << endl;
+	os << endl;
 
 	auto r = make_iiterator_adaptor(curves,mem_fn(&Curve::getPoints));
 	/*auto osi = ostream_iterator<array<double,3>>(os,"\n");
