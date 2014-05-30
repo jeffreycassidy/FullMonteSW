@@ -9,9 +9,12 @@ using namespace std;
 
 namespace Pinnacle {
 
+class File;
+
 class ROI : public Object
 {
 	list<Curve> curves;
+
 public:
 
 	bool validate(bool exc_=false) const;
@@ -20,11 +23,8 @@ public:
 
 	void printDetails() const;
 
-	/*
-	iiterator<list<Curve>,decltype(mem_fn(Curve::size))> getCurvePoints() const { make_iiterator_adaptor
-	}*/
-
 	const list<Curve>& getCurves() const { return curves; }
+
 
 	unsigned getNPoints() const {
 		unsigned sum=0;
@@ -33,7 +33,12 @@ public:
 		return sum;
 	}
 
-	//friend template<class OStream>OStream& operator<<(OStream&,const ROI&);
+	void exportCurves(string fn) const;
+
+	// exports curves in a Triangle .poly format
+	void exportCurvesTriangle(string fn_,const list<unsigned>& curveIDs_) const;
+
+	friend File;
 };
 
 }

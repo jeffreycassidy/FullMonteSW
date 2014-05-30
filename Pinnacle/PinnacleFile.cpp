@@ -45,7 +45,9 @@ public:
 	TreeWalker(Pinnacle::File *f) : current_file(f),current_props(f){}
     int run(pANTLR3_BASE_TREE,unsigned indent=0);
 
-    void printAll() const { current_file->printDetails(); }
+    void printAll() const {
+    	current_file->printDetails();
+    }
 
 };
 
@@ -82,6 +84,8 @@ bool Pinnacle::File::read()
 	tokens->free(tokens);
 	lex->free(lex);
 	input->close(input);
+
+	buildSliceMap();
 
 	return true;
 }
@@ -215,17 +219,43 @@ void File::printDetails() const
 
 	for(const ROI& r : rois)
 	{
-		cout << "  [" << setw(4) << i++ << "] ";
-		r.printDetails();
+		//cout << "  [" << setw(4) << i++ << "] ";
+		//r.printDetails();
 	}
+
+	//cout << "There are " << M.size() << " slices; details: " << endl;
 }
 
 
-void File::export_VTK_Curves(string fn_) const
-{
-	//ls
-	//make_iiterator_adaptor(rois,mem_fn(&ROI::getCurve));
 
+/** Maps curves to slices based on z coordinate.
+ *
+ */
+
+void File::buildSliceMap()
+{
+	M.clear();
+
+	for(const Curve& c : getCurves())
+		M.insert(make_pair(c.getPoints().front()[2],0));
+
+	// give slices one-based ID
+	unsigned i=1;
+	for(pair<const double,unsigned>& sl : M)
+		sl.second = i++;
+
+	// assign Curves to slices
+	for(ROI& r : rois)
+		for(Curve& c : r.curves)
+			c.sliceID = M.at(c.getPoints().front()[2]);
+
+}
+
+void File::printSliceMap() const
+{
+	cout << "Slices: " << endl;
+	for(auto m : M)
+		cout << "  [" << setw(4) << m.second << "] " << m.first << endl;
 }
 
 }
