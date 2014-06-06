@@ -1,10 +1,19 @@
 #include "PinnacleCurve.hpp"
+#include "PinnacleROI.hpp"
+#include "PinnacleFile.hpp"
+
+#include "PinnacleGraph.hpp"
 
 #include <vtkPolygon.h>
 #include <vtkCellArray.h>
 #include <vtkSmartPointer.h>
 #include <vtkPoints.h>
 #include <vtkIdList.h>
+
+#include <vector>
+#include <algorithm>
+
+using namespace std;
 
 pair<vtkSmartPointer<vtkCellArray>,vtkSmartPointer<vtkPoints>> vtkPolygonFromCurve(const Pinnacle::Curve* C)
 {
@@ -40,3 +49,67 @@ pair<vtkSmartPointer<vtkCellArray>,vtkSmartPointer<vtkPoints>> vtkPolygonFromCur
 
 	return make_pair(cellarray,pts);
 }
+
+
+
+class PointRecord {
+public:
+	unsigned sliceID;
+	unsigned roiID;
+	unsigned curveID;
+	PointGraph::vertex_descriptor pointID;
+	array<double,3> coords;
+
+	PointRecord(unsigned sliceID_=0,unsigned roiID_=0,unsigned curveID_=0,PointGraph::vertex_descriptor pointID_=0,const array<double,3>& coords_=array<double,3>{0.0,0.0,0.0}) :
+		sliceID(sliceID_),roiID(roiID_),curveID(curveID_),pointID(pointID_),coords(coords_){}
+
+	static PointRecord begin(unsigned sliceID_=0,unsigned roiID_=0){   return PointRecord(sliceID_,roiID_,0); }
+	static PointRecord   end(unsigned sliceID_=-1,unsigned roiID_=-1){ return PointRecord(sliceID_,roiID_,-1); }
+
+	static bool OrderBySlice(const PointRecord& a,const PointRecord& b){
+		if (a.sliceID < b.sliceID)
+			return true;
+		if (a.sliceID > b.sliceID)
+			return false;
+
+		if (a.roiID < b.roiID)
+			return true;
+		if (a.roiID > b.roiID)
+			return false;
+
+		if (a.curveID < b.curveID)
+			return true;
+		if (a.curveID > b.curveID)
+			return false;
+
+		return a.pointID < b.pointID;
+	}
+
+
+	static bool OrderByROI(const PointRecord& a,const PointRecord& b){
+		if (a.roiID < b.roiID)
+			return true;
+		if (a.roiID > b.roiID)
+			return false;
+
+		if (a.sliceID < b.sliceID)
+			return true;
+		if (a.sliceID > b.sliceID)
+			return false;
+
+		if (a.curveID < b.curveID)
+			return true;
+		if (a.curveID > b.curveID)
+			return false;
+
+		return a.pointID < b.pointID;
+	}
+};
+
+ostream& operator<<(ostream& os,const PointRecord& p)
+{
+	os << "ROI " << p.roiID << "  slice " << p.sliceID << "  curve " << p.curveID << "  point " << p.pointID << "  coords " << p.coords;
+	return os;
+}
+
+

@@ -113,7 +113,6 @@ int getChildType(pANTLR3_BASE_TREE p,unsigned i)
 
 bool TreeWalker::handleProp(pANTLR3_BASE_TREE tree,unsigned indent)
 {
-	bool inserted;
 	map<string,string>::const_iterator it;
 
 	string k=getChildText(tree,0),v=getChildText(tree,1);
@@ -125,9 +124,6 @@ bool TreeWalker::handleProp(pANTLR3_BASE_TREE tree,unsigned indent)
 		size_t first_nonspace = v.find_first_not_of(" \t",1);
 		v=v.substr(first_nonspace,v.size()-first_nonspace-1);
 	}
-
-	// insert into property map
-	//tie(it,inserted) = propmap_current->insert(make_pair(k,v));
 
 	current_props->addprop(k,v);
 
@@ -213,7 +209,7 @@ int TreeWalker::run(pANTLR3_BASE_TREE tree,unsigned indent)
 
 void File::printDetails() const
 {
-	unsigned i=0;
+	//unsigned i=0;
 
 	cout << "There are " << rois.size() << " ROIs defined; details: " << endl;
 

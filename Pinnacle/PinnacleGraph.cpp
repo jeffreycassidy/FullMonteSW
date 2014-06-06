@@ -11,6 +11,8 @@
 #include <vtkCellArray.h>
 #include <vtkCellData.h>
 #include <vtkUnsignedCharArray.h>
+#include <vtkDoubleArray.h>
+#include <vtkPointData.h>
 
 #include <boost/range.hpp>
 
@@ -20,20 +22,81 @@
 
 using namespace std;
 
+double distance_squared(const array<double,3>& a,const array<double,3>& b)
+{
+	double sum=0;
+	for(unsigned i=0;i<3;++i)
+	{
+		double d=a[i]-b[i];
+		sum += d*d;
+	}
+	return sum;
+}
+
+array<double,3> midpoint(const array<double,3>& a,const array<double,3>& b)
+{
+	array<double,3> mp;
+	for(unsigned i=0;i<3;++i)
+		mp[i]=0.5*(a[i]+b[i]);
+	return mp;
+}
+
+
+double dot_product(const array<double,3>& a,const array<double,3>& b)
+{
+	double sum=0.0;
+	for(unsigned i=0;i<3;++i)
+		sum += a[i]*b[i];
+	return sum;
+}
+
 template<class Graph>pair<typename Graph::edge_descriptor,bool> add_if_not_present(typename Graph::vertex_descriptor u,typename Graph::vertex_descriptor v,Graph& G)
 {
-	if(!edge(u,v,G).second)
+	typename Graph::edge_descriptor e;
+	bool found;
+
+	tie(e,found)=edge(u,v,G);
+
+	if(!found)
 		return add_edge(u,v,G);
 
-	return make_pair(typename Graph::edge_descriptor(),false);
+	return make_pair(e,false);
 }
 
 template<class Graph,class EdgeProperty>pair<typename Graph::edge_descriptor,bool> add_if_not_present(typename Graph::vertex_descriptor u,typename Graph::vertex_descriptor v,const EdgeProperty& ep,Graph& G)
 {
-	if(!edge(u,v,G).second)
+	typename Graph::edge_descriptor e;
+	bool found;
+
+	tie(e,found)=edge(u,v,G);
+
+	if(!found)
 		return add_edge(u,v,ep,G);
 	else
-		return make_pair(0,false);
+		return make_pair(e,false);
+}
+
+
+
+/** Gives the outwards-facing normal for two coplanar points in clockwise orientation.
+ *
+ */
+
+array<double,3> outwards_normal2(const array<double,3>& v0,const array<double,3>& v1)
+{
+	array<double,3> dv,dv2;
+	dv[0]=v1[0] - v0[0];
+	dv[1]=v1[1] - v0[1];
+	dv[2]=0;
+
+	dv2[0]=dv[0]*dv[0];
+	dv2[1]=dv[1]*dv[1];
+	dv2[0]=0;
+
+	//double k = 1.0/sqrtf(dv2[0]+dv2[1]);
+
+	return array<double,3>{ -dv[1], dv[0], 0.0 };
+	//return array<double,3> { 1.0,0.0,0.0 };
 }
 
 
@@ -53,7 +116,7 @@ MeshGraph::MeshGraph(const Pinnacle::File& pf,const vector<unsigned>& slices,con
 				if (slices.size()==0 || binary_search(slices.begin(),slices.end(),c.getSliceID()))
 				{
 					// this curve is inside the slice
-					cout << "Curve of size " << c.size() << endl;
+					//cout << "Curve of size " << c.size() << endl;
 					Np += c.size()-1;
 				}
 				++IDc;
@@ -62,10 +125,9 @@ MeshGraph::MeshGraph(const Pinnacle::File& pf,const vector<unsigned>& slices,con
 		++IDr;
 	}
 
-	// filters out a single z slice
 	IDr=IDc=0;
 	os << "3" << endl;
-	os << Np << endl;
+	os << Np+1 << endl;
 
 	// add null vertex for point zero
 	add_vertex(pg);
@@ -81,26 +143,35 @@ MeshGraph::MeshGraph(const Pinnacle::File& pf,const vector<unsigned>& slices,con
 				if (slices.size()==0 || binary_search(slices.begin(),slices.end(),c.getSliceID()))
 				{
 					unsigned i=0;
+					array<double,3> p0,p_last;
 					for(const array<double,3>& p : c.getPoints())
 					{
 						if (i < c.size()-1)
 						{
-							v = add_vertex(PointProperty(p,IDr,IDc,true),pg);
+							array<double,3> p_n_out = outwards_normal2( c.getPoints()[i==0 ? c.getNPoints()-2 : i-1],
+									c.getPoints()[i+1]); 		// outwards normal for point
+
+							v = add_vertex(PGPointProperty(p,IDr,IDc,c.getSliceID(),p_n_out,true),pg);
 							//cout << "Vertex descriptor: " << v << endl;
 							os << p[0] << ' ' << p[1] << ' ' << p[2] << endl;
 
 							if (i>0)
 							{
-								add_edge(u,v,EdgeProperty(IDr,IDc,true),pg);
+								add_edge(u,v,PGEdgeProperty(IDr,IDc,outwards_normal2(p_last,p),true),pg);			// rely on clockwise ordering
 								//cout << "Point edge: " << u << "->" << v << endl;
 								u=v;
 							}
 							else
+							{
 								u0 = u = v;		// set u0 to be start of loop
+								p0=p;
+							}
+							p_last=p;
 						}
 						else
 						{
-							add_edge(u0,u,EdgeProperty(IDr,IDc,true),pg);
+
+							add_edge(u0,u,PGEdgeProperty(IDr,IDc,outwards_normal2(p0,p_last),true),pg);				// rely on clockwise ordering to get out-normal
 							//cout << "Point edge: " << u << "->" << u0 << " to close loop" << endl;
 						}
 						++i;
@@ -112,6 +183,14 @@ MeshGraph::MeshGraph(const Pinnacle::File& pf,const vector<unsigned>& slices,con
 		++IDr;
 	}
 
+	// dummy vertices top and bottom
+	add_vertex(PGPointProperty(array<double,3>{ 0.0,0.0,200.0 },0,0,0,array<double,3>{0.0,0.0,0.0},true),pg);
+	os << "0 0 200" << endl;
+	//add_vertex(PointProperty(array<double,3>{ 0.0,0.0,0.0 },0,0,0,array<double,3>{0.0,0.0,0.0},false));
+	//os << "0 0 0" << endl;
+
+	os.close();
+
 	system("qdelaunay Qt i < delaunay_in.txt > delaunay_out.txt");
 
 
@@ -120,9 +199,9 @@ MeshGraph::MeshGraph(const Pinnacle::File& pf,const vector<unsigned>& slices,con
 	ifstream is(ifn.c_str());
 
 	unsigned Nt;
-	array<unsigned,4> IDps;
-	map<array<unsigned,4>,TetraGraph::vertex_descriptor> tets;
-	multimap<array<unsigned,3>,TetraGraph::vertex_descriptor> face_tet_map;
+	array<PointGraph::vertex_descriptor,4> IDps;
+	map<array<PointGraph::vertex_descriptor,4>,TetraGraph::vertex_descriptor> tets;
+	multimap<array<PointGraph::vertex_descriptor,3>,TetraGraph::vertex_descriptor> face_tet_map;
 
 	is >> Nt;
 	is.ignore(1,'\n');
@@ -175,52 +254,86 @@ MeshGraph::MeshGraph(const Pinnacle::File& pf,const vector<unsigned>& slices,con
 	cout << "Creating face-tetra map" << endl;
 
 	// null vertex at ID=0
-	add_vertex(tg);
-	for(pair<const array<unsigned,4>,TetraGraph::vertex_descriptor>& p : tets)
+	TetraGraph::vertex_descriptor null_tetra = add_vertex(tg);
+	for(pair<const array<PointGraph::vertex_descriptor,4>,TetraGraph::vertex_descriptor>& p : tets)
 	{
-		p.second = add_vertex(TetraProperty(p.first),tg);
+		p.second = add_vertex(TGTetraProperty(p.first),tg);
 
 		// tetra points are already in ascending ID order, so faces below will be ordered too
-		face_tet_map.insert( make_pair(array<unsigned,3>{ p.first[0],p.first[1],p.first[2] },p.second));
-		face_tet_map.insert( make_pair(array<unsigned,3>{ p.first[0],p.first[1],p.first[3] },p.second));
-		face_tet_map.insert( make_pair(array<unsigned,3>{ p.first[0],p.first[2],p.first[3] },p.second));
-		face_tet_map.insert( make_pair(array<unsigned,3>{ p.first[1],p.first[2],p.first[3] },p.second));
+		face_tet_map.insert( make_pair(array<PointGraph::vertex_descriptor,3>{ p.first[0],p.first[1],p.first[2] },p.second));
+		face_tet_map.insert( make_pair(array<PointGraph::vertex_descriptor,3>{ p.first[0],p.first[1],p.first[3] },p.second));
+		face_tet_map.insert( make_pair(array<PointGraph::vertex_descriptor,3>{ p.first[0],p.first[2],p.first[3] },p.second));
+		face_tet_map.insert( make_pair(array<PointGraph::vertex_descriptor,3>{ p.first[1],p.first[2],p.first[3] },p.second));
 	}
 
 	cout << "Creating tetra connectivity graph (|face_tet_map|=" << face_tet_map.size() << ")" << endl;
 
 	// map faces to tetras
-	for(multimap<array<unsigned,3>,TetraGraph::vertex_descriptor>::const_iterator it=face_tet_map.begin(); it != face_tet_map.end(); )
+	for(multimap<array<PointGraph::vertex_descriptor,3>,TetraGraph::vertex_descriptor>::const_iterator it=face_tet_map.cbegin(); it != face_tet_map.cend(); )
 	{
-		pair<array<unsigned,3>,TetraGraph::vertex_descriptor> u = *it;
+		pair<array<PointGraph::vertex_descriptor,3>,TetraGraph::vertex_descriptor> u = *it;
 
 		if (++it == face_tet_map.end())
 			break;
 
-		pair<array<unsigned,3>,TetraGraph::vertex_descriptor> v = *it;
+		pair<array<PointGraph::vertex_descriptor,3>,TetraGraph::vertex_descriptor> v = *it;
 
+		TetraGraph::edge_descriptor e;
+		bool added;
 		if (u.first==v.first)
 		{
 			//cout << "  " << u.second << "->" << v.second << endl;
 			++it;
-			add_edge(u.second,v.second,tg);
+			tie(e,added) = add_if_not_present(u.second,v.second,TGFaceProperty(u.first),tg);			// has a neighbour; add edge
 		}
 		else
-		{
+		{																	// outer face; add edge to null tetra
+			tie(e,added) = add_if_not_present(u.second,null_tetra,TGFaceProperty(u.first),tg);
 //			cout << "  singleton node " << u.first << " (followed by " << v.first << ')'<< endl;
 		}
+
+		bool found;
+		PointGraph::edge_descriptor pe;
+
+		tie(pe,found) = edge(it->first[0],it->first[1],pg);
+		if (!found)
+		{
+			cerr << "not found" << endl;
+			tg[e].pg_edges[0]=TetraGraph::edge_descriptor();
+		}
+		else
+			tg[e].pg_edges[0]=pe;
+
+		tie(pe,found) = edge(it->first[0],it->first[2],pg);
+
+		if (!found)
+		{
+			cerr << "not found" << endl;
+		tg[e].pg_edges[1]=TetraGraph::edge_descriptor();
+		}
+		else
+			tg[e].pg_edges[1]=pe;
+
+		tie(pe,found) = edge(it->first[1],it->first[2],pg);
+		if (!found)
+		{
+			cerr << "not found" << endl;
+			tg[e].pg_edges[2]=TetraGraph::edge_descriptor();
+		}
+		else
+			tg[e].pg_edges[2]=pe;
 	}
 
 	os.close();
 
 	os.open("face_tet_map.out");
 
+	// check face connectivity histogram
 
 	array<unsigned,4> fhist={0,0,0,0};
-
-	for(multimap<array<unsigned,3>,TetraGraph::vertex_descriptor>::const_iterator it=face_tet_map.begin(); it != face_tet_map.end(); )
+	for(multimap<array<PointGraph::vertex_descriptor,3>,TetraGraph::vertex_descriptor>::const_iterator it=face_tet_map.begin(); it != face_tet_map.end(); )
 	{
-		array<unsigned,3> F=it->first;
+		array<PointGraph::vertex_descriptor,3> F=it->first;
 		unsigned i;
 
 		for(i=0; it != face_tet_map.end() && it->first==F; ++i,++it)
@@ -248,6 +361,35 @@ MeshGraph::MeshGraph(const Pinnacle::File& pf,const vector<unsigned>& slices,con
 	writeASCII_edges("tri.edges.out",pg);
 	writeASCII_vertices("tri.faces.out",tg);
 	writeASCII_edges("tri.tetras.out",tg);
+
+
+
+	///////////////////////////////////////////////////////////////////////////
+	// Create FaceGraph
+
+	defineBoundaries();
+
+	// Doing this externally because making it an internal graph property causes a circular type dependency
+	for(TetraGraph::edge_descriptor e : edges(tg))
+		for(unsigned i=0;i<3;++i)
+			edge_face_map.insert(make_pair(tg[e].pg_edges[i],e));
+
+	typedef multimap<PointGraph::edge_descriptor,TetraGraph::edge_descriptor>::const_iterator mmit;
+	mmit lb,ub;
+	map<unsigned,unsigned> ehist;
+
+	for(lb = edge_face_map.cbegin(), ub=edge_face_map.upper_bound(lb->first);
+			lb != edge_face_map.cend();
+			lb=ub,ub=edge_face_map.upper_bound(lb->first))
+	{
+		unsigned i;
+		for(i=0; lb != ub; ++lb,++i){}
+		ehist[i]++;
+	}
+
+	cout << "Edge connectivity histogram: " << endl;
+	for(const pair<unsigned,unsigned>& p : ehist)
+		cout << "  " << p.first << ": " << p.second << endl;
 }
 
 bool MeshGraph::checkGraph(const TetraGraph& tg,bool exc_)
@@ -305,11 +447,11 @@ void MeshGraph::writeASCII_vertices(const string& fn,const PointGraph& pg) const
 	ofstream os("tri.points.out");
 	os << "# Point graph output" << endl;
 	os << "# <Nverts> followed by Nverts lines of" << endl;
-	os << "#   <x> <y> <z> <ROI> <curve>" << endl;
+	os << "#   <x> <y> <z> <ROI> <curve> <slice>" << endl;
 	os << num_vertices(pg) << endl;
 	auto r = vertices(pg);
 	for(auto it = r.first; it != r.second; ++it)
-		os << pg[*it].coords << ' ' << pg[*it].roi_id << ' ' << pg[*it].curve_id << endl;
+		os << pg[*it].coords << ' ' << pg[*it].roi_id << ' ' << pg[*it].curve_id << ' ' << pg[*it].slice_id << endl;
 }
 
 void MeshGraph::writeASCII_edges(const string& fn,const PointGraph& pg) const
@@ -420,7 +562,7 @@ vtkSmartPointer<vtkUnstructuredGrid> MeshGraph::getVTKMeshTetras() const
 
 	for(auto v = p.first; v != p.second; ++v)		// loop over all tetras, adding to output
 	{
-		vtkIdType IDps[4] = { tg[*v].IDps[0], tg[*v].IDps[1], tg[*v].IDps[2], tg[*v].IDps[3] };
+		vtkIdType IDps[4] = { tg[*v].pg_points[0], tg[*v].pg_points[1], tg[*v].pg_points[2], tg[*v].pg_points[3] };
 		if (IDps[0] && IDps[1] && IDps[2] && IDps[3])
 			tets->InsertNextCell(VTK_TETRA,4,IDps);
 	}
@@ -431,12 +573,6 @@ vtkSmartPointer<vtkUnstructuredGrid> MeshGraph::getVTKMeshTetras() const
 }
 
 
-
-/*vtkSmartPointer<vtkUnstructuredGrid> MeshGraph::getVTKMeshPolygons() const
-{
-	vtkSmartPointer<vtkUnstructuredGrid> polys = vtkUnstructuredGrid::New();
-}*/
-
 vtkSmartPointer<vtkPolyData> MeshGraph::getVTKMeshLines() const
 {
 	vtkSmartPointer<vtkPolyData> data = vtkPolyData::New();
@@ -445,6 +581,7 @@ vtkSmartPointer<vtkPolyData> MeshGraph::getVTKMeshLines() const
 	data->SetLines(getVTKMeshPolys());
 	return data;
 }
+
 
 /** Return an array of tetra types. *
  *
@@ -489,4 +626,141 @@ vtkSmartPointer<vtkUnstructuredGrid> MeshGraph::getVTKTetraData_Types() const
 	cout << "Active scalars set to " << cd->SetActiveScalars("Tetra Types") << endl;
 
 	return tets;
+}
+
+unsigned MeshGraph::incident_boundary_faces_to_edge(PointGraph::edge_descriptor e) const
+{
+	unsigned n=0;
+
+	auto __p = edge_face_map.equal_range(e);
+
+	for(auto p = __p.first; p != __p.second; ++p)
+		if (tg[p->second].isBoundary)
+			++n;
+
+	return n;
+}
+
+unsigned MeshGraph::incident_boundary_faces(TetraGraph::edge_descriptor e) const
+{
+	unsigned n=0;
+
+	for(unsigned i=0;i<3;++i)
+		n += incident_boundary_faces_to_edge(tg[e].pg_edges[i]);
+	return n;
+}
+
+
+// loop over all faces (edges) in the TetraGraph (Delaunay-triangulation tetra connectivity)
+// add faces where following criteria are met:
+//	1) 2 points coplanar
+//  2) 2 coplanar points adjacent in original Delaunay
+//	3) All refer to same ROI
+//	4) other point +/- 1 slice
+//	5) normals pointing in similar direction (dot product > 0)
+
+void MeshGraph::defineBoundaries()
+{
+	for(TetraGraph::edge_descriptor e : edges(tg))
+	{
+		tg[e].isBoundary=false;
+		array<pair<unsigned,PointGraph::vertex_descriptor>,3> p;			// { sliceID, pointID } for each point
+
+		for(unsigned i=0;i<3;++i)
+			p[i] = make_pair(pg[tg[e].pg_points[i]].slice_id,tg[e].pg_points[i]);
+
+		// ensure all 3 refer to same ROI
+		if (pg[tg[e].pg_points[0]].roi_id != pg[tg[e].pg_points[1]].roi_id || pg[tg[e].pg_points[1]].roi_id != pg[tg[e].pg_points[2]].roi_id)
+			continue;
+
+		// check 2 points coplanar, put their indices into first two elements and other into third
+		if (p[0].first == p[1].first){}
+		else if (p[1].first==p[2].first)
+			swap(p[0],p[2]);
+		else if (p[0].first==p[2].first)
+			swap(p[1],p[2]);
+		else
+			continue;
+
+		// check other point +/- 1 slice
+		if (abs((int)(p[1].first-p[2].first))!=1)
+			continue;
+
+		bool found;
+		PointGraph::edge_descriptor e_base;
+
+		tie(e_base,found)=edge(p[1].second,p[0].second,pg);
+		assert(found);
+
+		if (!pg[e_base].original)
+			continue;
+
+		// check that outward normals are in similar direction
+		if (dot_product(pg[e_base].n_out,pg[p[2].second].n_out) < 0)
+			continue;
+
+		tg[e].isBoundary=true;
+
+		// edge->face map
+		array<PointGraph::vertex_descriptor,3> IDps = { p[0].second, p[1].second, p[2].second };
+		sort(IDps.begin(),IDps.end());
+	}
+}
+
+/** Yet another try at solving this problem, this time using information gleaned from outward-facing normals.
+ * Seems promising!
+ */
+
+vtkSmartPointer<vtkPolyData> MeshGraph::vtkRibbonFromCurves2(const Pinnacle::File& f) const
+{
+	vtkSmartPointer<vtkPolyData> polys = vtkPolyData::New();
+	vtkSmartPointer<vtkCellArray> cells = vtkCellArray::New();
+
+	vtkSmartPointer<vtkDoubleArray> normalarray = vtkDoubleArray::New();
+
+	vtkSmartPointer<vtkUnsignedCharArray> faceconn = vtkUnsignedCharArray::New();
+
+	polys->SetPolys(cells);
+
+	// save point normals
+	normalarray->SetNumberOfComponents(3);
+	auto p = vertices(pg);
+	for(auto v=p.first; v != p.second; ++v)
+		normalarray->InsertNextTuple(pg[*v].n_out.data());
+
+	polys->GetPointData()->SetVectors(normalarray);
+
+	// save the points
+	polys->SetPoints(getVTKPoints());
+
+	map<unsigned,unsigned> hist,ehist;
+
+	auto pe = edges(tg);
+	unsigned Nb=0;
+	for(auto e=pe.first; e != pe.second; ++e)
+	{
+		if (tg[*e].isBoundary)
+		{
+			++Nb;
+			unsigned N_adjacent_faces = incident_boundary_faces(*e);
+			polys->InsertNextCell(VTK_TRIANGLE,3,array<vtkIdType,3>{ tg[*e].pg_points[0], tg[*e].pg_points[1], tg[*e].pg_points[2] }.data());
+			faceconn->InsertNextTuple1(N_adjacent_faces);
+			hist[N_adjacent_faces]++;
+		}
+	}
+
+	cout << "Found " << Nb << " boundary faces" << endl;
+
+//	cout << "Edge connectivity histogram" << endl;
+//	for(const pair<unsigned,unsigned>& p : ehist)
+//		cout << "  " << p.first << ": " << p.second << endl;
+
+
+	cout << "Face connectivity histogram" << endl;
+	for(const pair<unsigned,unsigned>& p : hist)
+		cout << "  " << p.first << ": " << p.second << endl;
+
+	polys->GetCellData()->SetScalars(faceconn);
+
+	return polys;
 }

@@ -58,6 +58,13 @@ public:
 	}
 	void printSliceMap() const;
 
+	unsigned getNumberOfSlices() const {
+		unsigned N=0;
+		for(const pair<double,unsigned>& m : M)
+			N=max(N,m.second);
+		return N;
+	}
+
 	const list<ROI>& getROIs() const { return rois; }
 	unsigned getNRois() const { return rois.size(); }
 };

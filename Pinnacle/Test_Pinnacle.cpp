@@ -23,6 +23,11 @@
 #include <vtkPolyDataMapper.h>
 #include <vtkScalarBarActor.h>
 
+#include <vtkConeSource.h>
+#include <vtkGlyph3D.h>
+#include <vtkTransformPolyDataFilter.h>
+#include <vtkTransform.h>
+
 #include <vtkCellData.h>
 
 #include <vtkLookupTable.h>
@@ -104,6 +109,9 @@ void writeXML_Sets(string fn,const Pinnacle::File& F);
 
 pair<vtkSmartPointer<vtkPlane>,vtkSmartPointer<vtkImplicitPlaneRepresentation>> callbackdata;
 
+unsigned char Const0(PointGraph::edge_descriptor){ return 0; }
+bool AlwaysTrue(PointGraph::edge_descriptor){ return true; }
+
 void callback_plane_widget_update(vtkObject*,unsigned long eid,void* clientdata,void *calldata)
 {
 	pair<vtkSmartPointer<vtkPlane>,vtkSmartPointer<vtkImplicitPlaneRepresentation>>& p =
@@ -170,14 +178,6 @@ int main(int argc,char **argv)
 	vector<unsigned> slices;
 	for(unsigned i=80;i<95;++i)
 		slices.push_back(i);
-	/*slices.push_back(83);
-	slices.push_back(84);
-	slices.push_back(85);
-	slices.push_back(86);
-	slices.push_back(87);
-	slices.push_back(88);
-	slices.push_back(89);
-	slices.push_back(90);*/
 
 	vector<unsigned> rois;
 	for(unsigned i=0;i<10;++i)
@@ -188,6 +188,103 @@ int main(int argc,char **argv)
 	M.writeAll("test");
 
 	VisualizationWindow vw;
+
+	// draw ribbon curves enclosing data
+	vtkSmartPointer<vtkPolyData> ribbons = M.vtkRibbonFromCurves2(pf);
+
+	vtkSmartPointer<vtkPolyDataMapper> ribbonMapper = vtkPolyDataMapper::New();
+	ribbonMapper->SetInputData(ribbons);
+
+		// display the scalars
+		ribbonMapper->ScalarVisibilityOn();
+		ribbonMapper->SetScalarModeToUseCellData();
+		ribbonMapper->UseLookupTableScalarRangeOn();
+		ribbonMapper->SetColorModeToMapScalars();
+
+		vtkSmartPointer<vtkLookupTable> ribbonlut = vtkLookupTable::New();
+		ribbonlut->IndexedLookupOn();
+		ribbonlut->SetNumberOfTableValues(5);
+		ribbonlut->Build();
+		ribbonlut->SetNanColor(1.0,1.0,0.0,1.0);		// invalid colour yellow
+
+		ribbonlut->SetTableValue(0,0,0,0,0);				// no connections: black, transparent
+		ribbonlut->SetAnnotation(vtkVariant(0),"");
+
+		ribbonlut->SetTableValue(1,1.0,0.0,0.0,1.0);		// singleton: red
+		ribbonlut->SetAnnotation(vtkVariant(1),"");
+
+		ribbonlut->SetTableValue(2,0.8,0.5,0.0,1.0);		// 2 neighbours: orange
+		ribbonlut->SetAnnotation(vtkVariant(2),"");
+
+		ribbonlut->SetTableValue(3,0.0,0.0,1.0,1.0);		// 3 neighbours (good): blue
+		ribbonlut->SetAnnotation(vtkVariant(3),"");
+
+		ribbonlut->SetTableValue(4,1.0,0.0,1.0,1.0);		// 4 neighbours (excessive): magenta
+		ribbonlut->SetAnnotation(vtkVariant(4),"");
+
+		ribbonMapper->SetLookupTable(ribbonlut);
+
+
+
+
+	vtkSmartPointer<vtkActor> ribbonActor = vtkActor::New();
+	ribbonActor->SetMapper(ribbonMapper);
+	ribbonActor->GetProperty()->SetOpacity(0.75);
+	//ribbonActor->GetProperty()->SetColor(0.0,0.0,1.0);
+
+	cout << "Ribbons: " << ribbons->GetNumberOfCells() << " cells, " << ribbons->GetNumberOfPolys() << " points" << endl;
+
+
+
+	// draw all of the graph edges
+	//vtkSmartPointer<vtkPolyData> edgeData = M.filterEdges(std::bind1st(std::mem_fn(&MeshGraph::incident_boundary_faces),&M),Const0);
+	//vtkSmartPointer<vtkPolyData> edgeData = M.filterEdges(AlwaysTrue,Const0);
+	vtkSmartPointer<vtkPolyData> edgeData = M.filterEdges(std::bind1st(std::mem_fn(&MeshGraph::ExcludeZero),&M),Const0);
+	//vtkSmartPointer<vtkPolyData> edgeData = M.filterEdges(std::bind1st(std::mem_fn(&MeshGraph::curve_edges),&M),Const0);
+	vtkSmartPointer<vtkTubeFilter> edgeTubes = vtkTubeFilter::New();
+	edgeTubes->SetInputData(edgeData);
+	edgeTubes->SetRadius(0.005);
+	edgeTubes->Update();
+
+	vtkSmartPointer<vtkPolyDataMapper> edgeMapper = vtkPolyDataMapper::New();
+	edgeMapper->ScalarVisibilityOff();
+	edgeMapper->SetInputData(edgeTubes->GetOutput());
+
+	vtkSmartPointer<vtkActor> edgeActor = vtkActor::New();
+	edgeActor->SetMapper(edgeMapper);
+
+	cout << "Edge dataset has " << edgeData->GetNumberOfCells() << " cells and " << edgeData->GetNumberOfPoints() << " points" << endl;
+
+
+	// glyph the ribbon curve points to show point normals
+	vtkSmartPointer<vtkConeSource> cone = vtkConeSource::New();
+		cone->SetResolution(6);
+		cone->Update();
+
+	vtkSmartPointer<vtkTransform> conetrans = vtkTransform::New();
+		conetrans->Translate(0.5,0.0,0.0);
+
+	vtkSmartPointer<vtkTransformPolyDataFilter> applytransform = vtkTransformPolyDataFilter::New();
+		applytransform->SetTransform(conetrans);
+		applytransform->SetInputData(cone->GetOutput());
+		applytransform->Update();
+
+	vtkSmartPointer<vtkGlyph3D> glyph = vtkGlyph3D::New();
+		glyph->SetInputData(ribbons);
+		glyph->SetSourceData(applytransform->GetOutput());
+		glyph->SetVectorModeToUseVector();
+		glyph->SetScaleModeToDataScalingOff();
+		glyph->SetScaleFactor(0.05);
+		glyph->Update();
+
+	vtkSmartPointer<vtkPolyDataMapper> glyphMapper = vtkPolyDataMapper::New();
+		glyphMapper->SetInputData(glyph->GetOutput());
+
+	vtkSmartPointer<vtkActor> glyphActor = vtkActor::New();
+		glyphActor->SetMapper(glyphMapper);
+
+
+
 
 	// the data
 	vtkSmartPointer<vtkPolyData> curveData = M.getVTKCurveLines();
@@ -232,6 +329,27 @@ int main(int argc,char **argv)
 	meshActor->SetMapper(meshMapper);
 	meshActor->GetProperty()->SetOpacity(1.0);
 	meshActor->GetProperty()->SetColor(0.0,0.0,1.0);
+
+
+
+	// now for the triangulation faces
+	/*vtkSmartPointer<vtkPolyData> faceData = // ....
+
+	vtkSmartPointer<vtkClipPolyData> faceClipper = vtkClipPolyData::New();
+	faceClipper->SetInputData(faceData);
+	faceClipper->GenerateClippedOutputOff();
+	faceClipper->SetClipFunction(clipPlane);
+	faceClipper->SetValue(0.0);
+
+
+	vtkSmartPointer<vtkPolyDataMapper> faceMapper = vtkPolyDataMapper::New();
+	faceMapper->SetInputConnection(faceClipper->GetOutputPort());
+	faceMapper->ScalarVisibilityOff();
+
+	vtkSmartPointer<vtkActor> faceActor = vtkActor::New();
+	faceActor->SetMapper(faceMapper);
+	faceActor->GetProperty()->SetOpacity(1.0);
+	faceActor->GetProperty()->SetColor(0.0,0.0,1.0);*/
 
 
 
@@ -286,16 +404,18 @@ int main(int argc,char **argv)
 	// actor to visualize curves
 	vtkSmartPointer<vtkActor> curveActor = vtkActor::New();
 	curveActor->SetMapper(curveMapper);
-	curveActor->GetProperty()->SetOpacity(1.0);
+	curveActor->GetProperty()->SetOpacity(0.5);
 	curveActor->GetProperty()->SetColor(1.0,1.0,1.0);
 
 
 
 	callbackdata = make_pair(clipPlane,planeRep);
 
-	vw.AddActor(curveActor);
+	//vw.AddActor(curveActor);
+	vw.AddActor(edgeActor);
 	//vw.AddActor(meshActor);
-	vw.AddActor(tetActor);
+	//vw.AddActor(faceActor);
+	//vw.AddActor(tetActor);
 
 	planeRep->PlaceWidget(meshActor->GetBounds());
 
@@ -308,19 +428,18 @@ int main(int argc,char **argv)
 	vtkSmartPointer<vtkImplicitPlaneWidget2> planeWidget = vtkImplicitPlaneWidget2::New();
 	planeWidget->SetRepresentation(planeRep);
 	planeWidget->AddObserver(vtkCommand::InteractionEvent,planeWidgetCallback);
-	vw.AddProp(planeRep);
-	vw.AddWidget(planeWidget);
+	//vw.AddProp(planeRep);
+	//vw.AddWidget(planeWidget);
 
-	vtkSmartPointer<vtkScalarBarActor> scale = vtkScalarBarActor::New();
-	scale->SetLookupTable(lut);
-	scale->SetOrientationToVertical();
-	scale->SetTitle("Title");
+	vw.AddActor(ribbonActor);
+	vw.AddActor(glyphActor);
 
-	//vw.AddActor2D(scale);
+//	vtkSmartPointer<vtkScalarBarActor> scale = vtkScalarBarActor::New();
+//	scale->SetLookupTable(lut);
+//	scale->SetOrientationToVertical();
+//	scale->SetTitle("Title");
 
 	vw.start();
-	//cout << "Hello" << endl;
-	//vw.waitUntilDone();
 }
 
 
@@ -364,7 +483,7 @@ void writeXML_Curves(string fn,const Pinnacle::File& F)
 	unsigned Ncurves=boost::distance(curves_iiterator);
 	unsigned Npoints=boost::distance(points_iiterator);
 
-	int status;
+	// int status;
 
 	//cout << "Typeid of *begin(points_iiterator): " << abi::__cxa_demangle(typeid(*begin(points_iiterator)).name(),0,0,&status) << endl;
 
@@ -430,8 +549,7 @@ void writeXML_Sets(string fn,const Pinnacle::File& F)
 
 	unsigned Nrois=F.getNRois();
 
-	int status;
-
+	//int status;
 	//cout << "Typeid of *begin(points_iiterator): " << abi::__cxa_demangle(typeid(*begin(points_iiterator)).name(),0,0,&status) << endl;
 
 	ofstream os(fn.c_str());
