@@ -45,7 +45,9 @@ public:
 	TreeWalker(Pinnacle::File *f) : current_file(f),current_props(f){}
     int run(pANTLR3_BASE_TREE,unsigned indent=0);
 
-    void printAll() const { current_file->printDetails(); }
+    void printAll() const {
+    	current_file->printDetails();
+    }
 
 };
 
@@ -83,6 +85,8 @@ bool Pinnacle::File::read()
 	lex->free(lex);
 	input->close(input);
 
+	buildSliceMap();
+
 	return true;
 }
 
@@ -109,7 +113,6 @@ int getChildType(pANTLR3_BASE_TREE p,unsigned i)
 
 bool TreeWalker::handleProp(pANTLR3_BASE_TREE tree,unsigned indent)
 {
-	bool inserted;
 	map<string,string>::const_iterator it;
 
 	string k=getChildText(tree,0),v=getChildText(tree,1);
@@ -121,9 +124,6 @@ bool TreeWalker::handleProp(pANTLR3_BASE_TREE tree,unsigned indent)
 		size_t first_nonspace = v.find_first_not_of(" \t",1);
 		v=v.substr(first_nonspace,v.size()-first_nonspace-1);
 	}
-
-	// insert into property map
-	//tie(it,inserted) = propmap_current->insert(make_pair(k,v));
 
 	current_props->addprop(k,v);
 
@@ -209,23 +209,49 @@ int TreeWalker::run(pANTLR3_BASE_TREE tree,unsigned indent)
 
 void File::printDetails() const
 {
-	unsigned i=0;
+	//unsigned i=0;
 
 	cout << "There are " << rois.size() << " ROIs defined; details: " << endl;
 
 	for(const ROI& r : rois)
 	{
-		cout << "  [" << setw(4) << i++ << "] ";
-		r.printDetails();
+		//cout << "  [" << setw(4) << i++ << "] ";
+		//r.printDetails();
 	}
+
+	//cout << "There are " << M.size() << " slices; details: " << endl;
 }
 
 
-void File::export_VTK_Curves(string fn_) const
-{
-	//ls
-	//make_iiterator_adaptor(rois,mem_fn(&ROI::getCurve));
 
+/** Maps curves to slices based on z coordinate.
+ *
+ */
+
+void File::buildSliceMap()
+{
+	M.clear();
+
+	for(const Curve& c : getCurves())
+		M.insert(make_pair(c.getPoints().front()[2],0));
+
+	// give slices one-based ID
+	unsigned i=1;
+	for(pair<const double,unsigned>& sl : M)
+		sl.second = i++;
+
+	// assign Curves to slices
+	for(ROI& r : rois)
+		for(Curve& c : r.curves)
+			c.sliceID = M.at(c.getPoints().front()[2]);
+
+}
+
+void File::printSliceMap() const
+{
+	cout << "Slices: " << endl;
+	for(auto m : M)
+		cout << "  [" << setw(4) << m.second << "] " << m.first << endl;
 }
 
 }

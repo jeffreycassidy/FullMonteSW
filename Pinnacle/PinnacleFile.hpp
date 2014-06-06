@@ -15,6 +15,10 @@ class File : public Object {
 
 	list<ROI> rois;
 
+	map<double,unsigned> M;
+
+	void buildSliceMap();
+
 public:
 
 	File(string fn_) : fn(fn_){ }
@@ -42,10 +46,27 @@ public:
 		return make_iiterator_adaptor(r,mem_fn(&Curve::getPoints));
 	}
 
+
+	typedef map<double,unsigned>::const_iterator slicemap_const_iterator;
+	typedef pair<slicemap_const_iterator,slicemap_const_iterator> slicemap_const_range;
+
+	const map<double,unsigned>& getSliceMap() const { return M; }
+	slicemap_const_range getSliceMap(double z,double eps_=1e-6) const {
+		slicemap_const_iterator b_it = M.lower_bound(z-eps_);
+		slicemap_const_iterator e_it = M.upper_bound(z+eps_);
+		return make_pair(b_it,e_it);
+	}
+	void printSliceMap() const;
+
+	unsigned getNumberOfSlices() const {
+		unsigned N=0;
+		for(const pair<double,unsigned>& m : M)
+			N=max(N,m.second);
+		return N;
+	}
+
 	const list<ROI>& getROIs() const { return rois; }
 	unsigned getNRois() const { return rois.size(); }
-
-	void export_VTK_Curves(string fn_) const;
 };
 
 }

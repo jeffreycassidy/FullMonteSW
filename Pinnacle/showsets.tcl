@@ -1,3 +1,5 @@
+package require vtk
+
 set fn "sets.xml"
 
 vtkXMLUnstructuredGridReader reader
@@ -8,8 +10,17 @@ reader Update
 puts "$fn contains [reader GetNumberOfCells] cells"
 puts "$fn contains [reader GetNumberOfPoints] points"
 
+vtkPlane plane
+
+vtkImplicitPlaneRepresentation planerep
+    planerep SetPlaceFactor 1.25
+
+vtkClipDataSet clipper
+    clipper SetInputConnection [reader GetOutputPort]
+    clipper SetClipFunction plane
+
 vtkDataSetMapper mapper
-    mapper SetInputConnection [reader GetOutputPort]
+    mapper SetInputConnection [clipper GetOutputPort]
 
 vtkLookupTable lut
 
@@ -37,21 +48,37 @@ mapper SetLookupTable lut
 #    delaunayactor SetMapper delaunaymapper
 #    [delaunayactor GetProperty] SetOpacity 0.1
 
-vtkLODActor actor
-    actor SetMapper mapper
-#    [actor GetProperty] SetRepresentationToSurface
-#    [actor GetProperty] SetOpacity 0.0
-#    [actor GetProperty] SetColor 1 1 1
-
 vtkRenderer ren
 ren AddActor actor
+ren AddActor planerep
+
 #ren AddActor delaunayactor
 vtkRenderWindow renwin
 renwin AddRenderer ren
 
 vtkRenderWindowInteractor iren
 iren SetRenderWindow renwin
+
+proc PlaneUpdate {} {
+    puts "Updating clipping plane"
+    planerep GetPlane plane
+}
+
+vtkImplicitPlaneWidget2 planewidget
+    planewidget SetInteractor iren
+    planewidget SetRepresentation planerep
+    planewidget AddObserver InteractionEvent PlaneUpdate
+
+planerep OutlineTranslationOff
+
+planerep PlaceWidget -30 30 -30 30 60 120
+#planerep SetNormal [plane GetNormal]
+
+planewidget On
+
+
 renwin Render
+
 iren Start
 
 
