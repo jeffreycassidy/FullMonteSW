@@ -27,15 +27,15 @@ for { set i 0 } { $i < 52 } { incr i } { lut SetTableValue $i 1 1 1 1 }
 
 mapper SetLookupTable lut
 
-vtkDelaunay3D delaunay
-    delaunay SetInputConnection [reader GetOutputPort]
+#vtkDelaunay3D delaunay
+#    delaunay SetInputConnection [reader GetOutputPort]
 
-vtkDataSetMapper delaunaymapper
-    delaunaymapper SetInputConnection [delaunay GetOutputPort]
+#vtkDataSetMapper delaunaymapper
+#    delaunaymapper SetInputConnection [delaunay GetOutputPort]
 
-vtkLODActor delaunayactor
-    delaunayactor SetMapper delaunaymapper
-    [delaunayactor GetProperty] SetOpacity 0.1
+#vtkLODActor delaunayactor
+#    delaunayactor SetMapper delaunaymapper
+#    [delaunayactor GetProperty] SetOpacity 0.1
 
 vtkLODActor actor
     actor SetMapper mapper
@@ -44,8 +44,8 @@ vtkLODActor actor
 #    [actor GetProperty] SetColor 1 1 1
 
 vtkRenderer ren
-#ren AddActor actor
-ren AddActor delaunayactor
+ren AddActor actor
+#ren AddActor delaunayactor
 vtkRenderWindow renwin
 renwin AddRenderer ren
 

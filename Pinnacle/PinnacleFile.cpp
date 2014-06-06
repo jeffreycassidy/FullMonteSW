@@ -59,7 +59,7 @@ bool Pinnacle::File::read()
 	pANTLR3_COMMON_TOKEN_STREAM tokens;
 	ppinnacleParser parser;
 
-	input = antlr3AsciiFileStreamNew((pANTLR3_UINT8)fn.c_str());
+	input = antlr3FileStreamNew((pANTLR3_UINT8)fn.c_str(),ANTLR3_ENC_8BIT);
 	lex = pinnacleLexerNew(input);
 	tokens = antlr3CommonTokenStreamSourceNew(ANTLR3_SIZE_HINT,
 			TOKENSOURCE(lex));
