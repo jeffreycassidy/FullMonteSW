@@ -7,14 +7,9 @@
 
 #include <vtkSmartPointer.h>
 
-#include <vtkPoints.h>
-#include <vtkCellArray.h>
-#include <vtkCellData.h>
-#include <vtkUnsignedCharArray.h>
-#include <vtkDoubleArray.h>
-#include <vtkPointData.h>
 
 #include <boost/range.hpp>
+
 
 #include <fstream>
 #include <iostream>
@@ -191,7 +186,7 @@ MeshGraph::MeshGraph(const Pinnacle::File& pf,const vector<unsigned>& slices,con
 
 	os.close();
 
-	system("qdelaunay Qt i < delaunay_in.txt > delaunay_out.txt");
+	system("qdelaunay Qt C-0 i < delaunay_in.txt > delaunay_out.txt");
 
 
 	// load delaunay_out.txt to populate
@@ -643,10 +638,10 @@ unsigned MeshGraph::incident_boundary_faces_to_edge(PointGraph::edge_descriptor 
 
 unsigned MeshGraph::incident_boundary_faces(TetraGraph::edge_descriptor e) const
 {
-	unsigned n=0;
+	unsigned n=0,Nfb;
 
 	for(unsigned i=0;i<3;++i)
-		n += incident_boundary_faces_to_edge(tg[e].pg_edges[i]);
+		n += incident_boundary_faces_to_edge(tg[e].pg_edges[i])-1;
 	return n;
 }
 
@@ -749,16 +744,16 @@ vtkSmartPointer<vtkPolyData> MeshGraph::vtkRibbonFromCurves2(const Pinnacle::Fil
 		}
 	}
 
-	cout << "Found " << Nb << " boundary faces" << endl;
+	//cout << "Found " << Nb << " boundary faces" << endl;
 
 //	cout << "Edge connectivity histogram" << endl;
 //	for(const pair<unsigned,unsigned>& p : ehist)
 //		cout << "  " << p.first << ": " << p.second << endl;
 
 
-	cout << "Face connectivity histogram" << endl;
-	for(const pair<unsigned,unsigned>& p : hist)
-		cout << "  " << p.first << ": " << p.second << endl;
+//	cout << "Face connectivity histogram" << endl;
+//	for(const pair<unsigned,unsigned>& p : hist)
+//		cout << "  " << p.first << ": " << p.second << endl;
 
 	polys->GetCellData()->SetScalars(faceconn);
 

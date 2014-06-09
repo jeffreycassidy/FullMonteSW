@@ -42,6 +42,8 @@
 
 #include <vtkClipDataSet.h>
 
+#include <boost/archive/binary_oarchive.hpp>
+
 #include <thread>
 
 class VisualizationWindow {
@@ -138,12 +140,15 @@ int main(int argc,char **argv)
 
 	unsigned i=0;
 
-	ofstream os("points.txt",ios_base::out);
+	{
 
-	auto pp = make_iiterator_adaptor(p,mem_fn(&Pinnacle::Curve::getPoints));
-	for(const array<double,3> x : pp)
-		os << x << endl;
-	os.close();
+		ofstream os("points.txt",ios_base::out);
+
+		auto pp = make_iiterator_adaptor(p,mem_fn(&Pinnacle::Curve::getPoints));
+		for(const array<double,3> x : pp)
+			os << x << endl;
+		os.close();
+	}
 
 	writeXML_Curves("curves.xml",pf);
 	writeXML_Sets("sets.xml",pf);
@@ -176,21 +181,30 @@ int main(int argc,char **argv)
 	// graph rep
 
 	vector<unsigned> slices;
-	for(unsigned i=80;i<95;++i)
+	//for(unsigned i=80;i<95;++i)
+	for(unsigned i=80;i<83;++i)
 		slices.push_back(i);
 
 	vector<unsigned> rois;
 	for(unsigned i=0;i<10;++i)
 		rois.push_back(i);
 
+//	std::ofstream os("oarchive.bin");
+//	boost::archive::binary_oarchive oa(os);
+
+
 	MeshGraph M(pf,slices,rois);
+
+//	oa << M;
+//	os.close();
 
 	M.writeAll("test");
 
 	VisualizationWindow vw;
 
 	// draw ribbon curves enclosing data
-	vtkSmartPointer<vtkPolyData> ribbons = M.vtkRibbonFromCurves2(pf);
+	//vtkSmartPointer<vtkPolyData> ribbons = M.vtkRibbonFromCurves2(pf);
+	vtkSmartPointer<vtkPolyData> ribbons = M.filterFaces(std::bind1st(mem_fn(&MeshGraph::isBoundary),&M),std::bind1st(mem_fn(&MeshGraph::incident_boundary_faces),&M));
 
 	vtkSmartPointer<vtkPolyDataMapper> ribbonMapper = vtkPolyDataMapper::New();
 	ribbonMapper->SetInputData(ribbons);
@@ -229,26 +243,76 @@ int main(int argc,char **argv)
 
 	vtkSmartPointer<vtkActor> ribbonActor = vtkActor::New();
 	ribbonActor->SetMapper(ribbonMapper);
-	ribbonActor->GetProperty()->SetOpacity(0.75);
+	ribbonActor->GetProperty()->SetOpacity(1.0);
 	//ribbonActor->GetProperty()->SetColor(0.0,0.0,1.0);
 
 	cout << "Ribbons: " << ribbons->GetNumberOfCells() << " cells, " << ribbons->GetNumberOfPolys() << " points" << endl;
+
+//	cout << "There are " << M.checkSelfEdges() << " self edges" << endl;
+
 
 
 
 	// draw all of the graph edges
 	//vtkSmartPointer<vtkPolyData> edgeData = M.filterEdges(std::bind1st(std::mem_fn(&MeshGraph::incident_boundary_faces),&M),Const0);
 	//vtkSmartPointer<vtkPolyData> edgeData = M.filterEdges(AlwaysTrue,Const0);
-	vtkSmartPointer<vtkPolyData> edgeData = M.filterEdges(std::bind1st(std::mem_fn(&MeshGraph::ExcludeZero),&M),Const0);
+	//vtkSmartPointer<vtkPolyData> edgeData = M.filterEdges(std::bind1st(std::mem_fn(&MeshGraph::ExcludeZero),&M),Const0);
+	//vtkSmartPointer<vtkPolyData> edgeData = M.filterEdges(std::bind1st(std::mem_fn(&MeshGraph::OrphanEdgesOnly),&M),std::bind1st(std::mem_fn(&MeshGraph::NumIncidentBoundaryFaces),&M));
+	vtkSmartPointer<vtkPolyData> edgeData = M.filterEdges(AlwaysTrue,std::bind1st(std::mem_fn(&MeshGraph::NumIncidentBoundaryFaces),&M));
 	//vtkSmartPointer<vtkPolyData> edgeData = M.filterEdges(std::bind1st(std::mem_fn(&MeshGraph::curve_edges),&M),Const0);
 	vtkSmartPointer<vtkTubeFilter> edgeTubes = vtkTubeFilter::New();
 	edgeTubes->SetInputData(edgeData);
 	edgeTubes->SetRadius(0.005);
 	edgeTubes->Update();
 
+	vtkSmartPointer<vtkLookupTable> edgelut = vtkLookupTable::New();
+			edgelut->IndexedLookupOn();
+			edgelut->SetNumberOfTableValues(10);
+			edgelut->Build();
+
+			// resistor colour code
+			edgelut->SetNanColor(0.0,1.0,1.0,1.0);		// invalid colour cyan
+
+			edgelut->SetTableValue(0,0,0,0,1.0);				// no connections: black
+			edgelut->SetAnnotation(vtkVariant(0),"0 Black");
+
+			edgelut->SetTableValue(1,0.5,0.25,0.0,1.0);
+			edgelut->SetAnnotation(vtkVariant(1),"1 Brown");
+
+			edgelut->SetTableValue(2,1.0,0.0,0.0,1.0);
+			edgelut->SetAnnotation(vtkVariant(2),"2 Red");
+
+			edgelut->SetTableValue(3,1.0,0.5,0.0,1.0);
+			edgelut->SetAnnotation(vtkVariant(3),"3 Orange");
+
+			edgelut->SetTableValue(4,1.0,1.0,0.0,1.0);
+			edgelut->SetAnnotation(vtkVariant(4),"4 Yellow");
+
+			edgelut->SetTableValue(5,0.0,1.0,0.0,1.0);
+			edgelut->SetAnnotation(vtkVariant(5),"5 Green");
+
+			edgelut->SetTableValue(6,0.0,0.0,1.0,1.0);
+			edgelut->SetAnnotation(vtkVariant(6),"6 Blue");
+
+			edgelut->SetTableValue(7,0.5,0.0,0.5,1.0);
+			edgelut->SetAnnotation(vtkVariant(7),"7 Violet");
+
+			edgelut->SetTableValue(8,0.5,0.5,0.5,1.0);
+			edgelut->SetAnnotation(vtkVariant(8),"8 Gray");
+
+			edgelut->SetTableValue(9,1.0,1.0,1.0,1.0);
+			edgelut->SetAnnotation(vtkVariant(9),"9 White");
+
+
+
+
 	vtkSmartPointer<vtkPolyDataMapper> edgeMapper = vtkPolyDataMapper::New();
-	edgeMapper->ScalarVisibilityOff();
+	edgeMapper->ScalarVisibilityOn();
+	edgeMapper->SetScalarModeToUseCellData();
+	edgeMapper->SetLookupTable(edgelut);
 	edgeMapper->SetInputData(edgeTubes->GetOutput());
+	edgeMapper->UseLookupTableScalarRangeOn();
+	edgeMapper->SetColorModeToMapScalars();
 
 	vtkSmartPointer<vtkActor> edgeActor = vtkActor::New();
 	edgeActor->SetMapper(edgeMapper);
@@ -404,7 +468,7 @@ int main(int argc,char **argv)
 	// actor to visualize curves
 	vtkSmartPointer<vtkActor> curveActor = vtkActor::New();
 	curveActor->SetMapper(curveMapper);
-	curveActor->GetProperty()->SetOpacity(0.5);
+	curveActor->GetProperty()->SetOpacity(1.0);
 	curveActor->GetProperty()->SetColor(1.0,1.0,1.0);
 
 
@@ -432,7 +496,7 @@ int main(int argc,char **argv)
 	//vw.AddWidget(planeWidget);
 
 	vw.AddActor(ribbonActor);
-	vw.AddActor(glyphActor);
+	//vw.AddActor(glyphActor);
 
 //	vtkSmartPointer<vtkScalarBarActor> scale = vtkScalarBarActor::New();
 //	scale->SetLookupTable(lut);
