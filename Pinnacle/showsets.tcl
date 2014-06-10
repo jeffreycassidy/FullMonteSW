@@ -44,23 +44,14 @@ mapper SetLookupTable lut
 #vtkDataSetMapper delaunaymapper
 #    delaunaymapper SetInputConnection [delaunay GetOutputPort]
 
-
-
-
 #vtkLODActor delaunayactor
 #    delaunayactor SetMapper delaunaymapper
 #    [delaunayactor GetProperty] SetOpacity 0.1
 
-vtkLODActor actor
-    actor SetMapper mapper
-#    [actor GetProperty] SetRepresentationToSurface
-#    [actor GetProperty] SetOpacity 0.0
-#    [actor GetProperty] SetColor 1 1 1
-
-
 vtkRenderer ren
 ren AddActor actor
 ren AddActor planerep
+
 #ren AddActor delaunayactor
 vtkRenderWindow renwin
 renwin AddRenderer ren
