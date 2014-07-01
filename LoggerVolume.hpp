@@ -1,13 +1,6 @@
 #include "logger.hpp"
 #include "AccumulationArray.hpp"
 
-//template<class T>unsigned getID(const T& t)			{ return t.id; }		///< Returns element ID
-//template<class T>double   getEnergy(const T& t)		{ return t.E; }			///< Returns total element energy (absorb/exit)
-//template<class T>unsigned getMaterial(const T& t)	{ return t.matID; }		///< Returns material ID (volume only)
-//template<class T>unsigned getRegion(const T& t)		{ return t.regionID; }	///< Returns region ID (volume only)
-//template<class T>double   getVariance(const T& t)	{ return t.var; }		///< Returns variance estimate
-//template<class T>unsigned getHits(const T& t)		{ return t.hits; }		///< Returns hit count
-
 template<class T>class VolumeArray {
 	const TetraMesh& mesh;
 	vector<T> v;
