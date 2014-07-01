@@ -8,6 +8,7 @@
 #include <boost/math/constants/constants.hpp>
 
 #include "avx_mathfun.h"
+#define SFMT_MEXP 19937
 #include "SFMT.h"
 
 using namespace std;

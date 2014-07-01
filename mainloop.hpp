@@ -44,36 +44,36 @@ template<class Logger,class RNG>class Manager;
 template<class LoggerType,class RNG>int doOnePacket(const RunConfig& cfg,Packet pkt,
     LoggerType& logger,unsigned IDt,RNG& rng);
 
-class RunConfig {
-    public:
-    const TetraMesh&        mesh;
-    const vector<Material>& mat;
-    const Source&           source;
-
-    unsigned seed;
-    unsigned Nthread;
-
-    double wmin,pr_win;
-
-    unsigned Nstep_max=10000,Nhit_max=1000;
-
-    // default copy constructor is fine
-
-    // prepare sources before creating run config
-    RunConfig(const TetraMesh& mesh_,const vector<Material>& mat_,Source& src_,unsigned seed_=1,unsigned Nthread_=1,
-        double wmin_=globalopts::wmin,double pr_win_=globalopts::prwin) :
-        mesh(mesh_),
-        mat(mat_),
-        source(src_),
-        seed(seed_),
-        Nthread(Nthread_),
-        wmin(wmin_),
-        pr_win(pr_win_)
-        { src_.prepare(mesh_); }
-
-    template<class LoggerType,class RNG>friend int doOnePacket(const RunConfig& cfg,Packet pkt,
-        LoggerType& logger,unsigned IDt,RNG& rng);
-};
+//class RunConfig {
+//    public:
+//    const TetraMesh&        mesh;
+//    const vector<Material>& mat;
+//    const Source&           source;
+//
+//    unsigned seed;
+//    unsigned Nthread;
+//
+//    double wmin,pr_win;
+//
+//    unsigned Nstep_max=10000,Nhit_max=1000;
+//
+//    // default copy constructor is fine
+//
+//    // prepare sources before creating run config
+//    RunConfig(const TetraMesh& mesh_,const vector<Material>& mat_,Source& src_,unsigned seed_=1,unsigned Nthread_=1,
+//        double wmin_=globalopts::wmin,double pr_win_=globalopts::prwin) :
+//        mesh(mesh_),
+//        mat(mat_),
+//        source(src_),
+//        seed(seed_),
+//        Nthread(Nthread_),
+//        wmin(wmin_),
+//        pr_win(pr_win_)
+//        { src_.prepare(mesh_); }
+//
+//    template<class LoggerType,class RNG>friend int doOnePacket(const RunConfig& cfg,Packet pkt,
+//        LoggerType& logger,unsigned IDt,RNG& rng);
+//};
 
 template<class Logger,class RNG>class Worker;
 
@@ -81,8 +81,9 @@ template<class Logger,class RNG>class Manager {
     boost::timer::cpu_timer t;
 
     protected:
+    const SimGeometry geom;
     const RunConfig cfg;
-    unsigned long long Npacket;
+    const RunOptions opts;
 
     public:
 
@@ -97,7 +98,7 @@ template<class Logger,class RNG>class Manager {
 
     virtual string getDetails() const { return ""; }
 
-    double getProgressPercent() const  { return 100.0*double(getProgressCount())/double(Npacket); }
+    double getProgressPercent() const  { return 100.0*double(getProgressCount())/double(cfg.Npacket); }
     double getRemainingPercent() const { return 100.0-getProgressPercent(); }
 };
 
@@ -137,7 +138,7 @@ template<class Logger,class RNG>class Manager_MT : public Manager<Logger,RNG> {
 
 template<class Logger,class RNG>void Manager_MT<Logger,RNG>::run(Logger& logger)
 {
-	typedef typename Logger::ThreadWorker LoggerThread;
+	typedef decltype(get_worker(logger)) LoggerThread;
 	LoggerThread* l[cfg.Nthread];
 
     cout << "Running with " << cfg.Nthread << " threads" << endl;
@@ -153,7 +154,7 @@ template<class Logger,class RNG>void Manager_MT<Logger,RNG>::run(Logger& logger)
     for(unsigned i=0;i<cfg.Nthread;++i)
     {
     	try {
-    		l[i] = new LoggerThread(logger.get_worker());
+    		l[i] = new LoggerThread(get_worker(logger));
     		workers[i].second = new ((WorkerType*)p + i) WorkerType(Manager<Logger,RNG>::cfg,
     				*(l[i]),
     				Manager<Logger,RNG>::Npacket/cfg.Nthread,
@@ -185,7 +186,7 @@ template<class Logger,class RNG>class Worker {
     public:
     const RunConfig cfg;
     unsigned long long i,Npacket;
-    typedef typename Logger::ThreadWorker ThreadWorker;
+    typedef decltype(get_worker((Logger&)*(Logger*)(0))) ThreadWorker;
     ThreadWorker& logger;
     Manager_MT<Logger,RNG>* manager;
 
@@ -243,7 +244,6 @@ template<class Logger,class RNG>class MgrProgressUpdate {
             cout << p->getDetails() << ")" << flush;
         };
 };
-
 template<class Logger,class RNG>boost::timer::cpu_times Manager_MT<Logger,RNG>::start(Logger& logger)
 {
     boost::timer::cpu_timer runTimer;

@@ -1,4 +1,4 @@
-#include "logger.hpp"
+#include "Logger.hpp"
 #include <mutex>
 
 /** LoggerEvent counts events as they happen.
@@ -12,7 +12,7 @@ struct EventCount {
 
 ostream& operator<<(ostream& os,const EventCount&);
 
-class LoggerEvent : public LoggerNull,private EventCount {
+class LoggerEvent : public LoggerNull,public EventCount {
 
     public:
 
@@ -64,7 +64,7 @@ class LoggerEvent : public LoggerNull,private EventCount {
 //	copy constructible
 
 
-class LoggerEventMT : private LoggerEvent, private std::mutex {
+class LoggerEventMT : public LoggerEvent, private std::mutex {
 public:
 	using LoggerEvent::result_type;
 	using LoggerEvent::getResults;
@@ -85,6 +85,7 @@ public:
 	class ThreadWorker : public LoggerEvent {
 		LoggerEventMT& parent;
 	public:
+		typedef void logger_member_tag;
 		/// Create a new ThreadWorker with reference to the specified parent_
 		ThreadWorker(LoggerEventMT& parent_) : parent(parent_){}
 

@@ -117,7 +117,7 @@ inline __m256 _mm256_abs_ps(__m256 x)
 	return _mm256_andnot_ps(_mm256_castsi256_ps(_mm256_set1_epi32(0x80000000U)),x);
 }
 
->>>>>>> e1b8e300eb750b762e532721b13e01c598d1d31e
+
 #define M256_SPLIT(a)  __m128  a##lo=_mm256_extractf128_ps(a,0),    a##hi=_mm256_extractf128_ps(a,1);
 #define M256I_SPLIT(a) __m128i a##lo=_mm256_extractf128_si256(a,0), a##hi=_mm256_extractf128_si256(a,1);
 
@@ -143,9 +143,6 @@ inline __m256 _mm256_abs_ps(__m256 x)
 	return _mm256_set_m128i( _mm_##Cmd(ahi,imm), _mm_##Cmd(alo,imm));		\
 }
 
-M256I_EQUIV2(add_epi32)
-M256I_EQUIV2(sub_epi32)
-M256I_EQUIV1IMM(slli_epi32)
 #warning "AVX2 integer (epi8/16/32/64) instructions are emulated using SSE instructions, starting here"
 M256I_EQUIV2(add_epi32)
 M256I_EQUIV1IMM(slli_epi32)
@@ -725,7 +722,7 @@ _PS_CONST(cephes_FOPI, 1.27323954473516); // 4 / M_PI
 /* since sin_ps and cos_ps are almost identical, sincos_ps could replace both of them..
    it is almost as fast, and gives you a free cosine with your sine */
 
-inline void sincos_ps(__m256 x, float *s, float *c) {
+
 inline std::pair<__m256,__m256> sincos_psp(__m256 x);
 
 inline void sincos_ps(__m256 x,float *s,float *c)
@@ -736,8 +733,7 @@ inline void sincos_ps(__m256 x,float *s,float *c)
 	_mm256_store_ps(c,yo);
 }
 
-inline std::pair<__m256,__m256> sincos_psp(__m256 x) {
->>>>>>> e1b8e300eb750b762e532721b13e01c598d1d31e
+inline std::pair<__m256,__m256> sincos_psp(__m256 x){
   __m256 xmm1, xmm2, xmm3 = _mm256_setzero_ps(), sign_bit_sin, y;
 //#ifdef USE_SSE2
   __m256i emm0, emm2, emm4;
@@ -892,13 +888,10 @@ inline std::pair<__m256,__m256> sincos_psp(__m256 x) {
   xmm2 = _mm256_add_ps(y,y2);
  
   /* update the sign */
-  _mm256_store_ps(s,_mm256_xor_ps(xmm1, sign_bit_sin));
-  _mm256_store_ps(c,_mm256_xor_ps(xmm2, sign_bit_cos));
   //_mm256_store_ps(s,_mm256_xor_ps(xmm1, sign_bit_sin));
   //_mm256_store_ps(c,_mm256_xor_ps(xmm2, sign_bit_cos));
 
   return std::make_pair(_mm256_xor_ps(xmm1, sign_bit_sin),_mm256_xor_ps(xmm2, sign_bit_cos));
->>>>>>> e1b8e300eb750b762e532721b13e01c598d1d31e
 }
 
 #endif

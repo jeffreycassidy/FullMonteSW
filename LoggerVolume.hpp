@@ -1,5 +1,6 @@
-#include "logger.hpp"
+#include "Logger.hpp"
 #include "AccumulationArray.hpp"
+#include "fluencemap.hpp"
 
 template<class T>class VolumeArray {
 	const TetraMesh& mesh;
@@ -44,6 +45,11 @@ public:
 template<class T>class LoggerVolume;
 template<class T>ostream& operator<<(ostream& os,const VolumeArray<T>& lv);
 
+template<class T>ostream& operator<<(ostream& os,const LoggerVolume<T>& lv)
+{
+	return os << lv.getResults();
+}
+
 template<class Accumulator>class LoggerVolume {
 	Accumulator acc;
 	const TetraMesh& mesh;
@@ -56,6 +62,7 @@ public:
 	class WorkerThread : public LoggerNull {
 		typename Accumulator::WorkerThread wt;
 	public:
+		typedef void logger_member_tag;
 		WorkerThread(Accumulator& parent_) : wt(parent_.get_worker()){};
 		WorkerThread(const WorkerThread& wt_) = delete;
 		WorkerThread(WorkerThread&& wt_) : wt(std::move(wt_.wt)){}
