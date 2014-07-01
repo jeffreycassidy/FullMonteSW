@@ -4,8 +4,6 @@ typedef double FluenceCountType;
 
 void writeFileBin(string,const vector<Point<3,double> >&,const map<FaceByPointID,double>&);
 
-ostream& operator<<(ostream& os,const LoggerMulti<>&){ return os; }
-
 
 /*void LoggerSurface::collect()
 {
@@ -127,29 +125,8 @@ template<>void SurfaceArray<double>::resultMap(map<FaceByPointID,double>& m,bool
     }
 }
 
-// Writes out a VTK datafile (v3.0)
-/*void LoggerSurface::writeFileVTK(string fn)
-{
-    map<FaceByPointID,double> m;
 
-    for(TetraMesh::boundary_f_const_iterator it=mesh.boundaryFaceBegin(); it != mesh.boundaryFaceEnd(); ++it)
-    {
-        FaceByPointID f = *it;
-
-        const Point<3,double> &A = mesh.P[mesh.F_p[it->first][0]], &B = mesh.P[mesh.F_p[it->first][1]], &C = mesh.P[mesh.F_p[it->first][2]];
-        Vector<3,double> AB(A,B), AC(A,C);
-        double area=cross(AB,AC).norm_l2();
-        assert(area != 0.0);
-        if(area != 0.0)
-            m.insert(make_pair(mesh.F_p[it->first],counts[it->first].second/area));
-        else
-            m.insert(make_pair(*it,0));
-    }
-
-    ::writeFileVTK(fn,mesh.P,m);
-}*/
-
-/*template<>ostream& operator<<(ostream& os,const SurfaceArray<double>& sa)
+template<>ostream& operator<<(ostream& os,const SurfaceArray<double>& sa)
 {
 	double sumE=0;
 	unsigned i=0;
@@ -159,4 +136,4 @@ template<>void SurfaceArray<double>::resultMap(map<FaceByPointID,double>& m,bool
 		++i;
 	}
 	return os << "Surface array total energy is " << setprecision(4) << sumE << " (" << i << " elements)" << endl;
-}*/
+}

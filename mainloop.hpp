@@ -137,7 +137,7 @@ template<class Logger,class RNG>class Manager_MT : public Manager<Logger,RNG> {
 
 template<class Logger,class RNG>void Manager_MT<Logger,RNG>::run(Logger& logger)
 {
-	typedef typename Logger::ThreadWorker LoggerThread;
+	typedef decltype(get_worker(logger)) LoggerThread;
 	LoggerThread* l[cfg.Nthread];
 
     cout << "Running with " << cfg.Nthread << " threads" << endl;
@@ -153,7 +153,7 @@ template<class Logger,class RNG>void Manager_MT<Logger,RNG>::run(Logger& logger)
     for(unsigned i=0;i<cfg.Nthread;++i)
     {
     	try {
-    		l[i] = new LoggerThread(logger.get_worker());
+    		l[i] = new LoggerThread(get_worker(logger));
     		workers[i].second = new ((WorkerType*)p + i) WorkerType(Manager<Logger,RNG>::cfg,
     				*(l[i]),
     				Manager<Logger,RNG>::Npacket/cfg.Nthread,
@@ -185,7 +185,7 @@ template<class Logger,class RNG>class Worker {
     public:
     const RunConfig cfg;
     unsigned long long i,Npacket;
-    typedef typename Logger::ThreadWorker ThreadWorker;
+    typedef decltype(get_worker((Logger&)*(Logger*)(0))) ThreadWorker;
     ThreadWorker& logger;
     Manager_MT<Logger,RNG>* manager;
 
@@ -243,7 +243,6 @@ template<class Logger,class RNG>class MgrProgressUpdate {
             cout << p->getDetails() << ")" << flush;
         };
 };
-
 template<class Logger,class RNG>boost::timer::cpu_times Manager_MT<Logger,RNG>::start(Logger& logger)
 {
     boost::timer::cpu_timer runTimer;

@@ -1,8 +1,3 @@
-// simulator ID for database
-#ifndef DB_DEF_SIMULATOR
-#define DB_DEF_SIMULATOR 2
-#endif
-
 #include "AccumulationArray.hpp"
 #include <iostream>
 #include <vector>
@@ -11,7 +6,7 @@
 #include <iomanip>
 #include "progress.hpp"
 
-#include "logger.hpp"
+#include "Logger.hpp"
 #include "LoggerConservation.hpp"
 #include "LoggerVolume.hpp"
 #include "LoggerSurface.hpp"
@@ -46,21 +41,44 @@ RunResults runSimulation(PGConnection* dbconn,const TetraMesh& mesh,const vector
 
 namespace po=boost::program_options;
 
-/* Problem definition (things that will change the expected answer)
- *
- * geometry
- * materials
- * sources
- *
- *
- * run configuration (things that will not change the expected answer)
- *
- * packet count
- * threads
- * hosts
- * wmin (will change the variance)
+
+/** Problem definition - things which change the expected result.
  *
  */
+
+class {
+	TetraMesh 			mesh;
+	vector<Material> 	mats;
+	vector<Source*>		sources;
+}
+
+/** Run configuration - things that will change quality but not expected value.
+ *
+ * packet count
+ * wmin
+ * win probability
+ */
+
+class {
+	unsigned long long Nk;
+	double wmin;
+	double prwin;
+}
+
+
+ /** Run configuration (things that will not change the expected answer or output statistics)
+ *
+ * threads
+ * hosts
+ * seed
+ * timer interval
+ */
+
+class {
+	unsigned randseed;
+	unsigned Nthreads;
+	unsigned timerinterval;
+}
 
 namespace globalopts {
     double Npkt;               // number of packets
@@ -196,18 +214,10 @@ int main(int argc,char **argv)
         vector<Source*>  sources = readTIMOSSource(fn_sources);
 
 
-        SurfaceFluenceMap surf(&M);
-        VolumeFluenceMap vol(&M);
-
-//        RunResults runresults = MonteCarloLoop(Nk,surf,vol,M,materials,sources);
-
-        surf.writeASCII("output.surf.txt");
-        vol.writeASCII("output.vol.txt");
     }*/
 
     cout << "Flight " << IDflight << " done" << endl;
     cout << "Name: " << flightname << endl << "Comment: " << flightcomm << endl;
-
 
     return 0;
 }
@@ -349,15 +359,11 @@ if(surfHit.size() > 0)
 		boost::tuples::make_tuple(runid,3,oid,0,b.getSize()));
 }*/
 
-/*#ifdef LOG_EVENT
-cout << "Total launched: " << le.Nlaunch << endl;
-#endif
-
+/*
 #ifdef LOG_SURFACE
 SurfaceFluenceMap surf(&mesh);
 sa.fluenceMap(surf);
 HitMap surfHit;
-cout << "Total exited:   " << surf.getTotalEnergy() << endl;
 if(globalopts::dbwrite)
     db_writeResult(dbconn,runid,surf);
 #endif
@@ -379,22 +385,11 @@ if(volHit.size() > 0)
 	    dbconn->execParams("INSERT INTO resultdata(runid,datatype,data_oid,total,bytesize) VALUES ($1,$2,$3,$4,$5)",
     	    boost::tuples::make_tuple(runid,4,oid,0,b.getSize()));
 }
-cout << "Total absorbed: " << vol.getTotalEnergy() << endl;
 
 if (globalopts::dbwrite)
     db_writeResult(dbconn,runid,vol);
 #endif
 */
-
-template<typename Logger>Logger make_multilogger(Logger&& h)
-{
-	return h;
-}
-
-template<typename LoggerH,typename... LoggerTs>LoggerMulti<LoggerH,LoggerTs...> make_multilogger(LoggerH&& h,LoggerTs&&... ts)
-{
-	return LoggerMulti<LoggerH,LoggerTs...>(std::move(h),std::forward<LoggerTs>(ts)...);
-}
 
 RunResults runSimulation(PGConnection* dbconn,const TetraMesh& mesh,const vector<Material>& materials,Source* source,
     unsigned IDflight,unsigned IDsuite,unsigned caseorder,unsigned long long Nk)
@@ -417,17 +412,13 @@ RunResults runSimulation(PGConnection* dbconn,const TetraMesh& mesh,const vector
     if (globalopts::dbwrite)
         runid = db_startRun(dbconn,".","args",IDsuite,caseorder,getpid(),IDflight);
 
-    cout << "==== Run ID " << runid << " starting" << endl;
+    // LoggerTracerMT
 
-    auto logger = make_multilogger(
+    auto logger=make_tuple(
     		LoggerEventMT(),
-#ifdef TRACER
-    		LoggerTracerMT(),
-#else
-    		LoggerSurface<QueuedAccumulatorMT<double>>(mesh,1<<20),
-    		LoggerVolume<QueuedAccumulatorMT<double>>(mesh,1<<20),
-#endif
-    		LoggerConservationMT());
+    		LoggerConservationMT(),
+    		LoggerVolume<QueuedAccumulatorMT<double>>(mesh,1<<10),
+    		LoggerSurface<QueuedAccumulatorMT<double>>(mesh,1<<10));
 
     // Run it
     boost::timer::cpu_times t = MonteCarloLoop<RNG_SFMT_AVX>(Nk,logger,mesh,materials,*source);

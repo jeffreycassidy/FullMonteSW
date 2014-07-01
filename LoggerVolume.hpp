@@ -1,12 +1,6 @@
-#include "logger.hpp"
+#include "Logger.hpp"
 #include "AccumulationArray.hpp"
-
-//template<class T>unsigned getID(const T& t)			{ return t.id; }		///< Returns element ID
-//template<class T>double   getEnergy(const T& t)		{ return t.E; }			///< Returns total element energy (absorb/exit)
-//template<class T>unsigned getMaterial(const T& t)	{ return t.matID; }		///< Returns material ID (volume only)
-//template<class T>unsigned getRegion(const T& t)		{ return t.regionID; }	///< Returns region ID (volume only)
-//template<class T>double   getVariance(const T& t)	{ return t.var; }		///< Returns variance estimate
-//template<class T>unsigned getHits(const T& t)		{ return t.hits; }		///< Returns hit count
+#include "fluencemap.hpp"
 
 template<class T>class VolumeArray {
 	const TetraMesh& mesh;
@@ -51,6 +45,11 @@ public:
 template<class T>class LoggerVolume;
 template<class T>ostream& operator<<(ostream& os,const VolumeArray<T>& lv);
 
+template<class T>ostream& operator<<(ostream& os,const LoggerVolume<T>& lv)
+{
+	return os << lv.getResults();
+}
+
 template<class Accumulator>class LoggerVolume {
 	Accumulator acc;
 	const TetraMesh& mesh;
@@ -63,6 +62,7 @@ public:
 	class WorkerThread : public LoggerNull {
 		typename Accumulator::WorkerThread wt;
 	public:
+		typedef void logger_member_tag;
 		WorkerThread(Accumulator& parent_) : wt(parent_.get_worker()){};
 		WorkerThread(const WorkerThread& wt_) = delete;
 		WorkerThread(WorkerThread&& wt_) : wt(std::move(wt_.wt)){}

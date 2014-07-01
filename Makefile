@@ -122,6 +122,9 @@ GetFluence: GetFluence.cpp
 
 test_serialize: test_serialize.cpp
 	g++ -Wall -O3 -g -std=c++11 -L/usr/local/lib/boost -lboost_serialization $< -o $@
+	
+tails: tails.cpp
+	g++ -Wall -std=c++11 -o $@ $^
 
 clean: fm-postgres/clean
 	rm -f *.o sse_int montecarlo blobmaint texwriter Test_VectorHG *.a *.so
