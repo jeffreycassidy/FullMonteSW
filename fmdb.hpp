@@ -2,11 +2,23 @@
 #include "fluencemap.hpp"
 #include "runresults.hpp"
 #include <boost/timer/timer.hpp>
+#include "FullMonte.hpp"
 
-unsigned db_startFlight(PGConnection* conn,const string& ="",const string& ="");
-unsigned db_startRun(PGConnection* dbconn,string path,string argstr,unsigned suiteid,unsigned caseorder,unsigned pid,
-    unsigned flightid);
-void db_finishRun(PGConnection*,unsigned,const RunResults&);
+/* Data types
+ * 		1		Surface integrated energy
+ *		2		Volume integrated energy
+ * 		3		Surface hit blob
+ * 		4		Volume hit blob
+ *
+ */
+
+TetraMesh exportMeshByMeshID(PGConnection& dbconn, unsigned IDm);
+std::tuple<SimGeometry,RunConfig,RunOptions> exportCaseByCaseID(PGConnection* dbconn,unsigned IDcase);
+vector<Material> exportMaterialSetByID(PGConnection& dbconn,unsigned IDmatset);
+
+unsigned db_startFlight(PGConnection* conn,const string& flightname="",const string& flightcomment="");
+unsigned db_startRun(PGConnection* dbconn,const RunConfig& cfg,const RunOptions& opts,unsigned IDc,unsigned IDflight,unsigned suiteid=0,unsigned caseorder=0);
+void db_finishRun(PGConnection* dbconn,unsigned runid,const RunResults& res);
 
 template<class T>unsigned   db_writeResult(PGConnection* conn,unsigned runid,const T& resultData);
 

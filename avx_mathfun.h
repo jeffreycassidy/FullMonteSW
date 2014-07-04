@@ -117,7 +117,6 @@ inline __m256 _mm256_abs_ps(__m256 x)
 	return _mm256_andnot_ps(_mm256_castsi256_ps(_mm256_set1_epi32(0x80000000U)),x);
 }
 
-
 #define M256_SPLIT(a)  __m128  a##lo=_mm256_extractf128_ps(a,0),    a##hi=_mm256_extractf128_ps(a,1);
 #define M256I_SPLIT(a) __m128i a##lo=_mm256_extractf128_si256(a,0), a##hi=_mm256_extractf128_si256(a,1);
 

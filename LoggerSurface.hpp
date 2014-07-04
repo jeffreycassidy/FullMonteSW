@@ -91,6 +91,8 @@ public:
 		/// Record exit event by accumulating weight to the appropriate surface entry
 		inline void eventExit(const Ray3,int IDf,double w){ acc[abs(IDf)] += w; }
 		inline void eventExit(const Packet& pkt,int IDf){ acc[abs(IDf)] += pkt.w; }
+
+		void eventCommit(){ acc.commit(); }
 	};
 
 	typedef WorkerThread ThreadWorker;

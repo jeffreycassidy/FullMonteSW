@@ -4,7 +4,6 @@
 #include <utility>
 #include <string>
 #include <iomanip>
-#include "progress.hpp"
 
 #include "Logger.hpp"
 #include "LoggerConservation.hpp"
@@ -12,7 +11,8 @@
 #include "LoggerSurface.hpp"
 #include "LoggerEvent.hpp"
 
-#include "graph.hpp"
+#include "FullMonte.hpp"
+
 #include "source.hpp"
 #include "io_timos.hpp"
 #include <signal.h>
@@ -20,11 +20,13 @@
 #include <boost/program_options/errors.hpp>
 #include <boost/timer/timer.hpp>
 
+
 #include "LoggerMemTrace.cpp"
 
-#ifdef TRACER
-#include "LoggerTracer.hpp"
-#endif
+// Tracer stores all steps the photon takes (for illustration)
+//#ifdef TRACER
+//#include "LoggerTracer.hpp"
+//#endif
 
 #include "mainloop.cpp"
 #include "fm-postgres/fm-postgres.hpp"
@@ -34,57 +36,14 @@
 
 #include "RandomAVX.hpp"
 
-void writeHitMap(string fn,const map<unsigned,unsigned long long>& m);
-
-RunResults runSimulation(PGConnection* dbconn,const TetraMesh& mesh,const vector<Material>& materials,Source*,
-    unsigned IDflight,unsigned IDsuite,unsigned caseorder,unsigned long long Nk);
+RunResults runSimulation(const SimGeometry& sim,const RunConfig& cfg,const RunOptions& opts);
 
 namespace po=boost::program_options;
-
-
-/** Problem definition - things which change the expected result.
- *
- */
-
-class SimGeometry {
-	TetraMesh 			mesh;
-	vector<Material> 	mats;
-	vector<Source*>		sources;
-};
-
-/** Run configuration - things that will change quality but not expected value.
- *
- * packet count
- * wmin
- * win probability
- */
-
-class RunConfig {
-public:
-	unsigned long long Nk;
-	double wmin;
-	double prwin;
-};
-
-
- /** Run configuration (things that will not change the expected answer or output statistics)
- *
- * threads
- * hosts
- * seed
- * timer interval
- */
-
-class RunOptions {
-	unsigned timerinterval;
-	unsigned randseed;
-	unsigned Nthreads;
-};
 
 namespace globalopts {
     double Npkt;               // number of packets
     long Nk=0;                 // number of packets as long int
-    unsigned Nthread=1;
+    unsigned Nthread=0;
     unsigned randseed=1;
     unsigned timerinterval=1;
     string logFN("log.out");   // log filename
@@ -103,7 +62,8 @@ void banner()
     cout << endl;
 }
 
-void runSuite(PGConnection* dbconn,unsigned IDflight,unsigned IDsuite);
+//void runSuite(PGConnection* dbconn,unsigned IDflight,unsigned IDsuite);
+void runCaseByID(PGConnection* dbconn,unsigned IDcase,unsigned IDflight);
 
 int main(int argc,char **argv)
 {
@@ -197,25 +157,21 @@ int main(int argc,char **argv)
         }
     }
 
-
-
     globalopts::Nk=globalopts::Npkt;
 
     Nk=globalopts::Npkt;
 
-    for(vector<unsigned>::const_iterator it=suites.begin(); it != suites.end(); ++it)
-        runSuite(dbconn.get(),IDflight,*it);
-    for(vector<unsigned>::const_iterator it=cases.begin(); it != cases.end(); ++it)
-        runCaseByID(dbconn.get(),IDflight,*it,Nk);
+    try {
 
-/*    if (vm.count("input"))
+    //for(vector<unsigned>::const_iterator it=suites.begin(); it != suites.end(); ++it)
+        //runSuite(dbconn.get(),IDflight,*it);
+    	for(vector<unsigned>::const_iterator it=cases.begin(); it != cases.end(); ++it)
+    		runCaseByID(dbconn.get(),*it,IDflight);
+    }
+    catch (PGConnection::PGConnectionException &e)
     {
-        TetraMesh M(fn_mesh,TetraMesh::MatlabTP);
-        vector<Material> materials = readTIMOSMaterials(fn_materials);
-        vector<Source*>  sources = readTIMOSSource(fn_sources);
-
-
-    }*/
+    	cerr << "Caught exception: " << e.msg << endl;
+    }
 
     cout << "Flight " << IDflight << " done" << endl;
     cout << "Name: " << flightname << endl << "Comment: " << flightcomm << endl;
@@ -223,13 +179,13 @@ int main(int argc,char **argv)
     return 0;
 }
 
+/*
+
 void runSuite(PGConnection* dbconn,unsigned IDflight,unsigned IDsuite)
 {
-    unsigned long long Nk;
-    vector<Source*> sources;
-    vector<Material> materials;
-
-    Oid pdata_oid,tdata_oid;
+    SimGeometry geom;
+    RunConfig 	cfg;
+    RunOptions	opts;
 
     // load the suite name & info from database
     PGConnection::ResultType res = dbconn->execParams("SELECT name,comment FROM suites WHERE suiteid=$1;",
@@ -243,7 +199,7 @@ void runSuite(PGConnection* dbconn,unsigned IDflight,unsigned IDsuite)
 
     // Get cases within the suite
     res = dbconn->execParams("SELECT cases.caseid,cases.sourcegroupid,cases.materialsetid,packets,"\
-        "caseorder,meshes.pdata_oid,meshes.tdata_oid,seed,wmin,threads FROM suites_map " \
+        "caseorder,seed,wmin,threads FROM suites_map " \
         "JOIN cases ON cases.caseid=suites_map.caseid " \
         "JOIN materialsets ON materialsets.materialsetid=cases.materialsetid "\
         "JOIN sourcegroups ON sourcegroups.sourcegroupid=cases.sourcegroupid "\
@@ -265,41 +221,53 @@ void runSuite(PGConnection* dbconn,unsigned IDflight,unsigned IDsuite)
             IDcase,
             IDsg,
             IDmatset,
-            Nk,
+            cfg.Npackets,
             caseorder,
-            pdata_oid,
-            tdata_oid,
             seed,
             wmin,
             Nthread
             ), i);
 
-        cout << "Setting globalopts::wmin=" << wmin << " globalopts::Nthread=" << Nthread << " globalopts::randseed=" << seed << endl;
+        cout << "Setting globalopts::wmin=" << scientific << wmin << " globalopts::Nthread=" << Nthread << " globalopts::randseed=" << seed << endl;
 
-	    cout << "Packets: " << bigIntSuffix(Nk) << endl;
-        globalopts::wmin = wmin;
-        globalopts::Nthread = Nthread;
-        globalopts::randseed = seed;
+	    cout << "Packets: " << bigIntSuffix(cfg.Npackets) << endl;
 
-        cout << "Case ID (" << IDcase << ") with " << bigIntSuffix(Nk) << " packets" << endl;
+	    opts.Nthreads=Nthread;
+	    opts.randseed=seed;
+
+        cfg.prwin=globalopts::prwin;
+        cfg.wmin=wmin;
+
+        cout << "Case ID (" << IDcase << ") with " << bigIntSuffix(cfg.Npackets) << " packets" << endl;
         cout << "  Source set (" << IDsg << ") from " << sourcefn << endl;
 
-            TetraMesh m;    // TODO: There is something very screwy in the fromBinary routine
-                            // it goes into infinite loop with FourLayer if the old m persists
+            geom.mesh.fromBinary(dbconn->loadLargeObject(pdata_oid),dbconn->loadLargeObject(tdata_oid));
 
-            m.fromBinary(dbconn->loadLargeObject(pdata_oid),dbconn->loadLargeObject(tdata_oid));
+            vector<Source*> sources;
+            Source* src;
 
             exportSources(*dbconn,IDsg,sources);
-            exportMaterials(*dbconn,IDmatset,materials);
-
-            Source* src;
+            exportMaterials(*dbconn,IDmatset,geom.mats);
 
             if(sources.size() > 1)
                 src = new SourceMulti(sources.begin(),sources.end());
             else
                 src = sources.front();
 
-            runSimulation(dbconn,m,materials,src,IDflight,IDsuite,caseorder,Nk);
+            src->prepare(geom.mesh);
+
+
+            // write record to database
+            unsigned runid=0;
+            if (globalopts::dbwrite)
+            	runid = db_startRun(dbconn,".","args",IDsuite,caseorder,getpid(),IDflight);
+
+
+            RunResults res = runSimulation(geom,cfg,opts);
+
+            // write results to database
+            if(globalopts::dbwrite)
+            	db_finishRun(dbconn,runid,res);
         }
         catch(PGConnection::PGConnectionException& e)
         {
@@ -311,91 +279,7 @@ void runSuite(PGConnection* dbconn,unsigned IDflight,unsigned IDsuite)
         }
     }
 }
-
-// run based on a case ID
-void runCaseByID(PGConnection* dbconn,unsigned IDflight,unsigned IDcase,unsigned long long Nk)
-{
-    unsigned IDsourcegroup,IDmaterials;
-    vector<Source*> sources;
-    vector<Material> materials;
-    TetraMesh m;
-    Oid pdata_oid,tdata_oid;
-
-    PGConnection::ResultType res = dbconn->execParams("SELECT meshes.pdata_oid,meshes.tdata_oid,cases.sourcegroupid,cases.materialsetid FROM cases " \
-        "JOIN meshes ON meshes.meshid=cases.meshid " \
-        "WHERE caseid=$1",
-        boost::tuples::make_tuple(IDcase));
-
-    unpackSinglePGRow(res,boost::tuples::tie(pdata_oid,tdata_oid,IDsourcegroup,IDmaterials));
-
-    m.fromBinary(dbconn->loadLargeObject(pdata_oid),dbconn->loadLargeObject(tdata_oid));
-
-    exportSources(*dbconn,IDsourcegroup,sources,Nk);
-    exportMaterials(*dbconn,IDmaterials,materials);
-
-    Source *src = (sources.size() > 1 ? new SourceMulti(sources.begin(),sources.end()) : sources.front());
-    src->prepare(m);
-
-    runSimulation(dbconn,m,materials,src,IDflight,0,0,Nk);
-}
-
-// Run config
-//	Processors, host, nthreads, packets
-//
-// Case
-//	Mesh, sources, materials (possibly w modifiers?)
-//
-// Run results
-//	Min: compute time, return code
-
-    // get the hit-count maps
-/*    ls.hitMap(surfHit);
-if(surfHit.size() > 0)
-{
-	writeHitMap("exit.count.txt",surfHit);
-
-	Blob b = surfHit.toBinary();
-	Oid oid = dbconn->createLargeObject(b);
-	dbconn->execParams("INSERT INTO resultdata(runid,datatype,data_oid,total,bytesize) VALUES ($1,$2,$3,$4,$5)",
-		boost::tuples::make_tuple(runid,3,oid,0,b.getSize()));
-}*/
-
-/*
-#ifdef LOG_SURFACE
-SurfaceFluenceMap surf(&mesh);
-sa.fluenceMap(surf);
-HitMap surfHit;
-if(globalopts::dbwrite)
-    db_writeResult(dbconn,runid,surf);
-#endif
-
-#ifdef LOG_VOLUME
-VolumeFluenceMap vol(&mesh);
-va.fluenceMap(vol,materials);
-HitMap volHit;
-
-// log the volume hits
-va.hitMap(volHit);
-if(volHit.size() > 0)
-{
-    writeHitMap("abs.count.txt",volHit);
-
-    Blob b = volHit.toBinary();
-	Oid oid = dbconn->createLargeObject(b);
-    if (globalopts::dbwrite)
-	    dbconn->execParams("INSERT INTO resultdata(runid,datatype,data_oid,total,bytesize) VALUES ($1,$2,$3,$4,$5)",
-    	    boost::tuples::make_tuple(runid,4,oid,0,b.getSize()));
-}
-
-if (globalopts::dbwrite)
-    db_writeResult(dbconn,runid,vol);
-#endif
 */
-
-RunResults runSimulation(PGConnection* dbconn,const TetraMesh& mesh,const vector<Material>& materials,Source* source,
-    unsigned IDflight,unsigned IDsuite,unsigned caseorder,unsigned long long Nk)
-{
-    source->prepare(mesh);
 
 // DEBUG: Print materials and sources
 //    cout << "Materials: " << endl;
@@ -406,50 +290,75 @@ RunResults runSimulation(PGConnection* dbconn,const TetraMesh& mesh,const vector
 //    cout << "Sources: " << endl;
 //    cout << *source << endl;
 
-    cout << "Nk=" << Nk << endl;
 
-    unsigned runid=0;
+// run based on a case ID
+void runCaseByID(PGConnection* dbconn,unsigned IDcase,unsigned IDflight)
+{
+    SimGeometry geom;
+    RunConfig   cfg;
+    RunOptions	opts;
+
+    unsigned IDrun;
+
+	tie(geom,cfg,opts) = exportCaseByCaseID(dbconn,IDcase);
+
+	if (globalopts::dbwrite)
+		IDrun=db_startRun(dbconn,cfg,opts,IDcase,IDflight);
+
+	// override selected variables
+	cfg.Npackets=globalopts::Nk;
+
+	cout << geom << endl << cfg << endl << opts << endl;
+
+    RunResults res = runSimulation(geom,cfg,opts);
 
     if (globalopts::dbwrite)
-        runid = db_startRun(dbconn,".","args",IDsuite,caseorder,getpid(),IDflight);
+    	db_finishRun(dbconn,IDrun,res);
+}
 
-    // LoggerTracerMT
-
-    auto logger=make_tuple(
+RunResults runSimulation(const SimGeometry& geom,const RunConfig& cfg,const RunOptions& opts)
+{
+	// Set up logger
+    auto logger = make_tuple(
     		LoggerEventMT(),
     		LoggerConservationMT(),
-    		LoggerVolume<QueuedAccumulatorMT<double>>(mesh,1<<10),
-    		LoggerSurface<QueuedAccumulatorMT<double>>(mesh,1<<10));
+    		LoggerVolume<QueuedAccumulatorMT<double>>(geom.mesh,1<<10),
+    		LoggerSurface<QueuedAccumulatorMT<double>>(geom.mesh,1<<10));
 
     // Run it
-    boost::timer::cpu_times t = MonteCarloLoop<RNG_SFMT_AVX>(Nk,logger,mesh,materials,*source);
+    ThreadManager<decltype(logger),RNG_SFMT_AVX> man(geom,cfg,opts,logger);
 
+
+    boost::timer::cpu_timer t;
+    t.start();
+    man.start_async();
+
+    unsigned long long completed,total;
+
+    do {
+    	tie(completed,total) = man.getProgress();
+    	cout << '\r' << "  Progress: " << completed << '/' << total << " (" << fixed << setprecision(2) << double(completed)/double(total)*100.0 << "%)" << flush;
+    	usleep(200000);
+    }
+    while(!man.done());
+
+    man.finish_async();
+    t.stop();
+
+    boost::timer::cpu_times elapsed=t.elapsed();
+
+    cout << "Simulation done, time: " << format(elapsed) << endl;
+
+    // Display results
     cout << logger << endl;
-
-    cout << "==== Run ID " << runid << " completed" << endl;
 
     // Gather results
     RunResults res;
-    res.Np = Nk;
-    res.runid = runid;
 
     res.exitcode=0;
-    res.t_wall=t.wall/1e9;
-    res.t_user=t.user/1e9;
-    res.t_system=t.system/1e9;
-
-    // write results to database
-    if(globalopts::dbwrite)
-        db_finishRun(dbconn,runid,res);
+    res.t_wall=elapsed.wall/1e9;
+    res.t_user=elapsed.user/1e9;
+    res.t_system=elapsed.system/1e9;
 
     return res;
-}
-
-void writeHitMap(string fn,const map<unsigned,unsigned long long>& m)
-{
-    ofstream os(fn.c_str());
-    for(map<unsigned,unsigned long long>::const_iterator it=m.begin(); it != m.end(); ++it)
-        os << it->first << ' ' << it->second << endl;
-    
-    os.close();
 }

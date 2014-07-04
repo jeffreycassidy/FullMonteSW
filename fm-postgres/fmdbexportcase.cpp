@@ -89,6 +89,7 @@ int exportSources(PGConnection& dbconn,unsigned IDsourcegroup,vector<Source*>& s
     return sources.size();
 }
 
+// TODO: Deprecated; moving it into fmdb in root directory
 int exportMaterials(PGConnection& dbconn,unsigned IDc,vector<Material>& materials)
 {
     materials.clear();
@@ -115,6 +116,7 @@ int exportMaterials(PGConnection& dbconn,unsigned IDc,vector<Material>& material
     return materials.size();
 }
 
+// TODO: Deprecated; move into fmdb in upper folder
 TetraMesh* exportMesh(PGConnection& dbconn, unsigned IDc)
 {
     stringstream qrystr;

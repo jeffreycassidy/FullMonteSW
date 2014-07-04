@@ -73,6 +73,8 @@ public:
 
 	    inline void eventAbsorb(const Packet& pkt,unsigned IDt,double dw)
 	    	{ wt[IDt] += dw; }
+
+	    inline void eventCommit(){ wt.commit(); }
 	};
 
 	typedef WorkerThread ThreadWorker;

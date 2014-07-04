@@ -103,6 +103,8 @@ public:
 			parent.unlock();
 			clear();
 		}
+
+		void eventCommit(){ commit(); }
 	};
 
 	/// Returns a new worker thread

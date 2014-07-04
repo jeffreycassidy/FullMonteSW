@@ -109,6 +109,8 @@ class LoggerConservationMT : public LoggerConservation,private std::mutex {
             parent.unlock();
             clear();
         }
+
+        void eventCommit(){ commit(); }
     };
 
     /// Return a new worker

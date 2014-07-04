@@ -31,6 +31,7 @@ DEFINE_EVENT(roulettedie,Die)
 DEFINE_EVENT(abnormal,Abnormal)
 DEFINE_EVENT(timegate,TimeGate)
 DEFINE_EVENT(nohit,NoHit)
+DEFINE_EVENT(commit,Commit);
 
 }
 
@@ -137,6 +138,8 @@ class LoggerNull {
     inline void eventTimeGate(const Packet&){};						// Exceeded time gate
     inline void eventNoHit(const Packet&,const Tetra&){};			// No hit in intersection
 
+    inline void eventCommit(){};
+
     typedef LoggerNull ThreadWorker;
 
     LoggerNull get_worker() { return LoggerNull(); }
@@ -158,5 +161,3 @@ template<std::size_t I=0,class LoggerTuple,class EventTag,typename... Args>inlin
 template<std::size_t I,class LoggerTuple,class EventTag,typename... Args>inline
 	typename std::enable_if<(I==tuple_size<LoggerTuple>::value),void>::type log_event(LoggerTuple& l,EventTag e,Args... args)
 {}
-
-
