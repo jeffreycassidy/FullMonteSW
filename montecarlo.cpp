@@ -24,7 +24,6 @@
 
 #include "TupleStuff.hpp"
 
-
 #include "LoggerMemTrace.cpp"
 
 // Tracer stores all steps the photon takes (for illustration)

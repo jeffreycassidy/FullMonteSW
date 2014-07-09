@@ -5,9 +5,6 @@
 
 #include "FullMonte.hpp"
 
-/*#include "Logger.hpp"
-#include "LoggerEvent.hpp"*/
-
 using namespace std;
 
 
@@ -26,11 +23,6 @@ public:
 
 	virtual void runfinish(boost::timer::cpu_times t,unsigned IDrun=0){};
 	virtual void flightfinish(unsigned IDflight=0){};
-
-	/*virtual void notify_result(const ConservationCounts&){};
-	virtual void notify_result(const SurfaceArray<double>&){};
-	virtual void notify_result(const VolumeArray<double>&){};
-	virtual void notify_result(const EventCounts&){};*/
 };
 
 class OStreamObserver : public Observer {

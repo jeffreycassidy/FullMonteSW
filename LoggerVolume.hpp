@@ -2,7 +2,12 @@
 #include "AccumulationArray.hpp"
 #include "fluencemap.hpp"
 
-template<class T>class VolumeArray {
+class ResultsType {
+public:
+	virtual string getType() const { return "<Unknown result type>"; }
+};
+
+template<class T>class VolumeArray : public ResultsType {
 	const TetraMesh& mesh;
 	vector<T> v;
 

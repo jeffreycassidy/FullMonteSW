@@ -1,3 +1,5 @@
+package require vtk
+
 vtkXMLPolyDataReader surfreader
 surfreader SetFileName "output_stripped.xml"
 

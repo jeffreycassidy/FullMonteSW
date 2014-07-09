@@ -1,10 +1,6 @@
 #include "fmdb.hpp"
 #include "runresults.hpp"
 
-#ifndef DB_DEF_SIMULATOR
-#define DB_DEF_SIMULATOR 2
-#endif
-
 string username(getlogin());
 
 unsigned db_startFlight(PGConnection* conn,const string& flightname,const string& flightcomment)

@@ -1,3 +1,5 @@
+package require vtk
+
 vtkXMLUnstructuredGridReader reader
 reader SetFileName "volume_mesh.xml"
 
@@ -92,14 +94,14 @@ restactor SetMapper restmapper
 [restactor GetProperty] SetRepresentationToWireframe
 [restactor GetProperty] SetOpacity 0.5
 
-vtkScalarBarActor bar
-bar SetLookupTable lut
+#vtkScalarBarActor bar
+#bar SetLookupTable lut
 
 # create renderer and go
 vtkRenderer ren
 ren AddActor meshactor
 #ren AddActor restactor
-ren AddActor bar
+#ren AddActor bar
 vtkRenderWindow renwin
 renwin AddRenderer ren
 
