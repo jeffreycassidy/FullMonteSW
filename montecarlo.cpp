@@ -20,6 +20,8 @@
 #include <boost/program_options/errors.hpp>
 #include <boost/timer/timer.hpp>
 
+#include "Notifier.hpp"
+
 #include "TupleStuff.hpp"
 
 
@@ -68,7 +70,7 @@ typedef std::tuple<
 
 typedef decltype(__get_result_tuple2(std::declval<LoggerType>())) ResultsType;
 
-pair<boost::timer::cpu_times,ResultsType> runSimulation(const SimGeometry& sim,const RunConfig& cfg,const RunOptions& opts);
+pair<boost::timer::cpu_times,ResultsType> runSimulation(const SimGeometry& sim,const RunConfig& cfg,const RunOptions& opts,const vector<Observer*>& obs_);
 
 void banner()
 {
@@ -324,22 +326,25 @@ void runCaseByID(PGConnection* dbconn,unsigned IDcase,unsigned IDflight)
 
 	cout << geom << endl << cfg << endl << opts << endl;
 
-	pair<boost::timer::cpu_times,ResultsType> p = runSimulation(geom,cfg,opts);
+	vector<Observer*> obs;
+
+	obs.push_back(new OStreamObserver(cout));
+
+	pair<boost::timer::cpu_times,ResultsType> p = runSimulation(geom,cfg,opts,obs);
 
     //if (globalopts::dbwrite)
 //    	db_finishRun(dbconn,IDrun,p.second);
 
-	cout << "Tuple results" << endl << "========================" << endl;
+/*	cout << "Tuple results" << endl << "========================" << endl;
 
 	cout << get<0>(p.second) << endl;
 	cout << get<1>(p.second) << endl;
 	cout << get<2>(p.second) << endl;
-	cout << get<3>(p.second) << endl;
-	//cout << get<4>(p.second) << endl;
+	cout << get<3>(p.second) << endl;*/
 }
 
 
-pair<boost::timer::cpu_times,ResultsType> runSimulation(const SimGeometry& geom,const RunConfig& cfg,const RunOptions& opts)
+pair<boost::timer::cpu_times,ResultsType> runSimulation(const SimGeometry& geom,const RunConfig& cfg,const RunOptions& opts,const vector<Observer*>& obs)
 {
 	// Set up logger
     LoggerType logger = make_tuple(
@@ -350,10 +355,8 @@ pair<boost::timer::cpu_times,ResultsType> runSimulation(const SimGeometry& geom,
     		);
 
     // Run it
-    ThreadManager<LoggerType,RNG_SFMT_AVX> man(geom,cfg,opts,logger);
+    ThreadManager<LoggerType,RNG_SFMT_AVX> man(geom,cfg,opts,logger,obs);
 
-    boost::timer::cpu_timer t;
-    t.start();
     man.start_async();
 
     unsigned long long completed,total;
@@ -365,24 +368,15 @@ pair<boost::timer::cpu_times,ResultsType> runSimulation(const SimGeometry& geom,
     }
     while(!man.done());
 
-    man.finish_async();
-    t.stop();
+    boost::timer::cpu_times elapsed = man.finish_async();
 
-    boost::timer::cpu_times elapsed=t.elapsed();
+    auto results = __get_result_tuple2(logger);
 
-    cout << "Simulation done, time: " << format(elapsed) << endl;
+    for(Observer* o : obs)
+    	handle_result(*o,results);
 
-    // Display results
-    cout << logger << endl;
+    // synchronous run
+    //boost::timer::cpu_times elapsed = man.run_sync();
 
     return make_pair(elapsed,__get_result_tuple2(logger));
-    // Gather results
-    /*RunResults res;
-
-    res.exitcode=0;
-    res.t_wall=elapsed.wall/1e9;
-    res.t_user=elapsed.user/1e9;
-    res.t_system=elapsed.system/1e9;*/
-
-    //return res;
 }

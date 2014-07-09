@@ -10,6 +10,8 @@
 
 #include "runresults.hpp"
 
+#include "Notifier.hpp"
+
 #include "progress.hpp"
 
 // Manager should be able to:
@@ -19,19 +21,7 @@
 //  report time required
 //  estimate completion time
 
-
-/*
-template<class Logger,class RNG>class MgrProgressUpdate {
-    const Manager<Logger,RNG>* p;
-    public:
-    MgrProgressUpdate(const Manager<Logger,RNG>* p_) : p(p_){}
-
-    void operator()() const
-        { cout << "\rProgress " << setw(5) << fixed << setprecision(2) << p->getProgressPercent() << "% (";
-            cout << p->getDetails() << ")" << flush;
-        };
-};*/
-
+class Observer;
 template<class Logger,class RNG>class WorkerThread;
 
 /** The parent class, bare minimum: run synchronously, tell if it's done or not, and give a progress count.
@@ -39,39 +29,74 @@ template<class Logger,class RNG>class WorkerThread;
  */
 
 class Worker {
+protected:
+	vector<Observer*> obs;
+	boost::timer::cpu_timer t;
+
+	void notify_start();
+	void notify_finish();
+	template<unsigned I=0,typename... Ts>typename std::enable_if<(I<sizeof...(Ts)),void>::type notify_result(const std::tuple<Ts...>&) const;
+	template<unsigned I=0,typename... Ts>typename std::enable_if<(I==sizeof...(Ts)),void>::type notify_result(const std::tuple<Ts...>&) const;
 
 public:
+	Worker(const vector<Observer*>& obs_ = vector<Observer*>()) : obs(obs_){}
 	virtual boost::timer::cpu_times run_sync()=0;
 	virtual bool done() const =0;
 
 	virtual pair<unsigned long long,unsigned long long> getProgress() const=0;
 };
 
+template<unsigned I,typename... Ts>typename std::enable_if<(I<sizeof...(Ts)),void>::type Worker::notify_result(const std::tuple<Ts...>& t) const
+{
+	for(Observer* o : obs)
+		handle_result(*o,get<I>(t));
+	notify_result<I+1>(t);
+}
+
+template<unsigned I,typename... Ts>typename std::enable_if<(I==sizeof...(Ts)),void>::type Worker::notify_result(const std::tuple<Ts...>& t) const
+{}
+
 
 
 /** A simulation worker which can work asynchronously.
- * Adds capabilities for asynchronous start/pause/resume/wait-for-finish.
+ * Adds capabilities for asynchronous start/pause/resume/wait-for-finish/stop.
  * Defaults the synchronous run capability to just start followed by wait.
  */
 
 class AsyncWorker : public Worker {
+protected:
+	virtual void _impl_start_async()=0;
+	virtual void _impl_finish_async()=0;
 
 public:
+	AsyncWorker(const vector<Observer*>& obs_=vector<Observer*>()) : Worker(obs_){}
 
 	virtual boost::timer::cpu_times run_sync(){
-		boost::timer::cpu_timer t;
-		t.start();
 		start_async();
 		finish_async();
-		t.stop();
 		return t.elapsed();
 	}
 
-	virtual void start_async()=0;
-	virtual void pause()=0;
-	virtual void resume()=0;
-	virtual void stop()=0;
-	virtual void finish_async()=0;			///< Block waiting for worker to finish
+	void start_async(){
+		t.start();
+		_impl_start_async();
+	}
+
+	void pause();
+	void resume();
+	void stop();
+
+	/// Block waiting for worker to finish
+	boost::timer::cpu_times finish_async(){
+		_impl_finish_async();
+
+		boost::timer::cpu_times elapsed = t.elapsed();
+
+		for(Observer* o : obs)
+			o->runfinish(elapsed,0);
+
+		return elapsed;
+	}
 };
 
 
@@ -92,10 +117,15 @@ template<class Logger,class RNG>class ThreadManager : public AsyncWorker {
 	LoggerWorker* loggers;
 	WorkerThread<LoggerWorker,RNG>* workers;
 
+protected:
+
+	virtual void _impl_start_async();
+	virtual void _impl_finish_async();
+
     public:
 
-    ThreadManager(const SimGeometry& geom_,const RunConfig& cfg_,const RunOptions& opts_,Logger& logger_)
-    	: geom(geom_),cfg(cfg_),opts(opts_),logger(logger_)
+    ThreadManager(const SimGeometry& geom_,const RunConfig& cfg_,const RunOptions& opts_,Logger& logger_,const vector<Observer*>& obs_)
+    	: AsyncWorker(obs_), geom(geom_),cfg(cfg_),opts(opts_),logger(logger_)
     {
     	// allocate aligned space for the workers
     	posix_memalign((void**)&loggers, 64, opts.Nthreads*sizeof(LoggerWorker));
@@ -131,9 +161,6 @@ template<class Logger,class RNG>class ThreadManager : public AsyncWorker {
         return make_pair(sum_completed,sum_total);
     }
 
-    void start_async();						///< Asynchronous simulation start
-    void finish_async();					///< Asynchronous simulation finish
-
     /// Poll all workers for status
     virtual bool done() const {
     	for(unsigned i=0;i<opts.Nthreads;++i)
@@ -147,20 +174,19 @@ template<class Logger,class RNG>class ThreadManager : public AsyncWorker {
     virtual void resume(){ cerr << "ERROR: Can't resume yet" << endl; }
 };
 
-template<class Logger,class RNG>void ThreadManager<Logger,RNG>::start_async()
+template<class Logger,class RNG>void ThreadManager<Logger,RNG>::_impl_start_async()
 {
-    cout << "Launching sim: " << endl;
-    cout << geom << endl << cfg << endl << opts << endl;
-
+	// start all threads
     for(unsigned i=0;i<opts.Nthreads;++i)
     	workers[i].start_async();
 }
 
-template<class Logger,class RNG>void ThreadManager<Logger,RNG>::finish_async()
+template<class Logger,class RNG>void ThreadManager<Logger,RNG>::_impl_finish_async()
 {
 	// wait for all threads to finish
     for(unsigned i=0;i<opts.Nthreads;++i)
     	workers[i].finish_async();
+
 }
 
 
@@ -269,13 +295,13 @@ public:
 
 	~WorkerThread(){ free(hg_buffers[0]); }
 
-	virtual void start_async(){
+	virtual void _impl_start_async(){
 		sim_en=true;
 		cv.notify_all();
 		cout << "  Sending go signal" << endl;
 	}
 
-	virtual void finish_async() {
+	virtual void _impl_finish_async() {
 		cout << "  Waiting for thread " << t.get_id() << " to terminate" << endl;
 		t.join();
 		cout << "  Done" << endl;

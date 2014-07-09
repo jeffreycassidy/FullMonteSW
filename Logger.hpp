@@ -6,7 +6,7 @@
 #include "graph.hpp"
 
 // Macro below is a convenience for defining new event types
-// Makes use of SFINAE to dispatch
+// for DEFINE_EVENT(ename,emember) sets up so log_event(logger,<ename>,args...) calls logger.event<emember>(args...)
 
 #define DEFINE_EVENT(ename,emember) typedef struct {} ename##_tag; \
 	extern ename##_tag ename; \
@@ -32,7 +32,8 @@ DEFINE_EVENT(roulettedie,Die)
 DEFINE_EVENT(abnormal,Abnormal)
 DEFINE_EVENT(timegate,TimeGate)
 DEFINE_EVENT(nohit,NoHit)
-DEFINE_EVENT(commit,Commit);
+
+DEFINE_EVENT(commit,Commit);				// not actually an event but a request to the logger to sync its results globally
 
 }
 
