@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <type_traits>
 #include "graph.hpp"
 
 // Macro below is a convenience for defining new event types
@@ -115,6 +116,10 @@ class LoggerNull {
     typedef __m128 Point3;
     typedef __m128 UVect3;
     typedef pair<__m128,__m128> Ray3;
+
+    typedef std::tuple<> ResultType;
+
+    ResultType getResults() const { return make_tuple(); }
 
     /// LoggerNull defines the basic functions that a Logger can overload
 

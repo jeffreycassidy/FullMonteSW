@@ -107,6 +107,10 @@ public:
 		void eventCommit(){ commit(); }
 	};
 
+	typedef EventCount ResultType;
+	typedef true_type single_result_tag;
+
+
 	/// Returns a new worker thread
 	ThreadWorker get_worker() { return ThreadWorker(*this); }
 };

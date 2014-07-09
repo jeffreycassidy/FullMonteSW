@@ -113,6 +113,10 @@ class LoggerConservationMT : public LoggerConservation,private std::mutex {
         void eventCommit(){ commit(); }
     };
 
+    typedef ConservationCounts ResultType;
+    typedef true_type single_result_tag;
+
+
     /// Return a new worker
     ThreadWorker get_worker() { return ThreadWorker(*this); }
 };

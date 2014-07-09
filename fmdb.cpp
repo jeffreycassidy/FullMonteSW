@@ -25,7 +25,7 @@ unsigned db_startFlight(PGConnection* conn,const string& flightname,const string
  * @param caseorder	Case order number (opt)
  */
 
-unsigned db_startRun(PGConnection* dbconn,const RunConfig& cfg,const RunOptions& opts,unsigned IDc,unsigned IDflight,unsigned suiteid=0,unsigned caseorder=0)
+unsigned db_startRun(PGConnection* dbconn,const RunConfig& cfg,const RunOptions& opts,unsigned IDc,unsigned IDflight,unsigned suiteid,unsigned caseorder)
 {
     const unsigned simulator = DB_DEF_SIMULATOR;
     unsigned runid;

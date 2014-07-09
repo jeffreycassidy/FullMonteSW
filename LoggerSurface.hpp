@@ -13,6 +13,7 @@ template<class T>class SurfaceArray {
 	vector<T> s;
 
 public:
+	SurfaceArray(const SurfaceArray& s_) = default;
     SurfaceArray(SurfaceArray&& ls_)        : mesh(ls_.mesh),s(std::move(ls_.s)){};
     SurfaceArray(const TetraMesh& mesh_)    : mesh(mesh_),s(mesh_.getNt()+1){};
     SurfaceArray(const TetraMesh& mesh_,vector<T>&& s_) : mesh(mesh_),s(std::move(s_)){};
@@ -104,6 +105,9 @@ public:
 	WorkerThread get_worker() { return WorkerThread(acc); }
 
 	typedef SurfaceArray<typename Accumulator::ElementType> result_type;
+
+	typedef SurfaceArray<typename Accumulator::ElementType> ResultType;
+	typedef true_type single_result_tag;
 
 	result_type getResults() const { return result_type(mesh,acc.getResults()); }
 

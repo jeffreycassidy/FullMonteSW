@@ -20,6 +20,8 @@
 #include <boost/program_options/errors.hpp>
 #include <boost/timer/timer.hpp>
 
+#include "TupleStuff.hpp"
+
 
 #include "LoggerMemTrace.cpp"
 
@@ -36,7 +38,7 @@
 
 #include "RandomAVX.hpp"
 
-RunResults runSimulation(const SimGeometry& sim,const RunConfig& cfg,const RunOptions& opts);
+
 
 namespace po=boost::program_options;
 
@@ -54,6 +56,19 @@ namespace globalopts {
 }
 
 using namespace std;
+
+
+typedef std::tuple<
+		LoggerEventMT,
+		LoggerConservationMT,
+		LoggerSurface<QueuedAccumulatorMT<double>>,
+		LoggerVolume<QueuedAccumulatorMT<double>>
+		>
+		LoggerType;
+
+typedef decltype(__get_result_tuple2(std::declval<LoggerType>())) ResultsType;
+
+pair<boost::timer::cpu_times,ResultsType> runSimulation(const SimGeometry& sim,const RunConfig& cfg,const RunOptions& opts);
 
 void banner()
 {
@@ -180,7 +195,6 @@ int main(int argc,char **argv)
 }
 
 /*
-
 void runSuite(PGConnection* dbconn,unsigned IDflight,unsigned IDsuite)
 {
     SimGeometry geom;
@@ -310,24 +324,33 @@ void runCaseByID(PGConnection* dbconn,unsigned IDcase,unsigned IDflight)
 
 	cout << geom << endl << cfg << endl << opts << endl;
 
-    RunResults res = runSimulation(geom,cfg,opts);
+	pair<boost::timer::cpu_times,ResultsType> p = runSimulation(geom,cfg,opts);
 
-    if (globalopts::dbwrite)
-    	db_finishRun(dbconn,IDrun,res);
+    //if (globalopts::dbwrite)
+//    	db_finishRun(dbconn,IDrun,p.second);
+
+	cout << "Tuple results" << endl << "========================" << endl;
+
+	cout << get<0>(p.second) << endl;
+	cout << get<1>(p.second) << endl;
+	cout << get<2>(p.second) << endl;
+	cout << get<3>(p.second) << endl;
+	//cout << get<4>(p.second) << endl;
 }
 
-RunResults runSimulation(const SimGeometry& geom,const RunConfig& cfg,const RunOptions& opts)
+
+pair<boost::timer::cpu_times,ResultsType> runSimulation(const SimGeometry& geom,const RunConfig& cfg,const RunOptions& opts)
 {
 	// Set up logger
-    auto logger = make_tuple(
+    LoggerType logger = make_tuple(
     		LoggerEventMT(),
     		LoggerConservationMT(),
-    		LoggerVolume<QueuedAccumulatorMT<double>>(geom.mesh,1<<10),
-    		LoggerSurface<QueuedAccumulatorMT<double>>(geom.mesh,1<<10));
+    		LoggerSurface<QueuedAccumulatorMT<double>>(geom.mesh,1<<10),
+    		LoggerVolume<QueuedAccumulatorMT<double>>(geom.mesh,1<<10)
+    		);
 
     // Run it
-    ThreadManager<decltype(logger),RNG_SFMT_AVX> man(geom,cfg,opts,logger);
-
+    ThreadManager<LoggerType,RNG_SFMT_AVX> man(geom,cfg,opts,logger);
 
     boost::timer::cpu_timer t;
     t.start();
@@ -352,13 +375,14 @@ RunResults runSimulation(const SimGeometry& geom,const RunConfig& cfg,const RunO
     // Display results
     cout << logger << endl;
 
+    return make_pair(elapsed,__get_result_tuple2(logger));
     // Gather results
-    RunResults res;
+    /*RunResults res;
 
     res.exitcode=0;
     res.t_wall=elapsed.wall/1e9;
     res.t_user=elapsed.user/1e9;
-    res.t_system=elapsed.system/1e9;
+    res.t_system=elapsed.system/1e9;*/
 
-    return res;
+    //return res;
 }

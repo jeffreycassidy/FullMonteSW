@@ -7,9 +7,11 @@ template<class T>class VolumeArray {
 	vector<T> v;
 
 public:
-    VolumeArray(VolumeArray&& lv_)        : mesh(lv_.mesh),v(mesh.getNt()+1){};
+	VolumeArray(const VolumeArray& v_) = default;
+    VolumeArray(VolumeArray&& lv_)        : mesh(lv_.mesh),v(std::move(lv_.v)){};
     VolumeArray(const TetraMesh& mesh_)    : mesh(mesh_),v(mesh.getNt()+1){};
     VolumeArray(const TetraMesh& mesh_,vector<T>&& v_) : mesh(mesh_),v(std::move(v_)){}
+    VolumeArray(const TetraMesh& mesh_,const vector<T>& v_)  : mesh(mesh_),v(v_){}
 
     /// Returns a VolumeFluenceMap for the absorption accumulated so far*/
     /** The value of asFluence determines whether it returns total energy (false) or fluence as E/V/mu_a (true) */
@@ -79,10 +81,13 @@ public:
 
 	typedef WorkerThread ThreadWorker;
 
+	typedef VolumeArray<typename Accumulator::ElementType> ResultType;
+	typedef true_type single_result_tag;
+
 	WorkerThread get_worker() { return WorkerThread(acc);  };
 
 	typedef VolumeArray<typename Accumulator::ElementType> result_type ;
 
-	result_type getResults() const { return result_type(mesh,vector<typename Accumulator::ElementType>(acc.getResults())); }
+	result_type getResults() const { return result_type(mesh,acc.getResults()); }
 };
 
