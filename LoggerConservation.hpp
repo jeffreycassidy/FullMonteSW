@@ -6,7 +6,8 @@
  * Provides basic facilities to initialize, copy, accumulate, and print to ostream. *
  */
 
-struct ConservationCounts {
+class ConservationCounts : public LoggerResults {
+public:
     double w_launch;			///< Amount of energy launched (generally 1.0 * Npackets)
     double w_absorb;			///< Amount of energy absorbed
     double w_die;				///< Amount of energy terminated in roulette
@@ -27,6 +28,8 @@ struct ConservationCounts {
 
     /// Add another ConservationCounts
     ConservationCounts& operator+=(const ConservationCounts&);
+
+    virtual string getTypeString() const { return "logger.results.conservation"; }
 
     /// Output to ostream&
     friend ostream& operator<<(ostream&,const ConservationCounts&);

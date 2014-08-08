@@ -2,12 +2,7 @@
 #include "AccumulationArray.hpp"
 #include "fluencemap.hpp"
 
-class ResultsType {
-public:
-	virtual string getType() const { return "<Unknown result type>"; }
-};
-
-template<class T>class VolumeArray : public ResultsType {
+template<class T>class VolumeArray : public LoggerResults {
 	const TetraMesh& mesh;
 	vector<T> v;
 
@@ -28,8 +23,17 @@ public:
     typename vector<T>::const_iterator begin() const { return v.begin(); }
     typename vector<T>::const_iterator end()   const { return v.end(); }
 
-        /// Provides a way of summarizing to an ostream
-    //friend ostream& operator<<(ostream&,VolumeArray&);
+    virtual string getTypeString() const { return "logger.results.volume"; }
+	virtual void summarize(ostream& os) const {
+		double sumE=0;
+		unsigned i=0;
+		for(auto it=begin(); it != end(); ++it)
+		{
+			sumE += *it;
+			++i;
+		}
+		os << "Volume array total energy is " << setprecision(4) << sumE << " (" << i << " elements)" << endl;
+	}
 };
 
 /*! Basic volume logger.

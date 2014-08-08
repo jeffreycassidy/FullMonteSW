@@ -37,6 +37,15 @@ DEFINE_EVENT(commit,Commit);				// not actually an event but a request to the lo
 
 }
 
+class LoggerResults {
+public:
+	virtual string getTypeString() const { return "logger.results.unknown"; }
+
+	virtual void summarize(ostream& os) const {
+		os << "<no summary available for " << getTypeString() << '>' << endl;
+	}
+};
+
 // set default to nop for all events (dangerous, may miss events unexpectedly if give bad args)
 //template<class EventTag,typename... Args>void log_event(LoggerNull&,EventTag,Args...){}
 

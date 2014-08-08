@@ -67,6 +67,7 @@ typedef std::tuple<
 		>
 		LoggerType;
 
+//typedef typename ThreadManager<LoggerType,RNG_SFMT_AVX>::results_type ResultsType;
 typedef decltype(__get_result_tuple2(std::declval<LoggerType>())) ResultsType;
 
 pair<boost::timer::cpu_times,ResultsType> runSimulation(const SimGeometry& sim,const RunConfig& cfg,const RunOptions& opts,const vector<Observer*>& obs_);
@@ -164,7 +165,7 @@ int main(int argc,char **argv)
 
     if (globalopts::dbwrite){
         try {
-            IDflight = db_startFlight(dbconn.get(),flightname,flightcomm);
+            //IDflight = db_startFlight(dbconn.get(),flightname,flightcomm);
             cout << "Starting flight " << IDflight << endl;
         }
         catch(PGConnection::PGConnectionException& e)
@@ -317,8 +318,8 @@ void runCaseByID(PGConnection* dbconn,unsigned IDcase,unsigned IDflight)
 
 	tie(geom,cfg,opts) = exportCaseByCaseID(dbconn,IDcase);
 
-	if (globalopts::dbwrite)
-		IDrun=db_startRun(dbconn,cfg,opts,IDcase,IDflight);
+	//if (globalopts::dbwrite)
+//		IDrun=db_startRun(dbconn,cfg,opts,IDcase,IDflight);
 
 	// override selected variables
 	cfg.Npackets=globalopts::Nk;
@@ -333,13 +334,6 @@ void runCaseByID(PGConnection* dbconn,unsigned IDcase,unsigned IDflight)
 
     //if (globalopts::dbwrite)
 //    	db_finishRun(dbconn,IDrun,p.second);
-
-/*	cout << "Tuple results" << endl << "========================" << endl;
-
-	cout << get<0>(p.second) << endl;
-	cout << get<1>(p.second) << endl;
-	cout << get<2>(p.second) << endl;
-	cout << get<3>(p.second) << endl;*/
 }
 
 
@@ -368,14 +362,8 @@ pair<boost::timer::cpu_times,ResultsType> runSimulation(const SimGeometry& geom,
     while(!man.done());
 
     boost::timer::cpu_times elapsed = man.finish_async();
-
     auto results = __get_result_tuple2(logger);
 
-    for(Observer* o : obs)
-    	handle_result(*o,results);
 
-    // synchronous run
-    //boost::timer::cpu_times elapsed = man.run_sync();
-
-    return make_pair(elapsed,__get_result_tuple2(logger));
+    return make_pair(elapsed,results);
 }

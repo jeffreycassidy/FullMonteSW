@@ -5,9 +5,12 @@
  *
  */
 
-struct EventCount {
+class EventCount : public LoggerResults {
+public:
     unsigned long long Nlaunch,Nabsorb,Nscatter,Nbound,Ntir,Nfresnel,Nrefr,Ninterface,Nexit,Ndie,Nwin,Nabnormal,Ntime,Nnohit;
     void clear(){ Nlaunch=Nabsorb=Nscatter=Nbound=Ntir=Nfresnel=Nrefr=Ninterface=Nexit=Ndie=Nwin=Nabnormal=Ntime=Nnohit=0; }
+
+    virtual string getTypeString() const { return "logger.results.events"; }
 };
 
 ostream& operator<<(ostream& os,const EventCount&);

@@ -1,4 +1,6 @@
 #include "Notifier.hpp"
+#include "LoggerEvent.hpp"
+#include "LoggerConservation.hpp"
 
 void OStreamObserver::runstart(const RunConfig& cfg,const RunOptions& opts,unsigned IDc,unsigned suiteid,unsigned caseorder)
 {
@@ -32,7 +34,8 @@ unsigned PGObserver::createNewFlight(PGConnection* dbconn_,string flightname,str
 	return IDflight;
 }
 
-
+map<string,void(*)(PGObserver*,const LoggerResults*)> PGObserver::op_map{ {"logger.results.events",NULL}, {"logger.results.conservation",NULL} };
+//map<string,void(*)(const LoggerResults*)> OStreamObserver::op_map{ {"logger.results.events",NULL}, {"logger.results.conservation",NULL} };
 
 void PGObserver::runstart(const RunConfig& cfg,const RunOptions& opts,unsigned IDc,unsigned IDflight,unsigned suiteid,unsigned caseorder)
 {
@@ -91,4 +94,25 @@ void PGObserver::runfinish(boost::timer::cpu_times t,unsigned runid)
 	        //res.Nabsorb,res.Ntir,res.Nscatter,res.Nabsorb,res.Nfresnel,res.Nexit,res.Nwin,res.Nrefr,res.Ndie));
 		dbconn->execParams("INSERT INTO logtext(runid,stderr_text,stdout_text) VALUES ($1,$2,$3);",boost::tuples::make_tuple(
 			runid,err,log));
+}
+
+void OStreamObserver::_impl_notify_result(const LoggerResults& lr)
+{
+//	string type=lr.getTypeString();
+	lr.summarize(cout);
+}
+
+void PGObserver::_impl_notify_result(const LoggerResults& lr)
+{
+	string type=lr.getTypeString();
+	/*map<string,void(*)(PGObserver*,const LoggerResults*)>::const_iterator it=op_map.find(type);
+	cout << "PGObserver: ";
+	if (it == op_map.end())
+		cout << "Did not find a writer for " << type << endl;
+	else if (it->second)
+		it->second(this,&lr);
+	else
+		cout << "Found it, but it's NULL for " << type << endl;*/
+
+//	if(VolumeHitMap* )
 }

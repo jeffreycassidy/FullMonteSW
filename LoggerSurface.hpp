@@ -8,7 +8,7 @@
  * @tparam T	Type to be accumulated; must support operator[](unsigned), operator+=(double) and operator+=(T)
  */
 
-template<class T>class SurfaceArray {
+template<class T>class SurfaceArray : public LoggerResults {
 	const TetraMesh& mesh;
 	vector<T> s;
 
@@ -30,6 +30,8 @@ public:
 
     typename vector<T>::const_iterator begin() const { return s.begin(); }
     typename vector<T>::const_iterator end()   const { return s.end(); }
+
+    virtual string getTypeString() const { return "logger.results.surface"; }
 
     // Provides a way of summarizing to an ostream
     friend ostream& operator<<(ostream& os,const SurfaceArray& sa){

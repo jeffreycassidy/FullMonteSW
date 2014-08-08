@@ -67,6 +67,7 @@ class AsyncWorker : public Worker {
 protected:
 	virtual void _impl_start_async()=0;
 	virtual void _impl_finish_async()=0;
+	virtual void _impl_notify_results(Observer* o)=0;
 
 public:
 	AsyncWorker(const vector<Observer*>& obs_=vector<Observer*>()) : Worker(obs_){}
@@ -74,6 +75,7 @@ public:
 	virtual boost::timer::cpu_times run_sync(){
 		start_async();
 		finish_async();
+		t.stop();
 		return t.elapsed();
 	}
 
@@ -89,11 +91,15 @@ public:
 	/// Block waiting for worker to finish
 	boost::timer::cpu_times finish_async(){
 		_impl_finish_async();
+		t.stop();
 
 		boost::timer::cpu_times elapsed = t.elapsed();
 
 		for(Observer* o : obs)
 			o->runfinish(elapsed,0);
+
+		for(Observer* o : obs)
+			_impl_notify_results(o);
 
 		return elapsed;
 	}
@@ -121,8 +127,15 @@ protected:
 
 	virtual void _impl_start_async();
 	virtual void _impl_finish_async();
+	virtual void _impl_notify_results(Observer* o)
+	{
+		auto results = __get_result_tuple2(logger);
+		o->notify_result(results);
+	}
 
     public:
+
+    typedef decltype(__get_result_tuple2(std::declval<Logger>())) results_type;
 
     ThreadManager(const SimGeometry& geom_,const RunConfig& cfg_,const RunOptions& opts_,Logger& logger_,const vector<Observer*>& obs_)
     	: AsyncWorker(obs_), geom(geom_),cfg(cfg_),opts(opts_),logger(logger_)
@@ -172,6 +185,9 @@ protected:
     virtual void pause(){ cerr << "ERROR: Can't pause yet" << endl; }
     virtual void stop(){  cerr << "ERROR: Can't stop yet" << endl; }
     virtual void resume(){ cerr << "ERROR: Can't resume yet" << endl; }
+
+    // TODO: Catch the error where this is called while still running (must pause first)
+    //pair<boost::timer::cpu_times,results_type> results() { return make_pair(AsyncWorker::t.elapsed(),__get_result_tuple2(logger)); }
 };
 
 template<class Logger,class RNG>void ThreadManager<Logger,RNG>::_impl_start_async()
@@ -186,7 +202,6 @@ template<class Logger,class RNG>void ThreadManager<Logger,RNG>::_impl_finish_asy
 	// wait for all threads to finish
     for(unsigned i=0;i<opts.Nthreads;++i)
     	workers[i].finish_async();
-
 }
 
 
@@ -221,6 +236,8 @@ template<class Logger,class RNG> class WorkerThread : public AsyncWorker {
 
     float * hg_buffers[HG_BUFFERS];			// should be float * const but GCC whines about not being initialized
     unsigned hg_next[HG_BUFFERS];
+
+    virtual void _impl_notify_results(Observer*){}
 
 
     /// Main body which does all the work
@@ -258,6 +275,7 @@ template<class Logger,class RNG> class WorkerThread : public AsyncWorker {
     int doOnePacket(Packet pkt,unsigned IDt);
 
 public:
+
 
     /// Temporary kludge to handle HG function generation
     inline __m128 getNextHG(unsigned matID){
@@ -302,9 +320,9 @@ public:
 	}
 
 	virtual void _impl_finish_async() {
-		cout << "  Waiting for thread " << t.get_id() << " to terminate" << endl;
+		cout << "  Waiting for thread " << t.get_id() << " to terminate" << flush;
 		t.join();
-		cout << "  Done" << endl;
+		cout << "  DONE" << endl;
 	}
 
 	virtual bool done() const { return i==N; }
