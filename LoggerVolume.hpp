@@ -2,14 +2,16 @@
 #include "AccumulationArray.hpp"
 #include "fluencemap.hpp"
 
-template<class T>class VolumeArray {
+template<class T>class VolumeArray : public LoggerResults {
 	const TetraMesh& mesh;
 	vector<T> v;
 
 public:
-    VolumeArray(VolumeArray&& lv_)        : mesh(lv_.mesh),v(mesh.getNt()+1){};
+	VolumeArray(const VolumeArray& v_) = default;
+    VolumeArray(VolumeArray&& lv_)        : mesh(lv_.mesh),v(std::move(lv_.v)){};
     VolumeArray(const TetraMesh& mesh_)    : mesh(mesh_),v(mesh.getNt()+1){};
     VolumeArray(const TetraMesh& mesh_,vector<T>&& v_) : mesh(mesh_),v(std::move(v_)){}
+    VolumeArray(const TetraMesh& mesh_,const vector<T>& v_)  : mesh(mesh_),v(v_){}
 
     /// Returns a VolumeFluenceMap for the absorption accumulated so far*/
     /** The value of asFluence determines whether it returns total energy (false) or fluence as E/V/mu_a (true) */
@@ -21,8 +23,18 @@ public:
     typename vector<T>::const_iterator begin() const { return v.begin(); }
     typename vector<T>::const_iterator end()   const { return v.end(); }
 
-        /// Provides a way of summarizing to an ostream
-    //friend ostream& operator<<(ostream&,VolumeArray&);
+    virtual string getTypeString() const { return "logger.results.volume"; }
+
+	virtual void summarize(ostream& os) const {
+		double sumE=0;
+		unsigned i=0;
+		for(auto it=begin(); it != end(); ++it)
+		{
+			sumE += *it;
+			++i;
+		}
+		os << "Volume array total energy is " << setprecision(4) << sumE << " (" << i << " elements)" << endl;
+	}
 };
 
 /*! Basic volume logger.
@@ -73,14 +85,19 @@ public:
 
 	    inline void eventAbsorb(const Packet& pkt,unsigned IDt,double dw)
 	    	{ wt[IDt] += dw; }
+
+	    inline void eventCommit(){ wt.commit(); }
 	};
 
 	typedef WorkerThread ThreadWorker;
+
+	typedef VolumeArray<typename Accumulator::ElementType> ResultType;
+	typedef true_type single_result_tag;
 
 	WorkerThread get_worker() { return WorkerThread(acc);  };
 
 	typedef VolumeArray<typename Accumulator::ElementType> result_type ;
 
-	result_type getResults() const { return result_type(mesh,vector<typename Accumulator::ElementType>(acc.getResults())); }
+	result_type getResults() const { return result_type(mesh,acc.getResults()); }
 };
 

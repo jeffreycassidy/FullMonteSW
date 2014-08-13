@@ -1,3 +1,5 @@
+package require vtk
+
 proc loadRegion { fn actorName } {
     vtkXMLPolyDataReader reader$fn
     reader$fn SetFileName $fn

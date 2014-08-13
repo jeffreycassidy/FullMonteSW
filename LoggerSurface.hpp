@@ -8,11 +8,12 @@
  * @tparam T	Type to be accumulated; must support operator[](unsigned), operator+=(double) and operator+=(T)
  */
 
-template<class T>class SurfaceArray {
+template<class T>class SurfaceArray : public LoggerResults {
 	const TetraMesh& mesh;
 	vector<T> s;
 
 public:
+	SurfaceArray(const SurfaceArray& s_) = default;
     SurfaceArray(SurfaceArray&& ls_)        : mesh(ls_.mesh),s(std::move(ls_.s)){};
     SurfaceArray(const TetraMesh& mesh_)    : mesh(mesh_),s(mesh_.getNt()+1){};
     SurfaceArray(const TetraMesh& mesh_,vector<T>&& s_) : mesh(mesh_),s(std::move(s_)){};
@@ -29,6 +30,10 @@ public:
 
     typename vector<T>::const_iterator begin() const { return s.begin(); }
     typename vector<T>::const_iterator end()   const { return s.end(); }
+
+    virtual string getTypeString() const { return "logger.results.surface"; }
+
+	virtual void summarize(ostream& os) const { os << *this; }
 
     // Provides a way of summarizing to an ostream
     friend ostream& operator<<(ostream& os,const SurfaceArray& sa){
@@ -91,6 +96,8 @@ public:
 		/// Record exit event by accumulating weight to the appropriate surface entry
 		inline void eventExit(const Ray3,int IDf,double w){ acc[abs(IDf)] += w; }
 		inline void eventExit(const Packet& pkt,int IDf){ acc[abs(IDf)] += pkt.w; }
+
+		void eventCommit(){ acc.commit(); }
 	};
 
 	typedef WorkerThread ThreadWorker;
@@ -102,6 +109,9 @@ public:
 	WorkerThread get_worker() { return WorkerThread(acc); }
 
 	typedef SurfaceArray<typename Accumulator::ElementType> result_type;
+
+	typedef SurfaceArray<typename Accumulator::ElementType> ResultType;
+	typedef true_type single_result_tag;
 
 	result_type getResults() const { return result_type(mesh,acc.getResults()); }
 

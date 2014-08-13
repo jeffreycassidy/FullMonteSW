@@ -34,12 +34,6 @@ template<>void VolumeArray<double>::hitMap(map<unsigned,unsigned long long>& m)
 
 template<>ostream& operator<<(ostream& os,const VolumeArray<double>& va)
 {
-	double sumE=0;
-	unsigned i=0;
-	for(auto it=va.begin(); it != va.end(); ++it)
-	{
-		sumE += *it;
-		++i;
-	}
-	return os << "Volume array total energy is " << setprecision(4) << sumE << " (" << i << " elements)" << endl;
+	va.summarize(os);
+	return os;
 }

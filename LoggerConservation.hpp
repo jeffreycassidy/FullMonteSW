@@ -6,7 +6,8 @@
  * Provides basic facilities to initialize, copy, accumulate, and print to ostream. *
  */
 
-struct ConservationCounts {
+class ConservationCounts : public LoggerResults {
+public:
     double w_launch;			///< Amount of energy launched (generally 1.0 * Npackets)
     double w_absorb;			///< Amount of energy absorbed
     double w_die;				///< Amount of energy terminated in roulette
@@ -27,6 +28,10 @@ struct ConservationCounts {
 
     /// Add another ConservationCounts
     ConservationCounts& operator+=(const ConservationCounts&);
+
+    virtual string getTypeString() const { return "logger.results.conservation"; }
+
+    virtual void summarize(ostream& os) const { os << *this; }
 
     /// Output to ostream&
     friend ostream& operator<<(ostream&,const ConservationCounts&);
@@ -109,7 +114,13 @@ class LoggerConservationMT : public LoggerConservation,private std::mutex {
             parent.unlock();
             clear();
         }
+
+        void eventCommit(){ commit(); }
     };
+
+    typedef ConservationCounts ResultType;
+    typedef true_type single_result_tag;
+
 
     /// Return a new worker
     ThreadWorker get_worker() { return ThreadWorker(*this); }

@@ -32,9 +32,9 @@ template<class RNG>pair<TerminationResult,double> terminationCheck(const RunConf
 	double w0=pkt.w;
     if (pkt.w < cfg.wmin)
     {
-    	if (rng.draw_float_u01() < cfg.pr_win)
+    	if (rng.draw_float_u01() < cfg.prwin)
     	{
-    		pkt.w /= cfg.pr_win;
+    		pkt.w /= cfg.prwin;
     		return make_pair(RouletteWin,pkt.w-w0);
     	}
     	else
@@ -65,12 +65,12 @@ inline pair<float,float> absorb(const Packet& pkt,const Material& mat,const Tetr
 }
 
 
-template<class LoggerType,class RNG>int Worker<LoggerType,RNG>::doOnePacket(Packet pkt,unsigned IDt)
+template<class LoggerType,class RNG>int WorkerThread<LoggerType,RNG>::doOnePacket(Packet pkt,unsigned IDt)
 {
     unsigned Nhit,Nstep;
     StepResult stepResult;
-    Tetra currTetra = cfg.mesh.getTetra(IDt);
-    Material currMat = cfg.mat[currTetra.matID];
+    Tetra currTetra = geom.mesh.getTetra(IDt);
+    Material currMat = geom.mats[currTetra.matID];
 
     float f_tmp[4] __attribute__((aligned(16)));
     float &n1 = f_tmp[0];
@@ -78,11 +78,10 @@ template<class LoggerType,class RNG>int Worker<LoggerType,RNG>::doOnePacket(Pack
     float &ratio = f_tmp[2];
     unsigned IDt_next=IDt, IDm=currTetra.matID, IDm_next=IDm, IDm_bound;
 
-    //logger.eventLaunch(make_pair(pkt.p,pkt.d),IDt,1.0);
     log_event(logger,Events::launch,make_pair(pkt.p,pkt.d),IDt,1.0);
 
     // start another hop
-    for(Nstep=0; Nstep < cfg.Nstep_max; ++Nstep)
+    for(Nstep=0; Nstep < opts.Nstep_max; ++Nstep)
     {
         // draw a hop length; pkt.s = { physical distance, MFPs to go, time, 0 }
         pkt.s = _mm_mul_ps(rng.draw_m128f1_exp(),currMat.s_init);
@@ -92,37 +91,33 @@ template<class LoggerType,class RNG>int Worker<LoggerType,RNG>::doOnePacket(Pack
         pkt.p      = stepResult.Pe;
 
         // loop while hitting a face in current step
-        for(Nhit=0; stepResult.hit && Nhit < cfg.Nhit_max; ++Nhit)
+        for(Nhit=0; stepResult.hit && Nhit < opts.Nhit_max; ++Nhit)
         {
             // extremely rarely, this can be a problem; we get no match in the getIntersection routine
             if(stepResult.idx > 3)
             {
                 cerr << "Abnormal condition: stepResult.idx=" << stepResult.idx << ", IDte=" << stepResult.IDte << endl;
                 cerr << "  Terminating packet" << endl;
-                //logger.eventNoHit(pkt,currTetra);
                 log_event(logger,Events::nohit,pkt,currTetra);
                 return -1;
             }
             pkt.s = _mm_add_ps(pkt.s,_mm_mul_ps(stepResult.distance,currMat.s_prop));
-            IDm_bound = cfg.mesh.getMaterial(stepResult.IDte);
+            IDm_bound = geom.mesh.getMaterial(stepResult.IDte);
             if (IDm == IDm_bound) { // no material change
-                //logger.eventBoundary(pkt.p,stepResult.IDfe,IDt,stepResult.IDte);
             	log_event(logger,Events::boundary,pkt.p,stepResult.IDfe,IDt,stepResult.IDte);
                 IDt_next = stepResult.IDte;
             }
             else // boundary with material change
             {
-                n2 = cfg.mat[IDm_bound].getn();
+                n2 = geom.mats[IDm_bound].getn();
                 n1 = currMat.getn();
 
-                if (n1 == n2 || cfg.mat[IDm_bound].isMatched()) // no refractive index difference
+                if (n1 == n2 || geom.mats[IDm_bound].isMatched()) // no refractive index difference
                 {
-                    //logger.eventBoundary(pkt.p,stepResult.IDfe,IDt,stepResult.IDte);
                 	log_event(logger,Events::boundary,pkt.p,stepResult.IDfe,IDt,stepResult.IDte);
                     IDt_next = stepResult.IDte;
                 }
                 else {
-                    //logger.eventInterface(make_pair(pkt.p,pkt.d),stepResult.IDfe,stepResult.IDte);
                 	log_event(logger,Events::interface,make_pair(pkt.p,pkt.d),stepResult.IDfe,stepResult.IDte);
                     __m128 Fn[4];
 
@@ -142,7 +137,6 @@ template<class LoggerType,class RNG>int Worker<LoggerType,RNG>::doOnePacket(Pack
                     if (_mm_movemask_ps(_mm_cmplt_ss(_mm_set_ss(1.0),_mm_movehl_ps(sini_cosi_sint_cost,sini_cosi_sint_cost)))&1)
                     {
                         pkt.d = reflect(pkt.d,normal,sini_cosi_sint_cost);
-                        //logger.eventReflectInternal(pkt.p,pkt.d);
                         log_event(logger,Events::reflect,pkt.p,pkt.d);
                     }
                     else {
@@ -156,7 +150,6 @@ template<class LoggerType,class RNG>int Worker<LoggerType,RNG>::doOnePacket(Pack
                         if (_mm_movemask_ps(_mm_cmplt_ss(rng.draw_m128f1_u01(),pr))&1)
                         {
                             pkt.d = reflect(pkt.d,normal,sini_cosi_sint_cost);
-                            //logger.eventReflectFresnel(pkt.p,pkt.d);
                             log_event(logger,Events::fresnel,pkt.p,pkt.d);
                         }
                         else {
@@ -167,7 +160,6 @@ template<class LoggerType,class RNG>int Worker<LoggerType,RNG>::doOnePacket(Pack
 							    _mm_mul_ps(
 								    normal,
 								    _mm_shuffle_ps(sini_cosi_sint_cost,sini_cosi_sint_cost,_MM_SHUFFLE(3,3,3,3))));
-                            //logger.eventRefract(pkt.p,pkt.d);
 						    log_event(logger,Events::refract,pkt.p,pkt.d);
                             IDt_next = stepResult.IDte;
                         // configure material properties
@@ -180,7 +172,6 @@ template<class LoggerType,class RNG>int Worker<LoggerType,RNG>::doOnePacket(Pack
 
             if (IDt_next == 0)
             {
-                //logger.eventExit(make_pair(pkt.p,pkt.d),stepResult.IDfe,pkt.w);
             	log_event(logger,Events::exit,make_pair(pkt.p,pkt.d),stepResult.IDfe,pkt.w);
                 return 0;
             }
@@ -188,36 +179,31 @@ template<class LoggerType,class RNG>int Worker<LoggerType,RNG>::doOnePacket(Pack
             {
                 IDt = IDt_next;
                 IDm_next = IDm_bound;
-                currTetra = cfg.mesh.getTetra(IDt);
+                currTetra = geom.mesh.getTetra(IDt);
             }
 
             if (IDm != IDm_next)
             {
                 IDm = IDm_next;
-                currMat = cfg.mat[IDm];
+                currMat = geom.mats[IDm];
                 pkt.s = _mm_div_ss(_mm_movehdup_ps(pkt.s), _mm_set_ss(currMat.getMuT()));
             }
             stepResult=currTetra.getIntersection(pkt.p,pkt.d,pkt.s);
             pkt.p   = stepResult.Pe;
         }
-        if (Nhit >= cfg.Nhit_max)
+        if (Nhit >= opts.Nhit_max)
         {
         	cerr << "Terminated due to unusual number of interface hits" << endl;
-            //logger.eventAbnormal(pkt,Nstep,Nhit);
         	log_event(logger,Events::abnormal,pkt,Nstep,Nhit);
         	return -2;
         }
-
-
 
         // Absorption process
         double dw,w0=pkt.w;
         tie(pkt.w,dw) = absorb(pkt,currMat,currTetra);
 
         if (dw != 0.0)
-        	//logger.eventAbsorb(pkt.p,IDt,pkt.w,dw);
         	log_event(logger,Events::absorb,pkt.p,IDt,pkt.w,dw);
-
 
         // Termination logic
         TerminationResult term;
@@ -231,21 +217,19 @@ template<class LoggerType,class RNG>int Worker<LoggerType,RNG>::doOnePacket(Pack
 
         case RouletteWin:							// Wins at roulette, dw > 0
         	log_event(logger,Events::roulettewin,w0,pkt.w);
-        	//logger.eventRouletteWin(w0,pkt.w);
         	break;
 
         case RouletteLose:							// Loses at roulette, dw < 0
-        	//logger.eventDie(pkt.w);
         	log_event(logger,Events::roulettedie,pkt.w);
         	return 0;
         	break;
 
         case TimeGate:								// Expires due to time gate
-        	//logger.eventTimeGate(pkt);
         	log_event(logger,Events::timegate,pkt);
         	return 1;
         	break;
 
+        case Other:
         default:
         	break;
         }

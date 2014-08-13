@@ -102,7 +102,7 @@ SFMT.o: SFMT.c SFMT*.h
 %.o: %.cpp *.hpp
 	g++ $(GCC_OPTS) $(INCLDIRS) -fPIC -c $*.cpp -o $@
 
-montecarlo: graph.o newgeom.o face.o helpers.o source.o montecarlo.o LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o mainloop.o fm-postgres/fm-postgres.o blob.o fmdb.o fm-postgres/fmdbexportcase.o sse.o random.o RandomAVX.o SFMT.o LoggerConservation.o LoggerEvent.o LoggerVolume.o
+montecarlo: graph.o newgeom.o face.o helpers.o source.o montecarlo.o LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o mainloop.o fm-postgres/fm-postgres.o blob.o fmdb.o fm-postgres/fmdbexportcase.o sse.o random.o RandomAVX.o SFMT.o LoggerConservation.o LoggerEvent.o LoggerVolume.o FullMonte.o Notifier.o
 	g++ $(GCC_OPTS) $^ $(LIBS) $(LIBDIRS) -o $@
 	
 montecarlo-tracer: graph.o newgeom.o face.o helpers.o source.o montecarlo.cpp LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o mainloop.o fm-postgres/fm-postgres.o blob.o fmdb.o fm-postgres/fmdbexportcase.o sse.o random.o RandomAVX.o SFMT.o LoggerConservation.o LoggerEvent.o LoggerVolume.o TracerStep.o

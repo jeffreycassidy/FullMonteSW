@@ -1,3 +1,5 @@
+package require vtk
+
 vtkXMLPolyDataReader reader
 reader SetFileName "output_stripped.xml"
 

@@ -2,10 +2,11 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <type_traits>
 #include "graph.hpp"
 
 // Macro below is a convenience for defining new event types
-// Makes use of SFINAE to dispatch
+// for DEFINE_EVENT(ename,emember) sets up so log_event(logger,<ename>,args...) calls logger.event<emember>(args...)
 
 #define DEFINE_EVENT(ename,emember) typedef struct {} ename##_tag; \
 	extern ename##_tag ename; \
@@ -32,7 +33,18 @@ DEFINE_EVENT(abnormal,Abnormal)
 DEFINE_EVENT(timegate,TimeGate)
 DEFINE_EVENT(nohit,NoHit)
 
+DEFINE_EVENT(commit,Commit);				// not actually an event but a request to the logger to sync its results globally
+
 }
+
+class LoggerResults {
+public:
+	virtual string getTypeString() const { return "logger.results.unknown"; }
+
+	virtual void summarize(ostream& os) const {
+		os << "<no summary available for " << getTypeString() << '>' << endl;
+	}
+};
 
 // set default to nop for all events (dangerous, may miss events unexpectedly if give bad args)
 //template<class EventTag,typename... Args>void log_event(LoggerNull&,EventTag,Args...){}
@@ -115,6 +127,10 @@ class LoggerNull {
     typedef __m128 UVect3;
     typedef pair<__m128,__m128> Ray3;
 
+    typedef std::tuple<> ResultType;
+
+    ResultType getResults() const { return make_tuple(); }
+
     /// LoggerNull defines the basic functions that a Logger can overload
 
     inline void eventAbsorb(const Point3 p,unsigned IDt,double w0,double dw){};
@@ -137,6 +153,8 @@ class LoggerNull {
     inline void eventTimeGate(const Packet&){};						// Exceeded time gate
     inline void eventNoHit(const Packet&,const Tetra&){};			// No hit in intersection
 
+    inline void eventCommit(){};
+
     typedef LoggerNull ThreadWorker;
 
     LoggerNull get_worker() { return LoggerNull(); }
@@ -158,5 +176,3 @@ template<std::size_t I=0,class LoggerTuple,class EventTag,typename... Args>inlin
 template<std::size_t I,class LoggerTuple,class EventTag,typename... Args>inline
 	typename std::enable_if<(I==tuple_size<LoggerTuple>::value),void>::type log_event(LoggerTuple& l,EventTag e,Args... args)
 {}
-
-

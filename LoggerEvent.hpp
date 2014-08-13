@@ -5,12 +5,20 @@
  *
  */
 
-struct EventCount {
+class EventCount;
+ostream& operator<<(ostream& os,const EventCount&);
+
+class EventCount : public LoggerResults {
+public:
     unsigned long long Nlaunch,Nabsorb,Nscatter,Nbound,Ntir,Nfresnel,Nrefr,Ninterface,Nexit,Ndie,Nwin,Nabnormal,Ntime,Nnohit;
     void clear(){ Nlaunch=Nabsorb=Nscatter=Nbound=Ntir=Nfresnel=Nrefr=Ninterface=Nexit=Ndie=Nwin=Nabnormal=Ntime=Nnohit=0; }
+
+    virtual string getTypeString() const { return "logger.results.events"; }
+
+    virtual void summarize(ostream& os) const { os << *this; }
 };
 
-ostream& operator<<(ostream& os,const EventCount&);
+
 
 class LoggerEvent : public LoggerNull,public EventCount {
 
@@ -103,7 +111,13 @@ public:
 			parent.unlock();
 			clear();
 		}
+
+		void eventCommit(){ commit(); }
 	};
+
+	typedef EventCount ResultType;
+	typedef true_type single_result_tag;
+
 
 	/// Returns a new worker thread
 	ThreadWorker get_worker() { return ThreadWorker(*this); }
