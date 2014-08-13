@@ -125,3 +125,9 @@ test_serialize: test_serialize.cpp
 
 clean: fm-postgres/clean
 	rm -f *.o sse_int montecarlo blobmaint texwriter Test_VectorHG *.a *.so
+	
+MatFile_Test: MatFile_Test.cpp MatFile.cpp MatFile.hpp
+	g++ $(GCC_OPTS) MatFile_Test.cpp MatFile.cpp -o $@
+	
+result2matlab: result2matlab.cpp source.o blob.o fluencemap.o
+	g++ $(GCC_OPTS) result2matlab.cpp MatFile.cpp source.o blob.o fluencemap.o newgeom.o face.o graph.o RandomAVX.o sse.o SFMT.o $(INCLDIRS) $(LIBDIRS) -Lfm-postgres -L. -lfmpg -lpq -lboost_program_options -o $@ 
