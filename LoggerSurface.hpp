@@ -1,4 +1,6 @@
-#include "logger.hpp"
+#pragma once
+#include "Logger.hpp"
+#include "fluencemap.hpp"
 #include "AccumulationArray.hpp"
 #include "Packet.hpp"
 
@@ -44,6 +46,9 @@ public:
 template<class T>ostream& operator<<(ostream& os,const SurfaceArray<T>&ls);
 template<>ostream& operator<<(ostream& os,const SurfaceArray<double>& ls);
 
+template<class T>class LoggerSurface;
+template<class T>ostream& operator<<(ostream& os,const LoggerSurface<T>& ls);
+
 /** Handles logging of surface exit events.
  *
  * @tparam 	Accumulator		Must support the AccumulatorConcept.
@@ -70,6 +75,7 @@ public:
 	class WorkerThread : public LoggerNull {
 		typename Accumulator::WorkerThread acc;
 	public:
+		typedef void logger_member_tag;
 		/// Construct from an Accumulator by getting a worker thread from the parent
 		WorkerThread(Accumulator& parent_) : acc(parent_.get_worker()){}
 
@@ -98,4 +104,11 @@ public:
 	typedef SurfaceArray<typename Accumulator::ElementType> result_type;
 
 	result_type getResults() const { return result_type(mesh,acc.getResults()); }
+
+	template<typename T>friend ostream& operator<<(ostream& os,const LoggerSurface<T>& ls);
 };
+
+template<class T>ostream& operator<<(ostream& os,const LoggerSurface<T>& ls)
+{
+	return os << ls.getResults();
+}

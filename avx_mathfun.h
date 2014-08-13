@@ -721,7 +721,6 @@ _PS_CONST(cephes_FOPI, 1.27323954473516); // 4 / M_PI
 /* since sin_ps and cos_ps are almost identical, sincos_ps could replace both of them..
    it is almost as fast, and gives you a free cosine with your sine */
 
-//inline void sincos_ps(__m256 x, float *s, float *c) {
 inline std::pair<__m256,__m256> sincos_psp(__m256 x);
 
 inline void sincos_ps(__m256 x,float *s,float *c)
@@ -732,7 +731,9 @@ inline void sincos_ps(__m256 x,float *s,float *c)
 	_mm256_store_ps(c,yo);
 }
 
-inline std::pair<__m256,__m256> sincos_psp(__m256 x) {
+
+inline std::pair<__m256,__m256> sincos_psp(__m256 x){
+
   __m256 xmm1, xmm2, xmm3 = _mm256_setzero_ps(), sign_bit_sin, y;
 //#ifdef USE_SSE2
   __m256i emm0, emm2, emm4;
@@ -887,8 +888,6 @@ inline std::pair<__m256,__m256> sincos_psp(__m256 x) {
   xmm2 = _mm256_add_ps(y,y2);
  
   /* update the sign */
-  //_mm256_store_ps(s,_mm256_xor_ps(xmm1, sign_bit_sin));
-  //_mm256_store_ps(c,_mm256_xor_ps(xmm2, sign_bit_cos));
   //_mm256_store_ps(s,_mm256_xor_ps(xmm1, sign_bit_sin));
   //_mm256_store_ps(c,_mm256_xor_ps(xmm2, sign_bit_cos));
 

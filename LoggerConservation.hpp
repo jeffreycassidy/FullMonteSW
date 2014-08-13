@@ -1,4 +1,5 @@
-#include "logger.hpp"
+#include "Logger.hpp"
+#include "Packet.hpp"
 #include <mutex>
 
 /** Tracks overall photon-packet conservation statistics.
@@ -36,7 +37,7 @@ struct ConservationCounts {
  *
  */
 
-class LoggerConservation : private ConservationCounts,public LoggerNull {
+class LoggerConservation : public ConservationCounts,public LoggerNull {
     public:
     inline void eventLaunch(Ray3 r,unsigned IDt,double w) { w_launch += w; };
     inline void eventAbsorb(Point3 p,unsigned IDt,double w0,double dw) { w_absorb += dw; };
@@ -74,6 +75,7 @@ class LoggerConservation : private ConservationCounts,public LoggerNull {
 
 class LoggerConservationMT : public LoggerConservation,private std::mutex {
     public:
+	typedef void logger_member_tag;
 	LoggerConservationMT() = default;
 	LoggerConservationMT(LoggerConservationMT&& lc_) : LoggerConservation(std::move(lc_)),std::mutex(){}
 
@@ -84,6 +86,8 @@ class LoggerConservationMT : public LoggerConservation,private std::mutex {
 		/// Reference to the parent LoggerConservationMT
         LoggerConservationMT& parent;
         public:
+
+        typedef void logger_member_tag;
 
         ///
         ThreadWorker(LoggerConservationMT& parent_) : parent(parent_){}

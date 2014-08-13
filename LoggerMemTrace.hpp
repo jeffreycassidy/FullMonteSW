@@ -1,6 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include "logger.hpp"
+#include "Logger.hpp"
 
 using namespace std;
 

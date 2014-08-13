@@ -4,8 +4,6 @@ typedef double FluenceCountType;
 
 void writeFileBin(string,const vector<Point<3,double> >&,const map<FaceByPointID,double>&);
 
-ostream& operator<<(ostream& os,const LoggerMulti<>&){ return os; }
-
 
 /*void LoggerSurface::collect()
 {
@@ -137,4 +135,5 @@ template<>void SurfaceArray<double>::resultMap(map<FaceByPointID,double>& m,bool
 		++i;
 	}
 	return os << "Surface array total energy is " << setprecision(4) << sumE << " (" << i << " elements)" << endl;
-}*/
+}
+*/
