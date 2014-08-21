@@ -7,9 +7,9 @@
 
 #include <boost/math/constants/constants.hpp>
 
-#include "avx_mathfun.h"
+#include "AVXMath/avx_mathfun.h"
 #define SFMT_MEXP 19937
-#include "SFMT.h"
+#include "SFMT/SFMT.h"
 
 using namespace std;
 
@@ -74,9 +74,7 @@ class RNG_SFMT_AVX {
     {
     	if ((long long unsigned)this & 0x1F)
     		throw string("RNG_SFMT_AVX: Failed to align on 32B boundary");
-    	std::cout << "Initialized SFMT RNG with seed of " << seed_ << std::endl;
-    	sfmt_init_gen_rand(&sfmt,seed_);
-    	refill();
+    	seed(seed_);
     }
 
     // requirements for Boost RNG concept
@@ -84,6 +82,13 @@ class RNG_SFMT_AVX {
     result_type min() const { return std::numeric_limits<uint32_t>::min(); }
     result_type max() const { return std::numeric_limits<uint32_t>::max(); }
     result_type operator()(){ return draw_uint32(); }
+
+    void seed(uint32_t seed_)
+    {
+    	sfmt_init_gen_rand(&sfmt,seed_);
+    	std::cout << "Initialized SFMT RNG with seed of " << seed_ << std::endl;
+    	refill();
+    }
 
     void refill();
 

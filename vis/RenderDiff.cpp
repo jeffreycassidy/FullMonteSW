@@ -3,7 +3,6 @@
 #include <vtkFloatArray.h>
 #include <vtkCellData.h>
 #include <vtkCellArray.h>
-#include <vtkDataSetToPolyDataFilter.h>
 #include <vtkPoints.h>
 #include <vtkPointData.h>
 #include <vtkPolyData.h>
@@ -34,7 +33,6 @@
 #include <list>
 #include <string>
 
-//#include <sys/types.h>
 #include <sys/stat.h>
 #include <boost/smart_ptr/scoped_ptr.hpp>
 
@@ -267,10 +265,10 @@ vtkSmartPointer<vtkActor> renderSurface(const TetraMesh& mesh)
     points->Delete();
     surface->SetPolys(celldata);
     celldata->Delete();
-    surface->Update();
+//    surface->Update();
 
     // set up the mapper
-    surfMapper->SetInput(surface);
+    surfMapper->SetInputData(surface);
 
     vtkSmartPointer<vtkActor> surf1 = vtkSmartPointer<vtkActor>::New();
     surf1->SetMapper(surfMapper);
@@ -300,10 +298,10 @@ vtkSmartPointer<vtkActor> renderFluence(const TetraMesh& mesh,SurfaceFluenceMap&
     celldata->Delete();
     surface->GetCellData()->SetScalars(scalars);
     scalars->Delete();
-    surface->Update();
+//    surface->Update();
 
     // set up the mapper
-    surfMapper->SetInput(surface);
+    surfMapper->SetInputData(surface);
     surfMapper->SetScalarRange(range.first,range.second);
     surfMapper->ScalarVisibilityOn();
 

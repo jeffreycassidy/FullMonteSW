@@ -14,7 +14,7 @@
 #include "sse.hpp"
 
 #define SFMT_MEXP 19937
-#include "SFMT.h"
+#include "SFMT/SFMT.h"
 
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_01.hpp>

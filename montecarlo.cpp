@@ -22,6 +22,8 @@
 
 #include "Notifier.hpp"
 
+#include "Sequence.hpp"
+
 #include "TupleStuff.hpp"
 
 #include "LoggerMemTrace.cpp"
@@ -48,6 +50,8 @@ namespace globalopts {
 	boost::optional<unsigned long long> Npkt;
 	boost::optional<unsigned> randseed;
 	boost::optional<unsigned> Nthread;
+
+	vector<unsigned> seeds;
 
 	// plain ol' options
 	bool dbwrite=true;
@@ -78,15 +82,15 @@ void banner()
     cout << endl;
 }
 
-//void runSuite(PGConnection* dbconn,unsigned IDflight,unsigned IDsuite);
-void runCaseByID(PGConnection* dbconn,unsigned IDcase,unsigned IDflight);
+void runCaseByID(PGConnection* dbconn,const vector<Observer*>& obs,unsigned IDcase);
 
 namespace __cmdline_opts {
     	unsigned long long Npkt;
-    	unsigned randseed;
+    	//unsigned randseed;
     	unsigned Nthread;
     	double prwin;
     	double wmin;
+    	Sequence<unsigned> seeds;
     }
 
 int main(int argc,char **argv)
@@ -94,7 +98,6 @@ int main(int argc,char **argv)
     signal(SIGHUP,SIG_IGN);
     vector<unsigned> suites;
     vector<unsigned> cases;
-    unsigned IDflight=0;
     string flightname,flightcomm;
     string fn_materials,fn_sources,fn_mesh;
     vector<Source*> sources;
@@ -115,7 +118,7 @@ int main(int argc,char **argv)
         ("N,N",po::value<unsigned long long>(&__cmdline_opts::Npkt),"Number of packets")
         ("sourcefile",po::value<string>(&fn_sources),"Source location file (TIM-OS .source type)")
         ("materials,m",po::value<string>(&fn_materials),"Materials file (TIM-OS .opt type)")
-        ("rngseed,r",po::value<unsigned>(&__cmdline_opts::randseed),"RNG seed (int)")
+        ("rngseed,r",po::value<Sequence<unsigned>>(&__cmdline_opts::seeds),"RNG seed (int)")
         ("threads,t",po::value<unsigned>(&__cmdline_opts::Nthread),"Thread count")
         ("Timer,T",po::value<double>(&globalopts::timerinterval),"Timer interval (seconds, 0=no timer)")
         ("nodbwrite","Disable database writes")
@@ -151,31 +154,15 @@ int main(int argc,char **argv)
     if(vm.count("N"))
     	globalopts::Npkt.reset(__cmdline_opts::Npkt);
 
-    if(vm.count("rngseed"))
-    	globalopts::randseed.reset(__cmdline_opts::randseed);
-
     if(vm.count("threads"))
     	globalopts::Nthread.reset(__cmdline_opts::Nthread);
 
+    if(vm.count("rngseed"))
+    	globalopts::seeds = __cmdline_opts::seeds.as_vector();
+    else
+    	globalopts::seeds.push_back(1);
+
     globalopts::dbwrite=vm.count("nodbwrite")==0;
-
-
-    boost::shared_ptr<PGConnection> dbconn;
-
-    //if (!vm.count("nodbwrite")){
-        cout << "DB host: " << globalopts::db::host << endl;
-        cout << "DB port: " << globalopts::db::port << endl;
-        cout << "DB name: " << globalopts::db::name << endl;
-    
-    
-        try {
-            dbconn = PGConnect();
-        }
-        catch(PGConnection::PGConnectionException& e)
-        {
-            cerr << "Failed to connect with error: " << e.msg << endl;
-        }
-    //}
 
     // apply options
     if (vm.count("help"))
@@ -185,31 +172,50 @@ int main(int argc,char **argv)
     }
 	cout << endl;
 
-    if (globalopts::dbwrite){
-        try {
-            //IDflight = db_startFlight(dbconn.get(),flightname,flightcomm);
-            cout << "Starting flight " << IDflight << endl;
-        }
-        catch(PGConnection::PGConnectionException& e)
-        {
-            cerr << "Database exception: " << e.msg << endl;
-        }
+
+
+    // print database connection params
+    cout << "DB host: " << globalopts::db::host << endl;
+    cout << "DB port: " << globalopts::db::port << endl;
+    cout << "DB name: " << globalopts::db::name << endl;
+
+    boost::shared_ptr<PGConnection> dbconn;
+
+    try {
+    	dbconn = PGConnect();
+    }
+    catch(PGConnection::PGConnectionException& e)
+    {
+    	cerr << "Failed to connect with error: " << e.msg << endl;
+    	return -1;
     }
 
     try {
+    	PGFlight flt(dbconn.get(),flightname,flightcomm);
+    	for(unsigned seed : globalopts::seeds)
+    	{
+    		cout << "Main: seed=" << seed << endl;
+    		globalopts::randseed.reset(seed);
 
-    //for(vector<unsigned>::const_iterator it=suites.begin(); it != suites.end(); ++it)
-        //runSuite(dbconn.get(),IDflight,*it);
-    	for(vector<unsigned>::const_iterator it=cases.begin(); it != cases.end(); ++it)
-    		runCaseByID(dbconn.get(),*it,IDflight);
+    		vector<Observer*> obs;
+
+    		obs.push_back(new OStreamObserver(cout));
+
+    		if(globalopts::dbwrite)
+    			obs.push_back(new PGObserver(flt));
+
+    		for(unsigned IDcase : cases)
+    			runCaseByID(dbconn.get(),obs,IDcase);
+
+    		for(Observer* o : obs)
+    			delete o;
+    	}
+    	cout << endl;
     }
     catch (PGConnection::PGConnectionException &e)
     {
     	cerr << "Caught exception: " << e.msg << endl;
     }
-
-    cout << "Flight " << IDflight << " done" << endl;
-    cout << "Name: " << flightname << endl << "Comment: " << flightcomm << endl;
 
     return 0;
 }
@@ -315,29 +321,15 @@ void runSuite(PGConnection* dbconn,unsigned IDflight,unsigned IDsuite)
 }
 */
 
-// DEBUG: Print materials and sources
-//    cout << "Materials: " << endl;
-//    unsigned i=0;
-//    for(vector<Material>::const_iterator it=materials.begin(); it != materials.end(); ++it,++i)
-//        cout << setw(2) << i << ": " << *it << endl;
-//
-//    cout << "Sources: " << endl;
-//    cout << *source << endl;
-
 
 // run based on a case ID
-void runCaseByID(PGConnection* dbconn,unsigned IDcase,unsigned IDflight)
+void runCaseByID(PGConnection* dbconn,const vector<Observer*>& obs,unsigned IDcase)
 {
     SimGeometry geom;
     RunConfig   cfg;
     RunOptions	opts;
 
-    unsigned IDrun;
-
 	tie(geom,cfg,opts) = exportCaseByCaseID(dbconn,IDcase);
-
-	//if (globalopts::dbwrite)
-//		IDrun=db_startRun(dbconn,cfg,opts,IDcase,IDflight);
 
 	// override selected variables
 	if(globalopts::Npkt)
@@ -346,22 +338,18 @@ void runCaseByID(PGConnection* dbconn,unsigned IDcase,unsigned IDflight)
 	if(globalopts::prwin)
 		cfg.prwin=*globalopts::prwin;
 
-	if(globalopts::randseed)
-		opts.randseed=*globalopts::randseed;
-
 	if(globalopts::Nthread)
 		opts.Nthreads = *globalopts::Nthread;
 
 	if(globalopts::wmin)
 		cfg.wmin=*globalopts::wmin;
 
+	if(globalopts::randseed)
+		opts.randseed=*globalopts::randseed;
+
 	opts.timerinterval=globalopts::timerinterval;
 
-	cout << geom << endl << cfg << endl << opts << endl;
-
-	vector<Observer*> obs;
-
-	obs.push_back(new OStreamObserver(cout));
+	geom.IDc=IDcase;
 
 	pair<boost::timer::cpu_times,ResultsType> p = runSimulation(geom,cfg,opts,obs);
 }
@@ -388,7 +376,7 @@ pair<boost::timer::cpu_times,ResultsType> runSimulation(const SimGeometry& geom,
     	double usecs = 1e6*opts.timerinterval;
     	tie(completed,total) = man.getProgress();
     	cout << '\r' << "  Progress: " << completed << '/' << total << " (" << fixed << setprecision(2) << double(completed)/double(total)*100.0 << "%)" << flush;
-    	usleep(200000);
+    	usleep(usecs);
     }
     while(!man.done());
 

@@ -1,70 +1,84 @@
 #include "fmdb.hpp"
 #include "runresults.hpp"
 
-//string username(getlogin());
-///*
-//unsigned db_startFlight(PGConnection* conn,const string& flightname,const string& flightcomment)
-//{
-//    unsigned IDflight;
-//    PGConnection::ResultType res = conn->execParams("INSERT INTO flights(flightname,flightcomment) VALUES ($1,$2) " \
-//        "RETURNING flightid;",boost::tuples::make_tuple(flightname,flightcomment));
-//    unpackSinglePGRow(res,boost::tuples::tie(IDflight));
-//    return IDflight;
-//}
-//
-///** Marks the start of a single simulation run in the database.
-// *
-// * @param dbconn	Database connection
-// * @param IDc		Case ID being run
-// * @param IDflight	Flight ID to attach to
-// * @param IDsuite	Suite ID being run (opt)
-// * @param caseorder	Case order number (opt)
-// */
-//
-//unsigned db_startRun(PGConnection* dbconn,const RunConfig& cfg,const RunOptions& opts,unsigned IDc,unsigned IDflight,unsigned suiteid,unsigned caseorder)
-//{
-//    const unsigned simulator = DB_DEF_SIMULATOR;
-//    unsigned runid;
-//
-//    char hostname_buf[100];
-//
-//    if(gethostname(hostname_buf,99))
-//        throw string("Failed to get hostname");
-//
-//    dbconn->exec("BEGIN");
-//
-//    PGConnection::ResultType res = dbconn->execParams(
-//        "INSERT INTO runs(hostname,pid,username,path,args,simulator,suiteid,caseorder) VALUES "\
-//            "($1,$2,$3,$4,$5,$6,$7,$8) RETURNING runid;",
-//        boost::tuples::make_tuple(string(hostname_buf),getpid(),username,string(),string(),simulator,suiteid,caseorder));
-//    unpackSinglePGRow(res,boost::tuples::tie(runid));
-//
-//    res = dbconn->execParams(
-//            "UPDATE runs SET caseid=$2,packets=$3,threads=$4,randseed=$5,stepmax=$6,hitmax=$7,prwin=$8 WHERE runid=$1",
-//            boost::tuples::make_tuple(runid,IDc,cfg.Npackets,opts.Nthreads,opts.randseed,opts.Nstep_max,opts.Nhit_max,cfg.prwin));
-//
-//    dbconn->execParams("INSERT INTO flights_map(flightid,runid) VALUES ($1,$2);",boost::tuples::make_tuple(IDflight,runid));
-//
-//    dbconn->exec("COMMIT");
-//
-//    return runid;
-//}
-//
-//void db_finishRun(PGConnection* dbconn,unsigned runid,const RunResults& res)
-//{
-//    const char* log = res.log_stdout.getSize() > 0 ? (const char*)res.log_stdout.getPtr() : "";
-//    const char* err = res.log_stderr.getSize() > 0 ? (const char*)res.log_stderr.getPtr() : "";
-//
-//    // write results to database
-//    dbconn->execParams("INSERT INTO runresults(runid,exitcode,t_wall,t_user,t_system,intersections,"\
-//        "launch) VALUES ($1,$2,$3,$4,$5,$6,$7)",boost::tuples::make_tuple(runid,
-//        res.exitcode,res.t_wall,res.t_user,res.t_system,res.Nintersection,res.Np));
-//    dbconn->execParams("UPDATE runresults SET steps=$2,tir=$3,scatter=$4,absorb=$5,fresnel=$6,exit=$7, " \
-//        "roulettewin=$8,refract=$9,die=$10 WHERE runid=$1;", boost::tuples::make_tuple(runid,
-//        res.Nabsorb,res.Ntir,res.Nscatter,res.Nabsorb,res.Nfresnel,res.Nexit,res.Nwin,res.Nrefr,res.Ndie));
-//	dbconn->execParams("INSERT INTO logtext(runid,stderr_text,stdout_text) VALUES ($1,$2,$3);",boost::tuples::make_tuple(
-//		runid,err,log));
-//}
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <sstream>
+
+PGFlight::PGFlight(PGConnection* dbconn_,const string& flightname_,const string& flightcomm_)
+		: dbconn(dbconn_),
+		  flightname(flightname_),
+		  flightcomm(flightcomm_)
+	{
+		if(!dbconn)
+			throw string("passed an invalid (NULL) PGConnection*");
+
+		// get current date
+		boost::posix_time::ptime t = boost::posix_time::second_clock::local_time();
+		boost::posix_time::time_facet* facet = new boost::posix_time::time_facet();
+		facet->format("%Y-%m-%d %H:%M:%S %z");
+
+		std::stringstream ss;
+		ss.imbue(std::locale(locale::classic(),facet));
+
+		ss << t;
+
+		// write to database
+		PGConnection::ResultType res = dbconn->execParams("INSERT INTO flights(flightname,flightcomment,flightlaunch) VALUES ($1,$2,$3::timestamp) RETURNING flightid",
+				boost::make_tuple(flightname,flightcomm,ss.str()));
+	    unpackSinglePGRow(res,boost::tuples::tie(IDflight));
+
+		// print to stdout
+		cout << "Starting flight " << IDflight << endl;
+		cout << "  ID: " << IDflight << endl;
+		cout << "  Name: " << flightname << endl;
+		cout << "  Comment: " << flightcomm << endl;
+		cout << "  Launch time: " << ss.str() << endl;
+	}
+
+unsigned PGFlight::newRun(const SimGeometry&,const RunConfig& cfg,const RunOptions& opts,unsigned IDc)
+{
+	unsigned IDrun;
+
+    char hostname_buf[100];
+    const char* login_name;
+
+    if(gethostname(hostname_buf,99))
+        throw string("Failed to get hostname");
+
+    if(!(login_name=getlogin()))
+    	throw std::string("Failed to get login name");
+    string username(login_name);
+
+    unsigned suiteid=0,caseorder=0;
+
+    // start transaction (required for FK constraint on flights_map -> runs)
+    dbconn->exec("BEGIN");
+
+	// create new run record, get run ID
+	PGConnection::ResultType res = dbconn->execParams(
+			"INSERT INTO runs(hostname,pid,username,path,args,simulator,suiteid,caseorder) VALUES "\
+			"($1,$2,$3,$4,$5,$6,$7,$8) RETURNING runid;",
+			boost::tuples::make_tuple(string(hostname_buf),getpid(),username,string(),string(),DB_DEF_SIMULATOR,suiteid,caseorder));
+	unpackSinglePGRow(res,boost::tuples::tie(IDrun));
+
+	cout << "Starting run " << IDrun << " as part of flight " << IDflight << endl;
+
+	// add the rest of the info to the record (max 10 items in a boost::tuple
+	// TODO: Change database backend to use std::tuple with no size limit
+	res = dbconn->execParams(
+			"UPDATE runs SET caseid=$2,packets=$3,threads=$4,randseed=$5,stepmax=$6,hitmax=$7,prwin=$8 WHERE runid=$1",
+			boost::tuples::make_tuple(IDrun,IDc,cfg.Npackets,opts.Nthreads,opts.randseed,opts.Nstep_max,opts.Nhit_max,cfg.prwin));
+
+
+	// link run to flight
+	dbconn->execParams("INSERT INTO flights_map(flightid,runid) VALUES ($1,$2);",boost::tuples::make_tuple(IDflight,IDrun));
+
+	// end transaction
+    dbconn->exec("COMMIT");
+
+    return IDrun;
+}
+
 
 vector<Material> exportMaterialSetByID(PGConnection& dbconn,unsigned IDmatset)
 {

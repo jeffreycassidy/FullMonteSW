@@ -233,16 +233,15 @@ _PS_CONST(cephes_log_q2, 0.693359375);
 //  __m64 mm[2];
 //} xmm_mm_union;
 //
-//#define COPY_XMM_TO_MM(xmm_, mm0_, mm1_) {          \
-//    xmm_mm_union u; u.xmm = xmm_;                   \
-//    mm0_ = u.mm[0];                                 \
-//    mm1_ = u.mm[1];                                 \
-//}
+/*#define COPY_XMM_TO_MM(xmm_, mm0_, mm1_) {          \
+    xmm_mm_union u; u.xmm = xmm_;                   \
+    mm0_ = u.mm[0];                                 \
+    mm1_ = u.mm[1];                                 \
+}*/
 //
-//#define COPY_MM_TO_XMM(mm0_, mm1_, xmm_) {                         \
-//    xmm_mm_union u; u.mm[0]=mm0_; u.mm[1]=mm1_; xmm_ = u.xmm;      \
-//  }
-//
+/*#define COPY_MM_TO_XMM(mm0_, mm1_, xmm_) {
+    xmm_mm_union u; u.mm[0]=mm0_; u.mm[1]=mm1_; xmm_ = u.xmm;
+  }*/
 //#endif // USE_SSE2
 
 /* natural logarithm computed for 4 simultaneous float 

@@ -1,5 +1,5 @@
 #include "RandomAVX.hpp"
-#include "SFMT.h"
+#include "SFMT/SFMT.h"
 
 void RNG_SFMT_AVX::refill()
 {

@@ -8,6 +8,9 @@
  * @tparam T	Type to be accumulated; must support operator[](unsigned), operator+=(double) and operator+=(T)
  */
 
+template<class T>class SurfaceArray;
+template<class T>ostream& operator<<(ostream&,const SurfaceArray<T>&);
+
 template<class T>class SurfaceArray : public LoggerResults {
 	const TetraMesh& mesh;
 	vector<T> s;
@@ -31,25 +34,26 @@ public:
     typename vector<T>::const_iterator begin() const { return s.begin(); }
     typename vector<T>::const_iterator end()   const { return s.end(); }
 
-    virtual string getTypeString() const { return "logger.results.surface"; }
+    virtual string getTypeString() const { return "logger.results.surface.energy"; }
 
 	virtual void summarize(ostream& os) const { os << *this; }
 
+	double getTotal() const {
+		double sum=0.0;
+		for(double E : s)
+			sum += E;
+		return sum;
+	}
+
     // Provides a way of summarizing to an ostream
-    friend ostream& operator<<(ostream& os,const SurfaceArray& sa){
-    	double sumE=0;
-    	unsigned i=0;
-    	for(auto it=sa.begin(); it != sa.end(); ++it)
-    	{
-    		sumE += *it;
-    		++i;
-    	}
-    	return os << "Surface array total energy is " << setprecision(4) << sumE << " (" << i << " elements)" << endl;
-    }
+    friend ostream& operator<<<>(ostream& os,const SurfaceArray<T>& sa);
 };
 
-template<class T>ostream& operator<<(ostream& os,const SurfaceArray<T>&ls);
-template<>ostream& operator<<(ostream& os,const SurfaceArray<double>& ls);
+template<class T>ostream& operator<<(ostream& os,const SurfaceArray<T>&ls)
+{
+	return os << "Surface array total energy is " << setprecision(4) << ls.getTotal() << " (" << ls.s.size() << " elements)" << endl;
+}
+//template<>ostream& operator<<(ostream& os,const SurfaceArray<double>& ls);
 
 template<class T>class LoggerSurface;
 template<class T>ostream& operator<<(ostream& os,const LoggerSurface<T>& ls);
@@ -122,3 +126,4 @@ template<class T>ostream& operator<<(ostream& os,const LoggerSurface<T>& ls)
 {
 	return os << ls.getResults();
 }
+

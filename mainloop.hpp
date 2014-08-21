@@ -1,6 +1,8 @@
 #include "graph.hpp"
 #include <boost/timer/timer.hpp>
 
+#include <boost/random/additive_combine.hpp>
+
 #include "FullMonte.hpp"
 #include "Material.hpp"
 
@@ -74,9 +76,7 @@ public:
 
 	virtual boost::timer::cpu_times run_sync(){
 		start_async();
-		finish_async();
-		t.stop();
-		return t.elapsed();
+		return finish_async();
 	}
 
 	void start_async(){
@@ -96,7 +96,7 @@ public:
 		boost::timer::cpu_times elapsed = t.elapsed();
 
 		for(Observer* o : obs)
-			o->runfinish(elapsed,0);
+			o->runfinish(elapsed);
 
 		for(Observer* o : obs)
 			_impl_notify_results(o);
@@ -123,6 +123,8 @@ template<class Logger,class RNG>class ThreadManager : public AsyncWorker {
 	LoggerWorker* loggers;
 	WorkerThread<LoggerWorker,RNG>* workers;
 
+	boost::ecuyer1988 seeds_generator;
+
 protected:
 
 	virtual void _impl_start_async();
@@ -138,7 +140,7 @@ protected:
     typedef decltype(__get_result_tuple2(std::declval<Logger>())) results_type;
 
     ThreadManager(const SimGeometry& geom_,const RunConfig& cfg_,const RunOptions& opts_,Logger& logger_,const vector<Observer*>& obs_)
-    	: AsyncWorker(obs_), geom(geom_),cfg(cfg_),opts(opts_),logger(logger_)
+    	: AsyncWorker(obs_), geom(geom_),cfg(cfg_),opts(opts_),logger(logger_),seeds_generator(opts_.randseed)
     {
     	// allocate aligned space for the workers
     	posix_memalign((void**)&loggers, 64, opts.Nthreads*sizeof(LoggerWorker));
@@ -152,12 +154,17 @@ protected:
     	RunConfig worker_cfg(cfg);
     	worker_cfg.Npackets /= opts.Nthreads;
 
-    	// create the workers but do not start them
+    	// create the workers but do not start them; this code is still single-thread
+    	seeds_generator.discard(10000);
     	for(unsigned i=0;i<opts.Nthreads;++i)
     	{
     		new (loggers+i) LoggerWorker(get_worker(logger));
-    		new (workers+i) WorkerThread<LoggerWorker,RNG>(geom,worker_cfg,opts,loggers[i],i);
+    		new (workers+i) WorkerThread<LoggerWorker,RNG>(geom,worker_cfg,opts,loggers[i],seeds_generator());
+    		seeds_generator.discard(100);
     	}
+
+		for(Observer* o : obs)
+			o->runstart(geom,cfg,opts,geom.IDc);
     }
 
     ~ThreadManager(){ free(loggers); free(workers); }
@@ -245,7 +252,7 @@ template<class Logger,class RNG> class WorkerThread : public AsyncWorker {
 	{
 		// lock mutex to take ownership of this worker
 		std::unique_lock<std::mutex> lck(m);
-		cout << "  Thread " << t.get_id() << " paused waiting for go signal" << endl;
+		//cout << "  Thread " << t.get_id() << " paused waiting for go signal" << endl;
 
 		pair<Packet,unsigned> tmp;
 		    Packet& pkt=tmp.first;
@@ -257,7 +264,7 @@ template<class Logger,class RNG> class WorkerThread : public AsyncWorker {
 			while (!sim_en)
 				cv.wait(lck);
 
-			cout << "  Thread " << t.get_id() << " received the go-ahead and is running" << endl;
+			//cout << "  Thread " << t.get_id() << " received the go-ahead and is running" << endl;
 
 			for(;i<N && sim_en; ++i)
 			{
@@ -265,8 +272,8 @@ template<class Logger,class RNG> class WorkerThread : public AsyncWorker {
 				doOnePacket(pkt,IDt);
 			}
 
-			if (i != N)
-				cout << "  Thread " << t.get_id() << " has been paused" << endl;
+			//if (i != N)
+				//cout << "  Thread " << t.get_id() << " has been paused" << endl;
 		}
 
 		log_event(logger,Events::commit);
@@ -275,6 +282,8 @@ template<class Logger,class RNG> class WorkerThread : public AsyncWorker {
     int doOnePacket(Packet pkt,unsigned IDt);
 
 public:
+
+    typedef uint32_t Seed;
 
 
     /// Temporary kludge to handle HG function generation
@@ -287,7 +296,7 @@ public:
     }
 
     /// Note RunConfig is copied, all else is referenced from the parent
-	WorkerThread(const SimGeometry& geom_,const RunConfig cfg_,const RunOptions& opts_,Logger& logger_,unsigned seed_) :
+	WorkerThread(const SimGeometry& geom_,const RunConfig cfg_,const RunOptions& opts_,Logger& logger_,const Seed& seed_) :
 		geom(geom_),
 		cfg(cfg_),
 		opts(opts_),
@@ -308,7 +317,7 @@ public:
 		// create thread waiting for condition variable; should be last thing done
 		t=std::thread(mem_fn(&WorkerThread<Logger,RNG>::thread_loop),this);
 
-		cout << "Thread " << t.get_id() << " created and ready to run (" << N << " packets), initially paused" << endl;
+		//cout << "Thread " << t.get_id() << " created and ready to run (" << N << " packets), initially paused" << endl;
 	}
 
 	~WorkerThread(){ free(hg_buffers[0]); }
@@ -316,13 +325,13 @@ public:
 	virtual void _impl_start_async(){
 		sim_en=true;
 		cv.notify_all();
-		cout << "  Sending go signal" << endl;
+		//cout << "  Sending go signal" << endl;
 	}
 
 	virtual void _impl_finish_async() {
-		cout << "  Waiting for thread " << t.get_id() << " to terminate" << flush;
+		//cout << "  Waiting for thread " << t.get_id() << " to terminate" << flush;
 		t.join();
-		cout << "  DONE" << endl;
+		//cout << "  DONE" << endl;
 	}
 
 	virtual bool done() const { return i==N; }

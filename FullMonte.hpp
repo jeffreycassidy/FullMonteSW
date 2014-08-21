@@ -16,6 +16,7 @@ public:
 	TetraMesh 			mesh;
 	vector<Material> 	mats;
 	vector<Source*>		sources;
+	unsigned IDc;					// TODO: Probably shouldn't be included here since it's particular to the database backend
 };
 
 /** Run configuration - things that will change quality but not expected value.

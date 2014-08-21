@@ -20,20 +20,22 @@ public:
     /// Returns (if available from AccumulatorT) a hit map
     void hitMap(map<unsigned,unsigned long long>& m);
 
-    typename vector<T>::const_iterator begin() const { return v.begin(); }
-    typename vector<T>::const_iterator end()   const { return v.end(); }
+    typedef typename vector<T>::const_iterator const_iterator;
 
-    virtual string getTypeString() const { return "logger.results.volume"; }
+    const_iterator begin() const { return v.begin(); }
+    const_iterator end()   const { return v.end(); }
+
+    virtual string getTypeString() const { return "logger.results.volume.energy"; }
+
+    double getTotal() const {
+    	double sum=0.0;
+    	for(double E : v)
+    		sum += E;
+    	return sum;
+    }
 
 	virtual void summarize(ostream& os) const {
-		double sumE=0;
-		unsigned i=0;
-		for(auto it=begin(); it != end(); ++it)
-		{
-			sumE += *it;
-			++i;
-		}
-		os << "Volume array total energy is " << setprecision(4) << sumE << " (" << i << " elements)" << endl;
+		os << "Volume array total energy is " << setprecision(4) << getTotal() << " (" << v.size() << " elements)" << endl;
 	}
 };
 

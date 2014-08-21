@@ -5,25 +5,21 @@
 #include "Logger.hpp"
 
 #include "FullMonte.hpp"
+#include "fmdb.hpp"
 
 using namespace std;
 
 class Observer {
-protected:
-	unsigned IDflight=0;
-	string flightname="",flightcomment="";
 
 	virtual void _impl_notify_result(const LoggerResults&)=0;
 
 public:
-	Observer(unsigned IDflight_=0,string flightname="",string flightcomment="") : IDflight(IDflight_)
-		{ flightstart(IDflight_,flightname,flightcomment); }
+	Observer(){}
 
-	virtual void runstart(const RunConfig& cfg,const RunOptions& opts,unsigned IDc,unsigned suiteid=0,unsigned caseorder=0){};
-	virtual void flightstart(unsigned IDflight=0,string flightname="",string flightcomment=""){};
+	virtual ~Observer(){}
 
-	virtual void runfinish(boost::timer::cpu_times t,unsigned IDrun=0){};
-	virtual void flightfinish(unsigned IDflight=0){};
+	virtual void runstart(const SimGeometry&,const RunConfig& cfg,const RunOptions& opts,unsigned IDc){};
+	virtual void runfinish(boost::timer::cpu_times t){};
 
 	template<unsigned I=0,typename... Ts>typename std::enable_if<(I<sizeof...(Ts)),void>::type notify_result(const std::tuple<Ts...>& t)
 	{
@@ -44,11 +40,8 @@ class OStreamObserver : public Observer {
 public:
 	OStreamObserver(ostream& os_) : os(os_){}
 
-	virtual void runstart(const RunConfig& cfg,const RunOptions& opts,unsigned IDc,unsigned suiteid,unsigned caseorder);
-	void flightstart(unsigned IDflight=0,string flightname="",string flightcomment="");
-
-	virtual void runfinish(boost::timer::cpu_times t,unsigned runid);
-	virtual void flightfinish();
+	virtual void runstart(const SimGeometry&,const RunConfig& cfg,const RunOptions& opts,unsigned IDc);
+	virtual void runfinish(boost::timer::cpu_times t);
 };
 
 
@@ -56,34 +49,27 @@ public:
 #include "fm-postgres/fm-postgres.hpp"
 
 class PGObserver : public Observer {
+	PGFlight& flight;
 	PGConnection* dbconn=NULL;
-	unsigned IDflight=0;
+	unsigned IDrun=0;
 
-	static map<string,void(*)(PGObserver*,const LoggerResults*)> op_map;
+	enum { PGDataSurfaceEnergy=1,PGDataVolumeEnergy=2,PGDataSurfaceHits=3,PGDataVolumeHits=4 } PGDataTypes;
 
-	unsigned createNewFlight(PGConnection* dbconn_,string="",string="");
+	void notifier_default(const LoggerResults*);
+	void notifier_surface_energy(const LoggerResults*);
+	void notifier_events(const LoggerResults*);
+	void notifier_volume_energy(const LoggerResults*);
+
+	static map<string,void(PGObserver::*)(const LoggerResults*)> op_map;
 
 	virtual void _impl_notify_result(const LoggerResults& lr);
 
 public:
-	PGObserver(PGConnection* dbconn_,string flightname_="",string flightcomment_="") :
-		Observer(createNewFlight(dbconn_,flightname_,flightcomment_),flightname_,flightcomment_),
-		dbconn(dbconn_){}
 
-	virtual void runstart(const RunConfig& cfg,const RunOptions& opts,unsigned IDc,unsigned IDflight,unsigned suiteid,unsigned caseorder);
+	PGObserver(PGFlight& flight_) : flight(flight_),dbconn(flight_.getConnection())
+		{};
 
-	virtual void runfinish(boost::timer::cpu_times t,unsigned runid);
+	virtual void runstart(const SimGeometry&,const RunConfig& cfg,const RunOptions& opts,unsigned IDc);
+	virtual void runfinish(boost::timer::cpu_times t);
 
 };
-
-//template<typename Result>void handle_result(PGObserver&,const Result&)
-//{
-//	int status;
-//	cout << "FAIL: PGObserver could not write a value of type " << abi::__cxa_demangle(typeid(Result).name(),0,0,&status) << endl;
-//}
-//
-//void handle_result(PGObserver& pg,const EventCount& ec)
-//{
-//	cout << "(simulated database write - EventCounts" << endl << ec << endl;
-//
-//}
