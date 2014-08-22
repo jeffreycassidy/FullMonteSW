@@ -47,9 +47,6 @@ class Stats {
 
 ostream& operator<<(ostream&,const Stats&);
 
-double rand01();
-__m128 rand_m128f3();
-
 template<class T> inline T clipRange(T l,T u,T x)
 {
     return (x > u ? u : (x < l ? l : x));

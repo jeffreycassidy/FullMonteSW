@@ -9,15 +9,13 @@
 
 #include "RandomAVX.hpp"
 
-#include "sse.hpp"
+typedef RNG_SFMT_AVX RNG_Type;
 
 // Source classes (isotropic point, directed face, isotropic volume, directed point (pencil beam)
 // A collection of sources can also be a Source (SourceMulti)
 // Framework should be relatively simple to introduce new types
 
 typedef __m128 UnitVectorType;
-
-typedef RNG_SFMT_AVX RNG_Type;
 
 class Source {
     double w;
@@ -30,7 +28,9 @@ class Source {
 
     virtual bool prepare(const TetraMesh& m){ return true; }
 
+#ifndef DATABASE
     virtual pair<Packet,unsigned>            emit(RNG_Type&) const=0;
+#endif
 
     virtual string operator()() const=0;
     virtual string timos_str(unsigned long long=0) const=0;
@@ -41,7 +41,10 @@ class PointSource : virtual public Source {
     pair<Point<3,double>, unsigned> origin;
 
     protected:
+
+#ifndef DATABASE
     virtual pair<Point<3,double>,unsigned> getOrigin(RNG_Type&) const { return origin; }
+#endif
 
     public:
     PointSource(const Point<3,double>& p_,double w_=1.0) : Source(w_),origin(make_pair(p_,0)){}
@@ -54,7 +57,9 @@ class PointSource : virtual public Source {
 
 class IsotropicSource : virtual public Source {
     protected:
+#ifndef DATABASE
     virtual UnitVectorType getDirection(RNG_Type&) const;
+#endif
 
     public:
     IsotropicSource(double w_=1.0) : Source(w_){}
@@ -67,8 +72,9 @@ class IsotropicPointSource : public IsotropicSource, public PointSource {
     virtual bool prepare(const TetraMesh& m){ return IsotropicSource::prepare(m) & PointSource::prepare(m); }
     virtual string operator()() const { return "Isotropic point source"; }
     virtual string timos_str(unsigned long long=0) const;
-
+#ifndef DATABASE
     virtual pair<Packet,unsigned> emit(RNG_Type&) const;
+#endif
 	virtual ostream& print(ostream&);
 };
 
@@ -82,9 +88,9 @@ class PencilBeamSource : public PointSource {
         pkt(Ray<3,double>(p_,uvectFrom(d_))),IDt(IDt_){ }
 
     virtual string operator()() const { return "Pencil beam source"; }
-
+#ifndef DATABASE
     virtual pair<Packet,unsigned> emit(RNG_Type&) const;
-
+#endif
     virtual bool prepare(const TetraMesh& m);
 
     virtual string timos_str(unsigned long long=0) const;
@@ -104,14 +110,12 @@ class VolumeSource : public IsotropicSource {
 
     protected:
     virtual pair<Point<3,double>,unsigned> getOrigin(RNG_Type&) const;
-
     public:
     VolumeSource(unsigned IDt_=0,double w=1.0) : Source(w),IDt(IDt_){}
     virtual string timos_str(unsigned long long=0) const;
     string operator()() const { return "Volume source"; }
 
     bool prepare(const TetraMesh&);
-
     virtual pair<Packet,unsigned> emit(RNG_Type& rng) const
         {
             Packet pkt;
@@ -135,7 +139,6 @@ class FaceSource : public Source {
 
     protected:
     virtual pair<Point<3,double>,unsigned> getOrigin(RNG_Type&) const;
-
     public:
 
     // if force_boundary is set, requires the face to be pointing in from an object boundary

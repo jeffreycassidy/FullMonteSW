@@ -2,10 +2,6 @@
 #define SSE_INCLUDED
 #include <mmintrin.h>
 
-#ifndef PLATFORM_DARWIN
-//#include <x86intrin.h>
-#endif 
-
 #include <pmmintrin.h>
 #include <emmintrin.h>
 #include <xmmintrin.h>

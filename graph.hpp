@@ -1,8 +1,5 @@
 #ifndef GRAPH_HPP_INCLUDE
 #define GRAPH_HPP_INCLUDE
-#include <emmintrin.h>
-#include <xmmintrin.h>
-#include <mmintrin.h>
 #include <set>
 #include <iostream>
 #include <fstream>
@@ -13,11 +10,8 @@
 
 #include <boost/shared_array.hpp>
 
-#include "optics.hpp"
-
 #include "newgeom.hpp"
 #include "blob.hpp"
-//#include "random.hpp"
 
 class MeshMapper;
 

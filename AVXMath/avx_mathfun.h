@@ -95,7 +95,6 @@ static const __m256 _ps_inv_sign_mask = _mm256_castsi256_ps(_mm256_set1_epi32(~0
 //_PS_CONST_TYPE(inv_sign_mask, int, ~0x80000000);
 
 
-// Intel intrinsic not supported on GCC?
 inline __m256 _mm256_set_m128(__m128 hi,__m128 lo)
 {
 	return _mm256_insertf128_ps(
@@ -148,16 +147,6 @@ M256I_EQUIV1IMM(slli_epi32)
 M256I_EQUIV2(sub_epi32)
 M256I_EQUIV1IMM(srli_epi32)
 #warning "  and ending here"
-
-// Intel intrinsic not supported on GCC?
-//inline __m256i _mm256_set_m128i(__m128i hi,__m128i lo)
-//{
-//	return _mm256_insertf128_ps(
-//			_mm256_castps128_ps256(lo),
-//			hi,
-//			1);
-//}
-
 
 _PI32_CONST(1, 1);
 _PI32_CONST(inv1, ~1);
@@ -247,6 +236,7 @@ _PS_CONST(cephes_log_q2, 0.693359375);
 /* natural logarithm computed for 4 simultaneous float 
    return NaN for x <= 0
 */
+
 inline __m256 log_ps(__m256 x) {
 //#ifdef USE_SSE2
   //__m256i emm0;
@@ -892,5 +882,4 @@ inline std::pair<__m256,__m256> sincos_psp(__m256 x){
 
   return std::make_pair(_mm256_xor_ps(xmm1, sign_bit_sin),_mm256_xor_ps(xmm2, sign_bit_cos));
 }
-
 #endif

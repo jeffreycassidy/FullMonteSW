@@ -2,6 +2,7 @@
 #define PACKET_INCLUDED
 #include <immintrin.h>
 #include "newgeom.hpp"
+#include "sse.hpp"
 
 // TODO: Relocate this somewhere more appropriate
 /** Computes the dot product of two 3D float vectors (__m128) using _mm_dp_ps.

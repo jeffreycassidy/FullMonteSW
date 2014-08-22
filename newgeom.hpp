@@ -1,8 +1,6 @@
 #ifndef INCLUDE_NEWGEOM
 #define INCLUDE_NEWGEOM
 
-#include "sse.hpp"
-
 #include <array>
 
 #include <math.h>
@@ -281,6 +279,14 @@ template<unsigned D,class T>class UnitVector : public Vector<D,T>
     };
 
     UnitVector operator-() const { UnitVector t(*this); for(unsigned i=0;i<D;++i) t[i] = -t[i]; return t; }
+
+    friend ostream& operator<<(ostream& os,const UnitVector& uv)
+    {
+    	os << '<' << uv[0];
+    	for(unsigned i=1;i<D;++i)
+    		os << ',' << uv[1];
+    	return os << '>';
+    }
 };
 
 UnitVector<3,double> uvect3FromPolar(double phi,double lambda);
@@ -326,12 +332,9 @@ template<int D,class T>class Ray
 
 	// returns the point that is T units along the ray
 	Point<D,T> operator()(T t) const { return Point<D,T>(P+d*t); };
-//	const Ray& operator=()(const Ray& r){ P=r.P; d=r.d; return *this; }
 
 	const Point<D,T>&      getOrigin()    const { return P; }
 	const UnitVector<D,T>& getDirection() const { return d; }
-
-    //operator Packet() const;
 
     void setOrigin(Point<3,double> p_){ P=p_; }
 

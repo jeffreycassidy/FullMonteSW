@@ -19,7 +19,7 @@
 #include <sstream>
 #include <string>
 
-#include <tuple/tuple.hpp>
+#include <boost/tuple/tuple.hpp>
 
 #include "../newgeom.hpp"
 

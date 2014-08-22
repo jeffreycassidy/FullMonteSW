@@ -1,5 +1,7 @@
 # base options only
-GCC_OPTS=-Wall -mfpmath=sse -fPIC -g -std=c++11 -mavx $(EXTRA_OPTS) -fabi-version=6
+#GXX=/sw/bin/g++-4
+GXX=g++
+GCC_OPTS=-Wall -mfpmath=sse -fPIC -g -std=c++11 -msse4 $(EXTRA_OPTS) -fabi-version=6 -DDATABASE
 LIBS=-lboost_program_options -lboost_system -lboost_iostreams -lpq
 LIBDIRS=-L/usr/local/lib -L/usr/local/lib/boost -L.
 INCLDIRS=-I/usr/local/boost -I/usr/local/include -I/usr/local/include/boost -I/usr/local/include/pgsql -I..
@@ -28,10 +30,10 @@ getMaterials: getMaterials.cpp libfmpg.so
 	g++ $(GCC_OPTS) -lfmpg -lmontecarlo $(LIBS) $(LIBDIRS) $(INCLDIRS) $< -o $@
 
 libfmpg.so: fm-postgres.o fmdbexportcase.o
-	g++ -Wall -fPIC -shared -o $@ $^
+	$(GXX) -Wall -fPIC -shared -o $@ $^
 
 fmdbexportcase: ../newgeom.o ../face.o fmdbexportcase.cpp exportcase_test.cpp ../graph.o fm-postgres.cpp ../helpers.cpp ../io_timos.cpp ../source.cpp fm-postgres.cpp ../linefile.cpp
-	g++ -ggdb -Wall $(GCC_OPTS) $(LIBS) $(INCLDIRS) -o $@ $^
+	$(GXX) -ggdb -Wall $(GCC_OPTS) $(LIBS) $(INCLDIRS) -o $@ $^
 
 fmdbimportmesh: ../newgeom.o ../face.o fmdbimportmesh.cpp ../graph.o fm-postgres.cpp ../helpers.cpp ../io_timos.cpp ../source.cpp ../linefile.cpp
 	g++ -ggdb -Wall $(LIBS) $(INCLDIRS) -o $@ $^
@@ -43,7 +45,7 @@ dyn_main: dyn_main.cpp
 	g++ $(GCC_OPTS) $(LIBS) $(LIBDIRS) $^ -o $@ -ldl
 
 %.o: %.cpp *.hpp
-	g++ -fPIC $(GCC_OPTS) $(INCLDIRS) -c $*.cpp
+	$(GXX) -fPIC $(GCC_OPTS) $(INCLDIRS) -c $*.cpp
 
 clean:
 	rm -f *.o *.so pgload *.so dyn_main fmdbimportmesh fmdb_export_mesh fmdbexportcase getMaterials

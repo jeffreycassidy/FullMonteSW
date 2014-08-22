@@ -98,6 +98,7 @@ Vector<3,double> Face::normalComponent(const Vector<3,double>& v) const
 	return v*dot(v,normal);
 }
 */
+
 ostream& operator<<(ostream& os,const Face& f)
 {
 	return os << "n=" << f.normal << " C=" << f.C;

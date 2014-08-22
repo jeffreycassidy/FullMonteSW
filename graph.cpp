@@ -6,7 +6,6 @@
 #include <signal.h>
 
 #include "blob.hpp"
-#include "sse.hpp"
 
 #include "Material.hpp"
 
@@ -531,18 +530,6 @@ bool Tetra::pointWithin(__m128 p)
 
     return _mm_movemask_ps(dot) == 0;
 }
-/*
-StepResult Tetra::getIntersection(const Ray<3,double>& r,double s,unsigned) const
-{
-    // convert to SSE vectors
-    //__m128 p = r.getOrigin();
-    //__m128 d = r.getDirection();
-#warning "Preceding two lines should be uncommented; did this to expedite compile"
-	__m128 p;
-	__m128 d;
-
-    return getIntersection(p,d,_mm_set_ss(s));
-}*/
 
 StepResult Tetra::getIntersection(__m128 p,__m128 d,__m128 s) const
 {
