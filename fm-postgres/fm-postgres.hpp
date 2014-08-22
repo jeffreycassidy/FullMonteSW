@@ -2,8 +2,8 @@
 #define FMPOSTGRES_INCLUDED
 #include <iostream>
 #include <arpa/inet.h>
-#include <libpq-fe.h>
 #include <libpq/libpq-fs.h>
+#include <libpq-fe.h>
 
 #include <boost/smart_ptr/shared_ptr.hpp>
 #include <boost/smart_ptr/scoped_array.hpp>

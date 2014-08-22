@@ -28,7 +28,6 @@
 #include "../fluencemap.hpp"
 #include "../newgeom.hpp"
 #include "../graph.hpp"
-#include "../logger.hpp"
 
 #include <list>
 #include <string>
