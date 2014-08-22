@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 2.6)
 
 LINK_DIRECTORIES( /usr/lib ../fm-postgres /usr/local/lib . )
 
+ADD_DEFINITIONS (-DSUPPRESS_AVX )
+
 SET(CMAKE_CXX_FLAGS "-O3 -g -Wall -std=c++11 -fabi-version=6 -msse4")
 
 INCLUDE_DIRECTORIES(/usr/local/pgsql/include ../fm-postgres ..)
