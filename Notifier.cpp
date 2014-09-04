@@ -63,7 +63,9 @@ void PGObserver::_impl_notify_result(const LoggerResults& lr)
 map<string,void(PGObserver::*)(const LoggerResults*)> PGObserver::op_map{
 		make_pair("logger.results.surface.energy",&PGObserver::notifier_surface_energy),
 		make_pair("logger.results.volume.energy",&PGObserver::notifier_volume_energy),
-		make_pair("logger.results.events",&PGObserver::notifier_events)
+		make_pair("logger.results.events",&PGObserver::notifier_events),
+		make_pair("logger.results.surface.hits",&PGObserver::notifier_surface_hits),
+		make_pair("logger.results.volume.hits",&PGObserver::notifier_volume_hits)
 	};
 
 void PGObserver::notifier_default(const LoggerResults* lr)
@@ -107,16 +109,53 @@ void PGObserver::notifier_volume_energy(const LoggerResults* lr)
 
 	cout << "Volume array: " << nnz << " nonzeros; size(ss)=" << ss.str().size() << " total=" << sum << endl;
 
-	Blob b(12*nnz,ss.str().c_str());
-    Oid oid = dbconn->createLargeObject(b);
+	string s=ss.str();
+    Oid oid = dbconn->createLargeObject(s);
 
     dbconn->execParams("INSERT INTO resultdata(runid,datatype,data_oid,total,bytesize) VALUES ($1,$2,$3,$4,$5)",
-        boost::tuples::make_tuple(IDrun,(unsigned)PGDataVolumeEnergy,oid,resultData.getTotal(),b.getSize()));
+        boost::tuples::make_tuple(IDrun,(unsigned)PGDataVolumeEnergy,oid,resultData.getTotal(),(unsigned)s.size()));
 }
 
 void PGObserver::notifier_surface_energy(const LoggerResults* lr)
 {
 	cout << "  It's a surface energy map" << endl;
+
+	const SurfaceArray<double> resultData = dynamic_cast<const SurfaceArray<double>&>(*lr);
+
+	//TODO: Below is a hack; code should be hoisted out and either templated or subsumed into boost::serialize
+	stringstream ss;
+
+	unsigned nnz=0,i=0;
+	double t,sum=0.0;
+
+	for(VolumeArray<double>::const_iterator it=resultData.begin(); it != resultData.end(); ++it,++i)
+		if ((t=*it) != 0.0)
+		{
+			++nnz;
+			sum += t;
+			ss.write((const char*)&i,4);
+			ss.write((const char*)&t,8);
+		}
+
+	cout << "** Surface array: " << nnz << " nonzeros; size(ss)=" << ss.str().size() << " total=" << sum << endl;
+
+	string s=ss.str();
+
+	cout << "Writing blob" << endl;
+
+	Oid oid = dbconn->createLargeObject(s);
+
+	cout << "Writing metadata" << endl;
+
+    dbconn->execParams("INSERT INTO resultdata(runid,datatype,data_oid,total,bytesize) VALUES ($1,$2,$3,$4,$5)",
+        boost::tuples::make_tuple(IDrun,(unsigned)PGDataSurfaceEnergy,oid,resultData.getTotal(),(unsigned)s.size()));
+
+    cout << "Done" << endl;
+}
+
+void PGObserver::notifier_volume_hits(const LoggerResults* lr)
+{
+	cout << "  It's a volume hit map" << endl;
 
 	const SurfaceArray<double> resultData = dynamic_cast<const SurfaceArray<double>&>(*lr);
 
@@ -136,9 +175,39 @@ void PGObserver::notifier_surface_energy(const LoggerResults* lr)
 
 	cout << "Volume array: " << nnz << " nonzeros; size(ss)=" << ss.str().size() << " total=" << sum << endl;
 
-	Blob b(12*nnz,ss.str().c_str());
-	Oid oid = dbconn->createLargeObject(b);
+	string s=ss.str();
+
+	Oid oid = dbconn->createLargeObject(s);
 
     dbconn->execParams("INSERT INTO resultdata(runid,datatype,data_oid,total,bytesize) VALUES ($1,$2,$3,$4,$5)",
-        boost::tuples::make_tuple(IDrun,(unsigned)PGDataSurfaceEnergy,oid,resultData.getTotal(),b.getSize()));
+        boost::tuples::make_tuple(IDrun,(unsigned)PGDataSurfaceEnergy,oid,resultData.getTotal(),(unsigned)s.size()));
+}
+
+void PGObserver::notifier_surface_hits(const LoggerResults* lr)
+{
+	cout << "  It's a surface hit map" << endl;
+
+	const SurfaceArray<double> resultData = dynamic_cast<const SurfaceArray<double>&>(*lr);
+
+	//TODO: Below is a hack; code should be hoisted out and either templated or subsumed into boost::serialize
+	stringstream ss;
+
+	unsigned nnz=0,i=0;
+	double t,sum=0.0;
+	for(VolumeArray<double>::const_iterator it=resultData.begin(); it != resultData.end(); ++it,++i)
+		if ((t=*it) != 0.0)
+		{
+			++nnz;
+			sum += t;
+			ss.write((const char*)&i,4);
+			ss.write((const char*)&t,8);
+		}
+
+	cout << "Surface array: " << nnz << " nonzeros; size(ss)=" << ss.str().size() << " total=" << sum << endl;
+
+	string s=ss.str();
+	Oid oid = dbconn->createLargeObject(s);
+
+    dbconn->execParams("INSERT INTO resultdata(runid,datatype,data_oid,total,bytesize) VALUES ($1,$2,$3,$4,$5)",
+        boost::tuples::make_tuple(IDrun,(unsigned)PGDataSurfaceEnergy,oid,resultData.getTotal(),(unsigned)s.size()));
 }

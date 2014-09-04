@@ -57,14 +57,14 @@ TetraMesh::~TetraMesh()
 {
 }
 
-void TetraMesh::fromBinary(const Blob& pts,const Blob& tetras,const Blob& faces)
+void TetraMesh::fromBinary(const string& pts,const string& tetras,const string& faces)
 {
     P.clear();
-    P.resize(pts.getSize()/24+1);
+    P.resize(pts.size()/24+1);
     T_m.clear();
-    T_m.resize(tetras.getSize()/20+1);
+    T_m.resize(tetras.size()/20+1);
     T_p.clear();
-    T_p.resize(tetras.getSize()/20+1);
+    T_p.resize(tetras.size()/20+1);
 
     unsigned zeros[4]={0,0,0,0};
     P[0] = Point<3,double>();
@@ -74,7 +74,7 @@ void TetraMesh::fromBinary(const Blob& pts,const Blob& tetras,const Blob& faces)
     unsigned i=1;
 
     // copy points over
-    for(const double* p=(const double*)pts.getPtr(); p < (const double*)pts.getEndPtr(); p += 3,++i)
+    for(const double* p=(const double*)pts.data(); p < (const double*)pts.data()+pts.size()/8; p += 3,++i)
     {
         P[i][0] = p[0];
         P[i][1] = p[1];
@@ -82,7 +82,7 @@ void TetraMesh::fromBinary(const Blob& pts,const Blob& tetras,const Blob& faces)
     }
 
     i=1;
-    for(const uint32_t* p=(const uint32_t*)tetras.getPtr(); p < (const uint32_t*)tetras.getEndPtr(); p += 5,++i)
+    for(const uint32_t* p=(const uint32_t*)tetras.data(); p < (const uint32_t*)tetras.data()+tetras.size()/4; p += 5,++i)
     {
         T_p[i][0] = p[0];
         T_p[i][1] = p[1];

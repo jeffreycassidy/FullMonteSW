@@ -94,6 +94,26 @@ class FluenceMapBase {
     const TetraMesh* mesh;
 
     public:
+
+//
+//    template<class Archive>void save(Archive& ar,const unsigned int version)
+//    {
+//    }
+//
+//    template<>void save(stringstream& ss,const unsigned int version)
+//    {
+//    }
+//
+//    template<class Archive>void load(Archive& ar,const unsigned int version)
+//    {
+//    }
+//
+//    template<>void load(stringstream& ss,const unsigned int version)
+//    {
+//    }
+
+
+    virtual ~FluenceMapBase(){}
     class InvalidMesh {};
     class InvalidBlobSize {};
 
@@ -148,13 +168,9 @@ class FluenceMapBase {
     vector<double> toVector(unsigned N) const;
 
     // Serialization to/from binary format
-    Blob    toBinary()              const;
-    bool    fromBinary(const Blob&,unsigned long long packets_=0);
-
-/*    FluenceMapBase& operator*=(double k){
-        for(map<unsigned,double>::iterator it=F.begin(); it != F.end(); ++it)
-            it->second *= k; return *this;
-    }*/
+    string    toBinary()              const;
+    bool    fromBinary(const string&);
+    bool	fromBinary(istream& is,unsigned long N=-1);
 };
 
 template<class T>class FluenceMap : public FluenceMapBase {
@@ -165,7 +181,7 @@ template<class T>class FluenceMap : public FluenceMapBase {
     virtual void bunga(){}; // need this so we can dynamic_cast
 
     using FluenceMapBase::operator[];
-	FluenceMap(const TetraMesh& mesh_,const Blob& b_,unsigned long long packets_=0) : FluenceMapBase(&mesh_),mat(NULL)
+	FluenceMap(const TetraMesh& mesh_,const string& b_,unsigned long long packets_=0) : FluenceMapBase(&mesh_),mat(NULL)
         { fromBinary(b_,packets_); }
 
     FluenceMap(const TetraMesh* mesh_) : FluenceMapBase(mesh_), mat(NULL){}
@@ -203,13 +219,13 @@ template<class T>class FluenceMap : public FluenceMapBase {
     // Element access
     double& operator[](PointIDType f)   { return F[PointIDLookupType(mesh)(f)]; }
 };
-
-class HitMap : public map<unsigned,unsigned long long> {
-	public:
-
-	Blob toBinary() const;
-	void fromBinary(const Blob&);
-};
+//
+//class HitMap : public map<unsigned,unsigned long long> {
+//	public:
+//
+//	Blob toBinary() const;
+//	void fromBinary(const Blob&);
+//};
 
 typedef FluenceMap<FaceByPointID>  SurfaceFluenceMap;
 typedef FluenceMap<TetraByPointID> VolumeFluenceMap;

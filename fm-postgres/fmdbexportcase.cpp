@@ -140,13 +140,13 @@ TetraMesh* exportMesh(PGConnection& dbconn, unsigned IDc)
     cout << "  pdata_oid=" << pdata_oid << ", tdata_oid=" << tdata_oid << ", fdata_oid=" << fdata_oid << endl;
     cout << "  name=" << name << " description=" << desc << endl;
 
-    Blob bpoints = dbconn.loadLargeObject(pdata_oid);
-    Blob btetras = dbconn.loadLargeObject(tdata_oid);
+    string bpoints = dbconn.loadLargeObject(pdata_oid);
+    string btetras = dbconn.loadLargeObject(tdata_oid);
 
-    cout << "Read " << bpoints.getSize() << " bytes of points (" << bpoints.getSize()/3/sizeof(double) << " points)" << endl;
-    cout << "Read " << btetras.getSize() << " bytes of tetras (" << btetras.getSize()/5/sizeof(unsigned) << " tetras)" << endl;
+    cout << "Read " << bpoints.size() << " bytes of points (" << bpoints.size()/3/sizeof(double) << " points)" << endl;
+    cout << "Read " << btetras.size() << " bytes of tetras (" << btetras.size()/5/sizeof(unsigned) << " tetras)" << endl;
 
-    if ((unsigned)bpoints.getSize()/3/sizeof(double) != (unsigned)Np || (unsigned)btetras.getSize()/5/sizeof(unsigned) != (unsigned)Nt)
+    if ((unsigned)bpoints.size()/3/sizeof(double) != (unsigned)Np || (unsigned)btetras.size()/5/sizeof(unsigned) != (unsigned)Nt)
     {
         cerr << "Error: size mismatch!" << endl;
         return NULL;
@@ -178,16 +178,16 @@ FluenceMapBase* exportResultSet(PGConnection* conn,unsigned IDr,unsigned dType,c
         boost::tuples::make_tuple(IDr,dType));
     unpackSinglePGRow(res,boost::tuples::tie(data_oid,packets));
 
-//    cout << "Run " << globalopts::runs[0] << ": " << packets_a << " launched" << endl;
-
     switch(dType){
         case 1: data = new SurfaceFluenceMap(mesh); break;
         case 2: data = new VolumeFluenceMap(mesh);  break;
+        //case 3: data = new {};
+        //case 4: data = new {};
         default: throw string("Error in exportResultSet: invalid datatype");
     }
 
-    Blob b = conn->loadLargeObject(data_oid);
-    data->fromBinary(b,packets);
+    string s = conn->loadLargeObject(data_oid);
+    data->fromBinary(s);
 
     return data;
 }

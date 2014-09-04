@@ -7,53 +7,61 @@
 
 using namespace std;
 
-Blob::Blob(string fn,bool append_null)
+char to_hex_digit(unsigned i)
 {
-    struct stat fileStats;
-    if(stat(fn.c_str(),&fileStats))
-        throw string("Failed to stat() "+fn);
-    Nb = fileStats.st_size + (append_null ? 1 : 0);
-    p = boost::shared_array<uint8_t>(new uint8_t[Nb]);
-    ifstream is(fn.c_str());
-    if(!is.good())
-        throw string("Failed to open "+fn);
-    is.read((char *)p.get(),fileStats.st_size);
-    if(is.fail())
-        throw string("Failed to read "+fn);
-    if(append_null)
-        p[fileStats.st_size]=0;
+	if (i > 15)
+		cerr << "Error in to_hex_digit: out of range" << endl;
+	else if (i >= 10)
+		return i-10+'A';
+	else
+		return i+'0';
 }
 
-void Blob::writeFile(std::string fn) const
+string SHA1_160_SUM::as_hex() const
+{
+	string s(41,'\0');
+	for(unsigned i=0;i<40;++i)
+		s[i] = to_hex_digit((string::operator[](i/2) >> ((1-(i%2))<<2))&0xf);
+	return s;
+}
+
+ostream& operator<<(ostream& os,const SHA1_160_SUM& sum)
+{
+	return os << sum.as_hex();
+}
+
+string readBinary(string fn)
+{
+	// get file size and create string
+    struct stat fileStats;
+
+    if(stat(fn.c_str(),&fileStats))
+        throw string("Failed to stat() "+fn);
+
+    string s(fileStats.st_size,'\0');
+
+    // read from file, check if valid
+    ifstream is(fn.c_str());
+
+    if(!is.good())
+        throw string("Failed to open "+fn);
+
+    is.read((char*)s.data(),fileStats.st_size);
+
+    if(is.fail())
+        throw string("Failed to read "+fn);
+    return s;
+}
+
+void writeBinary(const string& fn,const string& s)
 {
     ofstream os(fn.c_str());
+
     if(!os.good())
         throw std::string("Failed to open file for write");
 
-    os.write((const char*)p.get(),Nb);
+    os.write((const char*)s.data(),s.size());
 
     if(!os.good())
         throw string("Failed to write");
 }
-
-void Blob::sha1_160(uint8_t* md) const
-{
-	SHA1(p.get(),Nb,md);
-}
-
-std::string Blob::sha1_160() const
-{
-    unsigned char md[20];
-    char str[41];
-    SHA1(p.get(),Nb,md);
-    for(unsigned i=0;i<20;++i)
-        sprintf(str+(i<<1),"%02x",(unsigned)md[i]);
-    return std::string(str);
-}
-
-void Blob::release()
-{
-	Nb=0;
-	p=boost::shared_array<uint8_t>(NULL);
-}
-

@@ -98,16 +98,35 @@ uint64_t fromNetworkOrder_blah(uint64_t b)   { return ntohl((uint64_t)(b >> 32))
 //              typlen+2    24                  First element   -- INFERRED FROM DOUBLE ARRAY; NOT SURE IF IT GENERALIZES
 //              typlen+2    24+(typlen+2)*i     Element i
 
+unsigned from_hex_digit(char i)
+{
+	if (i >= '0' && i <= '9')
+		return i-'0';
+	else if (i >= 'A' && i <= 'F')
+		return i-'A'+10;
+	else if (i >= 'a' && i <= 'a')
+		return i-'a'+10;
+	else
+		cerr << "Invalid character '" << i << "' (" << (unsigned) i << ") in from_hex_digit" << endl;
+	return 0;
+}
+
 template<>void unpackPGVariable(const char* p,string& s){ s.assign(p); }
 template<>void unpackPGVariable(const char* p,boost::tuples::null_type&){}
 template<>void unpackPGVariable(const char* p,FaceByPointID& d){ unpackPGVariable(p,(array<unsigned,3>&)d); }
 template<>void unpackPGVariable(const char* p,Point<3,double>& P){ unpackPGVariable(p,(array<double,3>&)P); }
+template<>void unpackPGVariable(const char* p,SHA1_160_SUM& s){
+	string::iterator it=s.begin();
+	for(unsigned i=0;i<40;i+=2)
+		*(it++) = (from_hex_digit(p[i])<<4) + from_hex_digit(p[i+1]);
+}
 
 void unpackPGRow(const PGConnection::ResultType&,boost::tuples::null_type,unsigned,unsigned){}
 void unpackPGRow(const uint8_t* p,boost::tuples::null_type){}
 
 template<>void packPGVariable(const char* const& s, uint8_t* p){ copy(s,s+strlen(s)+1,p); }
 template<>void packPGVariable(const string& s,uint8_t* p){ copy(s.begin(),s.end()+1,p); }
+template<>void packPGVariable(const SHA1_160_SUM& s,uint8_t* p){ string h=s.as_hex(); copy(h.begin(),h.end(),p); p[40]='\0'; }
 template<>void packPGVariable(const FaceByPointID& d,uint8_t* p){ packPGVariable((const array<unsigned,3>&)d,p); }
 
 PGConnection::PGConnection(const string& connstr) : conn(NULL)
@@ -129,7 +148,7 @@ void PGConnection::connect(const string& connstr)
 
     switch(connstatus){
         case CONNECTION_OK:
-        cout << "Connected OK at " << endl;// << WHEREAMI << endl;
+        cout << "Connected OK at " << endl;
         break;
         default:
         throw PGConnectionException("Failed to connect with connection string \"" + connstr + "\"");
@@ -154,10 +173,10 @@ PGConnection::~PGConnection()
         PQfinish(conn);
 }
 
-Oid PGConnection::createLargeObject(const Blob& b)
+Oid PGConnection::createLargeObject(const string& s)
 {
-    const uint8_t* p=b.getPtr();
-    unsigned Nb=b.getSize();
+    const char* p=s.data();
+    unsigned Nb=s.size();
 
     Oid lobjid;
     int lobj_fd;
@@ -186,7 +205,7 @@ Oid PGConnection::createLargeObject(const Blob& b)
     }
 
     // write
-    int Nb_written = lo_write(conn,lobj_fd,(char*)p,Nb);
+    int Nb_written = lo_write(conn,lobj_fd,(const char*)p,Nb);
 
     if (Nb_written < 0)
         cerr << "Error writing - Nb<0" << endl;
@@ -196,7 +215,9 @@ Oid PGConnection::createLargeObject(const Blob& b)
     }
 
     lo_close(conn,lobj_fd);
-    execParams("INSERT INTO blobsums(blobid,sha1_160) VALUES ($1,$2);",boost::tuples::make_tuple(lobjid,b.sha1_160()));
+    string sum = SHA1_160_SUM(s).as_hex();
+    cout << "Writing checksum (size " << sum.size() << "): " << sum << endl;
+    execParams("INSERT INTO blobsums(blobid,sha1_160) VALUES ($1,$2);",boost::tuples::make_tuple(lobjid,sum));
 
     PQexec(conn,"end");
 
@@ -228,7 +249,7 @@ int PGConnection::getLargeObjectSize(Oid lobjid)
     return Nb_total;
 }
 
-Blob PGConnection::loadLargeObject(Oid lobjid)
+string PGConnection::loadLargeObject(Oid lobjid)
 {
     int lobj_fd; 
     stringstream fn;
@@ -241,7 +262,7 @@ Blob PGConnection::loadLargeObject(Oid lobjid)
         struct stat buf;
         fn << globalopts::db::blobCachePath << '/' << lobjid << ".bin";
         if(!stat(fn.str().c_str(),&buf)){            // file exists
-            Blob b_file(fn.str().c_str());
+        	string b_file = readBinary(fn.str());
 
             if (!globalopts::db::validateBlobCacheSum)  // just return data if not checking checksums
             {
@@ -250,8 +271,8 @@ Blob PGConnection::loadLargeObject(Oid lobjid)
                 return b_file;
             }
 
-            string dbsum;
-            string filesum=b_file.sha1_160();
+            SHA1_160_SUM dbsum;
+            SHA1_160_SUM filesum(b_file);
             PGConnection::ResultType res = execParams("SELECT sha1_160 FROM blobsums WHERE blobid=$1;",boost::tuples::make_tuple(lobjid));
 
             if (PQntuples(res.get()) == 0){ // couldn't find a checksum
@@ -261,16 +282,13 @@ Blob PGConnection::loadLargeObject(Oid lobjid)
             else
             {
                 unpackSinglePGRow(res,boost::tuples::tie(dbsum));
-                if(equal(dbsum.begin(),dbsum.end(),filesum.begin()))
+                if(dbsum==filesum)
                 {
                     if(globalopts::db::verboseBlobCache)
                         cout << "Loaded large object ID=" << lobjid << " from cache, checksum OK" << endl;
                     return b_file;
                 }
             }
-//                cout << "Large object requested - ID=" << oid << endl;
-//                cout << "Database sum: " << dbsum << endl;
-//                cout << "Cache sum:    " << filesum << endl;
         }
     }
 
@@ -285,7 +303,7 @@ Blob PGConnection::loadLargeObject(Oid lobjid)
     {
         cerr << "Failed to open large object " << lobjid << " for reading" << endl;
         PQexec(conn,"end");
-        return -1;
+        return string();
     }
 
     // get file size and reserve storage
@@ -293,20 +311,17 @@ Blob PGConnection::loadLargeObject(Oid lobjid)
     int Nb_total = lo_tell(conn,lobj_fd);
     lo_lseek(conn,lobj_fd,0,SEEK_SET);
 
-    Blob b(Nb_total);
+    string s(Nb_total,'\0');
 
     // do the read & check for errors
     int Nb_read=0,c;
-    char *q=(char*)b.getPtr();
+    char *q=(char*)s.data();			// cast away constness for reading
 
     for(Nb_read=0; Nb_read < Nb_total; Nb_read += c,q += c)
     {
         c = lo_read(conn,lobj_fd,q,min(Nb_total-Nb_read,4096));
         if (c < 0 || c != min(Nb_total-Nb_read,4096))
-        {
             cerr << "Read failed" << endl;
-            b.release();
-        }
 #ifndef POSIX_TIMER
         if (Nb_read % (10*4096) == 0)
             cout << "\rRead " << setw(8) << Nb_read << " of " << setw(8) << Nb_total << " bytes (" << fixed << setprecision(2) << setw(5) << (double)Nb_read/(double)(Nb_total)*100.0 << "%)" << flush;
@@ -321,11 +336,11 @@ Blob PGConnection::loadLargeObject(Oid lobjid)
         if(globalopts::db::verboseBlobCache)
             cout << "Overwriting database checksum value and cache file for large object ID=" << lobjid << endl;
         execParams("DELETE FROM blobsums WHERE blobid=$1;",boost::tuples::make_tuple(lobjid));
-        execParams("INSERT INTO blobsums(blobid,sha1_160) VALUES ($1,$2);",boost::tuples::make_tuple(lobjid,b.sha1_160()));
-        b.writeFile(fn.str());
+        execParams("INSERT INTO blobsums(blobid,sha1_160) VALUES ($1,$2);",boost::tuples::make_tuple(lobjid,SHA1_160_SUM(s)));
+        writeBinary(fn.str(),s);
     }
 
-    return b;
+    return s;
 }
 
 void PGConnection::prepare(const char* stmtName,const char* query,int nParams,const Oid* paramTypes)
@@ -373,6 +388,7 @@ PGConnection::ResultType PGConnection::execPrepared(const char* stmtName,int nPa
         if(status != PGRES_COMMAND_OK && status != PGRES_TUPLES_OK)
         {
             errmsg << "Failed to execute prepared statement; message: " << PQresultErrorMessage(res) << endl;
+            errmsg << "  Statement name: " << stmtName << endl;
             throw PGConnectionException(errmsg.str());//__FILE__ ":" __LINE__);
         }
     }
@@ -399,10 +415,9 @@ PGConnection::ResultType PGConnection::execParams(const char* cmd,int nParams,co
         if(status != PGRES_COMMAND_OK && status != PGRES_TUPLES_OK)
         {
             errmsg << "Failed to execute prepared statement; message: " << PQresultErrorMessage(res) << endl;
-            throw PGConnectionException(errmsg.str());//__FILE__ ":" __LINE__);
+            throw PGConnectionException(errmsg.str());
         }
     }
-
     return ResultType(res,PQclear);
 }
 

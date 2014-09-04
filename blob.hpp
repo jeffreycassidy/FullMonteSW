@@ -1,43 +1,42 @@
-#ifndef BLOB_INCLUDED
-#define BLOB_INCLUDED
-#include <boost/shared_array.hpp>
-#include <inttypes.h>
+#pragma once
 #include <string>
-#include <cstdio>
+#include <iostream>
+#include <openssl/sha.h>
 
-// Blob = Binary Large OBject
-//  Just a bunch of bytes as a Boost shared array, with a method provided to compute SHA1 hash
 // TODO: Base64 output iterator
 // TODO: Make SHA1 a dynamically-loaded library?
 // TODO: Integrate better with Postgres library
 // TODO: XML writer?
 // TODO: Iterators
-// TODO: Check if all conversions use proper alignment (ie no padding)
 
-class Blob 
-{
-    unsigned                        Nb;
-    boost::shared_array<uint8_t>    p;
+using std::string;
 
-    public:
+string readBinary(string fn);
+void writeBinary(const string& fn,const string& s);
+string hash_sha1_160(string s);
 
-    Blob() : Nb(0){}
-    Blob(unsigned Nb_,bool append_null=false) : Nb(Nb_),p(new uint8_t[Nb_]){}
-    Blob(unsigned Nb_,uint8_t* p_) : Nb(Nb_),p(p_){}
-    Blob(const Blob& b) : Nb(b.Nb),p(b.p){}
-    Blob(std::string fn,bool append_null=false);
+class SHA1_160_SUM : private string {
 
-    void sha1_160(uint8_t* md) const;
-	std::string sha1_160() const;
+public:
+	using string::begin;
+	using string::end;
 
-    void writeFile(std::string fn) const;
+	SHA1_160_SUM() : string(20,'\0'){}
 
-    void release();
+	SHA1_160_SUM(const unsigned char* d,unsigned long N){
+		SHA1((const uint8_t*)d,N,(uint8_t*)data());
+	}
 
-    unsigned        getSize() const { return Nb; };
-	uint8_t*		getWritePtr() { return p.get(); }
-    const uint8_t*  getPtr()  const { return p.get(); };
-    const uint8_t*  getEndPtr() const { return p.get()+Nb; }
+	SHA1_160_SUM(const string& s){
+		SHA1((const uint8_t*)s.c_str(),s.size(),(uint8_t*)data());
+	}
+
+	bool operator==(const SHA1_160_SUM& rhs) const { return operator==((const string&)rhs); }
+
+	operator const uint8_t*() const { return (const uint8_t*)data(); }
+	operator const char*() const { return (const char*)data(); }
+
+	string as_hex() const;
+
+	friend std::ostream& operator<<(std::ostream&,const SHA1_160_SUM&);
 };
-
-#endif

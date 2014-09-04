@@ -50,3 +50,7 @@ cyl
 isops
 Convolve
 
+outfile.*
+output
+timetest
+exportmulti

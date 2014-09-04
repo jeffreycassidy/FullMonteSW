@@ -162,13 +162,13 @@ TetraMesh exportMeshByMeshID(PGConnection& dbconn, unsigned IDm)
     cout << "  pdata_oid=" << pdata_oid << ", tdata_oid=" << tdata_oid << ", fdata_oid=" << fdata_oid << endl;
     cout << "  name=" << name << " description=" << desc << endl;
 
-    Blob bpoints = dbconn.loadLargeObject(pdata_oid);
-    Blob btetras = dbconn.loadLargeObject(tdata_oid);
+    string bpoints = dbconn.loadLargeObject(pdata_oid);
+    string btetras = dbconn.loadLargeObject(tdata_oid);
 
-    cout << "Read " << bpoints.getSize() << " bytes of points (" << bpoints.getSize()/3/sizeof(double) << " points)" << endl;
-    cout << "Read " << btetras.getSize() << " bytes of tetras (" << btetras.getSize()/5/sizeof(unsigned) << " tetras)" << endl;
+    cout << "Read " << bpoints.size() << " bytes of points (" << bpoints.size()/3/sizeof(double) << " points)" << endl;
+    cout << "Read " << btetras.size() << " bytes of tetras (" << btetras.size()/5/sizeof(unsigned) << " tetras)" << endl;
 
-    if ((unsigned)bpoints.getSize()/3/sizeof(double) != (unsigned)Np || (unsigned)btetras.getSize()/5/sizeof(unsigned) != (unsigned)Nt)
+    if ((unsigned)bpoints.size()/3/sizeof(double) != (unsigned)Np || (unsigned)btetras.size()/5/sizeof(unsigned) != (unsigned)Nt)
     {
     	throw std::string("goofy stuff going on here");
         cerr << "Error: size mismatch!" << endl;

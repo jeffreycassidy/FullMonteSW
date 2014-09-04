@@ -27,7 +27,7 @@
 
 using namespace std;
 
-#include "blob.hpp"
+#include "../blob.hpp"
 
 using namespace std;
 
@@ -137,9 +137,16 @@ template<unsigned long D>struct pgTypeInfo<Point<D,double> > {
     static const unsigned   type_format=1;
 };
 
-template<class T>unsigned           getPGVarLength(const T&){ return pgTypeInfo<T>::type_length; }
+template<>struct pgTypeInfo<SHA1_160_SUM> {
+	static const Oid type_oid=25;
+	static const unsigned type_length=41;
+	static const unsigned type_format=0;
+};
+
+
+template<class T>unsigned           	getPGVarLength(const T&){ return pgTypeInfo<T>::type_length; }
 template<unsigned D,class T>unsigned     getPGVarLength(const array<T,D>& a){ return 20+D*(pgTypeInfo<T>::type_length+4); }
-template<int D,class T>unsigned     getPGVarLength(const Point<D,T>& p){ return 20+D*(pgTypeInfo<T>::type_length+4); }
+template<int D,class T>unsigned     	getPGVarLength(const Point<D,T>& p){ return 20+D*(pgTypeInfo<T>::type_length+4); }
 
 template<class T>typename pgTypeInfo<T>::pg_representation toNetworkOrder(T);
 
@@ -172,6 +179,7 @@ template<class T>T fromNetworkOrder(const uint8_t* p)
 
 template<class T>       void unpackPGVariable(const char*,T&);
 template<unsigned long D,class T> void unpackPGVariable(const char*,array<T,D>&);
+template<>void unpackPGVariable(const char* p,SHA1_160_SUM& s);
 //template<unsigned long D,class T>void unpackPGVariable(const char* p,Point<D,T>& d){ unpackPGVariable(p,(array<T,D>&)d); }
 template<> void unpackPGVariable(const char* p,Point<3,double>& P);
 template<>void unpackPGVariable(const char* p,string& s);
@@ -184,11 +192,12 @@ template<class T> void unpackPGVariable(const char* p,T& t)
 
 template<class T>void packPGVariable(const T&,uint8_t*);
 
-template<>void packPGVariable(const char* const& s, uint8_t* p);
 template<>void packPGVariable(const string& s,uint8_t* p);
+template<>void packPGVariable(const char* const& s, uint8_t* p);
 template<unsigned long D,class T>void packPGVariable(const array<T,D>&,uint8_t* p);
 template<>void packPGVariable(const FaceByPointID& d,uint8_t* p);
 template<unsigned long D,class T>void packPGVariable(const Point<D,T>& d,uint8_t* p){ packPGVariable((const array<T,D>&)d,p); }
+template<>void packPGVariable(const SHA1_160_SUM& s,uint8_t* p);
 
 template<class T>void       packPGVariable(const T& t,uint8_t* p)
 {
@@ -276,11 +285,11 @@ class PGConnection {
 
     template<class T>ResultType execParams(const char* cmd,const T& params); // uses boost::tuple
 
-    Oid createLargeObject(const Blob& b);
+    Oid createLargeObject(const string& b);
 
     int getLargeObjectSize(Oid lobjid);
 
-    Blob loadLargeObject(Oid lobjid);
+    string loadLargeObject(Oid lobjid);
 
     unsigned cleanLargeObjects();
 

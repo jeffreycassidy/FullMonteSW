@@ -188,7 +188,7 @@ class TetraMesh {
     TetraMesh(const double*,unsigned Np,const unsigned*,unsigned Nt);
     ~TetraMesh();
 
-    void fromBinary(const Blob& pts,const Blob& tetras,const Blob& faces=Blob());
+    void fromBinary(const string& pts,const string& tetras,const string& faces=string());
 
 	// query size of mesh
 	unsigned getNp() const { return P.size()-1; };

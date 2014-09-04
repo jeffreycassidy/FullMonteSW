@@ -57,6 +57,8 @@ class PGObserver : public Observer {
 
 	void notifier_default(const LoggerResults*);
 	void notifier_surface_energy(const LoggerResults*);
+	void notifier_surface_hits(const LoggerResults*);
+	void notifier_volume_hits(const LoggerResults*);
 	void notifier_events(const LoggerResults*);
 	void notifier_volume_energy(const LoggerResults*);
 

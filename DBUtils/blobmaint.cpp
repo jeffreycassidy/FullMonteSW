@@ -41,11 +41,11 @@ int main(int argc,char **argv)
         stringstream fn;
         fn << "/Users/jcassidy/FullMonte/blobcache/" << *it << ".bin";
 
-        uint8_t filesum[21];
-        uint8_t dbsum[21];
+        string filesum(20,'\0');
+        string dbsum(20,'\0');
         string filesum_string;
 
-        Blob bfile,bdb;
+        string bfile,bdb;
 
         file_exists = !stat(fn.str().c_str(),&buf);
 
@@ -57,9 +57,10 @@ int main(int argc,char **argv)
         if (file_exists)        // if file exists, do checksum
         {
             cout << "File exists, ";
-            bfile = Blob(fn.str());
-            bfile.sha1_160(filesum);
-            filesum_string=bfile.sha1_160();
+            bfile = readBinary(fn.str());
+
+            filesum = hash_sha1_160(bfile);
+            filesum_string=toHex(filesum);
         }
         else
             cout << "No file, ";
@@ -76,8 +77,7 @@ int main(int argc,char **argv)
                 cout << "- Downloading data" << endl;
     
                 bdb = conn.get()->loadLargeObject(*it);
-                bdb.sha1_160(dbsum);
-                dbsum[20]=0;
+                dbsum = hash_sha1_160(bdb);
     
                 cout << endl;
     
@@ -85,9 +85,9 @@ int main(int argc,char **argv)
                 if (!file_exists)
                 {
                     cout << "  Writing file" << endl;
-                    bdb.writeFile(fn.str());
+                    writeBinary(fn.str(),bdb);
                 }
-                else if(equal(dbsum,dbsum+20,filesum))  // file exists, database must not - check for equality
+                else if(equal(dbsum.begin(),dbsum.end(),filesum.begin()))  // file exists, database must not - check for equality
                     cout << "  File sum agrees with database" << endl;
     
                 // if the checksum isn't in the DB, write it there

@@ -124,16 +124,3 @@ template<>void SurfaceArray<double>::resultMap(map<FaceByPointID,double>& m,bool
         it->second /= area;
     }
 }
-
-/*template<>ostream& operator<<(ostream& os,const SurfaceArray<double>& sa)
-{
-	double sumE=0;
-	unsigned i=0;
-	for(auto it=sa.begin(); it != sa.end(); ++it)
-	{
-		sumE += *it;
-		++i;
-	}
-	return os << "Surface array total energy is " << setprecision(4) << sumE << " (" << i << " elements)" << endl;
-}
-*/

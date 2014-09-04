@@ -91,44 +91,76 @@ void FluenceMapBase::absdiff()
 }
 
 // serialize the fluence map in binary
-Blob FluenceMapBase::toBinary() const
+string FluenceMapBase::toBinary() const
 {
-    uint8_t* p = new uint8_t[12*F.size()];
-    uint8_t* t=p;
+    stringstream ss;
 
-    const uint8_t* tmp;
+    union {
+    	uint32_t id;
+    	char p[4];
+    } idu;
 
-    for(map<unsigned,double>::const_iterator it=F.begin(); it != F.end(); ++it,t += 12)
+    union {
+    	double val;
+    	char p[8];
+    } valu;
+
+    double sum=0.0;
+
+    for(pair<unsigned,double> p : F)
     {
-        *(uint32_t*)t   = it->first;
-        tmp = (const uint8_t*)&it->second;
-        copy (tmp,tmp+8,t+4);
+    	if (p.second != 0.0)
+    	{
+    		idu.id=p.first;
+    		valu.val =p.second;
+    		ss.write(idu.p,4);
+    		ss.write(valu.p,8);
+    		sum += valu.val;
+    	}
     }
-    return Blob(12*F.size(),p);
+
+    cout << "just wrote a fluencemapbase with total value " << sum << " to database" << endl;
+
+    return ss.str();
 }
 
 // convert back from binary format
-bool FluenceMapBase::fromBinary(const Blob& blob,unsigned long long packets_) 
+bool FluenceMapBase::fromBinary(const string& blob)
 {
-    unsigned N=blob.getSize();
-    const uint8_t *p=blob.getPtr();
+    unsigned N=blob.size();
+    const uint8_t *p=blob.data();
+    const uint8_t * const p_end = p+N;
 
-    double tmp;
-
-    if (packets_ != 0)      // if packet count specified at function call, use it
-        packets = packets_;
-
-    double k = packets == 0 ? 1.0 : 1.0/(double)packets;   // else take from class or use default 1
+    cout << "Blob has " << N << " bytes (" << p_end-p << " ptrdiff), " << N/12 << " elements" << endl;
 
     if (N % 12 != 0)
         throw InvalidBlobSize();
 
-    for(unsigned i=0; i<N/12; ++i, p += 12)
+    stringstream ss(blob);
+
+    return fromBinary(ss,N/12);
+}
+
+bool FluenceMapBase::fromBinary(istream& is,unsigned long N)
+{
+    unsigned i;
+    for(i=0; i<N && !is.eof(); ++i)
     {
-        copy(p+4,p+12,(uint8_t*)&tmp);
-        F.insert(make_pair(*(uint32_t*)p,k*tmp));
+    	uint32_t id;
+    	double val;
+    	is.read((char*)&id, 4);
+    	is.read((char*)&val,8);
+
+    	F.insert(make_pair(id,val));
     }
 
+    if (is.eof() && N != -1 && N != i)
+    {
+    	cerr << "ERROR: Ran out of bytes to read in FluenceMapBase::fromBinary" << endl;
+    	return false;
+    }
+
+    cout << "Read " << i << " nonzero elements from istream in FluenceMapBase" << endl;
     return true;
 }
 
@@ -153,31 +185,31 @@ void FluenceMapBase::writeASCII(string fn)
         os << it->first << ' ' << it->second << endl;
 }
 
-Blob HitMap::toBinary() const
-{
-	Blob b(size()*12);	// 12= uint32 (4) + uint64 (8)
-	uint8_t* p=b.getWritePtr();
-	for(const_iterator it=begin(); it != end(); ++it)
-	{
-		*(uint32_t*)p 		= it->first;
-		*(uint64_t*)(p+4)	= it->second;
-		p+= 12;
-	}
-	return b;
-}
-
-void HitMap::fromBinary(const Blob& b)
-{
-	iterator it;
-	clear();
-	if (b.getSize() == 0)
-		cerr << "Error, zero size for hit map!" << endl;
-	else if (b.getSize() % 12 != 0)
-		cerr << "Error, size not a multiple of 12 for hit map!" << endl;
-	else
-		for(const uint8_t* p=b.getPtr(); p<b.getEndPtr(); p+=12)
-			it = insert(it,make_pair(*(const uint32_t*)p,*(const uint64_t*)(p+4)));
-}
+//Blob HitMap::toBinary() const
+//{
+//	Blob b(size()*12);	// 12= uint32 (4) + uint64 (8)
+//	uint8_t* p=b.getWritePtr();
+//	for(const_iterator it=begin(); it != end(); ++it)
+//	{
+//		*(uint32_t*)p 		= it->first;
+//		*(uint64_t*)(p+4)	= it->second;
+//		p+= 12;
+//	}
+//	return b;
+//}
+//
+//void HitMap::fromBinary(const Blob& b)
+//{
+//	iterator it;
+//	clear();
+//	if (b.getSize() == 0)
+//		cerr << "Error, zero size for hit map!" << endl;
+//	else if (b.getSize() % 12 != 0)
+//		cerr << "Error, size not a multiple of 12 for hit map!" << endl;
+//	else
+//		for(const uint8_t* p=b.getPtr(); p<b.getEndPtr(); p+=12)
+//			it = insert(it,make_pair(*(const uint32_t*)p,*(const uint64_t*)(p+4)));
+//}
 
 // converts a fluence map of (ID,value) into a vector where v[ID]=value
 vector<double> FluenceMapBase::toVector(unsigned N) const

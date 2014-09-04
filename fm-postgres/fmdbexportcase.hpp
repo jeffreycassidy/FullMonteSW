@@ -1,4 +1,4 @@
-#include "fluencemap.hpp"
+#include "../fluencemap.hpp"
 
 TetraMesh* exportMesh(PGConnection&,unsigned);
 int exportMaterials(PGConnection&,unsigned,vector<Material>&);

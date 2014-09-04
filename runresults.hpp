@@ -15,8 +15,8 @@ class RunResults {
 
     unsigned long long Np,Nintersection,Nhop,Nscatter,Nabsorb,Ntir,Nfresnel,Nexit,Nwin,Nrefr,Ndie;
 
-    Blob log_stdout;
-    Blob log_stderr;
+    string log_stdout;
+    string log_stderr;
 };
 
 #endif

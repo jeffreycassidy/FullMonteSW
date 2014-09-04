@@ -263,8 +263,8 @@ int runtimos(string path,string meshfn,string sourcefn,string matfn,string outpu
     boost::timer::cpu_times t=timer.elapsed();
 
     // read log files and parse out number of intersections, number of steps
-    Blob logText(logfn,true);
-    Blob errText(errfn,true);
+    string logText = readBinary(logfn);
+    string errText = readBinary(errfn);
 
     const char intsearch[]  = "Num of Intersection: ";
     const char stepsearch[] = "Num of Step: ";

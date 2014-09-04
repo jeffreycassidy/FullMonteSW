@@ -23,6 +23,6 @@ int main(int argc,char **argv)
 
     boost::shared_ptr<PGConnection> conn = PGConnect();
 
-    Blob b = conn.get()->loadLargeObject(atoi(argv[1]));
-    b.writeFile(argv[2]);
+    string s = conn.get()->loadLargeObject(atoi(argv[1]));
+    writeBinary(argv[2],s);
 }
