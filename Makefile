@@ -16,7 +16,7 @@ endif
 #GXX=/sw/bin/g++-4
 GXX=g++
 
-all: docs
+all: montecarlo
 
 docs: Doxyfile *.cpp *.hpp *.c *.h
 	doxygen
@@ -73,10 +73,10 @@ random.o: random.cpp random.hpp
 %.o: %.cpp *.hpp
 	$(GXX) $(GCC_OPTS) $(INCLDIRS) -fPIC -c $*.cpp -o $@
 
-montecarlo: graph.o newgeom.o face.o helpers.o source.o montecarlo.o LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o mainloop.o blob.o fmdb.o fm-postgres/fmdbexportcase.o sse.o random.o RandomAVX.o LoggerConservation.o LoggerEvent.o LoggerVolume.o FullMonte.o Notifier.o
+montecarlo: graph.o newgeom.o face.o helpers.o SourceDescription.o montecarlo.o LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o mainloop.o blob.o fmdb.o sse.o random.o RandomAVX.o LoggerConservation.o LoggerEvent.o LoggerVolume.o FullMonte.o Notifier.o
 	$(GXX) $(GCC_OPTS) $^ $(LIBS) $(LIBDIRS) -o $@
 
-libmontecarlo.so: graph.o newgeom.o face.o helpers.o source.o montecarlo.o LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o mainloop.o blob.o fmdb.o sse.o random.o RandomAVX.o LoggerConservation.o LoggerEvent.o LoggerVolume.o Notifier.o FullMonte.o
+libmontecarlo.so: graph.o newgeom.o face.o helpers.o SourceDescription.o montecarlo.o LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o mainloop.o blob.o fmdb.o sse.o random.o RandomAVX.o LoggerConservation.o LoggerEvent.o LoggerVolume.o Notifier.o FullMonte.o
 	$(GXX) -shared -fPIC $^ -Lfm-postgres -lfmpg -o $@
 
 ReadTracer: ReadTracer.cpp

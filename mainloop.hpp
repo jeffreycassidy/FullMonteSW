@@ -226,7 +226,7 @@ template<class Logger,class RNG>void ThreadManager<Logger,RNG>::_impl_finish_asy
 
 
 template<class Logger,class RNG> class WorkerThread : public AsyncWorker {
-	const SourceEmitter<RNG> *emitter;
+	const SourceEmitter<RNG> *emitter=NULL;
 	const SimGeometry& 	geom;
 	const RunConfig    	cfg;
 	const RunOptions& 	opts;
@@ -263,6 +263,8 @@ template<class Logger,class RNG> class WorkerThread : public AsyncWorker {
 		pair<Packet,unsigned> tmp;
 		    Packet& pkt=tmp.first;
 		    unsigned& IDt=tmp.second;
+
+		emitter = SourceEmitterFactory<RNG>(geom.mesh,geom.sources);
 
 
 		while(i<N){

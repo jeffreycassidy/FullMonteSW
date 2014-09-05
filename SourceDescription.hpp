@@ -17,7 +17,13 @@ public:
 
 	virtual string operator()() const=0;
 	virtual string timos_str(unsigned long long=0) const=0;
-	virtual ostream& print(ostream& os)=0;
+	virtual ostream& print(ostream& os) const=0;
+
+	friend ostream& operator<<(ostream& os,const SourceDescription& sd)
+	{
+		sd.print(os);
+		return os;
+	}
 };
 
 class PointSourceDescription : virtual public SourceDescription {
@@ -41,7 +47,7 @@ public:
 
 	virtual string operator()() const { return "Isotropic point source"; }
 	virtual string timos_str(unsigned long long=0) const;
-	virtual ostream& print(ostream&);
+	virtual ostream& print(ostream&)  const;
 };
 
 class PencilBeamSourceDescription : public PointSourceDescription {
@@ -54,11 +60,13 @@ public:
 	PencilBeamSourceDescription(Point<3,double> p_,UnitVector<3,double> d_,double w=1.0,int IDt_=0) : PointSourceDescription(p_,w),
 			r(d_),IDt(IDt_){ }
 
+	UnitVector<3,double> getDirection() const { return r; }
+
 	virtual string operator()() const { return "Pencil beam source"; }
 
 	virtual string timos_str(unsigned long long=0) const;
 
-	virtual ostream& print(ostream&);
+	virtual ostream& print(ostream&) const;
 
 	unsigned getIDt() const { return IDt; }
 };
@@ -67,6 +75,7 @@ ostream& operator<<(ostream& os,SourceDescription& src);
 
 class VolumeSourceDescription : public IsotropicSourceDescription {
 	// creates a random tetrahedral source by shearing the unit cube
+protected:
 	double M[3][3];
 	double P0[3];
 	unsigned IDt;
@@ -78,12 +87,12 @@ public:
 
 
 
-	virtual ostream& print(ostream&);
+	virtual ostream& print(ostream&) const;
 	unsigned getIDt() const { return IDt; }
 };
 
-class FaceSourceDescription : public SourceDescription {
-	Packet pkt;
+class FaceSourceDescription : virtual public SourceDescription {
+protected:
 	FaceByPointID f;
 	unsigned IDt;
 	int IDf;
@@ -102,7 +111,7 @@ public:
 	FaceSourceDescription(FaceByPointID f_,double w_=1.0) : SourceDescription(w_),f(f_),IDt(0),IDf(0){}
 	virtual string operator()() const { return "Face Source"; }
 
-	virtual ostream& print(ostream& os);
+	virtual ostream& print(ostream& os) const;
 	virtual string timos_str(unsigned long long=0) const;
 
 	unsigned getIDt() const { return IDt; }
@@ -115,13 +124,14 @@ class SourceMultiDescription : virtual public SourceDescription {
 
 public:
 	// Create from a pair of iterators that dereference to a Source*
+	SourceMultiDescription(){}
 	template<class ConstIterator> SourceMultiDescription(ConstIterator begin,ConstIterator end) :
 	sources(begin,end),
 			w_total(0.0)
 			{ for(; begin != end; ++begin) w_total += (*begin)->getPower(); }
 
 	virtual string operator()() const { return "Multiple sources"; }
-	virtual string timos_str(unsigned long long=0) const { return ""; }
+	virtual string timos_str(unsigned long long=0) const;
 
-	virtual ostream& print(ostream& os){ return os; };
+	virtual ostream& print(ostream& os) const;
 };

@@ -1,5 +1,4 @@
-#ifndef MATERIAL_INCLUDED
-#define MATERIAL_INCLUDED
+#pragma once
 #include <immintrin.h>
 #include <iostream>
 #include <cassert>
@@ -99,7 +98,7 @@ public:
      * @param i_uv			Pointer to 8 random 2D unit vectors (2x8 floats, 32B aligned)
      * @param[out] o		Output location, 32 random floats (4x8 floats < cos(theta), sin(theta), cos(phi), sin(phi) > ) (32B aligned)
      */
-#ifndef SUPPRESS_AVX
+#ifndef SQUELCH_AVX
     inline void VectorHG(const float* i_rand,const float* i_uv,float* o) const {
     	VectorHG(_mm256_load_ps(i_rand),_mm256_load_ps(i_uv),_mm256_load_ps(i_uv+8),o);
     }
@@ -110,6 +109,12 @@ public:
 
     /// Evaluates the Henyey-Greenstein function 8x in parallel using AVX instructions.
     inline void VectorHG(__m256 i_rand,__m256 uva,__m256 uvb,float* o) const;
+
+
+#else
+    inline void VectorHG(const float*,const float*,float*) const {};
+
+#endif
 
     /// Evaluates Henyey-Greenstein ICDF for a scalar float U [-1,1) random number, returning cos(theta)
     inline float ScalarHG(float rnd) const {
@@ -125,10 +130,6 @@ public:
     	return costheta;
     }
 
-    /// Evaluates Henyey-Greenstein ICDF for a scalar float U[0,1) random number, returning cos(theta)
-    //inline float ScalarHG_U01(float rnd) const { return ScalarHG(2.0*rnd-1.0); }
-
-#endif
     /// Helper function to print to an ostream
     friend std::ostream& operator<<(std::ostream& os,const Material& mat);
 };
@@ -145,7 +146,7 @@ public:
  * @param[out] o_uv		Output values (provides 32 floats: cos/sin x 8)
  */
 
-#ifndef SUPPRESS_AVX
+#ifndef SQUELCH_AVX
 
 inline void Material::VectorHG(__m256 i_rand,__m256 uva,__m256 uvb,float* o) const
 {
@@ -189,7 +190,5 @@ inline void Material::VectorHG(__m256 i_rand,__m256 uva,__m256 uvb,float* o) con
 	_mm256_store_ps(o+16,_mm256_shuffle_ps(vh,uvb,_MM_SHUFFLE(1,0,1,0)));
 	_mm256_store_ps(o+24,_mm256_shuffle_ps(vh,uvb,_MM_SHUFFLE(3,2,3,2)));
 }
-
-#endif
 
 #endif

@@ -132,8 +132,11 @@ std::tuple<SimGeometry,RunConfig,RunOptions> exportCaseByCaseID(PGConnection* db
     geom.mesh = exportMeshByMeshID(*dbconn,IDm);
 
     // load sources and prepare within mesh
-    vector<SourceDescription*> sources;
-    exportSources(*dbconn,IDsg,sources,1000000);		// TODO: Why is this random constant here are 4th arg?
+    geom.sources = exportSources(*dbconn,IDsg,1000000);
+
+    cout << "Sources are: " << endl;
+    for(const SourceDescription* sd : geom.sources)
+    	cout << "  " << *sd << endl;
 
     // get the materials
     exportMaterials(*dbconn,IDmatset,geom.mats);

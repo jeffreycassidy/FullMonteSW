@@ -3,6 +3,7 @@
 #include <fstream>
 #include <vector>
 #include <type_traits>
+#include "Packet.hpp"
 #include "graph.hpp"
 
 // Macro below is a convenience for defining new event types

@@ -1,7 +1,10 @@
 # base options only
-GXX=/sw/bin/g++-4
-#GXX=g++
-GCC_OPTS=-Wall -mfpmath=sse -fPIC -g -std=c++11 -msse $(EXTRA_OPTS) -fabi-version=6 -DSQUELCH_AVX
+ifndef GXX
+    GXX=g++
+endif
+
+#GXX=/sw/bin/g++-4
+GCC_OPTS=-Wall -mfpmath=sse -fPIC -g -std=c++11 -msse4 $(EXTRA_OPTS) -fabi-version=6 -DSQUELCH_AVX
 LIBS=-lboost_program_options -lboost_system -lboost_iostreams -lpq -lcrypto
 LIBDIRS=-L/usr/local/lib -L/usr/local/lib/boost -L. -L..
 INCLDIRS=-I/usr/local/boost -I/usr/local/include -I/usr/local/include/boost -I/usr/local/include/pgsql -I..
@@ -29,7 +32,7 @@ all: tupletest fmdbexportcase fmdbimportmesh libfmpg.so
 getMaterials: getMaterials.cpp libfmpg.so
 	g++ $(GCC_OPTS) -lfmpg -lmontecarlo $(LIBS) $(LIBDIRS) $(INCLDIRS) $< -o $@
 
-libfmpg.so: fm-postgres.o fmdbexportcase.o ../source.o
+libfmpg.so: fm-postgres.o fmdbexportcase.o ../SourceDescription.o
 	$(GXX) $(LIBDIRS) $(LIBS) -Wall -fPIC -shared -o $@ $^
 
 fmdbexportcase: ../newgeom.o ../face.o fmdbexportcase.cpp exportcase_test.cpp ../graph.o fm-postgres.cpp ../helpers.cpp ../io_timos.cpp ../source.cpp fm-postgres.cpp ../linefile.cpp

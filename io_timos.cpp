@@ -7,7 +7,7 @@
 #include <math.h>
 #include "linefile.hpp"
 #include "graph.hpp"
-#include "source.hpp"
+#include "SourceDescription.hpp"
 #include "newgeom.hpp"
 #include "fluencemap.hpp"
 
@@ -16,13 +16,13 @@
 using namespace std;
 
 // Reads a TIM-OS .source file
-vector<Source*> readTIMOSSource(string fn)
+vector<SourceDescription*> readTIMOSSource(string fn)
 {
     unsigned Ns,i,stype,Np,IDt;
     Point<3,double> pos;
     UnitVector<3,double> dir;
     FaceByPointID f;
-    vector<Source*> sources;
+    vector<SourceDescription*> sources;
 
     LineFile is(fn,'%',cerr);
 
@@ -37,23 +37,23 @@ vector<Source*> readTIMOSSource(string fn)
         switch(stype){
             case 1:
             is >> pos >> Np;
-            sources.push_back(new IsotropicPointSource(pos,Np));
+            sources.push_back(new IsotropicPointSourceDescription(pos,Np));
 			break;
 
             case 2:
             is >> IDt >> Np;
-            sources.push_back(new VolumeSource(IDt,Np));
+            sources.push_back(new VolumeSourceDescription(IDt,Np));
             break;
 
             case 11:
             is >> IDt >> pos >> dir >> Np;
             // pos is the position where it hits the geometry, not source location!
-            sources.push_back(new PencilBeamSource(pos,dir,Np,IDt));
+            sources.push_back(new PencilBeamSourceDescription(pos,dir,Np,IDt));
             break;
 
             case 12:
             is >> f >> Np;
-            sources.push_back(new FaceSource(f,Np));
+            sources.push_back(new FaceSourceDescription(f,Np));
             break;
 
             default:
@@ -68,13 +68,13 @@ vector<Source*> readTIMOSSource(string fn)
     is >> LineFile::LF_EOF;
 
     double sum_Np=0.0;
-    for(vector<Source*>::const_iterator it=sources.begin(); it != sources.end(); ++it)
+    for(vector<SourceDescription*>::const_iterator it=sources.begin(); it != sources.end(); ++it)
         sum_Np += (*it)->getPower();
 
     return sources;
 }
 
-bool writeTIMOSSource(string fn,const vector<Source*>& s,long long packetcount)
+bool writeTIMOSSource(string fn,const vector<SourceDescription*>& s,long long packetcount)
 {
     double w_sum=0.0;
     unsigned long Np;
@@ -88,10 +88,10 @@ bool writeTIMOSSource(string fn,const vector<Source*>& s,long long packetcount)
     os << s.size() << endl;
 
     if (packetcount != 0){
-        for(vector<Source*>::const_iterator it=s.begin(); it != s.end(); ++it)
+        for(vector<SourceDescription*>::const_iterator it=s.begin(); it != s.end(); ++it)
             w_sum += (*it)->getPower();
     
-        for(vector<Source*>::const_iterator it=s.begin(); it != s.end()-1; ++it)
+        for(vector<SourceDescription*>::const_iterator it=s.begin(); it != s.end()-1; ++it)
         {
             Np = rint(((*it)->getPower()/w_sum) * (double)packetcount);
             Np_total += Np;
@@ -100,7 +100,7 @@ bool writeTIMOSSource(string fn,const vector<Source*>& s,long long packetcount)
         os << s.back()->timos_str(packetcount-Np_total);
     }
     else {
-        for(vector<Source*>::const_iterator it=s.begin(); it != s.end(); ++it)
+        for(vector<SourceDescription*>::const_iterator it=s.begin(); it != s.end(); ++it)
             os << (*it)->timos_str() << endl;
     }
 

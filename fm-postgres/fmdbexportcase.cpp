@@ -5,14 +5,13 @@
 #include "fm-postgres.hpp"
 
 #include "io_timos.hpp"
-#include "source.hpp"
+#include "SourceDescription.hpp"
 #include "graph.hpp"
 
 using namespace std;
-
-int exportSources(PGConnection& dbconn,unsigned IDsourcegroup,vector<Source*>& sources,long long Npacket)
+vector<SourceDescription*> exportSources(PGConnection& dbconn,unsigned IDsourcegroup,long long Npacket)
 {
-    sources.clear();
+	vector<SourceDescription*> sources;
 
     // Isotropic point sources
     stringstream qry;
@@ -30,7 +29,7 @@ int exportSources(PGConnection& dbconn,unsigned IDsourcegroup,vector<Source*>& s
     for(int i=0;i<PQntuples(res.get());++i)
     {
         unpackPGRow(res,boost::tuples::tie(default_w,p),i);
-        IsotropicPointSource* s = new IsotropicPointSource(p,default_w);
+        IsotropicPointSourceDescription* s = new IsotropicPointSourceDescription(p,default_w);
         sources.push_back(s);
     }
 
@@ -47,7 +46,7 @@ int exportSources(PGConnection& dbconn,unsigned IDsourcegroup,vector<Source*>& s
     for(int i=0;i<PQntuples(res.get());++i)
     {
         unpackPGRow(res,boost::tuples::tie(default_w,IDt),i);
-        VolumeSource* s = new VolumeSource(IDt,default_w);
+        VolumeSourceDescription* s = new VolumeSourceDescription(IDt,default_w);
         sources.push_back(s);
     }
 
@@ -64,7 +63,7 @@ int exportSources(PGConnection& dbconn,unsigned IDsourcegroup,vector<Source*>& s
     for(int i=0;i<PQntuples(res.get());++i)
     {
         unpackPGRow(res,boost::tuples::tie(default_w,IDf,IDt,IDps),i);
-        FaceSource* s = new FaceSource(IDps,default_w);
+        FaceSourceDescription* s = new FaceSourceDescription(IDps,default_w);
         sources.push_back(s);
     }
 
@@ -81,11 +80,11 @@ int exportSources(PGConnection& dbconn,unsigned IDsourcegroup,vector<Source*>& s
     for(int i=0;i<PQntuples(res.get());++i)
     {
         unpackPGRow(res,boost::tuples::tie(default_w,p,dir,IDt),i);
-        PencilBeamSource* s = new PencilBeamSource(p,UnitVector<3,double>(dir),default_w,IDt);
+        PencilBeamSourceDescription* s = new PencilBeamSourceDescription(p,UnitVector<3,double>(dir),default_w,IDt);
         sources.push_back(s);
     }
 
-    return sources.size();
+    return sources;
 }
 
 // TODO: Deprecated; moving it into fmdb in root directory

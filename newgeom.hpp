@@ -13,8 +13,6 @@
 
 using namespace std;
 
-class Packet;
-
 template<int D,class T>class Vector;
 
 template<unsigned long D,class T>void rotateMax(array<T,D>& p);
@@ -59,6 +57,13 @@ template<unsigned long D,class T>class FixedArrayID : public array<T,D> {
     		if(p[i-1] > p[i])
     			return false;
     	return true; }
+
+    friend ostream& operator<<(ostream& os,const FixedArrayID& a){
+    	os << '[' << a[0];
+    	for(unsigned i=1;i<D;++i)
+    		os << ',' << a[i];
+    	return os << ']';
+    }
 };
 
 class FaceByPointID;
@@ -153,22 +158,22 @@ template<int D,class T>class Point : public array<T,D>
 	Point(const Point& P_) : array<T,D>(P_){};
 	Point(const T* p_)     { copy(p_,p_+3,array<T,D>::begin()); }
 
-    //operator __m128() const { return _mm_set_ps(0.0,(*this)[2],(*this)[1],(*this)[0]); }
-
-//    void set(__m128 r){
-//    	float f[4];
-//    	_mm_store_ps(f,r);
-//    	copy(f,f+3,array<T,D>::data());
-//    }
-
 	Point operator+(const Vector<D,T>& v) const { Point t; for(unsigned i=0;i<D;++i){ t[i]=(*this)[i]+v[i]; } return t; }
 	Point operator-(const Vector<D,T>& v) const { Point t; for(unsigned i=0;i<D;++i){ t[i]=(*this)[i]-v[i]; } return t; }
+
+	friend ostream& operator<<(ostream& os,const Point<D,T>& P)
+	{
+		os << P[0];
+		for(unsigned i=1;i<D;++i)
+			os << ',' << P[i];
+		return os;
+	}
 };
 
 template<unsigned D,class T>std::ostream& operator<<(std::ostream& os,const array<T,D>& P)
 {
-	os << '(';
-	for(int i=0; i<D; ++i){ os << P[i] << (i<D-1? ',' : ')'); }
+	os << '(' << P[0];
+	for(int i=0; i<D; ++i){ os << ',' << P[i]; }
 	return os;
 }
 

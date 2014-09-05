@@ -50,6 +50,11 @@ class Packet {
     		setDirection(d0[0],d0[1],d0[2]);
         }
 
+    void setPosition(Point<3,double> p_)
+    {
+    	p = _mm_set_ps(0.0,p_[2],p_[1],p_[0]);
+    }
+
     /** Sets the direction for the packet, selecting auxiliary vectors (a,b) as necessary.
      * Current implementation uses \f{eqnarray}{ \uvect a = \frac{\uvect d \times \uvect k}{|\uvect d \times \uvect k|} \\
      *  \uvect b =\uvect{d}\times\uvect{a} \f}
@@ -58,6 +63,8 @@ class Packet {
      */
     void setDirection(__m128 d_)
         { d=d_; a=getNormalTo(d_); b=cross(d,a); }
+
+    void setDirection(const UnitVector<3,double>& d_){ setDirection(_mm_set_ps(0,d_[2],d_[1],d_[0])); }
 
     /** Sets the direction for the packet using (x,y,z) float input constants
      * @param dx,dy,dz	New direction vector (must be unit)

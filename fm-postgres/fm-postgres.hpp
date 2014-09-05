@@ -12,6 +12,8 @@
 #include <boost/program_options/parsers.hpp>
 #include <boost/program_options/options_description.hpp>
 
+#include "../SourceDescription.hpp"
+
 #include <boost/shared_array.hpp>
 #include <inttypes.h>
 
@@ -399,6 +401,6 @@ class Material;
 class TetraMesh;
 
 TetraMesh* exportMesh(PGConnection&,unsigned);
-int exportSources(PGConnection&,unsigned,vector<Source*>&,long long Npacket=0);
+vector<SourceDescription*> exportSources(PGConnection&,unsigned,long long Npacket=0);
 int exportMaterials(PGConnection&,unsigned,vector<Material>&);
 #endif
