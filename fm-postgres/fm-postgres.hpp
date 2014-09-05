@@ -1,5 +1,4 @@
-#ifndef FMPOSTGRES_INCLUDED
-#define FMPOSTGRES_INCLUDED
+#pragma once
 #include <iostream>
 #include <arpa/inet.h>
 #include <libpq/libpq-fs.h>
@@ -403,4 +402,3 @@ class TetraMesh;
 TetraMesh* exportMesh(PGConnection&,unsigned);
 vector<SourceDescription*> exportSources(PGConnection&,unsigned,long long Npacket=0);
 int exportMaterials(PGConnection&,unsigned,vector<Material>&);
-#endif

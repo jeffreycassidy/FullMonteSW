@@ -1,7 +1,12 @@
-GCC_OPTS=-Wall -mfpmath=sse -Wstrict-aliasing=2 -g -msse -fpermissive -std=c++11 -fPIC -fabi-version=6 -DSQUELCH_AVX
-GXX=/sw/bin/g++-4
-LIBDIRS=-L../fm-postgres -L..
-LIBS=-lfmpg -lmontecarlo
+GCC_OPTS=-Wall -mfpmath=sse -Wstrict-aliasing=2 -g -msse4 -fpermissive -std=c++11 -fPIC -fabi-version=6 -DSQUELCH_AVX
+
+ifndef GXX
+	GXX=g++
+endif
+
+INCLDIRS=-I/usr/local/include/pgsql -I/usr/local/include
+LIBDIRS=-L../fm-postgres -L.. -L/usr/local/lib/boost
+LIBS=-lfmpg -lmontecarlo -lboost_program_options -lboost_system -lboost_timer
 
 exportResult: exportResult.cpp libmontecarlo.so
 	$(GXX) $(GCC_OPTS) $(INCLDIRS) $^ $(LIBS) $(LIBDIRS) -o $@
@@ -16,4 +21,4 @@ MatFile_Test: MatFile_Test.cpp MatFile.cpp MatFile.hpp
 	$(GXX) $(GCC_OPTS) MatFile_Test.cpp MatFile.cpp -o $@
 	
 exportmulti: MatFile.cpp exportmulti.cpp
-	$(GXX) $(GCC_OPTS) $(INCLDIRS) $(LIBDIRS) $(LIBS) $^ -o $@
+	$(GXX) $(GCC_OPTS) $(LIBDIRS) $(LIBS) $(INCLDIRS)  $^ ../SFMT/SFMT.o -o $@

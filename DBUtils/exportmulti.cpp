@@ -17,10 +17,12 @@ using namespace std;
 
 #include "../Sequence.hpp"
 
+boost::numeric::ublas::matrix<double,boost::numeric::ublas::column_major> getResultMatrix(PGConnection* dbconn,const vector<unsigned>& v,unsigned long Nt,unsigned dtype);
+
 
 namespace __cmdline_opts {
 	Sequence<unsigned> runs;
-	string ofile;
+	string ofile("output.mat");
 };
 
 int main(int argc,char **argv)
@@ -34,6 +36,8 @@ int main(int argc,char **argv)
     cmdline.add_options()
         ("help,h","Display option help")
         ("runs,r",po::value<Sequence<unsigned>>(&__cmdline_opts::runs),"RNG seed (int)")
+        ("surface,s","Surface energy")
+		("volume,v","Volume energy")
         ("outfile,o",po::value<string>(&__cmdline_opts::ofile),"Outfile file name")
         ;
 
@@ -85,67 +89,71 @@ int main(int argc,char **argv)
     }
 
 
-    // do the export into a matrix of size (Nt, Nruns)
-    unsigned long Nt=307000;
-    unsigned long dtype=2;
-    boost::numeric::ublas::matrix<double,boost::numeric::ublas::column_major> M(Nt,v.size());
 
-    unsigned j=0;
-    for(unsigned IDr : v)
-    {
-    	FluenceMapBase *fmap = exportResultSet(dbconn.get(),IDr,dtype);
-    	cout << "  Run " << IDr << " with " << fmap->getNNZ() << " nonzero elements" << flush;
-    	double sum=0.0;
-
-    	if(!fmap)
-    	{
-    		cerr << "Invalid run; no data returned" << endl;
-    				return -1;
-    	}
-
-    	// copy elementwise from the sparse iterator
-    	unsigned N=0;
-    	for(FluenceMapBase::const_iterator it=fmap->begin(); it != fmap->end(); ++it)
-    	{
-    		sum += it->second;
-    		++N;
-    		if (it->first >= Nt)
-    			cerr << "Invalid element index " << it->first << ">" << Nt << endl;
-    		else
-    			M(it->first,j) = it->second;
-    	}
-    	j++;
-
-    	cout << ": " << sum << " (" << N << ')'<< endl;
-
-    	delete fmap;
-    }
-
-    // check column sums
-    j=0;
-    for(boost::numeric::ublas::matrix<double,boost::numeric::ublas::column_major>::iterator2 c_it=M.begin2(); c_it != M.end2(); ++c_it,++j)
-    {
-    	double sum=0.0;
-    	for(auto it = c_it.begin(); it != c_it.end(); ++it)
-    		sum += *it;
-    	cout << "  Column " << j << " sum is " << setprecision(6) << sum << endl;
-    }
 
     // write matrix into .mat file
 
-    string fn("op.mat");
-    	ofstream os(fn.c_str());
+    ofstream os(__cmdline_opts::ofile.c_str());
+    MatFile::Header hdr;
+	os.write((const char*)&hdr,sizeof(MatFile::Header));
 
-    	MatFile::Header hdr;
+    if(vm.count("surface"))
+    	writeElement(os,"surface_energy",getResultMatrix(dbconn.get(),v,600000,2));
 
-    	os.write((const char*)&hdr,sizeof(MatFile::Header));
-
-    	unsigned i=0;
-    	for(unsigned r=0; r<5; ++r)
-    		for(unsigned c=0; c<2; ++c)
-    			M(r,c) = i++;
-
-    	writeElement(os,"matrix5_2",M);
+    if(vm.count("volume"))
+    	writeElement(os,"volume_energy",getResultMatrix(dbconn.get(),v,600000,1));
 
 	return 0;
+}
+
+
+boost::numeric::ublas::matrix<double,boost::numeric::ublas::column_major> getResultMatrix(PGConnection* dbconn,const vector<unsigned>& v,unsigned long Nt,unsigned dtype)
+{
+
+  boost::numeric::ublas::matrix<double,boost::numeric::ublas::column_major> M(Nt,v.size());
+
+  cout << "=== Exporting data type  " << dtype << endl;
+
+  unsigned j=0;
+  for(unsigned IDr : v)
+  {
+  	FluenceMapBase *fmap = exportResultSet(dbconn,IDr,dtype);
+  	cout << "  Run " << IDr << " with " << fmap->getNNZ() << " nonzero elements" << flush;
+  	double sum=0.0;
+
+  	if(!fmap)
+  	{
+  		cerr << "Invalid run; no data returned" << endl;
+  				return M;
+  	}
+
+  	// copy elementwise from the sparse iterator
+  	unsigned N=0;
+  	for(FluenceMapBase::const_iterator it=fmap->begin(); it != fmap->end(); ++it)
+  	{
+  		sum += it->second;
+  		++N;
+  		if (it->first >= Nt)
+  			cerr << "Invalid element index " << it->first << ">" << Nt << endl;
+  		else
+  			M(it->first,j) = it->second;
+  	}
+  	j++;
+
+  	cout << ": " << sum << " (" << N << ')'<< endl;
+
+  	delete fmap;
+  }
+
+  // check column sums
+  j=0;
+  for(boost::numeric::ublas::matrix<double,boost::numeric::ublas::column_major>::iterator2 c_it=M.begin2(); c_it != M.end2(); ++c_it,++j)
+  {
+  	double sum=0.0;
+  	for(auto it = c_it.begin(); it != c_it.end(); ++it)
+  		sum += *it;
+  	cout << "  Column " << j << " sum is " << setprecision(6) << sum << endl;
+  }
+
+  return M;
 }
