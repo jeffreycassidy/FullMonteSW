@@ -1,5 +1,4 @@
-#ifndef GRAPH_HPP_INCLUDE
-#define GRAPH_HPP_INCLUDE
+#pragma once
 #include <set>
 #include <iostream>
 #include <fstream>
@@ -12,6 +11,8 @@
 
 #include "newgeom.hpp"
 #include "blob.hpp"
+
+#include <emmintrin.h>
 
 class MeshMapper;
 
@@ -266,5 +267,3 @@ template<class T>int signum(T a)
 {
     return (a>T(0)) - (a<T(0));
 }
-
-#endif

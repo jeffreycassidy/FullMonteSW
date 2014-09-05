@@ -1,5 +1,4 @@
-#ifndef HELPERS_INCLUDED
-#define HELPERS_INCLUDED
+#pragma once
 #include <cmath>  
 #include <vector>
 #include <cstdlib>
@@ -8,8 +7,6 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
-
-#include <emmintrin.h>
 
 using namespace std;
 
@@ -70,5 +67,3 @@ template<class T>class Tolerance {
 };
 
 template<class T>bool operator==(T a,Tolerance<T> b){ return b==a; }
-
-#endif

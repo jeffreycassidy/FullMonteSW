@@ -98,18 +98,6 @@ remote-%: sync-AVXMath sync-fm-postgres sync-. sync-SFMT sync-DBUtils
 	
 remote-debug: remote-montecarlo
 	ssh $(FULLMONTE_BUILD_USER)@$(FULLMONTE_BUILD_HOST)/$(FULLMONTE_BUILD_PATH)/$* .
-
-rangeexprParser.o: output/rangeexprParser.c
-	gcc -g -Wall -O3 -c output/rangeexprParser.c -o $@
-
-rangeexprLexer.o: output/rangeexprLexer.c
-	gcc -g -Wall -O3 -c output/rangeexprLexer.c -o $@
 	
-Test_RangeParse: Test_RangeParse.cpp rangeexprParser.o rangeexprLexer.o
-	$(GXX) -g -Wall -O3 -std=c++11 $^ -lantlr3c -lboost_program_options -o $@
-	
-exportmulti: exportmulti.cpp libmontecarlo.so fm-postgres/libfmpg.so
-	$(GXX) $(GCC_OPTS) $(INCLDIRS) $(LIBDIRS) $(LIBS) $< -lboost_program_options -lmontecarlo -lfmpg -lSFMT -o $@
-
 timetest: timetest.cpp
 	$(GXX) -g -Wall -O3 -std=c++11 -I/usr/local/include $^ -o $@

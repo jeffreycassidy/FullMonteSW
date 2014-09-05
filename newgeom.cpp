@@ -116,6 +116,7 @@ GeomManip operator<<(ostream& os,const GeomManip& gm_)
     return gm;
 }
 
+/*
 Point<3,double> pointFrom(__m128 p)
 {
     Point<3,double> P;
@@ -152,7 +153,7 @@ UnitVector<3,double> uvectFrom(__m128 v)
         d[i]=f[i];
     return UnitVector<3,double>(d);
 }
-
+*/
 /*template<>Ray<3,double>::operator Packet() const
 {
     Packet p;

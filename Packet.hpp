@@ -42,7 +42,13 @@ class Packet {
 
     /// Sets the packet position and direction using a Ray<3,double>
     void setRay(const Ray<3,double>& r)
-        { p = to_m128f(r.getOrigin()); setDirection(to_m128f(r.getDirection())); }
+        {
+    		Point<3,double> p0=r.getOrigin();
+    		p = _mm_set_ps(0.0,p0[2],p0[1],p0[0]);
+
+    		UnitVector<3,double> d0=r.getDirection();
+    		setDirection(d0[0],d0[1],d0[2]);
+        }
 
     /** Sets the direction for the packet, selecting auxiliary vectors (a,b) as necessary.
      * Current implementation uses \f{eqnarray}{ \uvect a = \frac{\uvect d \times \uvect k}{|\uvect d \times \uvect k|} \\

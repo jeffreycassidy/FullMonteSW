@@ -51,14 +51,20 @@ unsigned PGFlight::newRun(const SimGeometry&,const RunConfig& cfg,const RunOptio
 
     unsigned suiteid=0,caseorder=0;
 
+    cout << "  hostname: " << hostname_buf << endl;
+    cout << "  pid: " << hostname_buf << endl;
+    cout << "  username: " << hostname_buf << endl;
+
     // start transaction (required for FK constraint on flights_map -> runs)
     dbconn->exec("BEGIN");
+
+    cout << "Attempting to write" << endl;
 
 	// create new run record, get run ID
 	PGConnection::ResultType res = dbconn->execParams(
 			"INSERT INTO runs(hostname,pid,username,path,args,simulator,suiteid,caseorder) VALUES "\
 			"($1,$2,$3,$4,$5,$6,$7,$8) RETURNING runid;",
-			boost::tuples::make_tuple(string(hostname_buf),getpid(),username,string(),string(),DB_DEF_SIMULATOR,suiteid,caseorder));
+			boost::tuples::make_tuple(string(hostname_buf),getpid(),username,string(" "),string(" "),DB_DEF_SIMULATOR,suiteid,caseorder));
 	unpackSinglePGRow(res,boost::tuples::tie(IDrun));
 
 	cout << "Starting run " << IDrun << " as part of flight " << IDflight << endl;
@@ -113,8 +119,8 @@ std::tuple<SimGeometry,RunConfig,RunOptions> exportCaseByCaseID(PGConnection* db
     string casename;
 
     SimGeometry geom;
-    RunConfig   cfg;			// TODO: Doesn't read params from DB
-    RunOptions	opts;			// TODO: Doesn't read params from DB
+    RunConfig   cfg;			// TODO: Doesn't read params from DB ?
+    RunOptions	opts;			// TODO: Doesn't read params from DB ?
 
     PGConnection::ResultType res = dbconn->execParams("SELECT meshid,sourcegroupid,materialsetid,casename FROM cases " \
     		"WHERE caseid=$1;",boost::tuples::make_tuple(IDcase));
@@ -125,13 +131,9 @@ std::tuple<SimGeometry,RunConfig,RunOptions> exportCaseByCaseID(PGConnection* db
     // TODO: Cache meshes that are used repeatedly
     geom.mesh = exportMeshByMeshID(*dbconn,IDm);
 
-    //geom.mesh.fromBinary(dbconn->loadLargeObject(pdata_oid),dbconn->loadLargeObject(tdata_oid));
-
     // load sources and prepare within mesh
-    vector<Source*> sources;
+    vector<SourceDescription*> sources;
     exportSources(*dbconn,IDsg,sources,1000000);		// TODO: Why is this random constant here are 4th arg?
-    geom.sources.push_back(sources.size() > 1 ? new SourceMulti(sources.begin(),sources.end()) : sources.front());
-    geom.sources[0]->prepare(geom.mesh);
 
     // get the materials
     exportMaterials(*dbconn,IDmatset,geom.mats);

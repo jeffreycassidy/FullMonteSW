@@ -1,6 +1,4 @@
-#ifndef INCLUDE_NEWGEOM
-#define INCLUDE_NEWGEOM
-
+#pragma once
 #include <array>
 
 #include <math.h>
@@ -155,12 +153,13 @@ template<int D,class T>class Point : public array<T,D>
 	Point(const Point& P_) : array<T,D>(P_){};
 	Point(const T* p_)     { copy(p_,p_+3,array<T,D>::begin()); }
 
-    operator __m128() const { return _mm_set_ps(0.0,(*this)[2],(*this)[1],(*this)[0]); }
-    void set(__m128 r){
-    	float f[4];
-    	_mm_store_ps(f,r);
-    	copy(f,f+3,array<T,D>::data());
-    }
+    //operator __m128() const { return _mm_set_ps(0.0,(*this)[2],(*this)[1],(*this)[0]); }
+
+//    void set(__m128 r){
+//    	float f[4];
+//    	_mm_store_ps(f,r);
+//    	copy(f,f+3,array<T,D>::data());
+//    }
 
 	Point operator+(const Vector<D,T>& v) const { Point t; for(unsigned i=0;i<D;++i){ t[i]=(*this)[i]+v[i]; } return t; }
 	Point operator-(const Vector<D,T>& v) const { Point t; for(unsigned i=0;i<D;++i){ t[i]=(*this)[i]-v[i]; } return t; }
@@ -340,11 +339,12 @@ template<int D,class T>class Ray
 
 	void print(ostream& os) const { os << "Ray: " << P << " " << d << std::endl; }
 };
-Point<3,double> pointFrom(__m128 p);
-Ray<3,double> rayFrom(__m128 p,__m128 d);
+
+//Point<3,double> pointFrom(__m128 p);
+//Ray<3,double> rayFrom(__m128 p,__m128 d);
 
 
-UnitVector<3,double> uvectFrom(__m128 v);
+//UnitVector<3,double> uvectFrom(__m128 v);
 
 // returns true if P+td falls within triangle defined by points T for some t
 bool PointInTriangle(Point<3,double> p,UnitVector<3,double> d,Point<3,double> T[3],Point<3,double>& Q,double& t);
@@ -408,6 +408,7 @@ template<int D,class T>ostream& operator<<(const GeomManip& gm,const Point<D,T>&
 
 extern GeomManip plainwhite;
 
+/*
 inline __m128 to_m128f(Point<3,double> p)
 {
     return _mm_set_ps(0.0,p[2],p[1],p[0]);
@@ -417,11 +418,10 @@ inline __m128 to_m128f(UnitVector<3,double> v)
 {
     return _mm_set_ps(0.0,v[2],v[1],v[0]);
 }
-
+*/
 
 
 std::istream& operator>>(std::istream& is,TetraByPointID& P);
 std::istream& operator>>(std::istream& is,FaceByPointID& F);
 std::ostream& operator<<(std::ostream& os,TetraByPointID& T);
 std::ostream& operator<<(std::ostream& os,FaceByPointID& T);
-#endif

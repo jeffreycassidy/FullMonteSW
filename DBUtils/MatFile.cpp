@@ -86,7 +86,7 @@ Code for writing structs; does not work yet
 	os.write((const char*)&datasize,4);
 
 writeElement(os,"smaller_vector_longer_name",v);
-
+*/
 /*
 Code for writing structs; does not work yet
 {

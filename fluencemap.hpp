@@ -1,5 +1,4 @@
-#ifndef FLUENCEMAP_INCLUDED
-#define FLUENCEMAP_INCLUDED
+#pragma once
 #include <inttypes.h>
 #include <map>
 
@@ -219,15 +218,6 @@ template<class T>class FluenceMap : public FluenceMapBase {
     // Element access
     double& operator[](PointIDType f)   { return F[PointIDLookupType(mesh)(f)]; }
 };
-//
-//class HitMap : public map<unsigned,unsigned long long> {
-//	public:
-//
-//	Blob toBinary() const;
-//	void fromBinary(const Blob&);
-//};
 
 typedef FluenceMap<FaceByPointID>  SurfaceFluenceMap;
 typedef FluenceMap<TetraByPointID> VolumeFluenceMap;
-
-#endif

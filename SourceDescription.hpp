@@ -1,166 +1,127 @@
-#ifndef SOURCE_INCLUDED
-#define SOURCE_INCLUDED
-#include "graph.hpp"
+#pragma once
 #include "newgeom.hpp"
-#include "Packet.hpp"
 
 #include <boost/iterator/transform_iterator.hpp>
 #include <boost/random/discrete_distribution.hpp>
-
 
 // Source classes (isotropic point, directed face, isotropic volume, directed point (pencil beam)
 // A collection of sources can also be a Source (SourceMulti)
 // Framework should be relatively simple to introduce new types
 
-class Source {
-    double w;
+class SourceDescription {
+	double w;
 
-    protected:
+public:
+	SourceDescription(double w_=1.0) : w(w_){}
+	double getPower() const { return w; }
 
-    public:
-    Source(double w_=1.0) : w(w_){}
-    double getPower() const { return w; }
-
-    SourceEmitter* getEmitter() const;
-
-    virtual string operator()() const=0;
-    virtual string timos_str(unsigned long long=0) const=0;
+	virtual string operator()() const=0;
+	virtual string timos_str(unsigned long long=0) const=0;
 	virtual ostream& print(ostream& os)=0;
 };
 
-class PointSource : virtual public Source {
-    pair<Point<3,double>, unsigned> origin;
+class PointSourceDescription : virtual public SourceDescription {
+	pair<Point<3,double>, unsigned> origin;
 
-    protected:
+public:
+	PointSourceDescription(const Point<3,double>& p_,double w_=1.0) : SourceDescription(w_),origin(make_pair(p_,0)){}
 
-    public:
-    PointSource(const Point<3,double>& p_,double w_=1.0) : Source(w_),origin(make_pair(p_,0)){}
-
-    virtual bool prepare(const TetraMesh& m);
-
-    Point<3,double> getOrigin() const { return origin.first; }
-    unsigned getTetraID() const { return origin.second; }
+	Point<3,double> getOrigin() const { return origin.first; }
+	unsigned getTetraID() const { return origin.second; }
 };
 
-class IsotropicSource : virtual public Source {
-    protected:
-
-    public:
-    IsotropicSource(double w_=1.0) : Source(w_){}
+class IsotropicSourceDescription : virtual public SourceDescription {
+public:
+	IsotropicSourceDescription(double w_=1.0) : SourceDescription(w_){}
 };
 
-class IsotropicPointSource : public IsotropicSource, public PointSource {
-    public:
-    IsotropicPointSource(Point<3,double>& p_,double w_=1.0) : PointSource(p_,w_){};
+class IsotropicPointSourceDescription : public IsotropicSourceDescription, public PointSourceDescription {
+public:
+	IsotropicPointSourceDescription(Point<3,double>& p_,double w_=1.0) : PointSourceDescription(p_,w_){};
 
-    virtual string operator()() const { return "Isotropic point source"; }
-    virtual string timos_str(unsigned long long=0) const;
+	virtual string operator()() const { return "Isotropic point source"; }
+	virtual string timos_str(unsigned long long=0) const;
 	virtual ostream& print(ostream&);
 };
 
-class PencilBeamSource : public PointSource {
-    Packet pkt;
-    int IDt,IDf;
-    public:
+class PencilBeamSourceDescription : public PointSourceDescription {
+	UnitVector<3,double> r;
+	int IDt,IDf;
+public:
 
-    PencilBeamSource(Ray<3,double> r_,double w=1.0) : PointSource(r_.getOrigin(),w),pkt(r_){ }
+	PencilBeamSourceDescription(Ray<3,double> r_,double w=1.0) : PointSourceDescription(r_.getOrigin(),w),r(r_.getDirection()){ }
 
-    PencilBeamSource(Point<3,double> p_,UnitVectorType d_,double w=1.0,int IDt_=0) : PointSource(p_,w),
-        pkt(Ray<3,double>(p_,uvectFrom(d_))),IDt(IDt_){ }
+	PencilBeamSourceDescription(Point<3,double> p_,UnitVector<3,double> d_,double w=1.0,int IDt_=0) : PointSourceDescription(p_,w),
+			r(d_),IDt(IDt_){ }
 
-    virtual string operator()() const { return "Pencil beam source"; }
-#ifndef DATABASE
-    virtual pair<Packet,unsigned> emit(RNG_Type&) const;
-#endif
-    virtual bool prepare(const TetraMesh& m);
+	virtual string operator()() const { return "Pencil beam source"; }
 
-    virtual string timos_str(unsigned long long=0) const;
+	virtual string timos_str(unsigned long long=0) const;
 
 	virtual ostream& print(ostream&);
 
-    unsigned getIDt() const { return IDt; }
+	unsigned getIDt() const { return IDt; }
 };
 
-ostream& operator<<(ostream& os,Source& src);
+ostream& operator<<(ostream& os,SourceDescription& src);
 
-class VolumeSource : public IsotropicSource {
-    // creates a random tetrahedral source by shearing the unit cube
-    double M[3][3];
-    double P0[3];
-    unsigned IDt;
+class VolumeSourceDescription : public IsotropicSourceDescription {
+	// creates a random tetrahedral source by shearing the unit cube
+	double M[3][3];
+	double P0[3];
+	unsigned IDt;
 
-    public:
-    VolumeSource(unsigned IDt_=0,double w=1.0) : Source(w),IDt(IDt_){}
-    virtual string timos_str(unsigned long long=0) const;
-    string operator()() const { return "Volume source"; }
+public:
+	VolumeSourceDescription(unsigned IDt_=0,double w=1.0) : SourceDescription(w),IDt(IDt_){}
+	virtual string timos_str(unsigned long long=0) const;
+	string operator()() const { return "Volume source"; }
 
-    bool prepare(const TetraMesh&);
-    virtual pair<Packet,unsigned> emit(RNG_Type& rng) const
-        {
-            Packet pkt;
-            pkt.setDirection(rng.draw_m128f3_uvect());
-            pkt.p = to_m128f(getOrigin(rng).first);
-            return make_pair(pkt,IDt);
-        }
 
-    virtual ostream& print(ostream&);
-    unsigned getIDt() const { return IDt; }
+
+	virtual ostream& print(ostream&);
+	unsigned getIDt() const { return IDt; }
 };
 
-class FaceSource : public Source {
-    Packet pkt;
-    FaceByPointID f;
-    unsigned IDt;
-    int IDf;
-    UnitVectorType n;
-    Point<3,double> P0;
-    double M[3][2];
+class FaceSourceDescription : public SourceDescription {
+	Packet pkt;
+	FaceByPointID f;
+	unsigned IDt;
+	int IDf;
+	UnitVector<3,double> n;
+	Point<3,double> P0;
+	double M[3][2];
 
-    protected:
-    virtual pair<Point<3,double>,unsigned> getOrigin(RNG_Type&) const;
-    public:
+public:
 
-    // if force_boundary is set, requires the face to be pointing in from an object boundary
-    virtual bool prepare(const TetraMesh& m) { return prepare(m,true); }
-    bool prepare(const TetraMesh&,bool force_boundary=true);
+	// if force_boundary is set, requires the face to be pointing in from an object boundary
+	//    virtual bool prepare(const TetraMesh& m) { return prepare(m,true); }
+	//    bool prepare(const TetraMesh&,bool force_boundary=true);
 
-    double w;
-    public:
-    FaceSource(FaceByPointID f_,double w_=1.0) : Source(w_),f(f_),IDt(0),IDf(0){}
-    virtual string operator()() const { return "Face Source"; }
-
-    virtual pair<Packet,unsigned> emit(RNG_Type&) const;
-	virtual ostream& print(ostream& os);
-    virtual string timos_str(unsigned long long=0) const;
-
-    unsigned getIDt() const { return IDt; }
-    FaceByPointID getIDps() const { return f; }
-};
-
-class SourceMulti : public Source {
-    vector<Source*> sources;
-    boost::random::discrete_distribution<unsigned> source_dist;
-    double w_total;
-
-    static double _f_getPower(Source* s){ return s->getPower(); }
-
-    public:
-    // Create from a pair of iterators that dereference to a Source*
-    template<class ConstIterator> SourceMulti(ConstIterator begin,ConstIterator end) :
-        sources(begin,end),
-        source_dist(boost::make_transform_iterator(begin,_f_getPower),
-            boost::make_transform_iterator(end,_f_getPower)),
-        w_total(0.0)
-        { for(; begin != end; ++begin) w_total += (*begin)->getPower(); }
-
-    virtual string operator()() const { return "Multiple sources"; }
-    virtual string timos_str(unsigned long long=0) const;
-
-    virtual bool prepare(const TetraMesh& m);
-
-    virtual pair<Packet,unsigned> emit(RNG_Type&) const;
+	double w;
+public:
+	FaceSourceDescription(FaceByPointID f_,double w_=1.0) : SourceDescription(w_),f(f_),IDt(0),IDf(0){}
+	virtual string operator()() const { return "Face Source"; }
 
 	virtual ostream& print(ostream& os);
+	virtual string timos_str(unsigned long long=0) const;
+
+	unsigned getIDt() const { return IDt; }
+	FaceByPointID getIDps() const { return f; }
 };
 
-#endif
+class SourceMultiDescription : virtual public SourceDescription {
+	vector<SourceDescription*> sources;
+	double w_total;
+
+public:
+	// Create from a pair of iterators that dereference to a Source*
+	template<class ConstIterator> SourceMultiDescription(ConstIterator begin,ConstIterator end) :
+	sources(begin,end),
+			w_total(0.0)
+			{ for(; begin != end; ++begin) w_total += (*begin)->getPower(); }
+
+	virtual string operator()() const { return "Multiple sources"; }
+	virtual string timos_str(unsigned long long=0) const { return ""; }
+
+	virtual ostream& print(ostream& os){ return os; };
+};

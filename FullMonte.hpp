@@ -1,6 +1,6 @@
 #pragma once
 #include "graph.hpp"
-#include "source.hpp"
+#include "SourceDescription.hpp"
 #include "Material.hpp"
 
 // simulator ID for database
@@ -13,9 +13,9 @@
 
 class SimGeometry {
 public:
-	TetraMesh 			mesh;
-	vector<Material> 	mats;
-	vector<Source*>		sources;
+	TetraMesh 					mesh;
+	vector<Material> 			mats;
+	vector<SourceDescription*>	sources;
 	unsigned IDc;					// TODO: Probably shouldn't be included here since it's particular to the database backend
 };
 

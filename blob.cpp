@@ -21,7 +21,7 @@ string SHA1_160_SUM::as_hex() const
 {
 	string s(41,'\0');
 	for(unsigned i=0;i<40;++i)
-		s[i] = to_hex_digit((string::operator[](i/2) >> ((1-(i%2))<<2))&0xf);
+		s[i] = to_hex_digit((string::operator[](i/2) >> ((1-(i%2))<<2)) & 0xf);
 	return s;
 }
 

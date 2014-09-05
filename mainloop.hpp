@@ -16,6 +16,9 @@
 
 #include "progress.hpp"
 
+#include "SourceEmitter.hpp"
+
+
 // Manager should be able to:
 //  report progress
 //  start/stop/pause
@@ -116,6 +119,8 @@ template<class Logger,class RNG>class ThreadManager : public AsyncWorker {
 	RunConfig 	cfg;
 	RunOptions 	opts;
 
+	SourceEmitter<RNG>* emitter=NULL;
+
 	Logger& logger;
 
 	typedef decltype(get_worker(*(Logger*)(NULL))) LoggerWorker;
@@ -140,7 +145,7 @@ protected:
     typedef decltype(__get_result_tuple2(std::declval<Logger>())) results_type;
 
     ThreadManager(const SimGeometry& geom_,const RunConfig& cfg_,const RunOptions& opts_,Logger& logger_,const vector<Observer*>& obs_)
-    	: AsyncWorker(obs_), geom(geom_),cfg(cfg_),opts(opts_),logger(logger_),seeds_generator(opts_.randseed)
+    	: AsyncWorker(obs_), geom(geom_),cfg(cfg_),opts(opts_),emitter(SourceEmitterFactory<RNG>(geom_.mesh,geom_.sources)),logger(logger_),seeds_generator(opts_.randseed)
     {
     	// allocate aligned space for the workers
     	posix_memalign((void**)&loggers, 64, opts.Nthreads*sizeof(LoggerWorker));
@@ -159,7 +164,7 @@ protected:
     	for(unsigned i=0;i<opts.Nthreads;++i)
     	{
     		new (loggers+i) LoggerWorker(get_worker(logger));
-    		new (workers+i) WorkerThread<LoggerWorker,RNG>(geom,worker_cfg,opts,loggers[i],seeds_generator());
+    		new (workers+i) WorkerThread<LoggerWorker,RNG>(emitter,geom,worker_cfg,opts,loggers[i],seeds_generator());
     		seeds_generator.discard(100);
     	}
 
@@ -221,6 +226,7 @@ template<class Logger,class RNG>void ThreadManager<Logger,RNG>::_impl_finish_asy
 
 
 template<class Logger,class RNG> class WorkerThread : public AsyncWorker {
+	const SourceEmitter<RNG> *emitter;
 	const SimGeometry& 	geom;
 	const RunConfig    	cfg;
 	const RunOptions& 	opts;
@@ -268,7 +274,7 @@ template<class Logger,class RNG> class WorkerThread : public AsyncWorker {
 
 			for(;i<N && sim_en; ++i)
 			{
-		        tmp = geom.sources[0]->emit(rng);
+		        tmp = emitter->emit(rng);
 				doOnePacket(pkt,IDt);
 			}
 
@@ -296,7 +302,8 @@ public:
     }
 
     /// Note RunConfig is copied, all else is referenced from the parent
-	WorkerThread(const SimGeometry& geom_,const RunConfig cfg_,const RunOptions& opts_,Logger& logger_,const Seed& seed_) :
+	WorkerThread(SourceEmitter<RNG>* emitter_,const SimGeometry& geom_,const RunConfig cfg_,const RunOptions& opts_,Logger& logger_,const Seed& seed_) :
+		emitter(emitter_),
 		geom(geom_),
 		cfg(cfg_),
 		opts(opts_),

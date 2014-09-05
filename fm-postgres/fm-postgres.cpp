@@ -186,7 +186,7 @@ Oid PGConnection::createLargeObject(const string& s)
 
 
     // begin transaction
-    PQexec(conn,"begin");
+    PQexec(conn,"BEGIN");
 
     // create large object & check
     lobjid = lo_creat(conn, INV_READ | INV_WRITE);
@@ -219,7 +219,7 @@ Oid PGConnection::createLargeObject(const string& s)
     cout << "Writing checksum (size " << sum.size() << "): " << sum << endl;
     execParams("INSERT INTO blobsums(blobid,sha1_160) VALUES ($1,$2);",boost::tuples::make_tuple(lobjid,sum));
 
-    PQexec(conn,"end");
+    PQexec(conn,"COMMIT");
 
     return lobjid;
 }
@@ -229,7 +229,7 @@ int PGConnection::getLargeObjectSize(Oid lobjid)
     if(!conn)
         throw PGConnectionException("Database is not open at ");// ##__FILE__ ":" ##__LINE__ );
 
-    PQexec(conn,"begin");
+    PQexec(conn,"BEGIN");
 
     // open and check
     int lobj_fd = lo_open(conn,lobjid,INV_READ);
@@ -244,7 +244,7 @@ int PGConnection::getLargeObjectSize(Oid lobjid)
     lo_lseek(conn,lobj_fd,0,SEEK_END);
     int Nb_total = lo_tell(conn,lobj_fd);
     lo_lseek(conn,lobj_fd,0,SEEK_SET);
-    PQexec(conn,"end");
+    PQexec(conn,"COMMIT");
 
     return Nb_total;
 }
@@ -295,7 +295,7 @@ string PGConnection::loadLargeObject(Oid lobjid)
     // we only get here if checksum is invalid or caching is disabled
 
     // begin transaction
-    PQexec(conn,"begin");
+    PQexec(conn,"BEGIN");
 
     // open and check
     lobj_fd = lo_open(conn,lobjid,INV_READ);
@@ -329,7 +329,7 @@ string PGConnection::loadLargeObject(Oid lobjid)
     }
     cout << "\rRead " << setw(8) << Nb_read << " of " << setw(8) << Nb_total << " bytes (100.00%)" << endl << flush;
 
-    PQexec(conn,"end");
+    PQexec(conn,"COMMIT");
 
     if (globalopts::db::blobCachePath != "")
     {
@@ -415,6 +415,7 @@ PGConnection::ResultType PGConnection::execParams(const char* cmd,int nParams,co
         if(status != PGRES_COMMAND_OK && status != PGRES_TUPLES_OK)
         {
             errmsg << "Failed to execute prepared statement; message: " << PQresultErrorMessage(res) << endl;
+            errmsg << "  Query string: '" << cmd << '\'' << endl;
             throw PGConnectionException(errmsg.str());
         }
     }

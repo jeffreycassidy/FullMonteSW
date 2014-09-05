@@ -6,7 +6,7 @@
 #include "Logger.hpp"
 #include "graph.hpp"
 #include "optics.hpp"
-#include "source.hpp"
+#include "SourceDescription.hpp"
 
 #include "mainloop.hpp"
 

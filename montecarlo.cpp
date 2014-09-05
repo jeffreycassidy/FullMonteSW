@@ -13,7 +13,7 @@
 
 #include "FullMonte.hpp"
 
-#include "source.hpp"
+#include "SourceDescription.hpp"
 #include "io_timos.hpp"
 #include <signal.h>
 #include <boost/program_options.hpp>

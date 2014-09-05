@@ -1,19 +1,21 @@
 #include <iostream>
 #include <iomanip>
-#include "fm-postgres/fm-postgres.hpp"
+#include "../fm-postgres/fm-postgres.hpp"
 
-#include "fm-postgres/fmdbexportcase.hpp"
-#include "fmdb.hpp"
+#include "../fm-postgres/fmdbexportcase.hpp"
+#include "../fmdb.hpp"
 
 #include <boost/program_options.hpp>
 #include <boost/program_options/errors.hpp>
 
 #include <boost/numeric/ublas/matrix.hpp>
 
+#include "MatFile.hpp"
+
 namespace po=boost::program_options;
 using namespace std;
 
-#include "Sequence.hpp"
+#include "../Sequence.hpp"
 
 
 namespace __cmdline_opts {
@@ -86,7 +88,7 @@ int main(int argc,char **argv)
     // do the export into a matrix of size (Nt, Nruns)
     unsigned long Nt=307000;
     unsigned long dtype=2;
-    boost::numeric::ublas::matrix<double> M(Nt,v.size());
+    boost::numeric::ublas::matrix<double,boost::numeric::ublas::column_major> M(Nt,v.size());
 
     unsigned j=0;
     for(unsigned IDr : v)
@@ -121,7 +123,7 @@ int main(int argc,char **argv)
 
     // check column sums
     j=0;
-    for(boost::numeric::ublas::matrix<double>::iterator2 c_it=M.begin2(); c_it != M.end2(); ++c_it,++j)
+    for(boost::numeric::ublas::matrix<double,boost::numeric::ublas::column_major>::iterator2 c_it=M.begin2(); c_it != M.end2(); ++c_it,++j)
     {
     	double sum=0.0;
     	for(auto it = c_it.begin(); it != c_it.end(); ++it)
@@ -130,5 +132,20 @@ int main(int argc,char **argv)
     }
 
     // write matrix into .mat file
+
+    string fn("op.mat");
+    	ofstream os(fn.c_str());
+
+    	MatFile::Header hdr;
+
+    	os.write((const char*)&hdr,sizeof(MatFile::Header));
+
+    	unsigned i=0;
+    	for(unsigned r=0; r<5; ++r)
+    		for(unsigned c=0; c<2; ++c)
+    			M(r,c) = i++;
+
+    	writeElement(os,"matrix5_2",M);
+
 	return 0;
 }

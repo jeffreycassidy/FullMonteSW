@@ -1,6 +1,5 @@
-#ifndef IO_TIMOS_INCLUDED
-#define IO_TIMOS_INCLUDED
-#include "source.hpp"
+#pragma once
+#include "SourceDescription.hpp"
 #include "graph.hpp"
 
 #include "linefile.hpp"
@@ -14,10 +13,8 @@ template<class T>double readTIMOSOutputFlatten(const TetraMesh& mesh,FluenceMap<
 
 void readTIMOSOutput(string fn,const TetraMesh&,SurfaceFluenceMap& surf,VolumeFluenceMap& vol);
 
-vector<Source*> readTIMOSSource(string fn);
+vector<SourceDescription*> readTIMOSSource(string fn);
 vector<Material> readTIMOSMaterials(string fn);
 bool writeTIMOSMaterials(string fn,const vector<Material>& mat);
 
-bool writeTIMOSSource(string fn,const vector<Source*>& s,long long packetcount=0);
-
-#endif
+bool writeTIMOSSource(string fn,const vector<SourceDescription*>& s,long long packetcount=0);
