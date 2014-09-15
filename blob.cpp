@@ -15,13 +15,14 @@ char to_hex_digit(unsigned i)
 		return i-10+'A';
 	else
 		return i+'0';
+	return '?';
 }
 
 string SHA1_160_SUM::as_hex() const
 {
 	string s(41,'\0');
 	for(unsigned i=0;i<40;++i)
-		s[i] = to_hex_digit((string::operator[](i/2) >> ((1-(i%2))<<2)) & 0xf);
+		s[i] = to_hex_digit((array<unsigned char,20>::operator[](i/2) >> ((1-(i%2))<<2)) & 0xf);
 	return s;
 }
 

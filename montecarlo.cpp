@@ -19,12 +19,9 @@
 #include <boost/program_options.hpp>
 #include <boost/program_options/errors.hpp>
 #include <boost/timer/timer.hpp>
-
 #include "Notifier.hpp"
 
 #include "Sequence.hpp"
-
-#include "TupleStuff.hpp"
 
 #include "LoggerMemTrace.cpp"
 
@@ -69,11 +66,7 @@ typedef std::tuple<
 		>
 		LoggerType;
 
-
-//typedef typename ThreadManager<LoggerType,RNG_SFMT_AVX>::results_type ResultsType;
-typedef decltype(__get_result_tuple2(std::declval<LoggerType>())) ResultsType;
-
-pair<boost::timer::cpu_times,ResultsType> runSimulation(const SimGeometry& sim,const RunConfig& cfg,const RunOptions& opts,const vector<Observer*>& obs_);
+pair<boost::timer::cpu_times> runSimulation(const SimGeometry& sim,const RunConfig& cfg,const RunOptions& opts,const vector<Observer*>& obs_);
 
 void banner()
 {
@@ -86,7 +79,6 @@ void runCaseByID(PGConnection* dbconn,const vector<Observer*>& obs,unsigned IDca
 
 namespace __cmdline_opts {
     	unsigned long long Npkt;
-    	//unsigned randseed;
     	unsigned Nthread;
     	double prwin;
     	double wmin;
@@ -221,12 +213,6 @@ int main(int argc,char **argv)
 }
 
 /*
-void runSuite(PGConnection* dbconn,unsigned IDflight,unsigned IDsuite)
-{
-    SimGeometry geom;
-    RunConfig 	cfg;
-    RunOptions	opts;
-
     // load the suite name & info from database
     PGConnection::ResultType res = dbconn->execParams("SELECT name,comment FROM suites WHERE suiteid=$1;",
         boost::tuples::make_tuple(IDsuite));
@@ -267,58 +253,6 @@ void runSuite(PGConnection* dbconn,unsigned IDflight,unsigned IDsuite)
             wmin,
             Nthread
             ), i);
-
-        cout << "Setting globalopts::wmin=" << scientific << wmin << " globalopts::Nthread=" << Nthread << " globalopts::randseed=" << seed << endl;
-
-	    cout << "Packets: " << bigIntSuffix(cfg.Npackets) << endl;
-
-	    opts.Nthreads=Nthread;
-	    opts.randseed=seed;
-
-        cfg.prwin=globalopts::prwin;
-        cfg.wmin=wmin;
-
-        cout << "Case ID (" << IDcase << ") with " << bigIntSuffix(cfg.Npackets) << " packets" << endl;
-        cout << "  Source set (" << IDsg << ") from " << sourcefn << endl;
-
-            geom.mesh.fromBinary(dbconn->loadLargeObject(pdata_oid),dbconn->loadLargeObject(tdata_oid));
-
-            vector<Source*> sources;
-            Source* src;
-
-            exportSources(*dbconn,IDsg,sources);
-            exportMaterials(*dbconn,IDmatset,geom.mats);
-
-            if(sources.size() > 1)
-                src = new SourceMulti(sources.begin(),sources.end());
-            else
-                src = sources.front();
-
-            src->prepare(geom.mesh);
-
-
-            // write record to database
-            unsigned runid=0;
-            if (globalopts::dbwrite)
-            	runid = db_startRun(dbconn,".","args",IDsuite,caseorder,getpid(),IDflight);
-
-
-            RunResults res = runSimulation(geom,cfg,opts);
-
-            // write results to database
-            if(globalopts::dbwrite)
-            	db_finishRun(dbconn,runid,res);
-        }
-        catch(PGConnection::PGConnectionException& e)
-        {
-            cerr << "Database exception: " << e.msg << endl;
-        }
-        catch(string& s)
-        {
-            cerr << "Caught an exception string: " << s << endl;
-        }
-    }
-}
 */
 
 
@@ -351,11 +285,11 @@ void runCaseByID(PGConnection* dbconn,const vector<Observer*>& obs,unsigned IDca
 
 	geom.IDc=IDcase;
 
-	pair<boost::timer::cpu_times,ResultsType> p = runSimulation(geom,cfg,opts,obs);
+	pair<boost::timer::cpu_times,vector<const LoggerResults*>> p = runSimulation(geom,cfg,opts,obs);
 }
 
 
-pair<boost::timer::cpu_times,ResultsType> runSimulation(const SimGeometry& geom,const RunConfig& cfg,const RunOptions& opts,const vector<Observer*>& obs)
+pair<boost::timer::cpu_times,vector<const LoggerResults*>> runSimulation(const SimGeometry& geom,const RunConfig& cfg,const RunOptions& opts,const vector<Observer*>& obs)
 {
 	// Set up logger
     LoggerType logger = make_tuple(
@@ -381,7 +315,7 @@ pair<boost::timer::cpu_times,ResultsType> runSimulation(const SimGeometry& geom,
     while(!man.done());
 
     boost::timer::cpu_times elapsed = man.finish_async();
-    auto results = __get_result_tuple2(logger);
+    vector<const LoggerResults*> results = man.getResults();
 
     return make_pair(elapsed,results);
 }

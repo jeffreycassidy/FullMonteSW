@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 #include "linefile.hpp"
 #include "newgeom.hpp"
 #include "fluencemap.hpp"
@@ -125,10 +126,10 @@ string FluenceMapBase::toBinary() const
 }
 
 // convert back from binary format
-bool FluenceMapBase::fromBinary(const string& blob)
+bool FluenceMapBase::fromBinary(const string& blob,unsigned long N_)
 {
     unsigned N=blob.size();
-    const uint8_t *p=blob.data();
+    const uint8_t *p=(const uint8_t*)blob.data();
     const uint8_t * const p_end = p+N;
 
     cout << "Blob has " << N << " bytes (" << p_end-p << " ptrdiff), " << N/12 << " elements" << endl;
@@ -154,7 +155,7 @@ bool FluenceMapBase::fromBinary(istream& is,unsigned long N)
     	F.insert(make_pair(id,val));
     }
 
-    if (is.eof() && N != -1 && N != i)
+    if (is.eof() && N != -1U && N != i)
     {
     	cerr << "ERROR: Ran out of bytes to read in FluenceMapBase::fromBinary" << endl;
     	return false;
@@ -184,32 +185,6 @@ void FluenceMapBase::writeASCII(string fn)
     for(const_iterator it=begin(); it != end(); ++it)
         os << it->first << ' ' << it->second << endl;
 }
-
-//Blob HitMap::toBinary() const
-//{
-//	Blob b(size()*12);	// 12= uint32 (4) + uint64 (8)
-//	uint8_t* p=b.getWritePtr();
-//	for(const_iterator it=begin(); it != end(); ++it)
-//	{
-//		*(uint32_t*)p 		= it->first;
-//		*(uint64_t*)(p+4)	= it->second;
-//		p+= 12;
-//	}
-//	return b;
-//}
-//
-//void HitMap::fromBinary(const Blob& b)
-//{
-//	iterator it;
-//	clear();
-//	if (b.getSize() == 0)
-//		cerr << "Error, zero size for hit map!" << endl;
-//	else if (b.getSize() % 12 != 0)
-//		cerr << "Error, size not a multiple of 12 for hit map!" << endl;
-//	else
-//		for(const uint8_t* p=b.getPtr(); p<b.getEndPtr(); p+=12)
-//			it = insert(it,make_pair(*(const uint32_t*)p,*(const uint64_t*)(p+4)));
-//}
 
 // converts a fluence map of (ID,value) into a vector where v[ID]=value
 vector<double> FluenceMapBase::toVector(unsigned N) const

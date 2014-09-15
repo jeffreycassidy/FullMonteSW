@@ -94,29 +94,10 @@ class FluenceMapBase {
 
     public:
 
-//
-//    template<class Archive>void save(Archive& ar,const unsigned int version)
-//    {
-//    }
-//
-//    template<>void save(stringstream& ss,const unsigned int version)
-//    {
-//    }
-//
-//    template<class Archive>void load(Archive& ar,const unsigned int version)
-//    {
-//    }
-//
-//    template<>void load(stringstream& ss,const unsigned int version)
-//    {
-//    }
-
-
     virtual ~FluenceMapBase(){}
     class InvalidMesh {};
     class InvalidBlobSize {};
 
-//    FluenceMapBase(unsigned long long packets_=0) : packets(packets_){}
     FluenceMapBase(const string& fn_,unsigned long long packets_=0) : mesh(NULL){ loadASCII(fn_,packets); }
     FluenceMapBase(const TetraMesh* mesh_=NULL,unsigned long long packets_=0) : packets(packets_),mesh(mesh_){}
     FluenceMapBase(const vector<double>& d,unsigned long long packets_=0);
@@ -168,7 +149,7 @@ class FluenceMapBase {
 
     // Serialization to/from binary format
     string    toBinary()              const;
-    bool    fromBinary(const string&);
+    bool    fromBinary(const string&,unsigned long N=-1);
     bool	fromBinary(istream& is,unsigned long N=-1);
 };
 

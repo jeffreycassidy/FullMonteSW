@@ -9,6 +9,8 @@
 #include <utility>
 #include <cassert>
 
+
+#include <initializer_list>
 #include "helpers.hpp"
 
 using namespace std;
@@ -155,6 +157,7 @@ template<int D,class T>class Point : public array<T,D>
 	public:
 
 	Point()                { array<T,D>::fill(T()); };
+	Point(const std::initializer_list<double>& il_){ copy(il_.begin(),il_.end(),array<T,D>::begin()); }
 	Point(const Point& P_) : array<T,D>(P_){};
 	Point(const T* p_)     { copy(p_,p_+3,array<T,D>::begin()); }
 
@@ -281,6 +284,7 @@ template<unsigned D,class T>class UnitVector : public Vector<D,T>
         for(unsigned i=0;i<D;++i)
         	(*this)[i]=v[i];
     };
+    UnitVector(const std::initializer_list<T>& il){ copy(il.begin(),il.end(),Vector<D,T>::begin()); }
 
     UnitVector operator-() const { UnitVector t(*this); for(unsigned i=0;i<D;++i) t[i] = -t[i]; return t; }
 
@@ -288,16 +292,12 @@ template<unsigned D,class T>class UnitVector : public Vector<D,T>
     {
     	os << '<' << uv[0];
     	for(unsigned i=1;i<D;++i)
-    		os << ',' << uv[1];
+    		os << ',' << uv[i];
     	return os << '>';
     }
 };
 
 UnitVector<3,double> uvect3FromPolar(double phi,double lambda);
-
-// set tolerance for checking unit vectors
-//template<>
-//Tolerance<double> UnitVector<3,double>::eps<>(1.0,1e-9);
 
 template<int D,class T> Vector<D,T> cross(const Vector<D,T>& a,const Vector<D,T>& b)
 {
@@ -412,19 +412,6 @@ template<int D,class T>ostream& operator<<(const GeomManip& gm,const Point<D,T>&
 }
 
 extern GeomManip plainwhite;
-
-/*
-inline __m128 to_m128f(Point<3,double> p)
-{
-    return _mm_set_ps(0.0,p[2],p[1],p[0]);
-}
-
-inline __m128 to_m128f(UnitVector<3,double> v)
-{
-    return _mm_set_ps(0.0,v[2],v[1],v[0]);
-}
-*/
-
 
 std::istream& operator>>(std::istream& is,TetraByPointID& P);
 std::istream& operator>>(std::istream& is,FaceByPointID& F);

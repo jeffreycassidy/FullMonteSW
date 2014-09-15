@@ -28,8 +28,6 @@ TetraMesh::TetraMesh(const double* p,unsigned Np_,const unsigned* t,unsigned Nt_
     P.resize(Np_+1);
     T_m.clear();
     T_m.resize(Nt_+1);
-    T_r.clear();
-    T_r.resize(Nt_+1);
     T_p.clear();
     T_p.resize(Nt_+1);
 
@@ -38,7 +36,6 @@ TetraMesh::TetraMesh(const double* p,unsigned Np_,const unsigned* t,unsigned Nt_
     P[0] = Point<3,double>();
     T_m[0] = 0;
     T_p[0] = TetraByPointID(zeros);
-    T_r[0] = 0;
 
     for(unsigned i=1;i<=Np_;++i,p+=3)
         P[i] = Point<3,double>(p);
@@ -47,7 +44,6 @@ TetraMesh::TetraMesh(const double* p,unsigned Np_,const unsigned* t,unsigned Nt_
     {
         T_p[i]=TetraByPointID(t);        // direct copy from unsigned*
         T_m[i]=t[4];
-        T_r[i]=T_m[i];
     }
 
 	tetrasToFaces(F,T_p,P,T_f);
@@ -549,10 +545,6 @@ StepResult Tetra::getIntersection(__m128 p,__m128 d,__m128 s) const
     dot    = _mm_add_ps(dot,    _mm_mul_ps(nz,_mm_shuffle_ps(d,d,_MM_SHUFFLE(2,2,2,2))));
     h1 = _mm_add_ps(h1, _mm_mul_ps(nz,_mm_shuffle_ps(p,p,_MM_SHUFFLE(2,2,2,2))));
 
-#ifdef VERBOSE_PRINT
-    cout << "Heights pre-sub: " << h1 << endl;
-#endif
-
     // height (=C - p dot n) should be negative if inside tetra, may occasionally be (small) positive due to numerical error
     // dot negative means facing outwards
     h1 = _mm_sub_ps(C,h1);
@@ -560,12 +552,6 @@ StepResult Tetra::getIntersection(__m128 p,__m128 d,__m128 s) const
 
     // dist = height/dot
     __m128 dist = _mm_div_ps(h1,dot);
-
-#ifdef VERBOSE_PRINT
-    cout << "Dots:      " << dot << endl;
-    cout << "Heights:   " << h1 << endl;
-    cout << "Distances: " << dist << endl;
-#endif
 
 //  selects dist where dist>0 and dot<0 (facing outwards), s otherwise
     // very, very rarely ( < 1e-8? ) gives an error where no intersection is found
@@ -595,10 +581,6 @@ StepResult Tetra::getIntersection(__m128 p,__m128 d,__m128 s) const
     result.idx = min_idx_val.first;					// will be 4 if no min found
     result.distance=_mm_min_ps(min_idx_val.second,s);
     result.Pe = _mm_add_ps(p,_mm_mul_ps(d,result.distance));
-
-#ifdef VERBOSE_PRINT
-    cout << "Expected winner: " << result.idx << endl;
-#endif
 
     return result;
 }
@@ -804,3 +786,38 @@ bool TetraMesh::checkIntegrity(bool printResults) const
     return status_ok;
 }
 
+
+
+/* Returns a TriSurf containing the boundary surface of material matID.
+ *
+ */
+
+TriSurf TetraMesh::extractMaterialBoundary(unsigned matID) const
+{
+	// permutation vector; 0 means don't permute
+    vector<unsigned long> Pmap(P.size(),0);				// Pmap[i] = j means that P[i] has moved to P_out[j]
+    vector<unsigned long> Fmap(F.size(),0);				// zero value means not output
+
+    vector<Point<3,double>> P_out(1,P[0]);
+    vector<FaceByPointID> F_out(1,FaceByPointID(0,0,0));
+
+    for(unsigned IDf=0; IDf<F.size(); ++IDf)
+    {
+    	if(faceBoundsRegion(matID,IDf))
+    	{
+    		Fmap[IDf]=F_out.size();
+    		F_out.emplace_back(F_p[IDf]);
+    		for(unsigned& IDp : F_out.back())
+    		{
+    			if (!Pmap[IDp]) // point hasn't been mapped yet
+    			{
+    				Pmap[IDp]=P_out.size();
+    				P_out.emplace_back(P[IDp]);
+    			}
+    			IDp=Pmap[IDp];			// map the face entry
+    		}
+    	}
+    }
+
+    return TriSurf(P_out,F_out);
+}

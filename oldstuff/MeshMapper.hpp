@@ -103,28 +103,6 @@ template<class Idx,class ItemIterator>boost::zip_iterator<boost::tuple<boost::co
     return make_zip_iterator(boost::make_tuple(boost::counting_iterator<Idx>(i0_),it));
 }
 
-
-/** Provides an adaptor for vector such that the iterator returns a boost::tuple<Idx,T> containing the index and the vector element */
-
-template<class Idx,class T>class vector_index_adaptor {
-    const vector<T>& v;
-    Idx offset;
-
-    public:
-
-    vector_index_adaptor(vector<T>& v_,Idx offset_) : v(v_),offset(offset_){}
-
-    typedef boost::tuple<Idx,T> element;
-
-    typedef boost::zip_iterator<boost::tuple<boost::counting_iterator<Idx>,typename vector<T>::const_iterator> > const_iterator;
-
-    const_iterator begin() { return make_indexed_iterator(v.begin(),offset); }
-    const_iterator   end() { return make_indexed_iterator(v.end(),offset+v.size()); }
-
-};
-
-template<class Idx,class Item>Item GetPayload(const boost::tuple<Idx,Item>& i){ return get<1>(i); }
-
 /** Provides facilities for remapping a subset of points according to a lookup table for point IDs.
  * The lookup is provided as a vector<unsigned long>. If lut[i]=j  ==>  i -> j   (current index i, output index j)
  * Zero destination value means the points are not included in the output set

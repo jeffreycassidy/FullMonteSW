@@ -10,8 +10,6 @@
 #include <condition_variable>
 #include <thread>
 
-#include "runresults.hpp"
-
 #include "Notifier.hpp"
 
 #include "progress.hpp"
@@ -40,8 +38,13 @@ protected:
 
 	void notify_start();
 	void notify_finish();
-	template<unsigned I=0,typename... Ts>typename std::enable_if<(I<sizeof...(Ts)),void>::type notify_result(const std::tuple<Ts...>&) const;
-	template<unsigned I=0,typename... Ts>typename std::enable_if<(I==sizeof...(Ts)),void>::type notify_result(const std::tuple<Ts...>&) const;
+
+	void notify_result(const vector<const LoggerResults*>& v) const
+	{
+		for(Observer* o : obs)
+			for(const LoggerResults* lr : v)
+				o->notify_result(lr);
+	}
 
 public:
 	Worker(const vector<Observer*>& obs_ = vector<Observer*>()) : obs(obs_){}
@@ -50,16 +53,6 @@ public:
 
 	virtual pair<unsigned long long,unsigned long long> getProgress() const=0;
 };
-
-template<unsigned I,typename... Ts>typename std::enable_if<(I<sizeof...(Ts)),void>::type Worker::notify_result(const std::tuple<Ts...>& t) const
-{
-	for(Observer* o : obs)
-		handle_result(*o,get<I>(t));
-	notify_result<I+1>(t);
-}
-
-template<unsigned I,typename... Ts>typename std::enable_if<(I==sizeof...(Ts)),void>::type Worker::notify_result(const std::tuple<Ts...>& t) const
-{}
 
 
 
@@ -72,7 +65,6 @@ class AsyncWorker : public Worker {
 protected:
 	virtual void _impl_start_async()=0;
 	virtual void _impl_finish_async()=0;
-	virtual void _impl_notify_results(Observer* o)=0;
 
 public:
 	AsyncWorker(const vector<Observer*>& obs_=vector<Observer*>()) : Worker(obs_){}
@@ -100,9 +92,6 @@ public:
 
 		for(Observer* o : obs)
 			o->runfinish(elapsed);
-
-		for(Observer* o : obs)
-			_impl_notify_results(o);
 
 		return elapsed;
 	}
@@ -134,15 +123,8 @@ protected:
 
 	virtual void _impl_start_async();
 	virtual void _impl_finish_async();
-	virtual void _impl_notify_results(Observer* o)
-	{
-		auto results = __get_result_tuple2(logger);
-		o->notify_result(results);
-	}
 
     public:
-
-    typedef decltype(__get_result_tuple2(std::declval<Logger>())) results_type;
 
     ThreadManager(const SimGeometry& geom_,const RunConfig& cfg_,const RunOptions& opts_,Logger& logger_,const vector<Observer*>& obs_)
     	: AsyncWorker(obs_), geom(geom_),cfg(cfg_),opts(opts_),emitter(SourceEmitterFactory<RNG>(geom_.mesh,geom_.sources)),logger(logger_),seeds_generator(opts_.randseed)
@@ -214,6 +196,8 @@ template<class Logger,class RNG>void ThreadManager<Logger,RNG>::_impl_finish_asy
 	// wait for all threads to finish
     for(unsigned i=0;i<opts.Nthreads;++i)
     	workers[i].finish_async();
+
+    vector<const LoggerResults*> res = get_results(logger);
 }
 
 
@@ -249,8 +233,6 @@ template<class Logger,class RNG> class WorkerThread : public AsyncWorker {
 
     float * hg_buffers[HG_BUFFERS];			// should be float * const but GCC whines about not being initialized
     unsigned hg_next[HG_BUFFERS];
-
-    virtual void _impl_notify_results(Observer*){}
 
 
     /// Main body which does all the work

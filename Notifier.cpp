@@ -35,12 +35,12 @@ void PGObserver::runfinish(boost::timer::cpu_times t)			// ignores runid argumen
 //					runid,err,log));
 }
 
-void OStreamObserver::_impl_notify_result(const LoggerResults& lr)
+void OStreamObserver::notify_result(const LoggerResults& lr)
 {
 	lr.summarize(cout);
 }
 
-void PGObserver::_impl_notify_result(const LoggerResults& lr)
+void PGObserver::notify_result(const LoggerResults& lr)
 {
 	string type=lr.getTypeString();
 	map<string,void(PGObserver::*)(const LoggerResults*)>::const_iterator it=op_map.find(type);

@@ -1,8 +1,7 @@
-#ifndef RANDOM_AVX_INCLUDED
-#define RANDOM_AVX_INCLUDED
+#pragma once
 #include <immintrin.h>
 #include <stdlib.h>
-
+#include <iostream>
 #include <string>
 
 #include <boost/math/constants/constants.hpp>
@@ -153,7 +152,7 @@ inline __m256 RNG_SFMT_AVX::draw_m256f8_pm1()
     __m256i exp = _mm256_set1_epi32(exp_float24);
     __m256 offs = _mm256_set1_ps(3.0);
 
-    rnd = _mm256_srli_epi32(rnd,9);
+    rnd = _emu_mm256_srli_epi32(rnd,9);
 
     __m256 rndf = _mm256_or_ps(_mm256_castsi256_ps(rnd),_mm256_castsi256_ps(exp));
     return _mm256_sub_ps(rndf,offs);
@@ -165,7 +164,7 @@ inline __m256 RNG_SFMT_AVX::draw_m256f8_u01()
     __m256i  exp = _mm256_set1_epi32(exp_float);
     __m256 offs = _mm256_set1_ps(1.0);
 
-    rnd = _mm256_srli_epi32(rnd,9);
+    rnd = _emu_mm256_srli_epi32(rnd,9);
     __m256 rndf = _mm256_or_ps(_mm256_castsi256_ps(rnd),_mm256_castsi256_ps(exp));
     return _mm256_sub_ps(rndf,offs);
 }
@@ -330,5 +329,3 @@ inline __m128 RNG_SFMT_AVX::draw_m128f3_uvect()
 	uv3d_count += 4;
 	return u;
 }
-
-#endif

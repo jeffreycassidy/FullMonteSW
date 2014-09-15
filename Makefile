@@ -1,8 +1,11 @@
 # base options only
-GCC_OPTS=-Wall -mfpmath=sse -Wstrict-aliasing=2 -g -mavx -fpermissive -std=c++11 -fPIC -fabi-version=6
-LIBS=-lboost_program_options -lboost_timer -lpq -lcrypto -lboost_system -lSFMT -lfmpg
+#no-deprecated is for SHA1 hash
+GCC_OPTS=-Wall -mfpmath=sse -Wstrict-aliasing=2 -g -mavx -fpermissive -std=c++11 -fPIC -fabi-version=6 -Wno-deprecated-declarations -Wa,-q
+LIBS=-lboost_program_options -lboost_timer -lpq -lcrypto -lboost_system -lboost_chrono -lSFMT -lfmpg
 LIBDIRS=-L/usr/local/lib -L/usr/local/lib/boost -LSFMT -L. -Lfm-postgres
 INCLDIRS=-I/usr/local/boost -I/usr/local/include -I. -I/usr/local/include/boost -I/usr/local/include/pgsql -I..
+
+SWIG=/sw/bin/swig
 
 # Switch debug on/off
 GCC_OPTS += -DNDEBUG -O3
@@ -13,8 +16,14 @@ ifeq ($(OS),Darwin)
 GCC_OPTS += -DPLATFORM_DARWIN
 endif
 
-#GXX=/sw/bin/g++-4
-GXX=g++
+ifndef GXX
+	GXX=g++
+endif
+
+default: Test_LineSourceEmitter
+
+Test_LineSourceEmitter: Test_LineSourceEmitter.cpp LineSourceEmitter.o newgeom.o RandomAVX.o graph.o Face.o Packet.o
+	$(GXX) $(GCC_OPTS) $(INCLDIRS) $(LIBDIRS) $(LIBS) -o $@ $^
 
 all: montecarlo
 
@@ -26,35 +35,6 @@ Testing: Testing.cpp RandomAVX.hpp
 
 Test_AccumulationArray: Test_AccumulationArray.cpp AccumulationArray.hpp
 	$(GXX) $(GCC_OPTS) $(INCLDIRS) -o $@ $^
-	
-test-ExtractBoundary: Test_ExtractBoundary
-	./Test_ExtractBoundary
-
-Test_ExtractBoundary: Test_ExtractBoundary.cpp Export_VTK_XML.cpp Export_VTK_XML.hpp MeshMapper.hpp
-	$(GXX) -Wall -O3 -std=c++11 -mavx -msse4 -I/usr/local/include -I/usr/local/include/pgsql -I. -I/usr/local/include/boost -lboost_program_options -lboost_timer -lboost_system -lpq -lmontecarlo -lfmpg -g -L/usr/local/lib/boost -lxerces-c -L. \
-		Test_ExtractBoundary.cpp Export_VTK_XML.cpp -o $@
-
-test-PointMapper: Test_PointMapper
-	./Test_PointMapper
-
-Test_PointMapper: Test_PointMapper.cpp
-	$(GXX) -Wall -O3 -std=c++11 -mavx -I/usr/local/include -g $^ -o $@
-
-test: XMLExport
-	./XMLExport
-	vtk vtk_testXML.tcl
-
-testXML: XMLWriter
-	./XMLWriter
-	vtk vtk_testXML.tcl
-
-XMLWriter: XMLWriter.cpp
-	$(GXX) -Wall -O3 -std=c++11 -g $^ -lxerces-c -o $@
-
-XMLExport: XMLExport.cpp Export_VTK_XML.cpp
-	$(GXX) -Wall -O3 -std=c++11 -I/usr/local/include/pgsql -I/usr/local/include/boost -I. -mavx -g -L. \
-		-lpq -lcrypto -lmontecarlo -lfmpg -L/usr/local/boost/lib -lboost_system -lboost_timer -lboost_program_options -lxerces-c \
-		XMLExport.cpp Export_VTK_XML.cpp -o $@
 
 all: montecarlo
 
@@ -76,8 +56,8 @@ random.o: random.cpp random.hpp
 montecarlo: graph.o newgeom.o face.o helpers.o SourceDescription.o montecarlo.o LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o mainloop.o blob.o fmdb.o sse.o random.o RandomAVX.o LoggerConservation.o LoggerEvent.o LoggerVolume.o FullMonte.o Notifier.o
 	$(GXX) $(GCC_OPTS) $^ $(LIBS) $(LIBDIRS) -o $@
 
-libmontecarlo.so: graph.o newgeom.o face.o helpers.o SourceDescription.o montecarlo.o LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o mainloop.o blob.o fmdb.o sse.o random.o RandomAVX.o LoggerConservation.o LoggerEvent.o LoggerVolume.o Notifier.o FullMonte.o
-	$(GXX) -shared -fPIC $^ -Lfm-postgres -lfmpg -o $@
+libmontecarlo.so: graph.o newgeom.o face.o helpers.o SourceDescription.o montecarlo.o LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o mainloop.o blob.o fmdb.o sse.o RandomAVX.o LoggerConservation.o LoggerEvent.o LoggerVolume.o Notifier.o FullMonte.o
+	$(GXX) -shared -fPIC $^ -LSFMT -lpq -lboost_program_options -lboost_system -lboost_timer -lboost_chrono -Lfm-postgres -lfmpg -lSFMT -o $@
 
 ReadTracer: ReadTracer.cpp
 	$(GXX) -Wall -O3 -g -std=c++11 -mavx -lxerces-c $< Export_VTK_XML.cpp -o $@
@@ -99,5 +79,12 @@ remote-%: sync-AVXMath sync-fm-postgres sync-. sync-SFMT sync-DBUtils
 remote-debug: remote-montecarlo
 	ssh $(FULLMONTE_BUILD_USER)@$(FULLMONTE_BUILD_HOST)/$(FULLMONTE_BUILD_PATH)/$* .
 	
-timetest: timetest.cpp
-	$(GXX) -g -Wall -O3 -std=c++11 -I/usr/local/include $^ -o $@
+Test_RegionSet: Test_RegionSet.cpp RegionSet.cpp RegionSet.hpp
+	$(GXX) -g -Wall -I/usr/local/include -O3 -std=c++11 -o $@ $^
+
+TetraMeshTCL_wrap.cxx: TetraMeshTCL.i
+	$(SWIG) -c++ -tcl -o $@ $^
+	
+TetraMeshTCL.so: TetraMeshTCL_wrap.cxx TetraMeshTCL.cpp TriSurf.cpp VTKInterface.cpp	
+	$(GXX) -g -Wall -shared -I/usr/local/include -I/usr/local/include/vtk -L/usr/local/lib -L/usr/local/lib/tcltk -lvtkCommonCore-6.1 -lvtkRenderingCoreTCL-6.1 -lvtkCommonDataModelTCL-6.1 -lvtkCommonCoreTCL-6.1 -lvtkRenderingCore-6.1 -lvtkCommonDataModel-6.1 -I/usr/local/include/pgsql -fPIC -Wno-deprecated-declarations -std=c++11 -lmontecarlo -lfmpg -L. -Lfm-postgres -lboost_program_options -ltcl -lboost_system -DUSE_TCL_STUBS -ltclstub8.5 -o $@ $^
+	

@@ -4,9 +4,9 @@ ifndef GXX
 	GXX=g++
 endif
 
-INCLDIRS=-I/usr/local/include/pgsql -I/usr/local/include
-LIBDIRS=-L../fm-postgres -L.. -L/usr/local/lib/boost
-LIBS=-lfmpg -lmontecarlo -lboost_program_options -lboost_system -lboost_timer
+INCLDIRS=-I/usr/local/include/pgsql -I/usr/local/include -I..
+LIBDIRS=-L../fm-postgres -L.. -L/usr/local/lib/boost -L/usr/local/lib
+LIBS=-lfmpg -lmontecarlo -lboost_program_options -lboost_system -lboost_timer -lpq
 
 exportResult: exportResult.cpp libmontecarlo.so
 	$(GXX) $(GCC_OPTS) $(INCLDIRS) $^ $(LIBS) $(LIBDIRS) -o $@

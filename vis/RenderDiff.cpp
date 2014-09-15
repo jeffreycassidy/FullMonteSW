@@ -23,7 +23,6 @@
 #include "../fm-postgres/fmdbexportcase.hpp"
 #include "fm_vtk.hpp"
 
-#include "../blob.hpp"
 #include "../histogram.hpp"
 #include "../fluencemap.hpp"
 #include "../newgeom.hpp"

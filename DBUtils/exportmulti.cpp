@@ -17,7 +17,7 @@ using namespace std;
 
 #include "../Sequence.hpp"
 
-boost::numeric::ublas::matrix<double,boost::numeric::ublas::column_major> getResultMatrix(PGConnection* dbconn,const vector<unsigned>& v,unsigned long Nt,unsigned dtype);
+boost::numeric::ublas::matrix<double,boost::numeric::ublas::column_major> getResultMatrix(PGConnection* dbconn,const vector<unsigned>& v,unsigned dtype);
 
 
 namespace __cmdline_opts {
@@ -63,7 +63,7 @@ int main(int argc,char **argv)
     	return 0;
     }
 
-    cout << "Outfile file: " << __cmdline_opts::ofile << endl;
+    cout << "Outfile: " << __cmdline_opts::ofile << endl;
     cout << "Runs:";
 
     vector<unsigned> v = __cmdline_opts::runs.as_vector();
@@ -76,6 +76,7 @@ int main(int argc,char **argv)
     cout << "DB host: " << globalopts::db::host << endl;
     cout << "DB port: " << globalopts::db::port << endl;
     cout << "DB name: " << globalopts::db::name << endl;
+    cout << "DB blob cache: " << globalopts::db::blobCachePath << endl;
 
     boost::shared_ptr<PGConnection> dbconn;
 
@@ -88,7 +89,7 @@ int main(int argc,char **argv)
     	return -1;
     }
 
-
+    try {
 
 
     // write matrix into .mat file
@@ -98,62 +99,88 @@ int main(int argc,char **argv)
 	os.write((const char*)&hdr,sizeof(MatFile::Header));
 
     if(vm.count("surface"))
-    	writeElement(os,"surface_energy",getResultMatrix(dbconn.get(),v,600000,2));
+    	writeElement(os,"surface_energy",getResultMatrix(dbconn.get(),v,1));
 
     if(vm.count("volume"))
-    	writeElement(os,"volume_energy",getResultMatrix(dbconn.get(),v,600000,1));
+    	writeElement(os,"volume_energy",getResultMatrix(dbconn.get(),v,2));
+    } catch(const string& s)
+    {
+    	cout << "Failed with exception string '" << s << '\'' << endl;
+    	return -1;
+    }
 
 	return 0;
 }
 
 
-boost::numeric::ublas::matrix<double,boost::numeric::ublas::column_major> getResultMatrix(PGConnection* dbconn,const vector<unsigned>& v,unsigned long Nt,unsigned dtype)
+boost::numeric::ublas::matrix<double,boost::numeric::ublas::column_major> getResultMatrix(PGConnection* dbconn,const vector<unsigned>& v,unsigned dtype)
 {
+	// find number of elements
+	unsigned long N;
+	unsigned IDm;
 
-  boost::numeric::ublas::matrix<double,boost::numeric::ublas::column_major> M(Nt,v.size());
+	PGConnection::ResultType res = dbconn->execParams("SELECT meshid FROM runs_data WHERE runid=$1 AND datatype=$2",boost::make_tuple(v.front(),dtype));
+	unpackSinglePGRow(res,boost::tuples::tie(IDm));
 
-  cout << "=== Exporting data type  " << dtype << endl;
+	string meshname,meshdesc;
+	unsigned Np,Nt,Nf;
+	Oid pdata_oid,tdata_oid;
 
-  unsigned j=0;
-  for(unsigned IDr : v)
-  {
-  	FluenceMapBase *fmap = exportResultSet(dbconn,IDr,dtype);
-  	cout << "  Run " << IDr << " with " << fmap->getNNZ() << " nonzero elements" << flush;
-  	double sum=0.0;
+	res = dbconn->execParams("SELECT name, npoints, ntetras, nfaces, pdata_oid, tdata_oid, description FROM meshes WHERE meshid=$1",boost::make_tuple(IDm));
+	unpackSinglePGRow(res,boost::tuples::tie(meshname,Np,Nt,Nf,pdata_oid,tdata_oid,meshdesc));
 
-  	if(!fmap)
-  	{
-  		cerr << "Invalid run; no data returned" << endl;
-  				return M;
-  	}
+	switch(dtype){
+	case 1: N = Nf; break;
+	case 2: N = Nt; break;
+	default:
+		cerr << "Invalid data type ID " << dtype << endl;
+		exit(-1);
+	}
 
-  	// copy elementwise from the sparse iterator
-  	unsigned N=0;
-  	for(FluenceMapBase::const_iterator it=fmap->begin(); it != fmap->end(); ++it)
-  	{
-  		sum += it->second;
-  		++N;
-  		if (it->first >= Nt)
-  			cerr << "Invalid element index " << it->first << ">" << Nt << endl;
-  		else
-  			M(it->first,j) = it->second;
-  	}
-  	j++;
+	boost::numeric::ublas::matrix<double,boost::numeric::ublas::column_major> M(N,v.size());
 
-  	cout << ": " << sum << " (" << N << ')'<< endl;
+	cout << "=== Exporting data type  " << dtype << endl;
 
-  	delete fmap;
-  }
+	unsigned j=0;
+	for(unsigned IDr : v)
+	{
+		FluenceMapBase *fmap = exportResultSet(dbconn,IDr,dtype);
+		cout << "  Run " << IDr << " with " << fmap->getNNZ() << " nonzero elements, " << N << " total" << flush;
+		double sum=0.0;
 
-  // check column sums
-  j=0;
-  for(boost::numeric::ublas::matrix<double,boost::numeric::ublas::column_major>::iterator2 c_it=M.begin2(); c_it != M.end2(); ++c_it,++j)
-  {
-  	double sum=0.0;
-  	for(auto it = c_it.begin(); it != c_it.end(); ++it)
-  		sum += *it;
-  	cout << "  Column " << j << " sum is " << setprecision(6) << sum << endl;
-  }
+		if(!fmap)
+		{
+			cerr << "Invalid run; no data returned" << endl;
+			return M;
+		}
 
-  return M;
+		// copy elementwise from the sparse iterator
+		unsigned el_count=0;
+		for(FluenceMapBase::const_iterator it=fmap->begin(); it != fmap->end(); ++it)
+		{
+			sum += it->second;
+			++el_count;
+			if (it->first >= N)
+				cerr << "Invalid element index " << it->first << ">" << N << endl;
+			else
+				M(it->first,j) = it->second;
+		}
+		j++;
+
+		cout << ": " << sum << " (" << el_count << ')'<< endl;
+
+		delete fmap;
+	}
+
+	// check column sums
+	j=0;
+	for(boost::numeric::ublas::matrix<double,boost::numeric::ublas::column_major>::iterator2 c_it=M.begin2(); c_it != M.end2(); ++c_it,++j)
+	{
+		double sum=0.0;
+		for(auto it = c_it.begin(); it != c_it.end(); ++it)
+			sum += *it;
+		cout << "  Column " << j << " sum is " << setprecision(6) << sum << endl;
+	}
+
+	return M;
 }

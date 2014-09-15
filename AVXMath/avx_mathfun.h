@@ -119,24 +119,24 @@ inline __m256 _mm256_abs_ps(__m256 x)
 #define M256_SPLIT(a)  __m128  a##lo=_mm256_extractf128_ps(a,0),    a##hi=_mm256_extractf128_ps(a,1);
 #define M256I_SPLIT(a) __m128i a##lo=_mm256_extractf128_si256(a,0), a##hi=_mm256_extractf128_si256(a,1);
 
-#define M256I_EQUIV2(Cmd) inline __m256i _mm256_##Cmd(__m256i a,__m256i b){ \
+#define M256I_EQUIV2(Cmd) inline __m256i _emu_mm256_##Cmd(__m256i a,__m256i b){ \
 	M256I_SPLIT(a)															\
 	M256I_SPLIT(b)															\
 	return _mm256_set_m128i( _mm_##Cmd(ahi,bhi), _mm_##Cmd(alo,blo) );		\
 }
 
-#define M256_EQUIV2(Cmd) inline __m256 _mm256_##Cmd(__m256 a,__m256 b){ \
+#define M256_EQUIV2(Cmd) inline __m256 _emu_mm256_##Cmd(__m256 a,__m256 b){ \
 	M256_SPLIT(a)															\
 	M256_SPLIT(b)															\
 	return _mm256_set_m128( _mm_##Cmd(ahi,bhi), _mm_##Cmd(alo,blo) );		\
 }
 
-#define M256_EQUIV1IMM(Cmd) inline __m256 _mm256_##Cmd(_m256 a,int imm){\
+#define M256_EQUIV1IMM(Cmd) inline __m256 _emu_mm256_##Cmd(_m256 a,int imm){\
 	M256_SPLIT(a)															\
 	return _mm256_set_m128( _mm_##Cmd(ahi,imm), _mm_##Cmd(alo,imm));		\
 }
 
-#define M256I_EQUIV1IMM(Cmd) inline __m256i _mm256_##Cmd(__m256i a,int imm){\
+#define M256I_EQUIV1IMM(Cmd) inline __m256i _emu_mm256_##Cmd(__m256i a,int imm){\
 	M256I_SPLIT(a)															\
 	return _mm256_set_m128i( _mm_##Cmd(ahi,imm), _mm_##Cmd(alo,imm));		\
 }
@@ -743,7 +743,7 @@ inline std::pair<__m256,__m256> sincos_psp(__m256 x){
   emm2 = _mm256_cvttps_epi32(y);
 
   /* j=(j+1) & (~1) (see the cephes sources) */
-  emm2 = _mm256_add_epi32(emm2, _mm256_castps_si256(_pi32_1));
+  emm2 = _emu_mm256_add_epi32(emm2, _mm256_castps_si256(_pi32_1));
   emm2 = _mm256_castps_si256(_mm256_and_ps(_mm256_castsi256_ps(emm2), _pi32_inv1));
   y = _mm256_cvtepi32_ps(emm2);
 
@@ -751,7 +751,7 @@ inline std::pair<__m256,__m256> sincos_psp(__m256 x){
 
   /* get the swap sign flag for the sine */
   emm0 = _mm256_castps_si256(_mm256_and_ps(_mm256_castsi256_ps(emm2), _pi32_4));
-  emm0 = _mm256_slli_epi32(emm0, 29);
+  emm0 = _emu_mm256_slli_epi32(emm0, 29);
   __m256 swap_sign_bit_sin = _mm256_castsi256_ps(emm0);
 
   /* get the polynom selection mask for the sine*/
@@ -820,9 +820,9 @@ inline std::pair<__m256,__m256> sincos_psp(__m256 x){
 
 //#ifdef USE_SSE2
 
-  emm4 = _mm256_sub_epi32(emm4, _mm256_castps_si256(_pi32_2));
+  emm4 = _emu_mm256_sub_epi32(emm4, _mm256_castps_si256(_pi32_2));
   emm4 = _mm256_castps_si256(_mm256_andnot_ps(_mm256_castsi256_ps(emm4), _pi32_4));
-  emm4 = _mm256_slli_epi32(emm4, 29);
+  emm4 = _emu_mm256_slli_epi32(emm4, 29);
 
 
   __m256 sign_bit_cos = _mm256_castsi256_ps(emm4);

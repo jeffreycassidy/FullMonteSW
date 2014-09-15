@@ -1,10 +1,12 @@
 cmake_minimum_required(VERSION 2.6)
 
-LINK_DIRECTORIES( /usr/lib ../fm-postgres /usr/local/lib . )
+LINK_DIRECTORIES( /usr/lib ../fm-postgres /usr/local/lib . ..)
 
-ADD_DEFINITIONS (-DSUPPRESS_AVX )
+#ADD_DEFINITIONS (-DSUPPRESS_AVX )
 
-SET(CMAKE_CXX_FLAGS "-O3 -g -Wall -std=c++11 -fabi-version=6 -msse4")
+SET(CXX "/sw/bin/g++-4")
+
+SET(CMAKE_CXX_FLAGS "-O3 -g -Wall -std=c++11 -msse4")
 
 INCLUDE_DIRECTORIES(/usr/local/pgsql/include ../fm-postgres ..)
 
@@ -19,8 +21,9 @@ IF(Boost_FOUND)
     LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
 ENDIF()
 
-ADD_EXECUTABLE(RenderDiff RenderDiff.cpp  ../histogram.cpp ../blob.o ../source.o ../RandomAVX.o ../Notifier.o ../SFMT/SFMT.o ../FullMonte.o)
+ADD_EXECUTABLE(RenderDiff RenderDiff.cpp  ../histogram.cpp)
 TARGET_LINK_LIBRARIES(RenderDiff
+    montecarlo 
     vtkCommonCore
     vtkRenderingCore
     vtkRenderingFreeTypeOpenGL

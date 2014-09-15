@@ -10,24 +10,13 @@
 using namespace std;
 
 class Observer {
-
-	virtual void _impl_notify_result(const LoggerResults&)=0;
-
 public:
-	Observer(){}
-
 	virtual ~Observer(){}
 
 	virtual void runstart(const SimGeometry&,const RunConfig& cfg,const RunOptions& opts,unsigned IDc){};
 	virtual void runfinish(boost::timer::cpu_times t){};
 
-	template<unsigned I=0,typename... Ts>typename std::enable_if<(I<sizeof...(Ts)),void>::type notify_result(const std::tuple<Ts...>& t)
-	{
-		this->_impl_notify_result(get<I>(t));
-		notify_result<I+1>(t);
-	}
-	template<unsigned I=0,typename... Ts>typename std::enable_if<(I==sizeof...(Ts)),void>::type notify_result(const std::tuple<Ts...>& t)
-		{}
+	virtual void notify_result(const LoggerResults* r){};
 };
 
 class OStreamObserver : public Observer {
@@ -35,13 +24,13 @@ class OStreamObserver : public Observer {
 
 	static map<string,void(*)(const LoggerResults*)> op_map;
 
-	void _impl_notify_result(const LoggerResults& lr);
-
 public:
 	OStreamObserver(ostream& os_) : os(os_){}
 
 	virtual void runstart(const SimGeometry&,const RunConfig& cfg,const RunOptions& opts,unsigned IDc);
 	virtual void runfinish(boost::timer::cpu_times t);
+	virtual void notify_result(const LoggerResults& lr);
+
 };
 
 
@@ -64,7 +53,6 @@ class PGObserver : public Observer {
 
 	static map<string,void(PGObserver::*)(const LoggerResults*)> op_map;
 
-	virtual void _impl_notify_result(const LoggerResults& lr);
 
 public:
 
@@ -74,4 +62,5 @@ public:
 	virtual void runstart(const SimGeometry&,const RunConfig& cfg,const RunOptions& opts,unsigned IDc);
 	virtual void runfinish(boost::timer::cpu_times t);
 
+	virtual void notify_result(const LoggerResults& lr);
 };

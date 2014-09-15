@@ -3,9 +3,8 @@ ifndef GXX
     GXX=g++
 endif
 
-#GXX=/sw/bin/g++-4
-GCC_OPTS=-Wall -mfpmath=sse -fPIC -g -std=c++11 -msse4 $(EXTRA_OPTS) -fabi-version=6 -DSQUELCH_AVX
-LIBS=-lboost_program_options -lboost_system -lboost_iostreams -lpq -lcrypto
+GCC_OPTS=-Wall -mfpmath=sse -fPIC -g -std=c++11 -msse4 $(EXTRA_OPTS) -fabi-version=6 -Wno-deprecated-declarations
+LIBS=-lboost_program_options -lboost_system -lboost_iostreams -lpq -lcrypto -lmontecarlo
 LIBDIRS=-L/usr/local/lib -L/usr/local/lib/boost -L. -L..
 INCLDIRS=-I/usr/local/boost -I/usr/local/include -I/usr/local/include/boost -I/usr/local/include/pgsql -I..
 
@@ -26,26 +25,22 @@ ifeq ($(OS),Darwin)
 GCC_OPTS += -DPLATFORM_DARWIN
 endif
 
-#all: fmdbimportmesh fmdb_export_mesh tupletest
+
+default: libfmpg.so
+
 all: tupletest fmdbexportcase fmdbimportmesh libfmpg.so
 
 getMaterials: getMaterials.cpp libfmpg.so
 	g++ $(GCC_OPTS) -lfmpg -lmontecarlo $(LIBS) $(LIBDIRS) $(INCLDIRS) $< -o $@
 
-libfmpg.so: fm-postgres.o fmdbexportcase.o ../SourceDescription.o
-	$(GXX) $(LIBDIRS) $(LIBS) -Wall -fPIC -shared -o $@ $^
+libfmpg.so: fm-postgres.o fmdbexportcase.o ../blob.o ../fluencemap.o ../graph.o ../SourceDescription.o ../face.o ../newgeom.o
+	$(GXX) $(LIBDIRS) -Wall -lpq -lboost_program_options -lcrypto -fPIC -shared -o $@ $^
 
-fmdbexportcase: ../newgeom.o ../face.o fmdbexportcase.cpp exportcase_test.cpp ../graph.o fm-postgres.cpp ../helpers.cpp ../io_timos.cpp ../source.cpp fm-postgres.cpp ../linefile.cpp
+fmdbexportcase: fmdbexportcase.cpp exportcase_test.cpp
 	$(GXX) -ggdb -Wall $(GCC_OPTS) $(LIBS) $(INCLDIRS) -o $@ $^
 
-fmdbimportmesh: ../newgeom.o ../face.o fmdbimportmesh.cpp ../graph.o fm-postgres.cpp ../helpers.cpp ../io_timos.cpp ../source.cpp ../linefile.cpp
+fmdbimportmesh: fmdbimportmesh.cpp
 	g++ -ggdb -Wall $(LIBS) $(INCLDIRS) -o $@ $^
-
-libdyn.so: dyn.cpp
-	g++ -Wall -fPIC -shared  -o $@ $^
-
-dyn_main: dyn_main.cpp
-	g++ $(GCC_OPTS) $(LIBS) $(LIBDIRS) $^ -o $@ -ldl
 
 %.o: %.cpp *.hpp
 	$(GXX) -fPIC $(GCC_OPTS) $(INCLDIRS) -c $*.cpp

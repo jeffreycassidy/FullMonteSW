@@ -135,3 +135,17 @@ public:
 
 	virtual ostream& print(ostream& os) const;
 };
+
+class LineSourceDescription : virtual public SourceDescription {
+protected:
+	Point<3,double> a,b;
+public:
+	LineSourceDescription(const Point<3,double>& a_,const Point<3,double>& b_) : a(a_),b(b_){}
+
+	virtual string operator()() const { return "Line source"; }
+	virtual string timos_str(unsigned long long=0) const { return "???Line source???"; }
+	virtual ostream& print(ostream& os) const
+	{
+		return os << "Line source from " << a << " to " << b;
+	}
+};

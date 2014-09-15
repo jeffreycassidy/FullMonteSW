@@ -26,16 +26,15 @@ namespace globalopts {
 namespace globalopts {
     namespace db {
 
-pair<string,string> dbenv[] = {
-    make_pair("FULLMONTE_DBHOST","dbhost"),
+const map<string,string> envmapper{
+	make_pair("FULLMONTE_DBHOST","dbhost"),
     make_pair("FULLMONTE_DBUSER","dbuser"),
     make_pair("FULLMONTE_DBPORT","dbport"),
     make_pair("FULLMONTE_DBNAME","dbname"),
     make_pair("FULLMONTE_DBBLOBCACHE","bcache")
 };
-const map<string,string> envmapper(dbenv,dbenv+5);
 
-const string empty_str("");
+string empty_str("");
 
 const string& dbEnvironmentMap(const string& s)
 {
@@ -116,7 +115,7 @@ template<>void unpackPGVariable(const char* p,boost::tuples::null_type&){}
 template<>void unpackPGVariable(const char* p,FaceByPointID& d){ unpackPGVariable(p,(array<unsigned,3>&)d); }
 template<>void unpackPGVariable(const char* p,Point<3,double>& P){ unpackPGVariable(p,(array<double,3>&)P); }
 template<>void unpackPGVariable(const char* p,SHA1_160_SUM& s){
-	string::iterator it=s.begin();
+	array<unsigned char,20>::iterator it=s.begin();
 	for(unsigned i=0;i<40;i+=2)
 		*(it++) = (from_hex_digit(p[i])<<4) + from_hex_digit(p[i+1]);
 }
@@ -257,6 +256,9 @@ string PGConnection::loadLargeObject(Oid lobjid)
     if(!conn)
         throw PGConnectionException("Database is not open at ");// ##__FILE__ ":" ##__LINE__ );
 
+    if(globalopts::db::verboseBlobCache)
+    	cout << "INFO: Verbose blob cache reporting for large object " << lobjid << endl;
+
     if (globalopts::db::blobCachePath != "")    // if caching is enabled
     {
         struct stat buf;
@@ -267,7 +269,7 @@ string PGConnection::loadLargeObject(Oid lobjid)
             if (!globalopts::db::validateBlobCacheSum)  // just return data if not checking checksums
             {
                 if (globalopts::db::verboseBlobCache)
-                    cout << "Fetching large object ID=" << lobjid << " from cache, no checksum validation" << endl;
+                    cout << "Fetching large object ID=" << lobjid << " from cache (" << fn.str() << ", no checksum validation" << endl;
                 return b_file;
             }
 
@@ -288,9 +290,15 @@ string PGConnection::loadLargeObject(Oid lobjid)
                         cout << "Loaded large object ID=" << lobjid << " from cache, checksum OK" << endl;
                     return b_file;
                 }
+                else
+                	cerr << "ERROR: Checksum mismatch" << endl;
             }
         }
+        else if (globalopts::db::verboseBlobCache)
+        	cout << "INFO: Cache entry does not exist for " << fn.str() << endl;
     }
+    else
+    	cout << "INFO: Blob caching disabled" << endl;
 
     // we only get here if checksum is invalid or caching is disabled
 
@@ -335,9 +343,21 @@ string PGConnection::loadLargeObject(Oid lobjid)
     {
         if(globalopts::db::verboseBlobCache)
             cout << "Overwriting database checksum value and cache file for large object ID=" << lobjid << endl;
-        execParams("DELETE FROM blobsums WHERE blobid=$1;",boost::tuples::make_tuple(lobjid));
-        execParams("INSERT INTO blobsums(blobid,sha1_160) VALUES ($1,$2);",boost::tuples::make_tuple(lobjid,SHA1_160_SUM(s)));
-        writeBinary(fn.str(),s);
+        try {
+        	execParams("DELETE FROM blobsums WHERE blobid=$1;",boost::tuples::make_tuple(lobjid));
+        	execParams("INSERT INTO blobsums(blobid,sha1_160) VALUES ($1,$2);",boost::tuples::make_tuple(lobjid,SHA1_160_SUM(s)));
+        }
+        catch(const std::string& s)
+        {
+        	cerr << "Caught exception string: " << s << endl;
+        }
+        try {
+        	writeBinary(fn.str(),s);
+        }
+        catch(const std::string& s)
+        {
+        	cerr << "ERROR: Write failed with cause\"" << s << "\"" << endl;
+        }
     }
 
     return s;

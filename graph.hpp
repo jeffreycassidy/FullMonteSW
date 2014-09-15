@@ -6,6 +6,9 @@
 #include <vector>
 #include <map>
 #include <inttypes.h>
+#include <functional>
+
+#include "TriSurf.hpp"
 
 #include <boost/shared_array.hpp>
 
@@ -85,16 +88,13 @@ struct Tetra {
     bool pointWithin(__m128);
 
     
-    StepResult getIntersection(const Ray<3,double>& r,double s,unsigned IDfe=0) const;
+    //StepResult getIntersection(const Ray<3,double>& r,double s,unsigned IDfe=0) const;
     StepResult getIntersection(__m128,__m128,__m128 s) const;
     
-} __attribute__ ((aligned(64))) ;
-
-
+} __attribute__ ((aligned(64)));
 
 class TetraMesh {
     vector<unsigned>            T_m;        // tetra -> material mapping
-    vector<unsigned>            T_r;        // tetra -> region mapping
 	vector<Point<3,double> >    P;          // point vector
 	vector<TetraByFaceID>	    T_f;        // tetra -> 4 face IDs
 	vector<TetraByPointID>      T_p;        // tetra -> 4 point IDs
@@ -185,7 +185,7 @@ class TetraMesh {
         vecFaceID_Tetra(Nf_+1),tetras(Nt_+1){}
 	TetraMesh(string,TetraFileType);
 	TetraMesh(const vector<Point<3,double> >& P_,const vector<TetraByPointID>& T_p_,const vector<unsigned>& T_m_)
-		: T_m(T_m_),T_r(T_m),P(P_),T_p(T_p_) { tetrasToFaces(F,T_p,P,T_f); }
+		: T_m(T_m_),P(P_),T_p(T_p_) { tetrasToFaces(F,T_p,P,T_f); }
     TetraMesh(const double*,unsigned Np,const unsigned*,unsigned Nt);
     ~TetraMesh();
 
@@ -216,7 +216,7 @@ class TetraMesh {
 
     Tetra                   getTetra(unsigned IDt) const { return tetras[IDt]; }
     unsigned                getMaterial(unsigned IDt) const { return T_m[IDt]; }
-    unsigned                getRegion(unsigned IDt) const { return T_r[IDt]; }
+    //unsigned                getRegion(unsigned IDt) const { return T_r[IDt]; }
 
     // returns the tetra that the given face points into
     unsigned                getTetraIDFromFaceID(int IDf) const
@@ -231,9 +231,6 @@ class TetraMesh {
     double                  getTetraVolume(unsigned IDt) const { return getTetraVolume(T_p[IDt]); }
 
     const vector<Point<3,double> >& getPoints() const { return P; }
-
-	// walk the graph (test code)
-	void walk(Point<3,double>,const UnitVector<3,double>&,double) const;
 
 	// find nearest point or enclosing tetra
 	unsigned findEnclosingTetra(const Point<3,double>&) const;
@@ -255,11 +252,18 @@ class TetraMesh {
     // does a number of data-structure integrity checks
     bool checkIntegrity(bool printResults=true) const;
 
+    bool faceBoundsRegion(unsigned region,int IDf) const {
+        	pair<unsigned,unsigned> p = vecFaceID_Tetra[abs(IDf)];		// Get the two incident tetras
+        	unsigned r0 = T_m[p.first], r1 = T_m[p.second];				// check material types
+        	return r0!=r1 && (r1==region || r0==region);
+        }
+
+    /// Creates a copy of the points and faces comprising the boundary of given material
+    TriSurf extractMaterialBoundary(unsigned matID) const;
+
     // functions for saving tetramesh representations
     pair<unsigned,boost::shared_array<const uint8_t> > tetrasAsBinary() const;
     pair<unsigned,boost::shared_array<const uint8_t> > pointsAsBinary() const;
-
-    friend MeshMapper listSurface(const TetraMesh*,unsigned);
 };
 
 

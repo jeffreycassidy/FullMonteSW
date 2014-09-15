@@ -1,7 +1,7 @@
 #pragma once
 #include "fm-postgres/fm-postgres.hpp"
 #include "fluencemap.hpp"
-#include "runresults.hpp"
+//#include "runresults.hpp"
 #include <boost/timer/timer.hpp>
 #include "FullMonte.hpp"
 

@@ -233,7 +233,7 @@ template<class T>void writeElement(ostream& os,string name,const typename boost:
 	typedef typename boost::numeric::ublas::matrix<T,boost::numeric::ublas::column_major>::const_iterator2 ColIterator;
 
 	// Iterate through array and write values
-	for(RowIterator begin_r=M.begin1(),end_r=M.end1(); begin_r != end_r; ++begin_r)
-		for(ColIterator begin_c=begin_r.begin(), end_c=begin_r.end(); begin_c != end_c; ++begin_c)
-			os.write((const char*)&(*begin_c),MatFile::type_traits<T>::bytesize);
+	for(ColIterator begin_c=M.begin2(),end_c=M.end2(); begin_c != end_c; ++begin_c)
+		for(RowIterator begin_r=begin_c.begin(), end_r=begin_c.end(); begin_r != end_r; ++begin_r)
+			os.write((const char*)&(*begin_r),MatFile::type_traits<T>::bytesize);
 }

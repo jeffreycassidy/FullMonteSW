@@ -13,6 +13,9 @@ getstats
 logtest
 *.vtk
 *.o
+*.so
+*.dSYM
+*.a
 *.gch
 *.s
 doxy
@@ -49,8 +52,10 @@ sandbox/tuple_drop
 cyl
 isops
 Convolve
-
+*.swp
 outfile.*
 output
 timetest
 exportmulti
+TetraMeshTCL_wrap.cxx
+

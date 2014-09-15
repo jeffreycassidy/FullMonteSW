@@ -180,8 +180,6 @@ FluenceMapBase* exportResultSet(PGConnection* conn,unsigned IDr,unsigned dType,c
     switch(dType){
         case 1: data = new SurfaceFluenceMap(mesh); break;
         case 2: data = new VolumeFluenceMap(mesh);  break;
-        //case 3: data = new {};
-        //case 4: data = new {};
         default: throw string("Error in exportResultSet: invalid datatype");
     }
 
