@@ -66,7 +66,7 @@ typedef std::tuple<
 		>
 		LoggerType;
 
-pair<boost::timer::cpu_times> runSimulation(const SimGeometry& sim,const RunConfig& cfg,const RunOptions& opts,const vector<Observer*>& obs_);
+boost::timer::cpu_times runSimulation(const SimGeometry& sim,const RunConfig& cfg,const RunOptions& opts,const vector<Observer*>& obs_);
 
 void banner()
 {
@@ -285,11 +285,11 @@ void runCaseByID(PGConnection* dbconn,const vector<Observer*>& obs,unsigned IDca
 
 	geom.IDc=IDcase;
 
-	pair<boost::timer::cpu_times,vector<const LoggerResults*>> p = runSimulation(geom,cfg,opts,obs);
+	boost::timer::cpu_times p = runSimulation(geom,cfg,opts,obs);
 }
 
 
-pair<boost::timer::cpu_times,vector<const LoggerResults*>> runSimulation(const SimGeometry& geom,const RunConfig& cfg,const RunOptions& opts,const vector<Observer*>& obs)
+boost::timer::cpu_times runSimulation(const SimGeometry& geom,const RunConfig& cfg,const RunOptions& opts,const vector<Observer*>& obs)
 {
 	// Set up logger
     LoggerType logger = make_tuple(
@@ -317,5 +317,5 @@ pair<boost::timer::cpu_times,vector<const LoggerResults*>> runSimulation(const S
     boost::timer::cpu_times elapsed = man.finish_async();
     vector<const LoggerResults*> results = man.getResults();
 
-    return make_pair(elapsed,results);
+    return elapsed;
 }

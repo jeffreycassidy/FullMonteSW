@@ -11,7 +11,7 @@
 #include <thread>
 
 #include "Notifier.hpp"
-
+#include "oldstuff/TupleStuff.hpp"
 #include "progress.hpp"
 
 #include "SourceEmitter.hpp"
@@ -114,6 +114,10 @@ template<class Logger,class RNG>class ThreadManager : public AsyncWorker {
 
 	typedef decltype(get_worker(*(Logger*)(NULL))) LoggerWorker;
 
+	typedef decltype(get_results_tuple(std::declval<Logger>())) ResultsType;
+
+	ResultsType* results=NULL;
+
 	LoggerWorker* loggers;
 	WorkerThread<LoggerWorker,RNG>* workers;
 
@@ -180,6 +184,14 @@ protected:
     virtual void stop(){  cerr << "ERROR: Can't stop yet" << endl; }
     virtual void resume(){ cerr << "ERROR: Can't resume yet" << endl; }
 
+    vector<const LoggerResults*> getResults() const
+		{
+    		vector<const LoggerResults*> res_v;
+    		// get pointers from results tuple
+    		tuple_for_each(*results, [&res_v] (const LoggerResults& r) { res_v.push_back(&r); });
+    		return res_v;
+		}
+
     // TODO: Catch the error where this is called while still running (must pause first)
     //pair<boost::timer::cpu_times,results_type> results() { return make_pair(AsyncWorker::t.elapsed(),__get_result_tuple2(logger)); }
 };
@@ -197,7 +209,7 @@ template<class Logger,class RNG>void ThreadManager<Logger,RNG>::_impl_finish_asy
     for(unsigned i=0;i<opts.Nthreads;++i)
     	workers[i].finish_async();
 
-    vector<const LoggerResults*> res = get_results(logger);
+    results = new ResultsType(get_results_tuple(logger));
 }
 
 
