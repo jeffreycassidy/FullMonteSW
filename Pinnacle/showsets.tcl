@@ -1,14 +1,14 @@
 package require vtk
 
-set fn "sets.xml"
+#set fn "sets.xml"
 
-vtkXMLUnstructuredGridReader reader
-reader SetFileName $fn
+#vtkXMLUnstructuredGridReader reader
+#reader SetFileName $fn
 
-reader Update
+#reader Update
 
-puts "$fn contains [reader GetNumberOfCells] cells"
-puts "$fn contains [reader GetNumberOfPoints] points"
+#puts "$fn contains [reader GetNumberOfCells] cells"
+#puts "$fn contains [reader GetNumberOfPoints] points"
 
 vtkPlane plane
 
@@ -20,7 +20,7 @@ vtkClipDataSet clipper
     clipper SetClipFunction plane
 
 vtkDataSetMapper mapper
-    mapper SetInputConnection [clipper GetOutputPort]
+    mapper SetInputConnection [reader GetOutputPort]
 
 vtkLookupTable lut
 
@@ -43,6 +43,9 @@ mapper SetLookupTable lut
 
 #vtkDataSetMapper delaunaymapper
 #    delaunaymapper SetInputConnection [delaunay GetOutputPort]
+
+vtkActor actor
+actor SetMapper mapper
 
 #vtkLODActor delaunayactor
 #    delaunayactor SetMapper delaunaymapper
@@ -76,9 +79,4 @@ planerep PlaceWidget -30 30 -30 30 60 120
 
 planewidget On
 
-
 renwin Render
-
-iren Start
-
-

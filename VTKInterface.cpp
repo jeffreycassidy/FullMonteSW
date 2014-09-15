@@ -70,27 +70,3 @@ vtkPoints* getVTKPoints(const vector<Point<3,double>>& pts)
 }
 
 
-
-/**
- * Requirements:
- * InputIterator must dereference to something which has a data() member giving a float* or double*
- *
- * If size_hint is given, the size will be preallocated (faster), otherwise inserted as needed
- * NOTE: size_hint must be exact!! no range checking performed
- */
-
-template<class InputIterator>vtkPoints* getVTKPoints(InputIterator begin,InputIterator end,unsigned long size_hint=0)
-{
-	vtkPoints* vtkp = vtkPoints::New();
-
-	if (size_hint == 0)
-		for(; begin != end; ++begin)
-			vtkp->InsertNextPoint(begin->data());
-	else
-	{
-		vtkp->SetNumberOfPoints(size_hint);
-		for(auto el : make_pair(begin,end) | boost::adaptors::indexed(0))
-			vtkp->SetPoint(el.index(), el.value().data());
-	}
-	return vtkp;
-}

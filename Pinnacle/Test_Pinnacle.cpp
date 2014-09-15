@@ -71,38 +71,6 @@ public:
 
 #include "PinnacleGraph.hpp"
 
-template<class T,class Counter=unsigned long> class repeat_iterator {
-	T v;
-	Counter c;
-public:
-
-	typedef T value_type;
-	typedef T& reference;
-	typedef T* pointer;
-	typedef Counter difference_type;
-
-	repeat_iterator(const repeat_iterator&) = default;
-	repeat_iterator(T v_,Counter c_=T()) : v(v_),c(c_){}
-
-	T operator*() const { return v; }
-	const T* operator->() const { return &v; }
-	repeat_iterator& operator++(){ ++c; return *this; }
-
-	bool operator==(const repeat_iterator& x) const { return x.c == c; }
-	bool operator!=(const repeat_iterator& x) const { return x.c != c; }
-};
-
-template<class T,class Counter=unsigned long>repeat_iterator<T,Counter> make_repeat_iterator(T v_,Counter N_)
-		{
-	return repeat_iterator<T,Counter>(v_,N_);
-		}
-
-template<class T,class Counter=unsigned long>pair<repeat_iterator<T,Counter>,repeat_iterator<T,Counter>>
-	make_repeat_adaptor(T v_,Counter N_)
-{
-	return make_pair(repeat_iterator<T,Counter>(v_,0),repeat_iterator<T,Counter>(v_,N_));
-}
-
 
 using namespace std;
 
@@ -136,7 +104,7 @@ int main(int argc,char **argv)
 	pf.read();
 	pf.printSliceMap();
 
-	auto p = pf.getCurves();
+/*	auto p = pf.getCurves();
 
 	unsigned i=0;
 
@@ -504,6 +472,8 @@ int main(int argc,char **argv)
 //	scale->SetTitle("Title");
 
 	vw.start();
+
+	*/
 }
 
 

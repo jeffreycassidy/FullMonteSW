@@ -24,7 +24,7 @@ public:
 	// add properties
 	void addprop(string,string);
 
-	template<typename T>T getprop(const string&) const;		///< Gets a property, throwing an exception
+	template<typename T>T getprop(const string&) const;						///< Gets a property, throwing an exception
 	template<typename T>T getprop_default(const string&,const T&) const;	///< Gets a property, returning a default value if not present
 
 	prop_const_range getPropRange() const { return make_pair(props.begin(),props.end()); }

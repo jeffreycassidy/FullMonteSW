@@ -9,6 +9,7 @@
 #include <vtkSmartPointer.h>
 #include <vtkPoints.h>
 #include <vtkIdList.h>
+#include <vtkIdTypeArray.h>
 
 #include <vector>
 #include <algorithm>
@@ -113,3 +114,92 @@ ostream& operator<<(ostream& os,const PointRecord& p)
 }
 
 
+
+
+#include <vtk/vtkTclUtil.h>
+
+// Support code that has some constants needed for creation of VTK TCL references
+
+template<class vtkObjectType>struct vtkObjectTraits;
+
+#define VTK_OBJECT_TCL_WRAPPER(VTK_OBJECT_TYPE) \
+	template<>struct vtkObjectTraits<VTK_OBJECT_TYPE>{ \
+		static constexpr const char *typestr=#VTK_OBJECT_TYPE;\
+		static vtkTclCommandStruct cs; \
+	}; \
+	ClientData VTK_OBJECT_TYPE##NewCommand(); \
+	int VTK_OBJECT_TYPE##Command(ClientData cd, Tcl_Interp *interp,int argc,char **argv); \
+	vtkTclCommandStruct vtkObjectTraits<VTK_OBJECT_TYPE>::cs = { VTK_OBJECT_TYPE##NewCommand, VTK_OBJECT_TYPE##Command };
+
+//VTK_OBJECT_TCL_WRAPPER(vtkActor)
+VTK_OBJECT_TCL_WRAPPER(vtkPolyData)
+
+// not part of the exposed API - need to use with care
+// This depends on VTK 6.1.0
+vtkTclInterpStruct *vtkGetInterpStruct(Tcl_Interp *interp);
+
+template<class vtkObjectType>vtkObjectType* createVTKTCLObject(Tcl_Interp* interp,const char* name)
+{
+	char *argv[2] = { (char*)vtkObjectTraits<vtkObjectType>::typestr, (char*)name };
+	vtkTclNewInstanceCommand((ClientData*)&vtkObjectTraits<vtkObjectType>::cs,interp,2,argv);
+
+	// look up the resulting object
+	vtkTclInterpStruct *is = vtkGetInterpStruct(interp);
+
+	if (Tcl_HashEntry *entry = Tcl_FindHashEntry(&is->InstanceLookup,name))
+	{
+		return static_cast<vtkObjectType*>(Tcl_GetHashValue(entry));
+	}
+	else {
+		cerr << "Error creating object! " << endl;
+		return NULL;
+	}
+}
+
+
+void vtkROIAsPolygons(const Pinnacle::ROI& roi,vtkPolyData* vtkpoly)
+{
+	vtkPoints* vtkp = vtkPoints::New();
+	vtkIdTypeArray *vtkid = vtkIdTypeArray::New();
+	vtkCellArray* vtkcells = vtkCellArray::New();
+
+	unsigned Npoints=0,Ncells=0;
+	for(const Pinnacle::Curve& c : roi.getCurves())
+	{
+		const vector<array<double,3>>& pts = c.getPoints();
+		vtkid->InsertNextTuple1(pts.size());
+		++Ncells;
+		for(const array<double,3>& p : pts)
+		{
+			vtkp->InsertNextPoint(p.data());
+			vtkid->InsertNextTuple1(Npoints++);
+		}
+	}
+
+	vtkcells->SetCells(Ncells,vtkid);
+
+	vtkpoly->SetPoints(vtkp);
+	vtkpoly->SetPolys(vtkcells);
+}
+
+
+void makeROIPolys(Tcl_Interp* interp,const Pinnacle::File* pf,unsigned roi,const char* name)
+{
+	vtkPolyData* vtkpoly = createVTKTCLObject<vtkPolyData>(interp,name);
+	vtkROIAsPolygons(pf->getROI(roi),vtkpoly);
+
+}
+
+
+void printStr(const string& str_)
+{
+	cout << "Printing string: " << str_ << endl;
+}
+
+
+Pinnacle::File* readPinnacleFile(const string& fn)
+{
+	Pinnacle::File* pf = new Pinnacle::File(fn);
+	pf->read();
+	return pf;
+}

@@ -1,14 +1,19 @@
 GCC_OPTS=-Wall -std=c++11 -Wno-missing-braces -O0 -fPIC -g -I/usr/include/antlr3.x.x -I/usr/include/vtk -DvtkRenderingCore_AUTOINIT="1(vtkRenderingOpenGL)" -frounding-math
-Gxx=/sw/bin/g++-4
+
+ifndef Gxx
+Gxx=g++
+endif
+
 ANTLR=java -jar /usr/local/antlrv3/antlr-3.5.2-complete-no-st3.jar
 
-all: Test_Pinnacle Test_CGAL
-
-test: Test_Pinnacle
-	Test_Pinnacle stub.txt
-
-bigtest: Test_Pinnacle
-	Test_Pinnacle plan_HN.roi
+default: PinnacleVTK.so
+	echo 'package require vtk;  \
+    load PinnacleVTK.so;        \
+    printStr {hello world};     \
+    set pf [readPinnacleFile plan_HN.roi]; \
+    puts $$pf;\
+    ' > test.tcl
+	vtk test.tcl
 
 pinnacleLexer.c pinnacleLexer.h pinnacleParser.c pinnacleParser.h: pinnacle.g
 	$(ANTLR) $^
@@ -27,6 +32,12 @@ parser_main.o: parser_main.cpp pinnacleLexer.h pinnacleParser.h
 	
 PinnacleROI.o: PinnacleROI.cpp PinnacleROI.hpp
 	$(Gxx) $(GCC_OPTS) $< -c
+	
+PinnacleVTK_wrap.cxx: PinnacleVTK.i
+	swig -c++ -tcl -o $@ $^
+
+PinnacleVTK.so: PinnacleVTK_wrap.cxx PinnacleVTK.cpp PinnacleFile.o PinnacleCurve.o PinnacleROI.o PinnacleObject.o pinnacleParser.o pinnacleLexer.o
+	$(Gxx) -Wall -std=c++11 -shared -fPIC -I/usr/include/tcl -I/usr/local/include/vtk -DUSE_TCL_STUBS -lantlr3c -lvtkCommonCore-6.1 -lvtkCommonDataModel-6.1 -lvtkCommonCoreTCL-6.1 -lvtkCommonDataModelTCL-6.1 -ltclstub8.5 -L/usr/local/lib/vtk -o $@ $^
 
 Test_Pinnacle: pinnacleLexer.o pinnacleParser.o PinnacleFile.o PinnacleObject.o Test_Pinnacle.o PinnacleROI.o PinnacleCurve.o PinnacleVTK.o PinnacleGraph.o
 	g++ -o $@ $^ -lantlr3c -L/usr/local/lib -lvtkCommonCore-6.1 -lvtkRenderingCore-6.1 -lvtkCommonDataModel-6.1 -lvtkRenderingOpenGL-6.1 -lvtkInteractionStyle-6.1 -lvtkCommonExecutionModel-6.1 -lvtkFiltersCore-6.1 \

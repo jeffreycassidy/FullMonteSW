@@ -65,6 +65,12 @@ public:
 		return N;
 	}
 
+	const ROI& getROI(unsigned i) const {
+		list<ROI>::const_iterator it;
+		for(it=rois.begin(); it != rois.end() && i > 0; ++it,--i){}
+			return *it;
+	}
+
 	const list<ROI>& getROIs() const { return rois; }
 	unsigned getNRois() const { return rois.size(); }
 };

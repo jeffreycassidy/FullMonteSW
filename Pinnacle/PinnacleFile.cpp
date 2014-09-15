@@ -5,6 +5,10 @@
 #include "pinnacleLexer.h"
 #include "pinnacleParser.h"
 
+
+#include <antlr3.h>
+#include <antlr3defs.h>
+
 #include <cassert>
 #include <map>
 #include <string>
@@ -61,7 +65,7 @@ bool Pinnacle::File::read()
 	pANTLR3_COMMON_TOKEN_STREAM tokens;
 	ppinnacleParser parser;
 
-	input = antlr3FileStreamNew((pANTLR3_UINT8)fn.c_str(),ANTLR3_ENC_8BIT);
+	input = antlr3AsciiFileStreamNew((pANTLR3_UINT8)fn.c_str());
 	lex = pinnacleLexerNew(input);
 	tokens = antlr3CommonTokenStreamSourceNew(ANTLR3_SIZE_HINT,
 			TOKENSOURCE(lex));
