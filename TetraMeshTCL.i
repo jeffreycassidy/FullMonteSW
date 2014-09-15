@@ -7,12 +7,26 @@
 // Needed for VTK commands
 %typemap(in,numinputs=0) Tcl_Interp* { $1 = interp; }
 
+//void vtkTclGetObjectFromPointer(Tcl_Interp *interp, void *temp, const char *targetType);
+                           
+// For vtkPolyData* returns, wrap it in a Tcl object and return the object name
+%typemap(out) vtkPolyData* {
+	vtkTclGetObjectFromPointer(interp,$1,"vtkPolyData");	
+}
+
+%typemap(out) vtkUnstructuredGrid* {
+	vtkTclGetObjectFromPointer(interp,$1,"vtkUnstructuredGrid");	
+}
+
+
 %{
 
 	#include "newgeom.hpp"
 	#include "graph.hpp"
 	#include "fm-postgres/fm-postgres.hpp"
 	#include "VTKInterface.hpp"
+
+	#include <vtk/vtkTclUtil.h>
 	
 	class TriSurf;
 	class vtkPolyData;
@@ -29,6 +43,7 @@
 #include <vtkActor.h>
 #include <vtkRenderer.h>
 #include <vtkPolyDataMapper.h>
+#include <vtkUnstructuredGrid.h>
 #include <tcl.h>
 
 
@@ -39,6 +54,5 @@ extern "C" PGConnection* tclConnect();
 // loading meshes and results
 extern "C" TetraMesh* loadMesh(PGConnection*,unsigned);
 
-extern "C" TriSurf* extractBoundary(const TetraMesh*,unsigned);
-
-void createVTKBoundary(Tcl_Interp* interp,const char *name,const TetraMesh* M, unsigned IDmat);
+vtkPolyData* getVTKPolyData(const TriSurf& surf);
+vtkUnstructuredGrid* getVTKTetraData(const TetraMesh& M);

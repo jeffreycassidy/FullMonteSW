@@ -4,6 +4,8 @@
 #include <vtkCellArray.h>
 #include <vtkPoints.h>
 
+#include <boost/range/adaptor/indexed.hpp>
+
 vtkPolyData* getVTKPolyData(const TriSurf& surf);
 void getVTKPolyData(const TriSurf& surf,vtkPolyData *polydata);
 

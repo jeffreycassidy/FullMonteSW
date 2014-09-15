@@ -216,7 +216,6 @@ class TetraMesh {
 
     Tetra                   getTetra(unsigned IDt) const { return tetras[IDt]; }
     unsigned                getMaterial(unsigned IDt) const { return T_m[IDt]; }
-    //unsigned                getRegion(unsigned IDt) const { return T_r[IDt]; }
 
     // returns the tetra that the given face points into
     unsigned                getTetraIDFromFaceID(int IDf) const

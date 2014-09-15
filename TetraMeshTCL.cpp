@@ -54,7 +54,7 @@ boost::shared_ptr<PGConnection> conn;
 
 extern "C" PGConnection* tclConnect()
 {
-	globalopts::db::blobCachePath = "/Users/jcassidy/fullmonte/blobcache";
+	globalopts::db::blobCachePath = "/home/jcassidy/fullmonte/blobcache";
 	// Normally set by environment parsed by boost::program_options
 
 	conn=PGConnect();
@@ -66,14 +66,8 @@ extern "C" TetraMesh* loadMesh(PGConnection* conn,unsigned IDm)
 	return exportMesh(*conn,IDm);
 }
 
-extern "C" TriSurf* extractBoundary(const TetraMesh* M,unsigned IDmat)
+vtkPolyData* extractVTKBoundary(const TetraMesh* M,unsigned IDmat)
 {
-	return new TriSurf(M->extractMaterialBoundary(IDmat));
-}
-
-void createVTKBoundary(Tcl_Interp* interp,const char *name,const TetraMesh* M, unsigned IDmat)
-{
-	vtkPolyData* pd = createVTKTCLObject<vtkPolyData>(interp,name);
-	TriSurf	ts = M->extractMaterialBoundary(IDmat);
-	getVTKPolyData(ts,pd);
+	TriSurf ts = M->extractMaterialBoundary(IDmat);
+	return getVTKPolyData(ts);
 }

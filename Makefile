@@ -1,11 +1,20 @@
 # base options only
 #no-deprecated is for SHA1 hash
+
+ifndef BOOST_INCLUDE
+	BOOST_INCLUDE=-I/usr/local/include
+endif
+
+ifndef BOOST_LIB
+	BOOST_LIB=-L/usr/local/lib/boost
+endif
+
 GCC_OPTS=-Wall -mfpmath=sse -Wstrict-aliasing=2 -g -mavx -fpermissive -std=c++11 -fPIC -fabi-version=6 -Wno-deprecated-declarations -Wa,-q
 LIBS=-lboost_program_options -lboost_timer -lpq -lcrypto -lboost_system -lboost_chrono -lSFMT -lfmpg
-LIBDIRS=-L/usr/local/lib -L/usr/local/lib/boost -LSFMT -L. -Lfm-postgres
-INCLDIRS=-I/usr/local/boost -I/usr/local/include -I. -I/usr/local/include/boost -I/usr/local/include/pgsql -I..
+LIBDIRS=-L/usr/local/lib $(BOOST_LIB) -LSFMT -L. -Lfm-postgres
+INCLDIRS=$(BOOST_INCLUDE) -I/usr/local/include -I. -I/usr/local/include/pgsql -I..
 
-SWIG=/sw/bin/swig
+SWIG=swig
 
 # Switch debug on/off
 GCC_OPTS += -DNDEBUG -O3
@@ -54,10 +63,10 @@ random.o: random.cpp random.hpp
 	$(GXX) $(GCC_OPTS) $(INCLDIRS) -fPIC -c $*.cpp -o $@
 
 montecarlo: graph.o newgeom.o face.o helpers.o SourceDescription.o montecarlo.o LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o mainloop.o blob.o fmdb.o sse.o random.o RandomAVX.o LoggerConservation.o LoggerEvent.o LoggerVolume.o FullMonte.o Notifier.o
-	$(GXX) $(GCC_OPTS) $^ $(LIBS) $(LIBDIRS) -o $@
+	$(GXX) $(GCC_OPTS) $^ $(BOOST_LIB) $(LIBS) $(LIBDIRS) -o $@
 
 libmontecarlo.so: graph.o newgeom.o face.o helpers.o SourceDescription.o montecarlo.o LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o mainloop.o blob.o fmdb.o sse.o RandomAVX.o LoggerConservation.o LoggerEvent.o LoggerVolume.o Notifier.o FullMonte.o
-	$(GXX) -shared -fPIC $^ -LSFMT -lpq -lboost_program_options -lboost_system -lboost_timer -lboost_chrono -Lfm-postgres -lfmpg -lSFMT -o $@
+	$(GXX) -shared -fPIC $^ $(BOOST_LIB) -LSFMT -lpq -lboost_program_options -lboost_system -lboost_timer -lboost_chrono -Lfm-postgres -lfmpg -lSFMT -o $@
 
 ReadTracer: ReadTracer.cpp
 	$(GXX) -Wall -O3 -g -std=c++11 -mavx -lxerces-c $< Export_VTK_XML.cpp -o $@
@@ -86,5 +95,5 @@ TetraMeshTCL_wrap.cxx: TetraMeshTCL.i
 	$(SWIG) -c++ -tcl -o $@ $^
 	
 TetraMeshTCL.so: TetraMeshTCL_wrap.cxx TetraMeshTCL.cpp TriSurf.cpp VTKInterface.cpp	
-	$(GXX) -g -Wall -shared -I/usr/local/include -I/usr/local/include/vtk -L/usr/local/lib -L/usr/local/lib/tcltk -lvtkCommonCore-6.1 -lvtkRenderingCoreTCL-6.1 -lvtkCommonDataModelTCL-6.1 -lvtkCommonCoreTCL-6.1 -lvtkRenderingCore-6.1 -lvtkCommonDataModel-6.1 -I/usr/local/include/pgsql -fPIC -Wno-deprecated-declarations -std=c++11 -lmontecarlo -lfmpg -L. -Lfm-postgres -lboost_program_options -ltcl -lboost_system -DUSE_TCL_STUBS -ltclstub8.5 -o $@ $^
+	$(GXX) -g -Wall -shared $(BOOST_INCLUDE) $(BOOST_LIB) -I/usr/local/include/vtk -L/usr/local/lib -I/usr/local/include/tcl -lvtkCommonCore-6.1 -lvtkRenderingCoreTCL-6.1 -lvtkCommonDataModelTCL-6.1 -lvtkCommonCoreTCL-6.1 -lvtkRenderingCore-6.1 -lvtkCommonDataModel-6.1 -I/usr/local/include/pgsql -fPIC -Wno-deprecated-declarations -std=c++11 -lmontecarlo -lfmpg -L. -Lfm-postgres -lboost_program_options -lboost_system -DUSE_TCL_STUBS -ltclstub8.5 -o $@ $^
 	
