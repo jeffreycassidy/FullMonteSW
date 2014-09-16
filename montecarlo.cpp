@@ -1,15 +1,17 @@
 #include "AccumulationArray.hpp"
 #include <iostream>
 #include <vector>
-#include <utility>
 #include <string>
 #include <iomanip>
 
+// Logger types
 #include "Logger.hpp"
 #include "LoggerConservation.hpp"
 #include "LoggerVolume.hpp"
 #include "LoggerSurface.hpp"
 #include "LoggerEvent.hpp"
+#include "LoggerMemTrace.cpp"
+
 
 #include "FullMonte.hpp"
 
@@ -19,11 +21,12 @@
 #include <boost/program_options.hpp>
 #include <boost/program_options/errors.hpp>
 #include <boost/timer/timer.hpp>
-#include "Notifier.hpp"
+
+#include "PGObserver.hpp"
+#include "OStreamObserver.hpp"
 
 #include "Sequence.hpp"
 
-#include "LoggerMemTrace.cpp"
 
 // Tracer stores all steps the photon takes (for illustration)
 //#ifdef TRACER
@@ -170,6 +173,10 @@ int main(int argc,char **argv)
     cout << "DB host: " << globalopts::db::host << endl;
     cout << "DB port: " << globalopts::db::port << endl;
     cout << "DB name: " << globalopts::db::name << endl;
+    cout << "Seeds:";
+    for(unsigned seed : globalopts::seeds)
+    	cout << ' ' << seed << endl;
+    cout << endl;
 
     boost::shared_ptr<PGConnection> dbconn;
 
@@ -194,10 +201,14 @@ int main(int argc,char **argv)
     		obs.push_back(new OStreamObserver(cout));
 
     		if(globalopts::dbwrite)
-    			obs.push_back(new PGObserver(flt));
+    			obs.push_back(new PGObserver(flt,0));
 
     		for(unsigned IDcase : cases)
+    		{
+    			if(globalopts::dbwrite)
+    				dynamic_cast<PGObserver&>(*obs.back()).setCaseID(IDcase);
     			runCaseByID(dbconn.get(),obs,IDcase);
+    		}
 
     		for(Observer* o : obs)
     			delete o;

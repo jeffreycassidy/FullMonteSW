@@ -10,7 +10,7 @@
 #include <condition_variable>
 #include <thread>
 
-#include "Notifier.hpp"
+#include "Observer.hpp"
 #include "oldstuff/TupleStuff.hpp"
 #include "progress.hpp"
 
@@ -24,7 +24,6 @@
 //  report time required
 //  estimate completion time
 
-class Observer;
 template<class Logger,class RNG>class WorkerThread;
 
 /** The parent class, bare minimum: run synchronously, tell if it's done or not, and give a progress count.
@@ -36,18 +35,38 @@ protected:
 	vector<Observer*> obs;
 	boost::timer::cpu_timer t;
 
-	void notify_start();
-	void notify_finish();
+	void notify_start()
+	{
+		for(Observer* o : obs)
+			o->notify_start();
+	}
+	void notify_create(const SimGeometry& geom_,const RunConfig& cfg_,const RunOptions& opts_)
+		{
+			for(Observer* o : obs)
+				o->notify_create(geom_,cfg_,opts_);
+		}
+	void notify_finish(boost::timer::cpu_times t)
+	{
+		for(Observer *o : obs)
+			o->notify_finish(t);
+	}
+
+	void notify_result(const LoggerResults& lr) const
+	{
+		for(Observer* o : obs)
+			o->notify_result(lr);
+	}
 
 	void notify_result(const vector<const LoggerResults*>& v) const
 	{
 		for(Observer* o : obs)
 			for(const LoggerResults* lr : v)
-				o->notify_result(lr);
+				o->notify_result(*lr);
 	}
 
 public:
 	Worker(const vector<Observer*>& obs_ = vector<Observer*>()) : obs(obs_){}
+	virtual ~Worker(){};
 	virtual boost::timer::cpu_times run_sync()=0;
 	virtual bool done() const =0;
 
@@ -65,6 +84,7 @@ class AsyncWorker : public Worker {
 protected:
 	virtual void _impl_start_async()=0;
 	virtual void _impl_finish_async()=0;
+	virtual void _impl_post_finish()=0;
 
 public:
 	AsyncWorker(const vector<Observer*>& obs_=vector<Observer*>()) : Worker(obs_){}
@@ -75,6 +95,8 @@ public:
 	}
 
 	void start_async(){
+		for(Observer* o : obs)
+			o->notify_start();
 		t.start();
 		_impl_start_async();
 	}
@@ -84,14 +106,16 @@ public:
 	void stop();
 
 	/// Block waiting for worker to finish
-	boost::timer::cpu_times finish_async(){
+	virtual boost::timer::cpu_times finish_async(){
 		_impl_finish_async();
 		t.stop();
 
 		boost::timer::cpu_times elapsed = t.elapsed();
 
 		for(Observer* o : obs)
-			o->runfinish(elapsed);
+			o->notify_finish(elapsed);
+
+		_impl_post_finish();
 
 		return elapsed;
 	}
@@ -104,6 +128,7 @@ public:
 
 
 template<class Logger,class RNG>class ThreadManager : public AsyncWorker {
+	std::thread mgrthread;
 	SimGeometry geom;
 	RunConfig 	cfg;
 	RunOptions 	opts;
@@ -113,22 +138,51 @@ template<class Logger,class RNG>class ThreadManager : public AsyncWorker {
 	Logger& logger;
 
 	typedef decltype(get_worker(*(Logger*)(NULL))) LoggerWorker;
-
 	typedef decltype(get_results_tuple(std::declval<Logger>())) ResultsType;
 
 	ResultsType* results=NULL;
+	ResultsType* results_final=NULL;
 
-	LoggerWorker* loggers;
-	WorkerThread<LoggerWorker,RNG>* workers;
+	LoggerWorker* loggers=NULL;
+	WorkerThread<LoggerWorker,RNG>* workers=NULL;
 
 	boost::ecuyer1988 seeds_generator;
+
+	std::mutex done_mutex;
+	bool done_flag=false;
+	std::condition_variable done_cv;
+
+	void wait_for_workers();
+
 
 protected:
 
 	virtual void _impl_start_async();
 	virtual void _impl_finish_async();
+	virtual void _impl_post_finish();
 
     public:
+
+	ThreadManager(const ThreadManager&) = delete;
+	ThreadManager(ThreadManager&& mgr_) :
+		mgrthread(std::move(mgr_.mgrthread)),
+		geom(std::move(mgr_.geom)),
+		cfg(std::move(mgr_.cfg)),
+		opts(std::move(mgr_.opts)),
+		emitter(mgr_.emitter),
+		logger(mgr_.logger),
+		results(mgr_.results),
+		results_final(mgr_.results_final),
+		loggers(mgr_.loggers),
+		workers(mgr_.workers),
+		seeds_generator(std::move(mgr_.seeds_generator))
+	{
+		mgr_.emitter=NULL;
+		mgr_.results=NULL;
+		mgr_.results_final=NULL;
+		mgr_.loggers=NULL;
+		mgr_.workers=NULL;
+	}
 
     ThreadManager(const SimGeometry& geom_,const RunConfig& cfg_,const RunOptions& opts_,Logger& logger_,const vector<Observer*>& obs_)
     	: AsyncWorker(obs_), geom(geom_),cfg(cfg_),opts(opts_),emitter(SourceEmitterFactory<RNG>(geom_.mesh,geom_.sources)),logger(logger_),seeds_generator(opts_.randseed)
@@ -154,11 +208,24 @@ protected:
     		seeds_generator.discard(100);
     	}
 
-		for(Observer* o : obs)
-			o->runstart(geom,cfg,opts,geom.IDc);
+    	notify_create(geom,cfg,opts);
+
+    	mgrthread=std::thread(std::mem_fn(&ThreadManager::wait_for_workers),this);
     }
 
-    ~ThreadManager(){ free(loggers); free(workers); }
+    ~ThreadManager(){
+    	if(mgrthread.joinable())
+    	{
+    		cout << "Waiting for manager thread" << endl;
+    		mgrthread.join();
+    	}
+    	else
+    		cout << "manager is already terminated" << endl;
+    	free(loggers);
+    	free(workers);
+    	delete results;
+    	delete results_final;
+    }
 
     pair<unsigned long long,unsigned long long> getProgress() const {
         unsigned long long sum_completed=0,sum_total=0;
@@ -172,17 +239,18 @@ protected:
         return make_pair(sum_completed,sum_total);
     }
 
-    /// Poll all workers for status
     virtual bool done() const {
-    	for(unsigned i=0;i<opts.Nthreads;++i)
-    		if (!workers[i].done())
-    			return false;
-    	return true;
+    	return done_flag;
     }
 
     virtual void pause(){ cerr << "ERROR: Can't pause yet" << endl; }
     virtual void stop(){  cerr << "ERROR: Can't stop yet" << endl; }
     virtual void resume(){ cerr << "ERROR: Can't resume yet" << endl; }
+
+	/// Block waiting for worker to finish
+	virtual boost::timer::cpu_times finish_async(){
+		_impl_finish_async();
+	}
 
     vector<const LoggerResults*> getResults() const
 		{
@@ -203,13 +271,43 @@ template<class Logger,class RNG>void ThreadManager<Logger,RNG>::_impl_start_asyn
     	workers[i].start_async();
 }
 
+template<class Logger,class RNG> void ThreadManager<Logger,RNG>::wait_for_workers()
+{
+	cout << "INFO: ThreadManager waiting for threads to finish" << endl;
+	for(unsigned i=0;i<opts.Nthreads;++i)
+		workers[i]._impl_finish_async();
+	cout << "INFO: ThreadManager threads have finished" << endl;
+
+	// stop timer and notify observers
+	t.stop();
+	notify_finish(t.elapsed());
+
+	// signal finish
+	done_flag=true;
+	done_cv.notify_all();
+
+	// handle results notification
+	vector<const LoggerResults*> res_v;
+
+	results_final = new ResultsType(get_results_tuple(logger));
+
+	// get pointers from results tuple
+	tuple_for_each(*results_final, [&res_v] (const LoggerResults& r) { res_v.push_back(&r); });
+	for(const LoggerResults* lr : res_v)
+		notify_result(*lr);
+}
+
 template<class Logger,class RNG>void ThreadManager<Logger,RNG>::_impl_finish_async()
 {
 	// wait for all threads to finish
-    for(unsigned i=0;i<opts.Nthreads;++i)
-    	workers[i].finish_async();
+	std::mutex mtx;
+	std::unique_lock<std::mutex> lck(mtx);
 
-    results = new ResultsType(get_results_tuple(logger));
+	done_cv.wait(lck, [this] { return done_flag; });
+}
+
+template<class Logger,class RNG>void ThreadManager<Logger,RNG>::_impl_post_finish()
+{
 }
 
 
@@ -282,6 +380,8 @@ template<class Logger,class RNG> class WorkerThread : public AsyncWorker {
 	}
 
     int doOnePacket(Packet pkt,unsigned IDt);
+
+    void _impl_post_finish(){}
 
 public:
 

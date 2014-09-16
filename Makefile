@@ -17,7 +17,7 @@ INCLDIRS=$(BOOST_INCLUDE) -I/usr/local/include -I. -I/usr/local/include/pgsql -I
 SWIG=swig
 
 # Switch debug on/off
-GCC_OPTS += -DNDEBUG -O3
+#GCC_OPTS += -DNDEBUG -O3
 
 # Check for Mac OS (no POSIX timer)
 OS:=$(shell uname)
@@ -47,6 +47,20 @@ Test_AccumulationArray: Test_AccumulationArray.cpp AccumulationArray.hpp
 
 all: montecarlo
 
+%.o: %.cpp *.hpp
+	$(GXX) $(GCC_OPTS) $(INCLDIRS) -fPIC -c $*.cpp -o $@
+
+montecarlo: montecarlo.o mainloop.o random.o FullMonte.o OStreamObserver.o PGObserver.o
+	$(GXX) $(GCC_OPTS) $^ $(BOOST_LIB) $(LIBS) -lmontecarlo $(LIBDIRS) -o $@
+	
+simlocal: simlocal.o RandomAVX.o OStreamObserver.o libmontecarlo.so
+	$(GXX) $(BOOST_LIB) $(BOOST_INCLUDE) -LSFMT -lpq -lboost_program_options -lboost_system -lboost_timer -lboost_chrono -o $@ $^
+
+libmontecarlo.so: graph.o newgeom.o face.o helpers.o SourceDescription.o LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o mainloop.o blob.o fmdb.o sse.o RandomAVX.o LoggerConservation.o LoggerEvent.o LoggerVolume.o FullMonte.o
+	$(GXX) -shared -fPIC $^ $(BOOST_LIB) -LSFMT -lpq -lboost_program_options -lboost_system -lboost_timer -lboost_chrono -Lfm-postgres -lfmpg -lSFMT -o $@
+
+
+
 rletrace: rletrace.cpp progress.cpp
 	$(GXX) -Wall -std=c++0x -lrt -DPOSIX_TIMER -O3 -o $@ $^
 
@@ -59,14 +73,9 @@ fm-postgres/%:
 random.o: random.cpp random.hpp
 	$(GXX) -O1 -msse4 -g -Wall -mavx -DNDEBUG -DPLATFORM_DARWIN $< -fPIC -c -o $@
 
-%.o: %.cpp *.hpp
-	$(GXX) $(GCC_OPTS) $(INCLDIRS) -fPIC -c $*.cpp -o $@
 
-montecarlo: graph.o newgeom.o face.o helpers.o SourceDescription.o montecarlo.o LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o mainloop.o blob.o fmdb.o sse.o random.o RandomAVX.o LoggerConservation.o LoggerEvent.o LoggerVolume.o FullMonte.o Notifier.o
-	$(GXX) $(GCC_OPTS) $^ $(BOOST_LIB) $(LIBS) $(LIBDIRS) -o $@
 
-libmontecarlo.so: graph.o newgeom.o face.o helpers.o SourceDescription.o montecarlo.o LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o mainloop.o blob.o fmdb.o sse.o RandomAVX.o LoggerConservation.o LoggerEvent.o LoggerVolume.o Notifier.o FullMonte.o
-	$(GXX) -shared -fPIC $^ $(BOOST_LIB) -LSFMT -lpq -lboost_program_options -lboost_system -lboost_timer -lboost_chrono -Lfm-postgres -lfmpg -lSFMT -o $@
+
 
 ReadTracer: ReadTracer.cpp
 	$(GXX) -Wall -O3 -g -std=c++11 -mavx -lxerces-c $< Export_VTK_XML.cpp -o $@
