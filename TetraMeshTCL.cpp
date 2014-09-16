@@ -1,13 +1,7 @@
-#include "fm-postgres/fm-postgres.hpp"
-#include "VTKInterface.hpp"
-
 #include "TetraMeshTCL.i"
-
-#include <vtkRenderWindow.h>
-#include <vtkActor.h>
-#include <vtkRenderWindowInteractor.h>
-
 #include <vtk/vtkTclUtil.h>
+#include <vtkPolyData.h>
+#include <vtkUnstructuredGrid.h>
 
 // Support code that has some constants needed for creation of VTK TCL references
 
@@ -22,8 +16,9 @@ template<class vtkObjectType>struct vtkObjectTraits;
 	int VTK_OBJECT_TYPE##Command(ClientData cd, Tcl_Interp *interp,int argc,char **argv); \
 	vtkTclCommandStruct vtkObjectTraits<VTK_OBJECT_TYPE>::cs = { VTK_OBJECT_TYPE##NewCommand, VTK_OBJECT_TYPE##Command };
 
-VTK_OBJECT_TCL_WRAPPER(vtkActor)
+VTK_OBJECT_TCL_WRAPPER(vtkUnstructuredGrid)
 VTK_OBJECT_TCL_WRAPPER(vtkPolyData)
+
 
 // not part of the exposed API - need to use with care
 // This depends on VTK 6.1.0
@@ -48,26 +43,24 @@ template<class vtkObjectType>vtkObjectType* createVTKTCLObject(Tcl_Interp* inter
 }
 
 
-
-
-boost::shared_ptr<PGConnection> conn;
-
-extern "C" PGConnection* tclConnect()
-{
-	globalopts::db::blobCachePath = "/home/jcassidy/fullmonte/blobcache";
-	// Normally set by environment parsed by boost::program_options
-
-	conn=PGConnect();
-	return conn.get();		// Careful! Managed by boost shared_ptr; need to keep it global to avoid premature destruction
-}
-
-extern "C" TetraMesh* loadMesh(PGConnection* conn,unsigned IDm)
-{
-	return exportMesh(*conn,IDm);
-}
-
-vtkPolyData* extractVTKBoundary(const TetraMesh* M,unsigned IDmat)
-{
-	TriSurf ts = M->extractMaterialBoundary(IDmat);
-	return getVTKPolyData(ts);
-}
+//boost::shared_ptr<PGConnection> conn;
+//
+//extern "C" PGConnection* tclConnect()
+//{
+//	globalopts::db::blobCachePath = "/home/jcassidy/fullmonte/blobcache";
+//	// Normally set by environment parsed by boost::program_options
+//
+//	conn=PGConnect();
+//	return conn.get();		// Careful! Managed by boost shared_ptr; need to keep it global to avoid premature destruction
+//}
+//
+//extern "C" TetraMesh* loadMesh(PGConnection* conn,unsigned IDm)
+//{
+//	return exportMesh(*conn,IDm);
+//}
+//
+//vtkPolyData* extractVTKBoundary(const TetraMesh* M,unsigned IDmat)
+//{
+//	TriSurf ts = M->extractMaterialBoundary(IDmat);
+//	return getVTKPolyData(ts);
+//}

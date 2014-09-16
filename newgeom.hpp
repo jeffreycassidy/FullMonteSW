@@ -15,7 +15,7 @@
 
 using namespace std;
 
-template<int D,class T>class Vector;
+template<size_t D,class T>class Vector;
 
 template<unsigned long D,class T>void rotateMax(array<T,D>& p);
 template<unsigned long D,class T>void rotateMin(array<T,D>& p);
@@ -109,7 +109,7 @@ class FaceByPointID : public FixedArrayID<3,unsigned> {
     FaceByPointID flip() const { const array<unsigned,3>&p =*this; return FaceByPointID(p[0],p[2],p[1]); }
 };
 
-template<unsigned long D,class T>unsigned findMin(const array<T,D>& p)
+template<size_t D,class T>unsigned findMin(const array<T,D>& p)
 {
 	unsigned m=std::numeric_limits<T>::max(),j=0;
 	for(unsigned i=0;i<D;++i)
@@ -122,7 +122,7 @@ template<unsigned long D,class T>unsigned findMin(const array<T,D>& p)
 	return j;
 }
 
-template<unsigned long D,class T>unsigned findMax(const array<T,D>& p)
+template<size_t D,class T>unsigned findMax(const array<T,D>& p)
 {
 	unsigned m=std::numeric_limits<T>::min(),j=0;
 	for(unsigned i=0;i<D;++i)
@@ -135,7 +135,7 @@ template<unsigned long D,class T>unsigned findMax(const array<T,D>& p)
 	return j;
 }
 
-template<unsigned long D,class T>void rotateMin(array<T,D>& p)
+template<size_t D,class T>void rotateMin(array<T,D>& p)
 {
 	array<T,D> tmp(p);
 	unsigned j=findMin(p);
@@ -143,7 +143,7 @@ template<unsigned long D,class T>void rotateMin(array<T,D>& p)
 		p[i]=tmp[(i+j)%D];
 }
 
-template<unsigned long D,class T>void rotateMax(array<T,D>& p)
+template<size_t D,class T>void rotateMax(array<T,D>& p)
 {
 	array<T,D> tmp(p);
 	unsigned j=findMax(p);
@@ -152,7 +152,7 @@ template<unsigned long D,class T>void rotateMax(array<T,D>& p)
 }
 
 
-template<int D,class T>class Point : public array<T,D>
+template<size_t D,class T>class Point : public array<T,D>
 {
 	public:
 
@@ -173,7 +173,7 @@ template<int D,class T>class Point : public array<T,D>
 	}
 };
 
-template<unsigned D,class T>std::ostream& operator<<(std::ostream& os,const array<T,D>& P)
+template<size_t D,class T>std::ostream& operator<<(std::ostream& os,const array<T,D>& P)
 {
 	os << '(' << P[0];
 	for(int i=0; i<D; ++i){ os << ',' << P[i]; }
@@ -181,13 +181,13 @@ template<unsigned D,class T>std::ostream& operator<<(std::ostream& os,const arra
 }
 
 
-template<int D,class T>std::istream& operator>>(std::istream& is,Point<D,T>& P)
+template<size_t D,class T>std::istream& operator>>(std::istream& is,Point<D,T>& P)
 {
 	is >> std::skipws;
 	bool paren=false;
 
 	if(is.peek()=='('){ paren=true; is.ignore(1); }
-	for(int i=0; i<D; ++i){ is >> P[i]; if(i < D-1 && is.peek()==','){ is.ignore(1); } }
+	for(size_t i=0; i<D; ++i){ is >> P[i]; if(i < D-1 && is.peek()==','){ is.ignore(1); } }
 	if (paren){ is.ignore(1); }
 	return is;
 }
@@ -195,7 +195,7 @@ template<int D,class T>std::istream& operator>>(std::istream& is,Point<D,T>& P)
 
 // A Vector extends the Point class with a norm, dot product, cross product, add/sub and scalar multiply/divide
 //    vector can be defined as going between two points, or implicitly as the origin (0,0,0) to a point
-template<int D,class T>class Vector : public Point<D,T>
+template<size_t D,class T>class Vector : public Point<D,T>
 {
 	public:
 	using Point<D,T>::operator=;
@@ -207,18 +207,18 @@ template<int D,class T>class Vector : public Point<D,T>
 	Vector(const T* x_)                             : Point<D,T>(x_){};
 	Vector(const Point<D,T>& P)                     : Point<D,T>(P) {};
 	Vector(const Point<D,T>& A,const Point<D,T>& B){
-		for(int i=0;i<D;++i)
+		for(size_t i=0;i<D;++i)
 			(*this)[i]=B[i]-A[i];
 	}
 
 	// norms and dots
-	T norm_l2()                 const { T s=0; for(int i=0;i<D;++i){ s += (*this)[i] * (*this)[i]; } return(sqrt(s)); }
-	T norm_l1()                 const { T s=0; for(int i=0;i<D;++i){ s += abs((*this)[i]); } return abs(s);   }
-	T norm2_l2()                const { T s=0; for(int i=0;i<D;++i){ s += (*this)[i]*(*this)[i]; } return s;        }
-	T dot(const Vector<D,T>& a) const { T s=0; for(int i=0;i<D;++i){ s += a[i]*(*this)[i]; } return s;        }
+	T norm_l2()                 const { T s=0; for(size_t i=0;i<D;++i){ s += (*this)[i] * (*this)[i]; } return(sqrt(s)); }
+	T norm_l1()                 const { T s=0; for(size_t i=0;i<D;++i){ s += abs((*this)[i]); } return abs(s);   }
+	T norm2_l2()                const { T s=0; for(size_t i=0;i<D;++i){ s += (*this)[i]*(*this)[i]; } return s;        }
+	T dot(const Vector<D,T>& a) const { T s=0; for(size_t i=0;i<D;++i){ s += a[i]*(*this)[i]; } return s;        }
 
 	// unary negate
-	Vector operator-()           { Vector v; for(int i=0; i<D; ++i){ v[i]=-(*this)[i]; } return v; }
+	Vector operator-()           { Vector v; for(size_t i=0; i<D; ++i){ v[i]=-(*this)[i]; } return v; }
 
 	// vector += / -= operations
 	const Vector& operator+=(const Vector& k) { for(int i=0; i<D; ++i){ (*this)[i]+=k[i]; } return *this; }
@@ -232,20 +232,20 @@ template<int D,class T>class Vector : public Point<D,T>
 
 	// vector cross product
 	Vector cross(const Vector<D,T>&) const;
-	template<int D_,class U>friend Vector<D_,U> cross(const Vector<D_,U>&,const Vector<D_,U>&);
+	template<size_t D_,class U>friend Vector<D_,U> cross(const Vector<D_,U>&,const Vector<D_,U>&);
 };
 
 // helpers
-template<int D,class T>T dot(const Vector<D,T>& a,const Vector<D,T>& b) { return a.dot(b); }
-template<int D,class T>T norm_l2(const Vector<D,T>& a) { return a.norm_l2(); }
-template<int D,class T>T norm_l1(const Vector<D,T>& a) { return a.norm_l1(); }
-template<int D,class T>T norm2_l2(const Vector<D,T>& a){ return a.norm2_l2(); }
+template<size_t D,class T>T dot(const Vector<D,T>& a,const Vector<D,T>& b) { return a.dot(b); }
+template<size_t D,class T>T norm_l2(const Vector<D,T>& a) { return a.norm_l2(); }
+template<size_t D,class T>T norm_l1(const Vector<D,T>& a) { return a.norm_l1(); }
+template<size_t D,class T>T norm2_l2(const Vector<D,T>& a){ return a.norm2_l2(); }
 
-template<int D,class T>T norm2_l2(const Point<D,T>& a,const Point<D,T>& b){ T s; for(unsigned i=0;i<D;++i){ s += (a[i]-b[i])*(a[i]-b[i]); } return s; }
+template<size_t D,class T>T norm2_l2(const Point<D,T>& a,const Point<D,T>& b){ T s; for(unsigned i=0;i<D;++i){ s += (a[i]-b[i])*(a[i]-b[i]); } return s; }
 
 
 // A UnitVector is a Vector that is guaranteed to always have L2 norm 1
-template<unsigned D,class T>class UnitVector : public Vector<D,T>
+template<size_t D,class T>class UnitVector : public Vector<D,T>
 {
 	public:
 	using Vector<D,T>::dot;
@@ -299,12 +299,12 @@ template<unsigned D,class T>class UnitVector : public Vector<D,T>
 
 UnitVector<3,double> uvect3FromPolar(double phi,double lambda);
 
-template<int D,class T> Vector<D,T> cross(const Vector<D,T>& a,const Vector<D,T>& b)
+template<size_t D,class T> Vector<D,T> cross(const Vector<D,T>& a,const Vector<D,T>& b)
 {
 	return a.cross(b);
 }
 
-template<int D,class T>Vector<D,T> Vector<D,T>::cross(const Vector<D,T>& x) const
+template<size_t D,class T>Vector<D,T> Vector<D,T>::cross(const Vector<D,T>& x) const
 {
 	T cp[3]= { (*this)[1]*x[2]-(*this)[2]*x[1], (*this)[2]*x[0]-x[2]*(*this)[0], (*this)[0]*x[1]-(*this)[1]*x[0] };
 	return Vector<D,T>(cp);
@@ -324,7 +324,7 @@ template<class T>T scalartriple(const Vector<3,T>& a,const Vector<3,T>& b,const 
 
 
 // A Ray represents the geometric idea of a ray, a semi-infinite line starting from a point and extending along a unit vector
-template<int D,class T>class Ray
+template<size_t D,class T>class Ray
 {
 	Point<D,T>      P;
 	UnitVector<D,T> d;
@@ -378,10 +378,10 @@ class GeomManip {
 
     friend GeomManip operator<<(ostream&,const GeomManip&);
 
-    template<int D,class T>friend ostream& operator<<(const GeomManip& gm,const Point<D,T>& p);
+    template<size_t D,class T>friend ostream& operator<<(const GeomManip& gm,const Point<D,T>& p);
 };
 
-template<int D,class T>ostream& operator<<(const GeomManip& gm,const UnitVector<D,T>& u)
+template<size_t D,class T>ostream& operator<<(const GeomManip& gm,const UnitVector<D,T>& u)
 {
     if(gm.parens)
         gm.os << gm.uvparenchar[0];
@@ -396,7 +396,7 @@ template<int D,class T>ostream& operator<<(const GeomManip& gm,const UnitVector<
     return gm.os;
 }
 
-template<int D,class T>ostream& operator<<(const GeomManip& gm,const Point<D,T>& p)
+template<size_t D,class T>ostream& operator<<(const GeomManip& gm,const Point<D,T>& p)
 {
     if(gm.parens)
         gm.os << gm.parenchar[0];

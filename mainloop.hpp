@@ -250,6 +250,7 @@ protected:
 	/// Block waiting for worker to finish
 	virtual boost::timer::cpu_times finish_async(){
 		_impl_finish_async();
+		return t.elapsed();
 	}
 
     vector<const LoggerResults*> getResults() const
