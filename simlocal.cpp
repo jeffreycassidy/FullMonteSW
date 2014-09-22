@@ -72,14 +72,13 @@ namespace __cmdline_opts {
     	Sequence<unsigned> seeds;
     }
 
-boost::timer::cpu_times runSimulation(const SimGeometry& geom,const RunConfig& cfg,const RunOptions& opts,const vector<Observer*>& obs);
-
 int main(int argc,char **argv)
 {
-    signal(SIGHUP,SIG_IGN);
     string fn_materials,fn_sources,fn_mesh;
     vector<Material> materials;
     string prefix;
+
+    vector<string> source_strs;
 
     banner();
 
@@ -93,6 +92,7 @@ int main(int argc,char **argv)
         ("input,i",po::value<string>(&fn_mesh),"Input file")
         ("N,N",po::value<unsigned long long>(&__cmdline_opts::Npkt),"Number of packets")
         ("sourcefile,s",po::value<string>(&fn_sources),"Source location file (TIM-OS .source type)")
+        ("source",po::value<vector<string>>(&source_strs),"Source strings")
         ("materials,m",po::value<string>(&fn_materials),"Materials file (TIM-OS .opt type)")
         ("prefix,x",po::value<string>(&prefix),"File prefix for mesh/source/materials file")
         ("rngseed,r",po::value<Sequence<unsigned>>(&__cmdline_opts::seeds),"RNG seed (int)")
@@ -160,8 +160,23 @@ int main(int argc,char **argv)
 	}
 	else if (!vm.count("sourcefile"))
 	{
-		cerr << "Sources required" << endl;
-		return -1;
+		if (!vm.count("source"))
+		{
+			cerr << "Sources required" << endl;
+			return -1;
+		}
+		cout << "Sources: " << endl;
+		for(const string& s : source_strs)
+		{
+			SourceDescription *src=parse_string(s);
+			cout << "  \"" << s << "\" => ";
+			if (src)
+				cout << *src << endl;
+			else
+				cout << endl;
+
+		}
+		return 0;
 	}
 	else if (!vm.count("materials"))
 	{
@@ -199,7 +214,6 @@ int main(int argc,char **argv)
 	return 0;
 }
 
-// run based on a case ID
 boost::timer::cpu_times runSimulation(const SimGeometry& geom,const RunConfig& cfg,const RunOptions& opts,const vector<Observer*>& obs)
 {
 	// Set up logger

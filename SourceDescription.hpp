@@ -54,7 +54,6 @@ class PencilBeamSourceDescription : public PointSourceDescription {
 	UnitVector<3,double> r;
 	int IDt,IDf;
 public:
-
 	PencilBeamSourceDescription(Ray<3,double> r_,double w=1.0) : PointSourceDescription(r_.getOrigin(),w),r(r_.getDirection()){ }
 
 	PencilBeamSourceDescription(Point<3,double> p_,UnitVector<3,double> d_,double w=1.0,int IDt_=0) : PointSourceDescription(p_,w),
@@ -140,7 +139,7 @@ class LineSourceDescription : virtual public SourceDescription {
 protected:
 	Point<3,double> a,b;
 public:
-	LineSourceDescription(const Point<3,double>& a_,const Point<3,double>& b_) : a(a_),b(b_){}
+	LineSourceDescription(const Point<3,double>& a_,const Point<3,double>& b_,double w_=1.0) : SourceDescription(w_),a(a_),b(b_){}
 
 	virtual string operator()() const { return "Line source"; }
 	virtual string timos_str(unsigned long long=0) const { return "???Line source???"; }
@@ -149,3 +148,5 @@ public:
 		return os << "Line source from " << a << " to " << b;
 	}
 };
+
+SourceDescription* parse_string(const string& s);

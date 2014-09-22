@@ -92,6 +92,15 @@ proc addLineProbe { name iren } {
     widget_$name SetEnabled 1
     }
 
+
+button .run -text "Run" -command {
+    set p1 [linerep_lp0 GetPoint1WorldPosition]
+    set p2 [linerep_lp0 GetPoint1WorldPosition]
+    puts "montecarlo --input data/mouse.mesh --N 100000 --source 'line:1.0:$p1 $p2'" }
+
+pack .run
+
+
 # set up rendering window
 vtkRenderer ren
 vtkRenderWindow renwin
