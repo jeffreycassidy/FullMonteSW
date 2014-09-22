@@ -66,7 +66,7 @@ montecarlo: montecarlo.o mainloop.o random.o FullMonte.o OStreamObserver.o PGObs
 simlocal: simlocal.o RandomAVX.o OStreamObserver.o libmontecarlo.so
 	$(GXX) $(BOOST_LIB) $(BOOST_INCLUDE) -LSFMT -lpq -lboost_program_options -lboost_system -lboost_timer -lboost_chrono -o $@ $^
 
-libmontecarlo.so: graph.o newgeom.o face.o helpers.o SourceDescription.o LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o mainloop.o blob.o fmdb.o sse.o RandomAVX.o LoggerConservation.o LoggerEvent.o LoggerVolume.o FullMonte.o
+libmontecarlo.so: graph.o newgeom.o face.o helpers.o SourceDescription.o LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o blob.o sse.o RandomAVX.o LoggerConservation.o LoggerEvent.o LoggerVolume.o FullMonte.o
 	$(GXX) -shared -fPIC $^ $(BOOST_LIB) -LSFMT -lpq -lboost_program_options -lboost_system -lboost_timer -lboost_chrono -Lfm-postgres -lSFMT -o $@
 
 rletrace: rletrace.cpp progress.cpp
@@ -138,6 +138,7 @@ TetraMeshTCL.so: TetraMeshTCL_wrap.o TetraMeshTCL.o
 		-ltclstub8.5					\
 		-lFullMonteGeometry				\
 		-lFullMonteVTK					\
+        -lmontecarlo                    \
 		-lfmpg							\
 		-L.								\
 		-I/usr/local/include/vtk		\

@@ -28,16 +28,23 @@ tumour SetMapper map_tumour
 
 
 proc addSurf { name mesh matID ren } {
-    puts "Adding surface $matID"
     set pd [createVTKBoundary $mesh $matID]
     set pd_$name $pd
+
+    vtkWindowedSincPolyDataFilter smoother_$name
+    smoother_$name SetInputData $pd
+    smoother_$name SetNumberOfIterations 50
+
+    vtkPolyDataNormals normals_$name
+    normals_$name SetInputConnection [smoother_$name GetOutputPort]
+
     vtkPolyDataMapper map_$name
-    map_$name SetInputData $pd
+    map_$name SetInputConnection [normals_$name GetOutputPort]
+
     vtkActor $name
     [$name GetProperty] SetOpacity 0.3
     $name SetMapper map_$name
     $ren AddActor $name
-    puts "Done"
 }
 
 proc boxWidgetUpdate { name } {
