@@ -260,6 +260,8 @@ class TetraMesh {
     /// Creates a copy of the points and faces comprising the boundary of given material
     TriSurf extractMaterialBoundary(unsigned matID) const;
 
+    TriSurf extractRegionSurface(const vector<unsigned>& tetIDs) const;
+
     // functions for saving tetramesh representations
     pair<unsigned,boost::shared_array<const uint8_t> > tetrasAsBinary() const;
     pair<unsigned,boost::shared_array<const uint8_t> > pointsAsBinary() const;

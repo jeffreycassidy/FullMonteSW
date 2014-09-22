@@ -57,23 +57,41 @@ extern "C" PGConnection* tclConnect()
 	return conn.get();		// Careful! Managed by boost shared_ptr; need to keep it global to avoid premature destruction
 }
 
-extern "C" TetraMesh* loadMesh(PGConnection* conn,unsigned IDm)
+/*TetraMesh* loadMesh(PGConnection* conn,unsigned IDm)
 {
 	return exportMesh(*conn,IDm);
-}
+}*/
 
 TetraMesh* loadMesh(const std::string& fn)
 {
 	TetraMesh* M=new TetraMesh(fn,TetraMesh::MatlabTP);
 	return M;
 }
-TetraMesh* loadMesh(const char* fn)
+/*TetraMesh* loadMesh(const char* fn)
 {
 	TetraMesh* M=new TetraMesh(fn,TetraMesh::MatlabTP);
 	return M;
-}
+}*/
 
 vtkPolyData* createVTKBoundary(const TetraMesh& M,unsigned matID)
 {
 	return getVTKPolyData(M.extractMaterialBoundary(matID));
+}
+
+vector<unsigned> loadVector(const std::string& fn)
+{
+	ifstream is(fn.c_str());
+	vector<unsigned> v;
+	cout << "Reading a vector from " << fn << endl;
+	copy(std::istream_iterator<unsigned>(is),
+			std::istream_iterator<unsigned>(),
+			std::back_inserter(v));
+	cout << "  Read " << v.size() << " elements" << endl;
+	return v;
+}
+
+vtkPolyData* getVTKRegion(const TetraMesh& M,const vector<unsigned>& tetIDs)
+{
+	TriSurf ts = M.extractRegionSurface(tetIDs);
+	return getVTKPolyData(ts);
 }

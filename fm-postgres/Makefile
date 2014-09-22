@@ -33,8 +33,8 @@ all: tupletest fmdbexportcase fmdbimportmesh libfmpg.so
 getMaterials: getMaterials.cpp libfmpg.so
 	g++ $(GCC_OPTS) -lfmpg -lmontecarlo $(LIBS) $(LIBDIRS) $(INCLDIRS) $< -o $@
 
-libfmpg.so: fm-postgres.o fmdbexportcase.o ../blob.o ../fluencemap.o ../graph.o ../SourceDescription.o ../face.o ../newgeom.o
-	$(GXX) $(LIBDIRS) -Wall -lpq -lboost_program_options -lcrypto -fPIC -shared -o $@ $^
+libfmpg.so: fm-postgres.o fmdbexportcase.o 
+	$(GXX) $(LIBDIRS) -Wall -lpq -lboost_program_options -lcrypto -lmontecarlo -L.. -fPIC -shared -o $@ $^
 
 fmdbexportcase: fmdbexportcase.cpp exportcase_test.cpp
 	$(GXX) -ggdb -Wall $(GCC_OPTS) $(LIBS) $(INCLDIRS) -o $@ $^

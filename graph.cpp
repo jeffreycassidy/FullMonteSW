@@ -821,3 +821,26 @@ TriSurf TetraMesh::extractMaterialBoundary(unsigned matID) const
 
     return TriSurf(P_out,F_out);
 }
+
+
+/* Returns a TriSurf containing the boundary surface of a set of tetrahedra
+ *
+ * The set must be given as a sorted vector of tetra IDs
+ *
+ */
+
+TriSurf TetraMesh::extractRegionSurface(const vector<unsigned>& tetIDs) const
+{
+    vector<FaceByPointID> F_out;
+
+    for(unsigned IDf=0; IDf<F.size(); ++IDf)
+    {
+    	// add iff one tetra incident to the face is in the set and the other is not
+    	if (binary_search(tetIDs.begin(),tetIDs.end(),vecFaceID_Tetra[IDf].first)
+    			^ binary_search(tetIDs.begin(),tetIDs.end(),vecFaceID_Tetra[IDf].second))
+    		F_out.push_back(F_p[IDf]);
+    }
+
+    return TriSurf(P,F_out);
+}
+

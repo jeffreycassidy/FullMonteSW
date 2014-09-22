@@ -9,7 +9,7 @@
 // Needed for VTK commands
 %typemap(in,numinputs=0) Tcl_Interp* { $1 = interp; }
 
-%typemap(in) const std::string& (std::string s){
+%typemap(in) std::string& (std::string s){
 	s = string(Tcl_GetString($input));
 	$1 = &s;
 }
@@ -34,10 +34,15 @@ VTK_TYPEMAP(vtkPolyData)
 	#include "TetraMeshTCL.i"
 	#include "TetraMeshBaseVTK.hpp"
 	
+	#include <string>
+	
 	vtkUnstructuredGrid* getVTKTetraMesh(const TetraMeshBase& M);
 	vtkPolyData* getVTKPolyData(const TriSurf& ts);
-	extern "C" TetraMesh* loadMesh(PGConnection*,unsigned);
+	//TetraMesh* loadMesh(PGConnection*,unsigned);
 	TetraMesh* loadMesh(const std::string&);
+	
+	vtkPolyData* getVTKRegion(const TetraMesh& M,const vector<unsigned>& tetIDs);
+	vector<unsigned> loadVector(const std::string& fn);
 %}
 #endif
 
@@ -47,6 +52,7 @@ VTK_TYPEMAP(vtkPolyData)
 #include "TetraMeshBase.hpp"
 #include <vtkPolyData.h>
 #include <vtkUnstructuredGrid.h>
+#include <string>
 
 
 TetraMeshBase 		 	loadTetraMeshBaseText(const std::string& fn);
@@ -57,7 +63,10 @@ vtkUnstructuredGrid* 	getVTKTetraMesh(const TetraMeshBase& M);
 extern "C" PGConnection* tclConnect();
 
 // loading meshes and results
-extern "C" TetraMesh* loadMesh(PGConnection*,unsigned);
+//TetraMesh* loadMesh(PGConnection*,unsigned);
 TetraMesh* loadMesh(const std::string&);
-TetraMesh* loadMesh(const char*);
+//TetraMesh* loadMesh(const char*);
 vtkPolyData* createVTKBoundary(const TetraMesh& M,unsigned matID);
+
+vtkPolyData* getVTKRegion(const TetraMesh& M,const vector<unsigned>& tetIDs);
+vector<unsigned> loadVector(const std::string& fn);

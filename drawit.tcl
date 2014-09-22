@@ -14,6 +14,18 @@ puts "data loaded from $fn";
 #set mesh [loadMesh $conn 1]
 #set ts   [extractBoundary $mesh 3]
 
+## Load the tumour region
+set tumourtets [loadVector "tumour_tet_IDs.txt"]
+
+set pd_tumour [getVTKRegion $mesh $tumourtets]
+
+vtkPolyDataMapper map_tumour
+map_tumour SetInputData $pd_tumour
+vtkActor tumour
+[tumour GetProperty] SetOpacity 0.8
+[tumour GetProperty] SetColor 1.0 0.0 0.0
+tumour SetMapper map_tumour
+
 
 proc addSurf { name mesh matID ren } {
     puts "Adding surface $matID"
@@ -22,11 +34,44 @@ proc addSurf { name mesh matID ren } {
     vtkPolyDataMapper map_$name
     map_$name SetInputData $pd
     vtkActor $name
-    [$name GetProperty] SetOpacity 0.5
+    [$name GetProperty] SetOpacity 0.3
     $name SetMapper map_$name
     $ren AddActor $name
     puts "Done"
 }
+
+proc boxWidgetUpdate { name } {
+    boxrep_$name GetPlanes planes_$name
+
+    puts "PTV bounding box: "
+    for { set i 0 } { $i < 6 } { incr i } {
+        set pl [planes_$name GetPlane $i]
+        puts "  Plane $i: n=[$pl GetNormal] p=[$pl GetOrigin]"
+    }
+}
+
+proc addBoxBound { name ren iren } {
+    vtkPlanes planes_$name
+
+    vtkBoxWidget2 widget_$name
+    widget_$name SetInteractor $iren
+    widget_$name EnabledOn
+    widget_$name TranslationEnabledOn
+    widget_$name ScalingEnabledOn
+    widget_$name RotationEnabledOn
+
+    widget_$name AddObserver EndInteractionEvent "boxWidgetUpdate $name"
+
+    vtkBoxRepresentation boxrep_$name
+    widget_$name SetRepresentation boxrep_$name
+    boxrep_$name SetPlaceFactor 1.0
+    boxrep_$name PlaceWidget 8 30 33 48 4 19
+    boxrep_$name InsideOutOn
+    # get normals pointing in
+
+    $ren AddActor boxrep_$name
+}
+
 
 proc lineWidgetUpdate { name } {
     global $name
@@ -42,8 +87,8 @@ proc addLineProbe { name iren } {
     widget_$name SetRepresentation linerep_$name
     widget_$name AddObserver InteractionEvent "lineWidgetUpdate $name"
     widget_$name SetInteractor $iren
-    linerep_$name SetPoint1WorldPosition 18.5 23.6 13.9
-    linerep_$name SetPoint2WorldPosition 20 15 13
+    linerep_$name SetPoint1WorldPosition 11.4 42.4 10.4
+    linerep_$name SetPoint2WorldPosition 11.7 41.6 11.0
     widget_$name SetEnabled 1
     }
 
@@ -60,6 +105,7 @@ for { set i 0 } { $i < 18 } { incr i } {
 #[surf0 GetProperty] SetOpacity 0.2
 
 ren RemoveActor surf0
+ren AddActor tumour
 
 [surf1 GetProperty] SetColor 1.0 1.0 1.0
 [surf1 GetProperty] SetOpacity 0.2
@@ -87,10 +133,16 @@ vtkRenderWindowInteractor iren
 [iren GetInteractorStyle] SetCurrentStyleToTrackballCamera
 iren SetRenderWindow renwin
 
-renwin Render
 
 # add interaction widgets
+renwin Render
+
 addLineProbe lp0 iren
+addBoxBound bx0 ren iren
 ren AddActor linerep_lp0
 
+renwin Render
+
 puts "rendered"
+
+iren Start

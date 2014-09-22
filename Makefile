@@ -67,7 +67,7 @@ simlocal: simlocal.o RandomAVX.o OStreamObserver.o libmontecarlo.so
 	$(GXX) $(BOOST_LIB) $(BOOST_INCLUDE) -LSFMT -lpq -lboost_program_options -lboost_system -lboost_timer -lboost_chrono -o $@ $^
 
 libmontecarlo.so: graph.o newgeom.o face.o helpers.o SourceDescription.o LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o mainloop.o blob.o fmdb.o sse.o RandomAVX.o LoggerConservation.o LoggerEvent.o LoggerVolume.o FullMonte.o
-	$(GXX) -shared -fPIC $^ $(BOOST_LIB) -LSFMT -lpq -lboost_program_options -lboost_system -lboost_timer -lboost_chrono -Lfm-postgres -lfmpg -lSFMT -o $@
+	$(GXX) -shared -fPIC $^ $(BOOST_LIB) -LSFMT -lpq -lboost_program_options -lboost_system -lboost_timer -lboost_chrono -Lfm-postgres -lSFMT -o $@
 
 rletrace: rletrace.cpp progress.cpp
 	$(GXX) -Wall -std=c++0x -lrt -DPOSIX_TIMER -O3 -o $@ $^
@@ -113,10 +113,10 @@ TetraMeshTCL_wrap.cxx: TetraMeshTCL.i
 	$(SWIG) -c++ -tcl -o $@ $^
 	
 TetraMeshTCL.o: TetraMeshTCL.cpp
-	$(GXX) -g -c -Wall -std=c++11 -I. -I/usr/local/include/pgsql -I/usr/local/include/vtk $^
+	$(GXX) -g -c -fPIC -Wall -std=c++11 -I. -I/usr/local/include/pgsql -I/usr/local/include/vtk $^
 	
 TetraMeshTCL_wrap.o: TetraMeshTCL_wrap.cxx
-	$(GXX) -g -c -Wall -std=c++11 -DUSE_TCL_STUBS -I/usr/local/include/pgsql -I/usr/local/include/vtk $^
+	$(GXX) -g -c -fPIC -Wall -std=c++11 -DUSE_TCL_STUBS -I/usr/local/include/pgsql -I/usr/local/include/vtk $^
 	
 libFullMonteGeometry.so: TetraMeshBase.o newgeom.o
 	$(GXX) -fPIC -shared -Wall -o $@ $^
