@@ -35,8 +35,14 @@ VTK_TYPEMAP(vtkPolyData)
 	#include "TetraMeshBaseVTK.hpp"
 	
 	vtkUnstructuredGrid* getVTKTetraMesh(const TetraMeshBase& M);
+	vtkPolyData* getVTKPolyData(const TriSurf& ts);
+	extern "C" TetraMesh* loadMesh(PGConnection*,unsigned);
+	TetraMesh* loadMesh(const std::string&);
 %}
 #endif
+
+#include <boost/smart_ptr/shared_ptr.hpp>
+#include "fm-postgres/fm-postgres.hpp"
 
 #include "TetraMeshBase.hpp"
 #include <vtkPolyData.h>
@@ -48,10 +54,10 @@ void 					saveTetraMeshBaseText(const TetraMeshBase&,const std::string& fn);
 vtkUnstructuredGrid* 	getVTKTetraMesh(const TetraMeshBase& M);
 
 // managing database connections
-//extern "C" PGConnection* tclConnect();
+extern "C" PGConnection* tclConnect();
 
 // loading meshes and results
-//extern "C" TetraMesh* loadMesh(PGConnection*,unsigned);
-
-//vtkPolyData* getVTKPolyData(const TriSurf& surf);
-//vtkUnstructuredGrid* getVTKTetraData(const TetraMesh& M);
+extern "C" TetraMesh* loadMesh(PGConnection*,unsigned);
+TetraMesh* loadMesh(const std::string&);
+TetraMesh* loadMesh(const char*);
+vtkPolyData* createVTKBoundary(const TetraMesh& M,unsigned matID);

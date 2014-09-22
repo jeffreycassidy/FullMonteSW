@@ -115,7 +115,6 @@ public:
     unsigned                getTetraFromFace(int IDf)       const;
     Point<3,double>         getTetraPoint(unsigned IDt,unsigned i) const { return P[T_p[IDt][i]]; }
 
-
     double                  getTetraVolume(TetraByPointID IDps) const
         { return abs(scalartriple(P[IDps[0]],P[IDps[1]],P[IDps[2]],P[IDps[3]])/6); }
 

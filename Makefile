@@ -9,10 +9,14 @@ ifndef BOOST_LIB
 	BOOST_LIB=-L/usr/local/lib/boost
 endif
 
+ifndef VTK_INCLUDE
+	VTK_INCLUDE=-I/usr/local/include/vtk
+endif
+
 GCC_OPTS=-Wall -mfpmath=sse -Wstrict-aliasing=2 -g -mavx -fpermissive -std=c++11 -fPIC -fabi-version=6 -Wno-deprecated-declarations -Wa,-q
 LIBS=-lboost_program_options -lboost_timer -lpq -lcrypto -lboost_system -lboost_chrono -lSFMT -lfmpg
 LIBDIRS=-L/usr/local/lib $(BOOST_LIB) -LSFMT -L. -Lfm-postgres
-INCLDIRS=$(BOOST_INCLUDE) -I/usr/local/include -I. -I/usr/local/include/pgsql -I..
+INCLDIRS=$(BOOST_INCLUDE) -I/usr/local/include -I. -I/usr/local/include/pgsql $(VTK_INCLUDE) -I..
 
 SWIG=swig
 
@@ -109,22 +113,22 @@ TetraMeshTCL_wrap.cxx: TetraMeshTCL.i
 	$(SWIG) -c++ -tcl -o $@ $^
 	
 TetraMeshTCL.o: TetraMeshTCL.cpp
-	$(GXX) -g -c -Wall -std=c++11 -I/usr/local/include/vtk $^
+	$(GXX) -g -c -Wall -std=c++11 -I. -I/usr/local/include/pgsql -I/usr/local/include/vtk $^
 	
 TetraMeshTCL_wrap.o: TetraMeshTCL_wrap.cxx
-	$(GXX) -g -c -Wall -std=c++11 -DUSE_TCL_STUBS -I/usr/local/include/vtk $^
+	$(GXX) -g -c -Wall -std=c++11 -DUSE_TCL_STUBS -I/usr/local/include/pgsql -I/usr/local/include/vtk $^
 	
 libFullMonteGeometry.so: TetraMeshBase.o newgeom.o
 	$(GXX) -fPIC -shared -Wall -o $@ $^
 
-libFullMonteVTK.so: TetraMeshBaseVTK.o
+libFullMonteVTK.so: TetraMeshBaseVTK.o VTKInterface.o
 	$(GXX) -fPIC -shared -Wall -lFullMonteGeometry -L.			\
 		-lvtkCommonDataModel-6.1 								\
 		-lvtkCommonCore-6.1										\
 		-o $@ $^
 	
 TetraMeshTCL.so: TetraMeshTCL_wrap.o TetraMeshTCL.o	
-	$(GXX) -g -Wall -fPIC -shared -L/usr/local/lib	\
+	$(GXX) -g -Wall -fPIC -shared -L/usr/local/lib -Lfm-postgres	\
 		-lvtkCommonCore-6.1				\
 		-lvtkRenderingCoreTCL-6.1		\
 		-lvtkCommonDataModelTCL-6.1		\
@@ -134,6 +138,7 @@ TetraMeshTCL.so: TetraMeshTCL_wrap.o TetraMeshTCL.o
 		-ltclstub8.5					\
 		-lFullMonteGeometry				\
 		-lFullMonteVTK					\
+		-lfmpg							\
 		-L.								\
 		-I/usr/local/include/vtk		\
 		-o $@ $^

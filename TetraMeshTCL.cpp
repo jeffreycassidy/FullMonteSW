@@ -2,6 +2,9 @@
 #include <vtk/vtkTclUtil.h>
 #include <vtkPolyData.h>
 #include <vtkUnstructuredGrid.h>
+#include <string>
+#include "VTKInterface.hpp"
+#include "graph.hpp"
 
 // Support code that has some constants needed for creation of VTK TCL references
 
@@ -43,24 +46,34 @@ template<class vtkObjectType>vtkObjectType* createVTKTCLObject(Tcl_Interp* inter
 }
 
 
-//boost::shared_ptr<PGConnection> conn;
-//
-//extern "C" PGConnection* tclConnect()
-//{
-//	globalopts::db::blobCachePath = "/home/jcassidy/fullmonte/blobcache";
-//	// Normally set by environment parsed by boost::program_options
-//
-//	conn=PGConnect();
-//	return conn.get();		// Careful! Managed by boost shared_ptr; need to keep it global to avoid premature destruction
-//}
-//
-//extern "C" TetraMesh* loadMesh(PGConnection* conn,unsigned IDm)
-//{
-//	return exportMesh(*conn,IDm);
-//}
-//
-//vtkPolyData* extractVTKBoundary(const TetraMesh* M,unsigned IDmat)
-//{
-//	TriSurf ts = M->extractMaterialBoundary(IDmat);
-//	return getVTKPolyData(ts);
-//}
+boost::shared_ptr<PGConnection> conn;
+
+extern "C" PGConnection* tclConnect()
+{
+	globalopts::db::blobCachePath = "/home/jcassidy/fullmonte/blobcache";
+	// Normally set by environment parsed by boost::program_options
+
+	conn=PGConnect();
+	return conn.get();		// Careful! Managed by boost shared_ptr; need to keep it global to avoid premature destruction
+}
+
+extern "C" TetraMesh* loadMesh(PGConnection* conn,unsigned IDm)
+{
+	return exportMesh(*conn,IDm);
+}
+
+TetraMesh* loadMesh(const std::string& fn)
+{
+	TetraMesh* M=new TetraMesh(fn,TetraMesh::MatlabTP);
+	return M;
+}
+TetraMesh* loadMesh(const char* fn)
+{
+	TetraMesh* M=new TetraMesh(fn,TetraMesh::MatlabTP);
+	return M;
+}
+
+vtkPolyData* createVTKBoundary(const TetraMesh& M,unsigned matID)
+{
+	return getVTKPolyData(M.extractMaterialBoundary(matID));
+}

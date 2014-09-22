@@ -2,18 +2,30 @@ package require vtk
 
 # load data
 load TetraMeshTCL.so
-set conn [tclConnect]
-set mesh [loadMesh $conn 1]
-set ts   [extractBoundary $mesh 3]
+
+set fn "data/mouse.mesh"
+
+# load from text mesh file
+set mesh [loadMesh $fn]
+puts "data loaded from $fn";
+
+# load from database
+#set conn [tclConnect]
+#set mesh [loadMesh $conn 1]
+#set ts   [extractBoundary $mesh 3]
+
 
 proc addSurf { name mesh matID ren } {
-    createVTKBoundary pd_$name $mesh $matID
+    puts "Adding surface $matID"
+    set pd [createVTKBoundary $mesh $matID]
+    set pd_$name $pd
     vtkPolyDataMapper map_$name
-    map_$name SetInputData pd_$name
+    map_$name SetInputData $pd
     vtkActor $name
     [$name GetProperty] SetOpacity 0.5
     $name SetMapper map_$name
     $ren AddActor $name
+    puts "Done"
 }
 
 proc lineWidgetUpdate { name } {
@@ -72,11 +84,13 @@ ren RemoveActor surf0
 # start render interactor
 vtkRenderWindowInteractor iren
 
+[iren GetInteractorStyle] SetCurrentStyleToTrackballCamera
+iren SetRenderWindow renwin
+
+renwin Render
+
 # add interaction widgets
 addLineProbe lp0 iren
 ren AddActor linerep_lp0
 
-
-[iren GetInteractorStyle] SetCurrentStyleToTrackballCamera
-iren SetRenderWindow renwin
-renwin Render
+puts "rendered"
