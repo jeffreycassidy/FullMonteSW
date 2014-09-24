@@ -37,3 +37,20 @@ template<class InputIterator>vtkPoints* getVTKPoints(InputIterator begin,InputIt
 	}
 	return vtkp;
 }
+
+template<class ArrayType,class InputIterator>ArrayType* getVTKScalarArray(InputIterator begin,InputIterator end,unsigned long size_hint=0)
+{
+	ArrayType* vtka = ArrayType::New();
+
+	vtka->SetNumberOfComponents(1);
+
+	if(size_hint==0)
+		for(; begin != end; ++begin)
+			vtka->InsertNextTuple1(*begin);
+	else {
+		vtka->SetNumberOfTuples(size_hint);
+		for(auto el : make_pair(begin,end) | boost::adaptors::indexed(0))
+			vtka->SetTuple1(el.index(),el.value());
+	}
+	return vtka;
+}

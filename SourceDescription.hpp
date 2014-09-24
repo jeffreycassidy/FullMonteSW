@@ -141,6 +141,8 @@ protected:
 public:
 	LineSourceDescription(const Point<3,double>& a_,const Point<3,double>& b_,double w_=1.0) : SourceDescription(w_),a(a_),b(b_){}
 
+	std::pair<Point<3,double>,Point<3,double>> getEndPoints() const { return make_pair(a,b); }
+
 	virtual string operator()() const { return "Line source"; }
 	virtual string timos_str(unsigned long long=0) const { return "???Line source???"; }
 	virtual ostream& print(ostream& os) const

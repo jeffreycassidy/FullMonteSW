@@ -5,6 +5,8 @@
 #include <string>
 #include "VTKInterface.hpp"
 #include "graph.hpp"
+#include <vtkDoubleArray.h>
+#include "Parallelepiped.hpp"
 
 // Support code that has some constants needed for creation of VTK TCL references
 
@@ -50,33 +52,44 @@ boost::shared_ptr<PGConnection> conn;
 
 extern "C" PGConnection* tclConnect()
 {
-	globalopts::db::blobCachePath = "/home/jcassidy/fullmonte/blobcache";
+	globalopts::db::blobCachePath = "/Users/jcassidy/fullmonte/blobcache";
 	// Normally set by environment parsed by boost::program_options
 
 	conn=PGConnect();
 	return conn.get();		// Careful! Managed by boost shared_ptr; need to keep it global to avoid premature destruction
 }
 
-/*TetraMesh* loadMesh(PGConnection* conn,unsigned IDm)
+TetraMeshBase* loadMesh(PGConnection* conn,unsigned IDm)
 {
-	return exportMesh(*conn,IDm);
-}*/
-
-TetraMesh* loadMesh(const std::string& fn)
-{
-	TetraMesh* M=new TetraMesh(fn,TetraMesh::MatlabTP);
+	TetraMesh *M = exportMesh(*conn,IDm);
 	return M;
 }
-/*TetraMesh* loadMesh(const char* fn)
+
+TetraMeshBase* loadMeshFile(const std::string& fn)
 {
-	TetraMesh* M=new TetraMesh(fn,TetraMesh::MatlabTP);
-	return M;
-}*/
+	TetraMeshBase *tmb = new TetraMeshBase;
+	tmb->readFileMatlabTP(fn);
+	return tmb;
+}
 
 vtkPolyData* createVTKBoundary(const TetraMesh& M,unsigned matID)
 {
 	return getVTKPolyData(M.extractMaterialBoundary(matID));
 }
+
+vector<double> loadVectorDouble(const std::string& fn)
+		{
+	ifstream is(fn.c_str());
+	vector<double> v;
+	cout << "Reading a vector from " << fn << endl;
+	copy(std::istream_iterator<double>(is),
+			std::istream_iterator<double>(),
+			std::back_inserter(v));
+	for(double& d : v)
+		d = log(d);
+	cout << "  Read " << v.size() << " elements" << endl;
+	return v;
+		}
 
 vector<unsigned> loadVector(const std::string& fn)
 {
@@ -90,8 +103,18 @@ vector<unsigned> loadVector(const std::string& fn)
 	return v;
 }
 
+vtkDataArray* getVTKDataArray(const vector<double>& v)
+{
+	return getVTKScalarArray<vtkDoubleArray>(v.begin(),v.end(),v.size());
+}
+
 vtkPolyData* getVTKRegion(const TetraMesh& M,const vector<unsigned>& tetIDs)
 {
 	TriSurf ts = M.extractRegionSurface(tetIDs);
 	return getVTKPolyData(ts);
+}
+
+TetraMeshBase clipToRegion(const TetraMeshBase& M,const Parallelepiped& pp)
+{
+	return M.clipTo(pp);
 }

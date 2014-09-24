@@ -25,6 +25,7 @@
 
 VTK_TYPEMAP(vtkUnstructuredGrid)
 VTK_TYPEMAP(vtkPolyData)
+VTK_TYPEMAP(vtkDataArray)
 
 %{
 	#include "graph.hpp"
@@ -34,12 +35,18 @@ VTK_TYPEMAP(vtkPolyData)
 	#include "TetraMeshTCL.i"
 	#include "TetraMeshBaseVTK.hpp"
 	
+	#include "Parallelepiped.hpp"
+	
 	#include <string>
 	
 	vtkUnstructuredGrid* getVTKTetraMesh(const TetraMeshBase& M);
 	vtkPolyData* getVTKPolyData(const TriSurf& ts);
-	//TetraMesh* loadMesh(PGConnection*,unsigned);
-	TetraMesh* loadMesh(const std::string&);
+	vtkDoubleArray* getScalars(const vector<double>& V);
+	
+TetraMeshBase* loadMesh(PGConnection*,unsigned);
+TetraMeshBase* loadMeshFile(const std::string&);
+vtkDataArray* getVTKDataArray(const vector<double>& v);
+vector<double> loadVectorDouble(const std::string& fn);
 	
 	vtkPolyData* getVTKRegion(const TetraMesh& M,const vector<unsigned>& tetIDs);
 	vector<unsigned> loadVector(const std::string& fn);
@@ -49,6 +56,7 @@ VTK_TYPEMAP(vtkPolyData)
 #include <boost/smart_ptr/shared_ptr.hpp>
 #include "fm-postgres/fm-postgres.hpp"
 
+#include "Parallelepiped.hpp"
 #include "TetraMeshBase.hpp"
 #include <vtkPolyData.h>
 #include <vtkUnstructuredGrid.h>
@@ -63,10 +71,17 @@ vtkUnstructuredGrid* 	getVTKTetraMesh(const TetraMeshBase& M);
 extern "C" PGConnection* tclConnect();
 
 // loading meshes and results
-//TetraMesh* loadMesh(PGConnection*,unsigned);
-TetraMesh* loadMesh(const std::string&);
-//TetraMesh* loadMesh(const char*);
+TetraMeshBase*	loadMesh(PGConnection*,unsigned);
+TetraMeshBase* 	loadMeshFile(const std::string&);
 vtkPolyData* createVTKBoundary(const TetraMesh& M,unsigned matID);
 
 vtkPolyData* getVTKRegion(const TetraMesh& M,const vector<unsigned>& tetIDs);
 vector<unsigned> loadVector(const std::string& fn);
+vector<double> loadVectorDouble(const std::string& fn);
+vtkDataArray* getVTKDataArray(const vector<double>& v);
+
+TetraMesh* buildMesh(const TetraMeshBase& M);
+
+Parallelepiped readParallelepiped(const std::string&);
+TetraMeshBase clipToRegion(const TetraMeshBase& M,const Parallelepiped& pp);
+vector<double> exportResultVector(PGConnection* conn,unsigned IDr,unsigned dType);

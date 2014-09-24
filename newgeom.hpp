@@ -225,8 +225,8 @@ template<size_t D,class T>class Vector : public Point<D,T>
 	const Vector& operator-=(const Vector& k) { for(int i=0; i<D; ++i){ (*this)[i]-=k[i]; } return *this; }
 
 	// scalar operations
-	const Vector& operator*=(const T& k) { for(int i=0; i<D; ++i){ (*this)[i]*=k; } return *this; }
-	const Vector& operator/=(const T& k) { for(int i=0; i<D; ++i){ (*this)[i]/=k; } return *this; }
+	const Vector& operator*=(const T& k) { for(size_t i=0; i<D; ++i){ (*this)[i]*=k; } return *this; }
+	const Vector& operator/=(const T& k) { for(size_t i=0; i<D; ++i){ (*this)[i]/=k; } return *this; }
 	Vector operator* (T k)        const { Vector<D,T> t(*this); return t *= k; }
 	Vector operator/ (const T& k) const { Vector<D,T> t(*this); return t /= k; }
 

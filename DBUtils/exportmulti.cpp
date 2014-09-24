@@ -35,7 +35,7 @@ int main(int argc,char **argv)
 
     cmdline.add_options()
         ("help,h","Display option help")
-        ("runs,r",po::value<Sequence<unsigned>>(&__cmdline_opts::runs),"RNG seed (int)")
+        ("runs,r",po::value<Sequence<unsigned>>(&__cmdline_opts::runs),"Run IDs")
         ("surface,s","Surface energy")
 		("volume,v","Volume energy")
         ("outfile,o",po::value<string>(&__cmdline_opts::ofile),"Outfile file name")

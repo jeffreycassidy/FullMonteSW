@@ -9,6 +9,7 @@
 #include <functional>
 
 #include "TriSurf.hpp"
+#include "TetraMeshBase.hpp"
 
 #include <boost/shared_array.hpp>
 
@@ -64,11 +65,6 @@ class Face {
 	friend ostream& operator<<(ostream&,const Face&);
 };
 
-typedef union
-{
-	__m128 vf;
-	float f[4];
-} SSEReg128;
 
 typedef struct { 
         __m128 Pe;          // 4x16B = 64 B
@@ -93,11 +89,8 @@ struct Tetra {
     
 } __attribute__ ((aligned(64)));
 
-class TetraMesh {
-    vector<unsigned>            T_m;        // tetra -> material mapping
-	vector<Point<3,double> >    P;          // point vector
+class TetraMesh : public TetraMeshBase {
 	vector<TetraByFaceID>	    T_f;        // tetra -> 4 face IDs
-	vector<TetraByPointID>      T_p;        // tetra -> 4 point IDs
     vector<FaceByPointID>       F_p;        // face ID -> 3 point IDs
 	vector<Face>			    F;          // faces (with normals and constants)
 	vector<pair<int,int> >      vecFaceID_Tetra;        // for each face f, vecFaceID_Tetra[f] gives the tetras adjacent to the face
@@ -109,15 +102,11 @@ class TetraMesh {
 
     map<TetraByPointID,unsigned> tetraMap;
 
-	// file input/output
-	bool readFileMatlabTP(string);
-
 	int  tetrasToFaces(vector<Face>&,vector<TetraByPointID>&,const vector<Point<3,double> >&,vector<TetraByFaceID>&);
 
     map<FaceByPointID,unsigned> faceMap;
 
 	public:
-    bool writeFileMatlabTP(string) const;
 
     // iterators
     typedef vector<Point<3,double> >::const_iterator point_const_iterator;
@@ -181,11 +170,12 @@ class TetraMesh {
 	enum TetraFileType { MatlabTP };
 
 	TetraMesh(){};
-    TetraMesh(unsigned Np_,unsigned Nt_,unsigned Nf_) : T_m(Nt_+1),P(Np_+1),T_f(Nf_+1),T_p(Nt_+1),F_p(Nf_+1),F(Nf_+1),
+	TetraMesh(const TetraMeshBase& Mb) : TetraMeshBase(Mb){ tetrasToFaces(F,T_p,P,T_f); }
+    TetraMesh(unsigned Np_,unsigned Nt_,unsigned Nf_) : TetraMeshBase(Np_,Nt_),T_f(Nf_+1),F_p(Nf_+1),F(Nf_+1),
         vecFaceID_Tetra(Nf_+1),tetras(Nt_+1){}
 	TetraMesh(string,TetraFileType);
 	TetraMesh(const vector<Point<3,double> >& P_,const vector<TetraByPointID>& T_p_,const vector<unsigned>& T_m_)
-		: T_m(T_m_),P(P_),T_p(T_p_) { tetrasToFaces(F,T_p,P,T_f); }
+		: TetraMeshBase(P,T_p,T_m) { tetrasToFaces(F,T_p,P,T_f); }
     TetraMesh(const double*,unsigned Np,const unsigned*,unsigned Nt);
     ~TetraMesh();
 
@@ -230,6 +220,7 @@ class TetraMesh {
     double                  getTetraVolume(unsigned IDt) const { return getTetraVolume(T_p[IDt]); }
 
     const vector<Point<3,double> >& getPoints() const { return P; }
+    const vector<TetraByPointID>& getTetrasByPointID() const { return T_p; }
 
 	// find nearest point or enclosing tetra
 	unsigned findEnclosingTetra(const Point<3,double>&) const;
@@ -244,6 +235,8 @@ class TetraMesh {
 
     // find the surface element hit by an incoming ray
     pair<pair<unsigned,int>,Point<3,double> > getSurfaceElement(const Ray<3,double>&) const;
+
+    vector<unsigned> getMaterialMap() const { return T_m; }
 
 	// checks if faces are oriented correctly
 	bool checkFaces() const;
@@ -267,6 +260,7 @@ class TetraMesh {
     pair<unsigned,boost::shared_array<const uint8_t> > pointsAsBinary() const;
 };
 
+TetraMesh* buildMesh(const TetraMeshBase& M);
 
 template<class T>int signum(T a)
 {

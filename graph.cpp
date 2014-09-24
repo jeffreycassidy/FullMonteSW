@@ -4,6 +4,8 @@
 #include <set>
 #include <cassert>
 #include <signal.h>
+#include <boost/range/adaptor/indexed.hpp>
+
 
 #include "blob.hpp"
 
@@ -14,7 +16,7 @@ TetraMesh::TetraMesh(string fn,TetraFileType type)
 {
 	switch(type){
 		case MatlabTP:
-		readFileMatlabTP(fn);
+		TetraMeshBase::readFileMatlabTP(fn);
 		
 		default:
 		break;
@@ -135,82 +137,6 @@ vector<Material> loadMatFile(string fn)
     return mat;
 }
 
-/*
-	readFileMatlabTP(fn,ids,coords)
-
-Args
-	fn			File name to open
-
-Returns
-	ids			Vector of TetraByPointID, specifies the tetrahedra in terms of their points
-	coords		Vector of Point<3,double> giving the actual point coordinates
-
-	pair<int,int> contains (number of faces, number of points)
-
-
-	NOTE: Arrays are 1-based so they will agree with Matlab/Octave
-			0 is used as a special value (for not-found or exited)
-
-*/
-
-bool TetraMesh::readFileMatlabTP(string fn)
-{
-	ifstream is(fn.c_str(),ios_base::in);
-
-    if(!is.good()){
-        cerr << "Failed to open " << fn << " for reading; abort" << endl;
-        return false;
-    }
-	int Nt,Np;
-
-    // read sizes
-    is >> Np;
-	is >> Nt;
-
-	// read point coordinates -- uses 1-based addressing
-	P.resize(Np+1);
-	P[0]=Point<3,double>();
-	for (vector<Point<3,double> >::iterator it = P.begin()+1; it != P.end(); ++it)
-		is >> *it;
-
-	T_p.resize(Nt+1);
-    T_m.resize(Nt+1);
-    tetraMap.clear();
-	unsigned t[4]={0,0,0,0},i=1,max_m=0;
-	T_p[0]=TetraByPointID(t);
-    T_m[0]=0;
-    TetraByPointID IDps;
-	for (vector<TetraByPointID>::iterator it=T_p.begin()+1; it != T_p.end(); ++it,++i)
-	{
-		is >> IDps;
-		is >> T_m[i];
-        *it=IDps.getSort();
-        tetraMap.insert(make_pair(*it,i));
-		max_m = max(max_m,T_m[i]);
-	}
-
-	return true;
-}
-
-bool TetraMesh::writeFileMatlabTP(string fn) const
-{
-    ofstream os(fn.c_str());
-
-    if(!os.good())
-        return false;
-
-    os << P.size()-1 << endl << T_p.size()-1 << endl;
-    
-    for(vector<Point<3,double> >::const_iterator it=P.begin()+1; it != P.end(); ++it)
-        os << (*it)[0] << ' ' << (*it)[1] << ' ' << (*it)[2] << endl;
-    
-    vector<TetraByPointID>::const_iterator T_it;
-    vector<unsigned>::const_iterator M_it;
-    for(M_it=T_m.begin()+1, T_it=T_p.begin()+1; T_it != T_p.end(); ++M_it,++T_it)
-        os << (*T_it)[0] << ' ' << (*T_it)[1] << ' ' << (*T_it)[2] << ' ' << (*T_it)[3] << ' ' << *M_it << endl;
-
-    return !os.fail();
-}
 
 // writes the face mapping to a Matlab-compatible file
 bool TetraMesh::writeFileMatlabF(string fn) const
@@ -274,6 +200,9 @@ int TetraMesh::tetrasToFaces(vector<Face>& v,vector<TetraByPointID>& vecTetra_Po
 	typedef FaceByPointID mm_key_type;
 	typedef pair<mm_key_type,unsigned> mm_pair_type;
 	multimap <mm_key_type,unsigned> m;
+
+	for(auto el : T_p | boost::adaptors::indexed(0))
+		tetraMap.insert(make_pair(el.value(),(unsigned)el.index()));
 
 	unsigned i=1;
 	// loop through list of tetrahedra defined by point IDs, creating the tetraGraph
@@ -462,6 +391,10 @@ int TetraMesh::tetrasToFaces(vector<Face>& v,vector<TetraByPointID>& vecTetra_Po
 bool TetraMesh::checkValid() const
 {
 	bool valid=true;
+
+	valid &= TetraMeshBase::checkValid();
+
+	// TODO: more checks here
 	return valid;
 }
 
@@ -844,3 +777,7 @@ TriSurf TetraMesh::extractRegionSurface(const vector<unsigned>& tetIDs) const
     return TriSurf(P,F_out);
 }
 
+TetraMesh* buildMesh(const TetraMeshBase& M)
+{
+	return new TetraMesh(M);
+}

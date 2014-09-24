@@ -47,12 +47,14 @@ int main(int argc,char **argv)
     try {
         conn=PGConnect();
 
-        boost::shared_ptr<PGresult> res = conn->execParams("SELECT data_oid,datatype,packets,cases.caseid,cases.meshid,meshes.ntetras,meshes.nfaces "\
+        /*boost::shared_ptr<PGresult> res = conn->execParams("SELECT data_oid,datatype,packets,cases.caseid,cases.meshid,meshes.ntetras,meshes.nfaces "\
             "FROM runs_data AS rd LEFT JOIN cases ON rd.caseid=cases.caseid "\
             "LEFT JOIN meshes ON meshes.meshid = cases.meshid WHERE datatype=$2 AND runid=$1;",
-            boost::tuples::make_tuple(runid,dtype));
+            boost::tuples::make_tuple(runid,dtype));*/
 
-        unsigned IDm=1,IDc=1;
+
+
+        unsigned IDm,IDc;
     
         Oid data_oid;
         unsigned long long Nph;
@@ -131,7 +133,7 @@ map<unsigned,unsigned long long> loadVolumeHitMap(PGConnection& dbconn,unsigned 
     cout << "  pdata_oid=" << pdata_oid << ", tdata_oid=" << tdata_oid << ", fdata_oid=" << fdata_oid << endl;
     cout << "  name=" << name << " description=" << desc << endl;*/
 
-    Blob b = dbconn.loadLargeObject(data_oid);
+    string b = dbconn.loadLargeObject(data_oid);
 
 //    cout << "Read " << bpoints.getSize() << " bytes of points (" << bpoints.getSize()/3/sizeof(double) << " points)" << endl;
 //    cout << "Read " << btetras.getSize() << " bytes of tetras (" << btetras.getSize()/5/sizeof(unsigned) << " tetras)" << endl;
@@ -153,7 +155,7 @@ map<unsigned,unsigned long long> loadVolumeHitMap(PGConnection& dbconn,unsigned 
 
 //    cout << "Exported " << b.getSize() << " bytes, expecting " << bytesize << endl;
 
-    for(const uint8_t* p=b.getPtr(); p<b.getEndPtr(); p+=12)
+    for(const uint8_t* p=b.data(); p<b.data()+b.size(); p+=12)
     {
         unsigned id = *((uint32_t*)p);
         unsigned long long count = *((uint64_t*)(p+4));

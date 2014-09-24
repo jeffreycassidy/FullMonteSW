@@ -1,3 +1,4 @@
+#pragma once
 #include "SourceDescription.hpp"
 #include "SourceEmitter.hpp"
 #include "graph.hpp"
@@ -5,7 +6,7 @@
 
 #include <boost/math/constants/constants.hpp>
 
-__m128 to_m128(const UnitVector<3,double>& uv)
+inline __m128 to_m128(const UnitVector<3,double>& uv)
 {
 	return _mm_set_ps(0.0,uv[2],uv[1],uv[0]);
 }
@@ -20,6 +21,8 @@ template<class RNG>class LineSourceEmitter : virtual public SourceEmitter<RNG>,v
 
 public:
 
+	LineSourceEmitter(const TetraMesh& mesh_,const LineSourceDescription& lsd) :
+		LineSourceEmitter(mesh_,lsd.getEndPoints().first,lsd.getEndPoints().second){};
 	LineSourceEmitter(const TetraMesh& mesh_,const Point<3,double>& a_,const Point<3,double>& b_);
 
 
@@ -56,8 +59,8 @@ template<class RNG>LineSourceEmitter<RNG>::LineSourceEmitter(const TetraMesh& me
 	n0 = UnitVector<3,double>(cross(uv,UnitVector<3,double>{1.0,0.0,0.0}));
 	n1 = cross(n0,uv);
 
-//	cout << "Unit vectors are: " << n0 << " and " << n1 << endl;
-//	cout << "  Dot products: " << dot(n0,n1) << ", " << dot(n0,uv) << ", " << dot(n1,uv) << endl;
+	cout << "Unit vectors are: " << n0 << " and " << n1 << endl;
+	cout << "  Dot products: " << dot(n0,n1) << ", " << dot(n0,uv) << ", " << dot(n1,uv) << endl;
 
 	// walk the line and find regions
 	unsigned IDt=mesh_.findEnclosingTetra(a_);
@@ -74,7 +77,7 @@ template<class RNG>LineSourceEmitter<RNG>::LineSourceEmitter(const TetraMesh& me
 	__m128 d=_mm_set_ps(0.0,uv[2],uv[1],uv[0]);
 	float l=0.0,dist;		// distance travelled
 
-	for(unsigned N=0; l<L-1e-6 && N<100 && IDt != 0; ++N)
+	for(unsigned N=0; l<L-1e-6 && IDt != 0; ++N)
 	{
 		__m128 s=_mm_set1_ps(L-l);
 		StepResult res = T.getIntersection(p,d,s);
@@ -96,7 +99,19 @@ template<class RNG>LineSourceEmitter<RNG>::LineSourceEmitter(const TetraMesh& me
 
 template<class RNG>pair<Packet,unsigned> LineSourceEmitter<RNG>::emit(RNG& rng) const
 {
-	//return make_pair(Packet(),0);
+	unsigned IDt;
+	Point<3,double> p0;
+	Packet pkt;
+
+	float f[4];
+
+	std::tie(p0,IDt) = getOrigin(rng.draw_float_u01());
+
+	_mm_store_ps(f,rng.draw_m128f2_uvect());
+	pkt.setPosition(p0);
+	pkt.setDirection(getDirection(f[0],f[1]));
+
+	return make_pair(pkt,IDt);
 }
 
 template<class RNG>pair<Point<3,double>,unsigned> LineSourceEmitter<RNG>::getOrigin(double t_) const

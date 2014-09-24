@@ -6,8 +6,10 @@ load TetraMeshTCL.so
 set fn "data/mouse.mesh"
 
 # load from text mesh file
-set mesh [loadMesh $fn]
+set imesh [loadMeshFile $fn]
 puts "data loaded from $fn";
+
+set mesh [buildMesh $imesh]
 
 # load from database
 #set conn [tclConnect]
@@ -48,13 +50,22 @@ proc addSurf { name mesh matID ren } {
 }
 
 proc boxWidgetUpdate { name } {
-    boxrep_$name GetPlanes planes_$name
+    puts "PTV bounding box: [getPlaneExpression $name]"
+}
 
-    puts "PTV bounding box: "
+proc getPlaneExpression { name } {
+    vtkPlanes tmppl
+    boxrep_$name GetPlanes tmppl
+
     for { set i 0 } { $i < 6 } { incr i } {
-        set pl [planes_$name GetPlane $i]
-        puts "  Plane $i: n=[$pl GetNormal] p=[$pl GetOrigin]"
+        set pl [tmppl GetPlane $i]
+        set n$i [$pl GetNormal]
+        set c$i [$pl EvaluateFunction 0 0 0]
     }
+
+    tmppl Delete
+
+    return "$n0 [expr -$c0] $c1 $n2 [expr -$c2] $c3 $n4 [expr -$c4] $c5"
 }
 
 proc addBoxBound { name ren iren } {
@@ -78,6 +89,20 @@ proc addBoxBound { name ren iren } {
 
     $ren AddActor boxrep_$name
 }
+
+proc updateDVHBox { } {
+    global imesh
+    set pp [readParallelepiped [getPlaneExpression bx0]]
+    set cliptets [clipToRegion $imesh $pp]
+    clipmapper SetInputData [getVTKTetras $cliptets]
+    clipmapper Update
+    ren Render
+}
+
+vtkDataSetMapper clipmapper
+
+vtkActor clipactor
+    clipactor SetMapper clipmapper
 
 
 proc lineWidgetUpdate { name } {
@@ -122,6 +147,7 @@ for { set i 0 } { $i < 18 } { incr i } {
 
 ren RemoveActor surf0
 ren AddActor tumour
+ren AddActor clipactor
 
 [surf1 GetProperty] SetColor 1.0 1.0 1.0
 [surf1 GetProperty] SetOpacity 0.2
@@ -161,4 +187,4 @@ renwin Render
 
 puts "rendered"
 
-iren Start
+#iren Start

@@ -15,6 +15,7 @@
 #include "progress.hpp"
 
 #include "SourceEmitter.hpp"
+#include "LineSourceEmitter.hpp"
 
 
 // Manager should be able to:

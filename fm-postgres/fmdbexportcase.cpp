@@ -2,7 +2,9 @@
 #include <sstream>
 #include <fstream>
 #include <vector>
+#include <boost/static_assert.hpp>
 #include "fm-postgres.hpp"
+#include "fmdbexportcase.hpp"
 
 #include "io_timos.hpp"
 #include "SourceDescription.hpp"
@@ -84,10 +86,28 @@ vector<SourceDescription*> exportSources(PGConnection& dbconn,unsigned IDsourceg
         sources.push_back(s);
     }
 
+
+    // Pencil beam sources
+    qry.str(string());
+    qry << "SELECT default_w,p0,p1 FROM sources ";
+    qry << "JOIN sources_line ON sources_line.sourceid=sources.sourceid ";
+    qry << "WHERE sourcegroupid=$1 ORDER BY sources.sourceid;";
+
+    res = dbconn.execParams(qry.str().c_str(),boost::tuples::make_tuple(IDsourcegroup));
+
+    Point<3,double> p0,p1;
+
+    for(int i=0;i<PQntuples(res.get());++i)
+    {
+        unpackPGRow(res,boost::tuples::tie(default_w,p0,p1),i);
+        LineSourceDescription* s = new LineSourceDescription(p0,p1,default_w);
+        sources.push_back(s);
+    }
+
     return sources;
 }
 
-// TODO: Deprecated; moving it into fmdb in root directory
+// TODO: Deprecate this, just return a vector (don't be silly)!
 int exportMaterials(PGConnection& dbconn,unsigned IDc,vector<Material>& materials)
 {
     materials.clear();
@@ -112,6 +132,13 @@ int exportMaterials(PGConnection& dbconn,unsigned IDc,vector<Material>& material
         materials.push_back(Material(mu_a,mu_s,g,n));
     }
     return materials.size();
+}
+
+vector<Material> exportMaterials(PGConnection& dbconn,unsigned IDc)
+{
+	vector<Material> mats;
+	exportMaterials(dbconn,IDc,mats);
+	return mats;
 }
 
 // TODO: Deprecated; move into fmdb in upper folder
@@ -166,7 +193,7 @@ TetraMesh* exportMesh(PGConnection& dbconn, unsigned IDc)
  * @param mesh	Associated mesh
  */
 
-FluenceMapBase* exportResultSet(PGConnection* conn,unsigned IDr,unsigned dType,const TetraMesh* mesh=NULL)
+FluenceMapBase* exportResultSet(PGConnection* conn,unsigned IDr,unsigned dType,const TetraMesh* mesh)
 {
     unsigned long long packets;
     FluenceMapBase* data;
@@ -187,4 +214,95 @@ FluenceMapBase* exportResultSet(PGConnection* conn,unsigned IDr,unsigned dType,c
     data->fromBinary(s);
 
     return data;
+}
+
+
+
+RunInfo getRunInfo(PGConnection* conn,unsigned IDr)
+{
+	RunInfo info;
+
+	info.IDrun=IDr;
+
+	PGConnection::ResultType res = conn->execParams("SELECT runs.caseid, runs.packets, cases.meshid, cases.materialsetid,cases.sourcegroupid "
+			"FROM cases JOIN runs ON runs.caseid=cases.caseid "
+			"WHERE runid=$1",
+			boost::tuples::make_tuple(IDr));
+	unpackSinglePGRow(res,boost::tuples::tie(info.IDcase,info.Npkt,info.IDmesh,info.IDmaterialset,info.IDsourcegroup));
+
+	res = conn->execParams("SELECT datatype,data_oid,total,bytesize FROM resultdata WHERE runid=$1",boost::tuples::make_tuple(IDr));
+
+	info.results.reserve(PQntuples(res.get()));
+
+	for(int i=0;i<PQntuples(res.get());++i)
+	{
+		ResultInfo resinfo;
+		unpackPGRow(res,boost::tuples::tie(resinfo.dtype,resinfo.oid,resinfo.sum,resinfo.Nbytes),i);
+		info.results.push_back(resinfo);
+	}
+
+	return info;
+}
+
+
+/** Exports a data vector from the database
+ *
+ */
+
+vector<double> exportResultVector(PGConnection* conn,unsigned IDr,unsigned dType)
+{
+	vector<double> v;
+
+	cout << "INFO: Result data requested for run " << IDr << " data type " << dType << endl;
+	PGConnection::ResultType res = conn->execParams("SELECT runs.caseid, runs.packets, cases.meshid, resultdata.data_oid,"
+			"resultdata.total,resultdata.bytesize,meshes.npoints,meshes.nfaces,meshes.ntetras FROM runs "
+			"JOIN cases ON runs.caseid=cases.caseid "
+			"JOIN meshes ON meshes.meshid=cases.meshid "
+			"JOIN resultdata ON resultdata.runid=runs.runid "
+			"WHERE runs.runid=$1 AND resultdata.datatype=$2 "
+			,boost::tuples::make_tuple(IDr,dType));
+
+	unsigned long long Npkt;
+	unsigned IDcase,IDmesh;
+	Oid oid;
+	double total;
+	unsigned bytes,Np,Nf,Nt,N;
+
+	unpackSinglePGRow(res,boost::tuples::tie(IDcase,Npkt,IDmesh,oid,total,bytes,Np,Nf,Nt));
+
+	string b;
+
+	switch(dType){
+	case 1:
+		cout << "Extracting surface fluence map" << endl;
+		N = Nf+1;
+		break;
+	case 2:
+		N = Nt+1;
+		cout << "Extracting volume fluence map" << endl;
+		break;
+	default:
+		cerr << "ERROR: Invalid data type requested" << endl;
+		throw(std::string("invalid data type"));
+	}
+
+	b = conn->loadLargeObject(oid);
+
+	v.resize(N,0.0);
+	stringstream ss(b);
+
+	struct __attribute__((packed)) { uint32_t id; double data; } idata;
+	BOOST_STATIC_ASSERT(sizeof(idata)==12);
+
+	cout << "  INFO: Read " << b.size() << " bytes from database (" << b.size()/12 << " 12B elements)" << endl;
+	if (b.size() % 12 != 0)
+		cerr << "  ERROR: size not a multiple of 12" << endl;
+
+	while(!ss.eof())
+	{
+		ss.read((char*)&idata,12);
+		v[idata.id] = idata.data;
+	}
+
+	return v;
 }

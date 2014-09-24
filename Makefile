@@ -13,15 +13,12 @@ ifndef VTK_INCLUDE
 	VTK_INCLUDE=-I/usr/local/include/vtk
 endif
 
-GCC_OPTS=-Wall -mfpmath=sse -Wstrict-aliasing=2 -g -mavx -fpermissive -std=c++11 -fPIC -fabi-version=6 -Wno-deprecated-declarations -Wa,-q
+GCC_OPTS=-Wall -mfpmath=sse -Wstrict-aliasing=2 -g -DNDEBUG -O3 -mavx -fpermissive -std=c++11 -fPIC -fabi-version=6 -Wno-deprecated-declarations -Wa,-q
 LIBS=-lboost_program_options -lboost_timer -lpq -lcrypto -lboost_system -lboost_chrono -lSFMT -lfmpg
 LIBDIRS=-L/usr/local/lib $(BOOST_LIB) -LSFMT -L. -Lfm-postgres
 INCLDIRS=$(BOOST_INCLUDE) -I/usr/local/include -I. -I/usr/local/include/pgsql $(VTK_INCLUDE) -I..
 
 SWIG=swig
-
-# Switch debug on/off
-#GCC_OPTS += -DNDEBUG -O3
 
 # Check for Mac OS (no POSIX timer)
 OS:=$(shell uname)
@@ -33,7 +30,12 @@ ifndef GXX
 	GXX=g++
 endif
 
+default: GenDVH
+
 all: libFullMonteGeometry.so libFullMonteVTK.so TetraMeshTCL.so
+
+GenDVH: DVH.o GenDVH.o Parallelepiped.o
+	$(GXX) -L. -Lfm-postgres -lmontecarlo -lboost_system -lboost_serialization -lfmpg -o $@ $^
 
 Test_TetraMeshBase: Test_TetraMeshBase.o TetraMeshBase.o newgeom.o
 	$(GXX) $(GCC_OPTS) -o $@ $^
@@ -60,14 +62,14 @@ all: montecarlo
 %.o: %.cpp *.hpp
 	$(GXX) $(GCC_OPTS) $(INCLDIRS) -fPIC -c $*.cpp -o $@
 
-montecarlo: montecarlo.o mainloop.o random.o FullMonte.o OStreamObserver.o PGObserver.o
-	$(GXX) $(GCC_OPTS) $^ $(BOOST_LIB) $(LIBS) -lmontecarlo $(LIBDIRS) -o $@
+montecarlo: montecarlo.o mainloop.o random.o FullMonte.o OStreamObserver.o PGObserver.o fmdb.o
+	$(GXX) $(GCC_OPTS) $^ $(BOOST_LIB) $(LIBS) -lmontecarlo -lFullMonteGeometry $(LIBDIRS) -o $@
 	
 simlocal: simlocal.o RandomAVX.o OStreamObserver.o
-	$(GXX) $(BOOST_LIB) $(BOOST_INCLUDE) -L. -Lfm-postgres -lfmpg -LSFMT -lpq -lboost_program_options -lboost_system -lboost_timer -lboost_chrono -lmontecarlo -o $@ $^
+	$(GXX) $(BOOST_LIB) $(BOOST_INCLUDE) -L. -LSFMT -lFullMonteGeometry -lboost_program_options -lboost_system -lboost_timer -lboost_chrono -lmontecarlo -o $@ $^
 
-libmontecarlo.so: graph.o newgeom.o face.o helpers.o SourceDescription.o LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o blob.o sse.o RandomAVX.o LoggerConservation.o LoggerEvent.o LoggerVolume.o FullMonte.o
-	$(GXX) -shared -fPIC $^ $(BOOST_LIB) -LSFMT -lpq -lboost_program_options -lboost_system -lboost_timer -lboost_chrono -Lfm-postgres -lSFMT -o $@
+libmontecarlo.so: helpers.o SourceDescription.o LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o blob.o sse.o RandomAVX.o LoggerConservation.o LoggerEvent.o LoggerVolume.o FullMonte.o
+	$(GXX) -shared -fPIC $^ $(BOOST_LIB) -LSFMT -L. -lpq -lboost_program_options -lboost_system -lboost_timer -lFullMonteGeometry -lboost_chrono -Lfm-postgres -lSFMT -o $@
 
 rletrace: rletrace.cpp progress.cpp
 	$(GXX) -Wall -std=c++0x -lrt -DPOSIX_TIMER -O3 -o $@ $^
@@ -80,6 +82,9 @@ fm-postgres/%:
 
 random.o: random.cpp random.hpp
 	$(GXX) -O1 -msse4 -g -Wall -mavx -DNDEBUG -DPLATFORM_DARWIN $< -fPIC -c -o $@
+
+Test_Parallelepiped: Test_Parallelepiped.o Parallelepiped.o newgeom.o
+	$(GXX) -Wall -o $@ $^
 
 ReadTracer: ReadTracer.cpp
 	$(GXX) -Wall -O3 -g -std=c++11 -mavx -lxerces-c $< Export_VTK_XML.cpp -o $@
@@ -118,7 +123,7 @@ TetraMeshTCL.o: TetraMeshTCL.cpp
 TetraMeshTCL_wrap.o: TetraMeshTCL_wrap.cxx
 	$(GXX) -g -c -fPIC -Wall -std=c++11 -DUSE_TCL_STUBS -I/usr/local/include/pgsql -I/usr/local/include/vtk $^
 	
-libFullMonteGeometry.so: TetraMeshBase.o newgeom.o
+libFullMonteGeometry.so: TetraMeshBase.o newgeom.o graph.o face.o helpers.o
 	$(GXX) -fPIC -shared -Wall -o $@ $^
 
 libFullMonteVTK.so: TetraMeshBaseVTK.o VTKInterface.o
@@ -127,7 +132,7 @@ libFullMonteVTK.so: TetraMeshBaseVTK.o VTKInterface.o
 		-lvtkCommonCore-6.1										\
 		-o $@ $^
 	
-TetraMeshTCL.so: TetraMeshTCL_wrap.o TetraMeshTCL.o	
+TetraMeshTCL.so: TetraMeshTCL_wrap.o TetraMeshTCL.o	Parallelepiped.o
 	$(GXX) -g -Wall -fPIC -shared -L/usr/local/lib -Lfm-postgres	\
 		-lvtkCommonCore-6.1				\
 		-lvtkRenderingCoreTCL-6.1		\

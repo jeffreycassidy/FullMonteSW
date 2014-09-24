@@ -64,6 +64,19 @@ class Packet {
     void setDirection(__m128 d_)
         { d=d_; a=getNormalTo(d_); b=cross(d,a); }
 
+
+    /** Sets the new direction for the packet, with input specifying the direction and auxiliary vectors.
+     * NOTE: Does not perform error checking.
+     * TODO: Could be (a lot?) faster by using _mm_load_ps
+     */
+
+    void setDirection(const std::array<UnitVector<3,double>,3>& d0)
+    {
+    	d=_mm_set_ps(0.0,d0[0][2],d0[0][1],d0[0][0]);
+    	a=_mm_set_ps(0.0,d0[1][2],d0[1][1],d0[1][0]);
+    	b=_mm_set_ps(0.0,d0[2][2],d0[2][1],d0[2][0]);
+    }
+
     void setDirection(const UnitVector<3,double>& d_){ setDirection(_mm_set_ps(0,d_[2],d_[1],d_[0])); }
 
     /** Sets the direction for the packet using (x,y,z) float input constants

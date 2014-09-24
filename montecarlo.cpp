@@ -51,6 +51,8 @@ namespace globalopts {
 	boost::optional<unsigned> randseed;
 	boost::optional<unsigned> Nthread;
 
+	bool dryrun=false;
+
 	vector<unsigned> seeds;
 
 	// plain ol' options
@@ -123,6 +125,7 @@ int main(int argc,char **argv)
         ("suite,s",po::value<vector<unsigned> >(&suites),"Suites to run from database")
         ("wmin,w",po::value<double>(&__cmdline_opts::wmin),"Minimum weight for roulette")
         ("prwin,p",po::value<double>(&__cmdline_opts::prwin),"Probability of winning roulette")
+        ("dryrun","Just display what would be done, don't do anything")
         ;
 
     cmdline.add(globalopts::db::dbopts);
@@ -139,6 +142,8 @@ int main(int argc,char **argv)
         cout << cmdline << endl;
         return -1;
     }
+
+    globalopts::dryrun = vm.count("dryrun");
 
     if(vm.count("wmin"))
     	globalopts::wmin.reset(__cmdline_opts::wmin);
@@ -173,10 +178,11 @@ int main(int argc,char **argv)
     cout << "DB host: " << globalopts::db::host << endl;
     cout << "DB port: " << globalopts::db::port << endl;
     cout << "DB name: " << globalopts::db::name << endl;
-    cout << "Seeds:";
-    for(unsigned seed : globalopts::seeds)
-    	cout << ' ' << seed << endl;
-    cout << endl;
+    //cout << "Seeds:";
+    //for(unsigned seed : globalopts::seeds)
+//    	cout << ' ' << seed << endl;
+
+    //cout << endl;
 
     boost::shared_ptr<PGConnection> dbconn;
 
@@ -190,7 +196,10 @@ int main(int argc,char **argv)
     }
 
     try {
-    	PGFlight flt(dbconn.get(),flightname,flightcomm);
+    	PGFlight* flt;
+    	if (!globalopts::dryrun)
+    		flt = new PGFlight(dbconn.get(),flightname,flightcomm);
+
     	for(unsigned seed : globalopts::seeds)
     	{
     		cout << "Main: seed=" << seed << endl;
@@ -200,12 +209,12 @@ int main(int argc,char **argv)
 
     		obs.push_back(new OStreamObserver(cout));
 
-    		if(globalopts::dbwrite)
-    			obs.push_back(new PGObserver(flt,0));
+    		if(globalopts::dbwrite && !globalopts::dryrun)
+    			obs.push_back(new PGObserver(*flt,0));
 
     		for(unsigned IDcase : cases)
     		{
-    			if(globalopts::dbwrite)
+    			if(globalopts::dbwrite && !globalopts::dryrun)
     				dynamic_cast<PGObserver&>(*obs.back()).setCaseID(IDcase);
     			runCaseByID(dbconn.get(),obs,IDcase);
     		}
@@ -296,7 +305,10 @@ void runCaseByID(PGConnection* dbconn,const vector<Observer*>& obs,unsigned IDca
 
 	geom.IDc=IDcase;
 
-	boost::timer::cpu_times p = runSimulation(geom,cfg,opts,obs);
+	if (!globalopts::dryrun)
+		boost::timer::cpu_times p = runSimulation(geom,cfg,opts,obs);
+	else
+		cout << "Dry run: " << geom << cfg << opts << endl;
 }
 
 

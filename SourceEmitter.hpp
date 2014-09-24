@@ -40,6 +40,8 @@ public:
 	virtual UnitVector<3,double> getDirection(RNG& rng) const;
 };
 
+#include "LineSourceEmitter.hpp"
+
 
 template<class RNG>class FaceSourceEmitter : virtual public SourceEmitter<RNG>,virtual public FaceSourceDescription {
 	Packet pkt;
@@ -200,17 +202,13 @@ public:
 template<class RNG>SourceEmitter<RNG>* SourceEmitterFactory(const TetraMesh& mesh,const SourceDescription& sd)
 {
 	if (const IsotropicPointSourceDescription* ipsd=dynamic_cast<const IsotropicPointSourceDescription*>(&sd))
-	{
 		return new IsotropicPointSourceEmitter<RNG>(mesh,*ipsd);
-	}
 	else if (const VolumeSourceDescription* vsd=dynamic_cast<const VolumeSourceDescription*>(&sd))
-	{
 		return new VolumeSourceEmitter<RNG>(mesh,*vsd);
-	}
 	else if (const FaceSourceDescription* fsd=dynamic_cast<const FaceSourceDescription*>(&sd))
-	{
 		return new FaceSourceEmitter<RNG>(mesh,*fsd);
-	}
+	else if (const LineSourceDescription* lsd=dynamic_cast<const LineSourceDescription*>(&sd))
+		return new LineSourceEmitter<RNG>(mesh,*lsd);
 	else
 	{
 		cerr << "ERROR: Unknown source type!" << endl;
