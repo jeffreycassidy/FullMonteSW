@@ -1,39 +1,32 @@
-region=1;
+tumour_regions = loadTextMatrix(fn_regions);
 
-fid = fopen('../output/linesource_dvh100/dvh3197.regions.txt','r');
-fgetl(fid);
-fgetl(fid);
-N = fscanf(fid,'%d',1);
-T = fscanf(fid,'%d %f\n',[2 Inf])';
-fclose(fid);
+[Ne,Nc] = size(tumour_regions);
 
-printf('reading region codes for %d elements\n',N);
+printf('read region codes for %d elements\n',Ne);
 
-regions=T(:,1);
-vols=T(:,2);
+regions=tumour_regions(:,1);
+vols=tumour_regions(:,2);
 
-if(length(regions) != N)
-    error(sprintf('ERROR: Wrong number of regions (expected %d, read %d)',N,length(regions)));
-end
+%if(length(regions) != N)
+%    error(sprintf('ERROR: Wrong number of regions (expected %d, read %d)',N,length(regions)));
+%end
 
+% Squeeze out values not relevant to the current ROI
 idx = find(regions);
-
 regions = regions(idx);
 nnz = length(idx);
 
-phi_v = zeros(nnz,100);
+phi_v = zeros(nnz,length(runs));
 V = vols(idx);
 
 clear vols
-
-runs = 3098:3197;
 
 for i=1:length(runs)
     printf('Reading data from run %d\n',runs(i));
 
     fflush(1);
 
-    fn = sprintf('../output/linesource_dvh100/flt589.%d.phi_v.txt',runs(i));
+    fn = sprintf(fn_fmt,runs(i));
     fid = fopen(fn,'r');
 
     T = fscanf(fid,'%f\n',[1 Inf])';
@@ -45,9 +38,17 @@ for i=1:length(runs)
 end
 
 
+for i=1:max(regions)
+    Ne = length(find(regions==i));
+    if (Ne > 0)
+        printf('  Region %d: %d elements\n',i,length(find(regions==i)));
+    end
+end
+
+
 
 [Ne,Nr] = size(phi_v);
 
-printf('Loaded data for region %d (%d elements, %d runs)\n',region,Ne,Nr);
+printf('Loaded data: %d elements, %d runs\n',Ne,Nr);
 
-clear nnz N Ne Nr T ans fid i idx region runs
+clear nnz N Ne Nr T ans fid i idx runs Nc fn_fmt fn_regions

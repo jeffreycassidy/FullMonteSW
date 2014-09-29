@@ -1,3 +1,4 @@
+#pragma once
 #include "Logger.hpp"
 #include "AccumulationArray.hpp"
 #include "fluencemap.hpp"

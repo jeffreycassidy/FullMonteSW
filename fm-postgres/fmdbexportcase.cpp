@@ -1,3 +1,5 @@
+#include "fmdbexportcase.hpp"
+
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -6,8 +8,6 @@
 #include <boost/static_assert.hpp>
 
 #include <boost/range/adaptor/indexed.hpp>
-#include "fm-postgres.hpp"
-#include "fmdbexportcase.hpp"
 
 #include "io_timos.hpp"
 #include "SourceDescription.hpp"
