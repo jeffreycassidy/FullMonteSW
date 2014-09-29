@@ -13,6 +13,4 @@
 function [phi_dvh,v_dvh,idx] = makeDVH(phi_v,V);
 
 [phi_dvh,idx] = sort(phi_v);
-v_dvh = 100*(1-cumsum(V(idx))/sum(V));
-
-
+v_dvh = 100*(1-cumsum(V(idx))/sum(V(idx)));

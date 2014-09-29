@@ -1,12 +1,9 @@
-# base options only
-ifndef GXX
-    GXX=g++
-endif
+include ../Makefile.in
 
 GCC_OPTS=-Wall -mfpmath=sse -fPIC -g -std=c++11 -mavx $(EXTRA_OPTS) -fabi-version=6 -Wno-deprecated-declarations -Wa,-q
 LIBS=-lboost_program_options -lboost_system -lboost_iostreams -lpq -lcrypto -lmontecarlo
-LIBDIRS=-L/usr/local/lib -L/usr/local/lib/boost -L. -L..
-INCLDIRS=-I/usr/local/boost -I/usr/local/include -I/usr/local/include/boost -I/usr/local/include/pgsql -I..
+LIBDIRS=-L/usr/local/lib -L$(BOOST_LIB) -L. -L..
+INCLDIRS=-I/usr/local/include -I$(BOOST_INCLUDE) -I/usr/local/include/pgsql -I..
 
 ifdef FULLMONTE_DEBUG
 	GCC_OPTS += -O0 -g
@@ -28,7 +25,7 @@ endif
 
 default: libfmpg.so
 
-all: tupletest fmdbexportcase fmdbimportmesh libfmpg.so
+all: libfmpg.so
 
 getMaterials: getMaterials.cpp libfmpg.so
 	g++ $(GCC_OPTS) -lfmpg -lmontecarlo $(LIBS) $(LIBDIRS) $(INCLDIRS) $< -o $@

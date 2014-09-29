@@ -83,7 +83,7 @@ proc addBoxBound { name ren iren } {
     vtkBoxRepresentation boxrep_$name
     widget_$name SetRepresentation boxrep_$name
     boxrep_$name SetPlaceFactor 1.0
-    boxrep_$name PlaceWidget 8 30 33 48 4 19
+    boxrep_$name PlaceWidget 7 17 35.5 45.5 6.5 16.5
     boxrep_$name InsideOutOn
     # get normals pointing in
 

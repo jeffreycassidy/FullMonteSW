@@ -32,7 +32,7 @@ void LocalObserver::notify_result(const LoggerResults& r)
 
 	if (type == "logger.results.volume.energy")
 	{
-		const VolumeArray<double>& E_v = dynamic_cast<VolumeArray<double>&>(r);
+		const VolumeArray<double>& E_v = dynamic_cast<const VolumeArray<double>&>(r);
 
 		vector<double> E_vv;
 		std::copy(E_v.begin(),E_v.end(),std::back_inserter(E_vv));

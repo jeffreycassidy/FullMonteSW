@@ -1,0 +1,19 @@
+ifndef BOOST_INCLUDE
+	BOOST_INCLUDE=/usr/local/include
+endif
+
+ifndef BOOST_LIB
+	BOOST_LIB=/usr/local/lib/boost
+endif
+
+ifndef VTK_INCLUDE
+	VTK_INCLUDE=/usr/local/include/vtk
+endif
+
+ifndef GXX
+	GXX=g++
+endif
+
+ifndef SWIG
+	SWIG=swig
+endif

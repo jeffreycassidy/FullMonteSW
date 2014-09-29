@@ -1,3 +1,4 @@
+#include "fm-postgres.hpp"
 #include "../fluencemap.hpp"
 
 TetraMesh* exportMesh(PGConnection&,unsigned);
