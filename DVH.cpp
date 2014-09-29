@@ -25,7 +25,7 @@ DVH::DVH(const TetraMesh& M_,const vector<double>& fluence_,const vector<unsigne
 
 	// insert all tetras into the DVH; assume zero variance for now
 	for(unsigned IDt=1; IDt <= M_.getNt(); ++IDt)
-		dvh[IDt-1] = DVHElement(regions_[IDt],M_.getTetraVolume(IDt),fluence_[IDt],0.0);
+		dvh[IDt-1] = DVHElement(IDt,regions_[IDt],M_.getTetraVolume(IDt),fluence_[IDt],0.0);
 
 	sort();
 }
@@ -38,9 +38,9 @@ void DVH::sort()
 
 	// find region boundaries
 	unsigned IDr=0;
-	for(vector<DVHElement>::const_iterator it_region_start=dvh.cbegin(), it_region_end = upper_bound(dvh.cbegin(),dvh.cend(),0,DVHElement::RegionOrder);
+	for(vector<DVHElement>::const_iterator it_region_start=dvh.cbegin(), it_region_end = upper_bound(dvh.cbegin(),dvh.cend(),DVHElement(0U),DVHElement::RegionOrder);
 			it_region_start != dvh.cend();
-			it_region_end = upper_bound(it_region_start=it_region_end,dvh.cend(),IDr,DVHElement::RegionOrder),++IDr)
+			it_region_end = upper_bound(it_region_start=it_region_end,dvh.cend(),DVHElement(++IDr),DVHElement::RegionOrder))
 		regions.emplace_back(dvh,it_region_start-dvh.cbegin(),it_region_end-dvh.cbegin());
 
 	// do volume accumulation to get total area

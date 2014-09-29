@@ -3,24 +3,26 @@
 #include <iostream>
 
 class DVHElement {
-	unsigned region;
-	double fluence;
-	double fluence_var;
-	double volume;
-	double volume_sum;
-	double volume_cdf;
+	unsigned IDt=0;
+	unsigned region=0;
+	double fluence=NAN;
+	double fluence_var=NAN;
+	double volume=NAN;
+	double volume_sum=NAN;
+	double volume_cdf=NAN;
 
 public:
 
-	DVHElement() : region(0),fluence(NAN),fluence_var(NAN),volume(NAN),volume_sum(NAN),volume_cdf(NAN){}
+	DVHElement(){}
 
-	DVHElement(unsigned region_,double volume_=NAN,double fluence_=NAN,double fluence_var_=NAN) :
+	explicit DVHElement(unsigned int IDr_) : region(IDr_){}
+
+	DVHElement(unsigned IDt_,unsigned region_,double volume_=NAN,double fluence_=NAN,double fluence_var_=NAN) :
+		IDt(IDt_),
 		region(region_),
 		fluence(fluence_),
 		fluence_var(fluence_var_),
-		volume(volume_),
-		volume_sum(NAN),
-		volume_cdf(NAN){}
+		volume(volume_){}
 
 	DVHElement(const DVHElement&)=default;
 	DVHElement& operator=(const DVHElement&) = default;

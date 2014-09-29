@@ -7,6 +7,10 @@ vector<Material> exportMaterials(PGConnection& dbconn,unsigned IDc);
 void runCase(PGConnection* dbconn,unsigned IDflight,unsigned IDsuite,unsigned caseorder);
 void runCaseByID(PGConnection* dbconn,unsigned IDflight,unsigned IDcase,unsigned long long Nk);
 
+vector<double> volumeEnergyToFluence(const vector<double>& energy,const TetraMesh& M,const vector<Material>& mats);
+vector<double> surfaceEnergyToFluence(const vector<double>& energy,const TetraMesh& M);
+
+
 // results
 FluenceMapBase* exportResultSet(PGConnection* conn,unsigned IDr,unsigned dType,const TetraMesh* mesh=NULL);
 

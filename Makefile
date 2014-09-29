@@ -34,8 +34,8 @@ default: GenDVH
 
 all: libFullMonteGeometry.so libFullMonteVTK.so TetraMeshTCL.so
 
-GenDVH: DVH.o GenDVH.o Parallelepiped.o
-	$(GXX) -L. -Lfm-postgres -lmontecarlo -lboost_system -lboost_serialization -lfmpg -o $@ $^
+GenDVH: DVH.o GenDVH.o Parallelepiped.o io_timos.o linefile.o
+	$(GXX) -L. -Lfm-postgres -lFullMonteGeometry -lmontecarlo -lboost_program_options -lboost_system -lboost_serialization -lfmpg -o $@ $^
 
 Test_TetraMeshBase: Test_TetraMeshBase.o TetraMeshBase.o newgeom.o
 	$(GXX) $(GCC_OPTS) -o $@ $^
@@ -62,7 +62,7 @@ all: montecarlo
 %.o: %.cpp *.hpp
 	$(GXX) $(GCC_OPTS) $(INCLDIRS) -fPIC -c $*.cpp -o $@
 
-montecarlo: montecarlo.o mainloop.o random.o FullMonte.o OStreamObserver.o PGObserver.o fmdb.o
+montecarlo: montecarlo.o mainloop.o random.o FullMonte.o OStreamObserver.o PGObserver.o fmdb.o LocalObserver.o
 	$(GXX) $(GCC_OPTS) $^ $(BOOST_LIB) $(LIBS) -lmontecarlo -lFullMonteGeometry $(LIBDIRS) -o $@
 	
 simlocal: simlocal.o RandomAVX.o OStreamObserver.o

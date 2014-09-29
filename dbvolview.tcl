@@ -39,11 +39,18 @@ cell2point PassCellDataOn
 
 vtkContourFilter contours
 contours SetInputConnection [cell2point GetOutputPort]
-contours SetNumberOfContours 4
-contours SetValue 0 1
-contours SetValue 1 10
-contours SetValue 2 100
-contours SetValue 3 1000
+#contours SetNumberOfContours 8
+#contours SetValue 0   1000
+#contours SetValue 1   2000
+#contours SetValue 2   4000
+#contours SetValue 3   8000
+#contours SetValue 4  16000
+#contours SetValue 5  32000
+#contours SetValue 6  64000
+#contours SetValue 7 128000
+contours SetNumberOfContours 2
+contours SetValue   0   100000
+contours SetValue   1   200000
 contours Update
 
 vtkWindowedSincPolyDataFilter contoursmoother
@@ -66,7 +73,7 @@ vtkPolyDataMapper contourmapper
     contourmapper SetInputConnection [contournormals GetOutputPort]
 vtkActor contouractor
     contouractor SetMapper contourmapper
-    [contouractor GetProperty] SetOpacity 0.5
+    [contouractor GetProperty] SetOpacity 1.0
 
 
 # render it

@@ -1,10 +1,13 @@
-function dvh(V,labels)
+% Plots a DVH on a semilog (x) scale
+
+function plotdvh_log(V,labels)
 
 figure;
 hold on;
 
 formats = { 'r','g','b','c','m','y','k','r--','g--','b--','c--','m--','y--','k--','r-.','g-.','b-.','c-.','m-.','y-.','l-.' };
 
+% clip values to max/min for log scale
 minval=1e-5;
 maxval=1;
 

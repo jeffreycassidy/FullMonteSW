@@ -12,7 +12,6 @@
 #include "LoggerEvent.hpp"
 #include "LoggerMemTrace.cpp"
 
-
 #include "FullMonte.hpp"
 
 #include "SourceDescription.hpp"
@@ -107,8 +106,6 @@ int main(int argc,char **argv)
     po::positional_options_description pos;
     pos.add("input",1).add("materials",1).add("sourcefile",1);
 
-
-
     cmdline.add_options()
         ("help,h","Display option help")
         ("input,i",po::value<string>(&fn_mesh),"Input file")
@@ -178,11 +175,6 @@ int main(int argc,char **argv)
     cout << "DB host: " << globalopts::db::host << endl;
     cout << "DB port: " << globalopts::db::port << endl;
     cout << "DB name: " << globalopts::db::name << endl;
-    //cout << "Seeds:";
-    //for(unsigned seed : globalopts::seeds)
-//    	cout << ' ' << seed << endl;
-
-    //cout << endl;
 
     boost::shared_ptr<PGConnection> dbconn;
 

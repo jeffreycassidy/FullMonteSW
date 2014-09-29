@@ -2,7 +2,10 @@
 #include <sstream>
 #include <fstream>
 #include <vector>
+
 #include <boost/static_assert.hpp>
+
+#include <boost/range/adaptor/indexed.hpp>
 #include "fm-postgres.hpp"
 #include "fmdbexportcase.hpp"
 
@@ -306,3 +309,26 @@ vector<double> exportResultVector(PGConnection* conn,unsigned IDr,unsigned dType
 
 	return v;
 }
+
+
+vector<double> volumeEnergyToFluence(const vector<double>& energy,const TetraMesh& M,const vector<Material>& mats)
+{
+	vector<double> fluence(energy.size(),0.0);
+	vector<double>::iterator fluence_it=fluence.begin();
+
+	for(auto E : energy | boost::adaptors::indexed(0))
+		*(fluence_it++) = E.index() ? E.value() / M.getTetraVolume(E.index()) / mats[M.getMaterial(E.index())].getMuA() : 0.0;
+	return fluence;
+}
+
+vector<double> surfaceEnergyToFluence(const vector<double>& energy,const TetraMesh& M)
+{
+	vector<double> fluence(energy.size(),0.0);
+
+	vector<double>::iterator fluence_it=fluence.begin();
+
+	for(auto E : energy | boost::adaptors::indexed(0))
+		*(fluence_it++) = E.index() ? E.value() / M.getFaceArea((unsigned)E.index()) : 0;
+	return fluence;
+}
+

@@ -21,9 +21,6 @@ void writeASCII(string fn,const vector<double>& V)
 		os << v << endl;
 }
 
-vector<double> volumeEnergyToFluence(const vector<double>& energy,const TetraMesh& M,const vector<Material>& mats);
-vector<double> surfaceEnergyToFluence(const vector<double>& energy,const TetraMesh& M);
-
 template<class T,class U>bool CompareSecondDesc(const pair<T,U>& a,const pair<T,U>& b){ return a.second > b.second; }
 
 //template<class Iterator>void writeSortedFluence_ASCII(string fn,Iterator begin,Iterator end,unsigned N=0);
@@ -148,30 +145,6 @@ int main(int argc,char **argv)
     		writeASCII(ss.str()+".phi_v.txt",phi_v);
     	}
     }
-}
-
-
-
-vector<double> volumeEnergyToFluence(const vector<double>& energy,const TetraMesh& M,const vector<Material>& mats)
-{
-	vector<double> fluence(energy.size(),0.0);
-	vector<double>::iterator fluence_it=fluence.begin();
-
-	for(auto E : energy | boost::adaptors::indexed(0))
-		*(fluence_it++) = E.index() ? E.value() / M.getTetraVolume(E.index()) / mats[M.getMaterial(E.index())].getMuA() : 0.0;
-	return fluence;
-}
-
-vector<double> surfaceEnergyToFluence(const vector<double>& energy,const TetraMesh& M)
-{
-	vector<double> fluence(energy.size(),0.0);
-
-	vector<double>::const_iterator energy_it=energy.begin();
-	vector<double>::iterator fluence_it=fluence.begin();
-
-	for(auto E : energy | boost::adaptors::indexed(0))
-		*(fluence_it++) = E.index() ? E.value() / M.getFaceArea((unsigned)E.index()) : 0;
-	return fluence;
 }
 
 

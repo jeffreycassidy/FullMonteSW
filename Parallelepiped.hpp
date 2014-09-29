@@ -34,3 +34,5 @@ template<class T>auto membership_tester(const T& r) ->
 
 // TODO: This shouldn't be here
 double dot(const UnitVector<3,double>& a,const Point<3,double>& b);
+
+Parallelepiped readParallelepiped(const std::string& s);

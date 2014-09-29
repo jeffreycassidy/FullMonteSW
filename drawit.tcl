@@ -132,11 +132,84 @@ button .run -text "Run" -command {
 
 pack .run
 
+vtkLegendBoxActor legendactor
+    legendactor SetNumberOfEntries 19
+    [legendactor GetPositionCoordinate] SetCoordinateSystemToView
+    [legendactor GetPositionCoordinate] SetValue 0.5 0.0
+    [legendactor GetPosition2Coordinate] SetCoordinateSystemToView
+    [legendactor GetPosition2Coordinate] SetValue 0.9 0.9
+
+    legendactor SetEntryString  0 "(outside DVH box)"
+    legendactor SetEntryString  1 "Muscle"
+    legendactor SetEntryString  2 "Brain"
+    legendactor SetEntryString  3 "Heart"
+    legendactor SetEntryString  4 "Bladder"
+    legendactor SetEntryString  5 "Stomach"
+    legendactor SetEntryString  6 "Spleen"
+    legendactor SetEntryString  7 "Kidney"
+    legendactor SetEntryString  8 "Kidney"
+    legendactor SetEntryString  9 "Lung"
+    legendactor SetEntryString 10 "Lung"
+    legendactor SetEntryString 11 "Pancreas"
+    legendactor SetEntryString 12 "Liver"
+    legendactor SetEntryString 13 "Skeleton"
+    legendactor SetEntryString 14 "Muscle"
+    legendactor SetEntryString 15 "Muscle"
+    legendactor SetEntryString 16 "Testis"
+    legendactor SetEntryString 17 "Testis"
+    legendactor SetEntryString 18 "Tumour"
+
+    legendactor SetEntryColor  1  1.0 1.0 1.0
+    legendactor SetEntryColor  2  0.0 1.0 0.0
+    legendactor SetEntryColor  3  0.0 0.0 1.0
+    legendactor SetEntryColor  4  1.0 1.0 0.0
+    legendactor SetEntryColor  5  1.0 0.0 1.0
+    legendactor SetEntryColor  6  0.0 1.0 1.0
+    legendactor SetEntryColor  7  1.0 1.0 0.0
+    legendactor SetEntryColor  8  0.5 1.0 1.0
+    legendactor SetEntryColor  9  1.0 0.5 1.0
+    legendactor SetEntryColor 10  1.0 1.0 0.5
+    legendactor SetEntryColor 11  0.5 0.5 1.0
+    legendactor SetEntryColor 12  0.5 1.0 0.5
+    legendactor SetEntryColor 13  1.0 0.5 0.5
+    legendactor SetEntryColor 14  0.0 0.0 0.5
+    legendactor SetEntryColor 15  0.0 0.5 0.0
+    legendactor SetEntryColor 16  0.5 0.0 0.0
+    legendactor SetEntryColor 17  0.5 0.5 0.0
+
+    legendactor SetEntryColor 18  1.0 0.0 0.0
+
+
+
+#    lut SetAnnotation 0 "Exterior"
+#    lut SetAnnotation 1 "Muscle"
+#    lut SetAnnotation 2 "Brain"
+#    lut SetAnnotation 3 "Heart"
+#    lut SetAnnotation 4 "Bladder"
+#    lut SetAnnotation 5 "Stomach"
+#    lut SetAnnotation 6 "Spleen"
+#    lut SetAnnotation 7 "Kidney"
+#    lut SetAnnotation 8 "Kidney"
+#    lut SetAnnotation 9 "Lung"
+#    lut SetAnnotation 10 "Lung"
+#    lut SetAnnotation 11 "Pancreas"
+#    lut SetAnnotation 12 "Liver"
+#    lut SetAnnotation 13 "Skeleton"
+#    lut SetAnnotation 14 "Muscle"
+#    lut SetAnnotation 15 "Muscle"
+#    lut SetAnnotation 16 "Testis"
+#    lut SetAnnotation 17 "Testis"
+#    lut SetAnnotation 18 "Tumour"
+
+
+
 
 # set up rendering window
 vtkRenderer ren
 vtkRenderWindow renwin
 renwin AddRenderer ren
+
+ren AddActor legendactor
 
 for { set i 0 } { $i < 18 } { incr i } {
     addSurf surf$i $mesh $i ren
