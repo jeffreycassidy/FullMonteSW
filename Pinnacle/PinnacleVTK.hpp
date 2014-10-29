@@ -1,5 +1,6 @@
 #include "PinnacleCurve.hpp"
 
+#include <vtkActor.h>
 #include <vtkPolygon.h>
 #include <vtkPolyData.h>
 #include <vtkSmartPointer.h>

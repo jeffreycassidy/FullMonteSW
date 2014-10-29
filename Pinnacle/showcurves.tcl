@@ -8,6 +8,8 @@ set roi 1
 # read file
 set pf [readPinnacleFile $fn]
 
+puts "Read from file $fn"
+
 # grab poly data for specified ROI
 makeROIPolys $pf $roi polydata
 

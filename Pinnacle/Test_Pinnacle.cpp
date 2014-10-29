@@ -1,12 +1,10 @@
 #include "PinnacleFile.hpp"
 
-#include "PinnacleVTK.hpp"
+#include <vtkSmartPointer.h>
 
 #include <iostream>
 #include <fstream>
 #include <sstream>
-
-#include "../../ece297/XMLWriter/XMLWriter.hpp"
 
 #include <boost/iterator/counting_iterator.hpp>
 
@@ -22,6 +20,8 @@
 #include <vtkTriangleFilter.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkScalarBarActor.h>
+
+#include <boost/range/adaptor/indexed.hpp>
 
 #include <vtkConeSource.h>
 #include <vtkGlyph3D.h>
@@ -74,8 +74,8 @@ public:
 
 using namespace std;
 
-void writeXML_Curves(string fn,const Pinnacle::File& F);
-void writeXML_Sets(string fn,const Pinnacle::File& F);
+//void writeXML_Curves(string fn,const Pinnacle::File& F);
+//void writeXML_Sets(string fn,const Pinnacle::File& F);
 
 pair<vtkSmartPointer<vtkPlane>,vtkSmartPointer<vtkImplicitPlaneRepresentation>> callbackdata;
 
@@ -103,6 +103,15 @@ int main(int argc,char **argv)
 
 	pf.read();
 	pf.printSliceMap();
+
+	ofstream o_rois("roimap.txt");
+
+	o_rois << "# roi names extracted from " << argv[1] << endl;
+
+	for(auto roi : pf.getROIs() | boost::adaptors::indexed(0))
+		o_rois << roi.index() << ' ' << roi.value().getprop<string>("name") << endl;
+
+	o_rois<<endl;
 
 /*	auto p = pf.getCurves();
 
@@ -365,7 +374,7 @@ int main(int argc,char **argv)
 
 
 	// now for the triangulation faces
-	/*vtkSmartPointer<vtkPolyData> faceData = // ....
+	vtkSmartPointer<vtkPolyData> faceData = // ....
 
 	vtkSmartPointer<vtkClipPolyData> faceClipper = vtkClipPolyData::New();
 	faceClipper->SetInputData(faceData);
@@ -381,7 +390,7 @@ int main(int argc,char **argv)
 	vtkSmartPointer<vtkActor> faceActor = vtkActor::New();
 	faceActor->SetMapper(faceMapper);
 	faceActor->GetProperty()->SetOpacity(1.0);
-	faceActor->GetProperty()->SetColor(0.0,0.0,1.0);*/
+	faceActor->GetProperty()->SetColor(0.0,0.0,1.0);
 
 
 
@@ -471,9 +480,7 @@ int main(int argc,char **argv)
 //	scale->SetOrientationToVertical();
 //	scale->SetTitle("Title");
 
-	vw.start();
-
-	*/
+	vw.start();*/
 }
 
 
@@ -508,7 +515,7 @@ void VisualizationWindow::start()
 	thread_start(this);
 }
 
-
+/*
 void writeXML_Curves(string fn,const Pinnacle::File& F)
 {
 	auto points_iiterator = F.getPoints();
@@ -622,4 +629,4 @@ void writeXML_Sets(string fn,const Pinnacle::File& F)
 		}
 	}
 }
-
+*/

@@ -1,54 +1,43 @@
-tumour_regions = loadTextMatrix(fn_regions);
+% Load a set of fluence (or energy values)
+%
+% Arguments
+%   runs        The run IDs to load
+%   fnfmt       Format of file name; must contain a %d somewhere for run IDs
+%   idxs        Indices to load (can use to mask out some data)
+%
+% Returns
+%   D           An Ne x Nr matrix of results (rows are elements, columns are runs)
 
-[Ne,Nc] = size(tumour_regions);
-
-printf('read region codes for %d elements\n',Ne);
-
-regions=tumour_regions(:,1);
-vols=tumour_regions(:,2);
-
-%if(length(regions) != N)
-%    error(sprintf('ERROR: Wrong number of regions (expected %d, read %d)',N,length(regions)));
-%end
+function D = frontiers_dvh_load(runs,fnfmt,idxs);
 
 % Squeeze out values not relevant to the current ROI
-idx = find(regions);
-regions = regions(idx);
-nnz = length(idx);
+if (nargin>2)
+    D = zeros(length(idxs),length(runs));
+else
+    D = zeros(0,length(runs));
+end
 
-phi_v = zeros(nnz,length(runs));
-V = vols(idx);
 
-clear vols
+printf('Reading data: ');
 
 for i=1:length(runs)
-    printf('Reading data from run %d\n',runs(i));
-
+    printf('%d ',runs(i));
     fflush(1);
 
-    fn = sprintf(fn_fmt,runs(i));
+    fn = sprintf(fnfmt,runs(i));
     fid = fopen(fn,'r');
 
     T = fscanf(fid,'%f\n',[1 Inf])';
 
-    phi_v(:,i) = T(idx);
+    if (nargin>2)
+        D(:,i) = T(idxs);
+    else
+        D(:,i) = T;
+    end
 
     fclose(fid);
 
 end
 
-
-for i=1:max(regions)
-    Ne = length(find(regions==i));
-    if (Ne > 0)
-        printf('  Region %d: %d elements\n',i,length(find(regions==i)));
-    end
-end
-
-
-
-[Ne,Nr] = size(phi_v);
-
+[Ne,Nr] = size(D);
 printf('Loaded data: %d elements, %d runs\n',Ne,Nr);
-
-clear nnz N Ne Nr T ans fid i idx runs Nc fn_fmt fn_regions

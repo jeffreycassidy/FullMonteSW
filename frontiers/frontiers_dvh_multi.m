@@ -3,7 +3,7 @@
 %   regions         Map of elements to region codes
 %   phi_v           Fluence integrated over volume element
 %   V               Volume of elements
-%   region          Region to plot
+%   region          Regions to plot (target first if applicable)
 
 function [phi_dvh,v_dvh,sigma_dvh] = frontiers_dvh_multi(regions,phi_v,V,region,varargin)
 
@@ -27,6 +27,8 @@ end
 
 hold on;
 
+set(gcf,'Visible','Off');
+
 for roi=1:length(region)
     idx = find(regions==region(roi));
     V_roi = V(idx);
@@ -38,12 +40,17 @@ for roi=1:length(region)
     sigma = std(phi_v_roi')';
 
     for i=1:Nr
-        [phi_dvh,v_dvh,idx] = makeDVH(phi_v_roi(:,i),V_roi);
+        [phi_dvh,v_dvh,idx,D90] = makeDVH(phi_v_roi(:,i),V_roi);
+
+        if (roi == 1)
+            D90s(i) = D90;
+        end
 
         if (exist('target'))
             h = stairs(100*phi_dvh/target,v_dvh,plotstyles{roi});
         else
-            h = stairs(phi_dvh,v_dvh,plotstyles{roi});
+            k = 100/getD90(phi_dvh,v_dvh);
+            h = stairs(k*phi_dvh,v_dvh,plotstyles{roi},'LineWidth',0.1);
         end
 
         if (i==1)
@@ -52,12 +59,18 @@ for roi=1:length(region)
     end
 end
 
+mu_d90 = mean(D90s);
+sigma_d90 = std(D90s);
+
+printf('Target region D90 mean=%f std=%f cv=%f\n',mu_d90,sigma_d90,sigma_d90/mu_d90);
+
+
 set(gca,'YLim',[0 100]);
 
 if (exist('target'))
     xlabel('Fluence dose (% of target)');
     set(gca,'XLim',[0 2e2]);
-elseif(exist('XLim'))
+elseif(exist('xlims'))
     set(gca,'XLim',xlims);
     xlabel('Fluence dose (au)');
 end
@@ -72,3 +85,6 @@ else
     end
     legend(hobjs,labels);
 end
+
+line((mu_d90 + sigma_d90*[-1 1])/target*100,[90 90],'LineWidth',5,'Color','k');
+set(gcf,'Visible','On');

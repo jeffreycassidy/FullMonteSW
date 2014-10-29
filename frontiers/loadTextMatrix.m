@@ -12,8 +12,14 @@
 function v = loadTextMatrix(fn)
 
 fid=fopen(fn,'r');
-comm = stripComments(fid);
-T = fscanf(fid,'%d %d\n',[2 1])'
+%comm = stripComments(fid);
+fgetl(fid);
+fgetl(fid);
+[T,count] = fscanf(fid,'%d %d\n',[2 1]);
+
+if (count != 2)
+    error('Failed to read matrix size');
+end
 
 R=T(1);
 C=T(2);

@@ -44,10 +44,6 @@ roi
 curve	:	CURVE^ '='! '{'! prop* points '}'! ';'!
 	;
 	
-//	 { printf("  \%s -> \%s\n",$ID->getText($ID)->chars,$ID->getText($ID)->chars); }
-//  { printf("  \%s -> \%s\n",$ID->getText($ID)->chars,$ID->getText($INT)->chars); }
-// { printf("  \%s -> \%s\n",$ID->getText($ID)->chars,$ID->getText($LITERAL)->chars); }
-
 prop	:	ID '=' FLOAT ';' -> ^(PROP ID FLOAT)
 	|	ID '=' INT ';' -> ^(PROP ID INT)
 	|	ID LITERAL -> ^(PROP ID LITERAL)
@@ -60,7 +56,7 @@ point3	:	FLOAT FLOAT FLOAT -> ^(POINT FLOAT FLOAT FLOAT)
 	;
 	
 TRIANGLES
-	:	't' 'r' 'i' 'a' 'n' 'g' 'l' 'e' 's'
+	:	'triangles'
 	;
 	
 VERTICES:	'v' 'e' 'r' 't' 'i' 'c' 'e' 's'

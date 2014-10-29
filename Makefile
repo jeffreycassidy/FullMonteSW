@@ -105,7 +105,8 @@ sync-%:
 Test_RegionSet: Test_RegionSet.cpp RegionSet.cpp RegionSet.hpp
 	$(GXX) -g -Wall -I/usr/local/include -O3 -std=c++11 -o $@ $^
 
-
+Test_Adaptors: Test_Adaptors.cpp Adaptors.hpp
+	$(GXX) -g -Wall -I/usr/local/include -O3 -std=c++11 -o $@ $<
 
 
 #### WRAPPING FUNCTIONS
