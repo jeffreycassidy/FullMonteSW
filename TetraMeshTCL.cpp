@@ -72,9 +72,15 @@ TetraMeshBase* loadMeshFile(const std::string& fn)
 	return tmb;
 }
 
-vtkPolyData* createVTKBoundary(const TetraMesh& M,unsigned matID)
+vtkPolyData* createVTKBoundary(const TetraMeshBase& Mb,unsigned matID)
 {
-	return getVTKPolyData(M.extractMaterialBoundary(matID));
+	if (const TetraMesh* M = dynamic_cast<const TetraMesh*>(&Mb))
+		return getVTKPolyData(M->extractMaterialBoundary(matID));
+	else
+	{
+		cerr << "Dynamic_cast<const TetraMesh*> failed in createVTKBoundary" << endl;
+		return NULL;
+	}
 }
 
 vector<double> loadVectorDouble(const std::string& fn)
@@ -108,10 +114,18 @@ vtkDataArray* getVTKDataArray(const vector<double>& v)
 	return getVTKScalarArray<vtkDoubleArray>(v.begin(),v.end(),v.size());
 }
 
-vtkPolyData* getVTKRegion(const TetraMesh& M,const vector<unsigned>& tetIDs)
+vtkPolyData* getVTKRegion(const TetraMeshBase& Mb,const vector<unsigned>& tetIDs)
 {
-	TriSurf ts = M.extractRegionSurface(tetIDs);
-	return getVTKPolyData(ts);
+	if (const TetraMesh* M = dynamic_cast<const TetraMesh*>(&Mb))
+	{
+		TriSurf ts = M->extractRegionSurface(tetIDs);
+		return getVTKPolyData(ts);
+	}
+	else
+	{
+		cerr << "dynamic_cast<const TetraMesh*> failed in getVTKRegion" << endl;
+		return NULL;
+	}
 }
 
 TetraMeshBase clipToRegion(const TetraMeshBase& M,const Parallelepiped& pp)

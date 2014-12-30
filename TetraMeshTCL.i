@@ -73,9 +73,9 @@ extern "C" PGConnection* tclConnect();
 // loading meshes and results
 TetraMeshBase*	loadMesh(PGConnection*,unsigned);
 TetraMeshBase* 	loadMeshFile(const std::string&);
-vtkPolyData* createVTKBoundary(const TetraMesh& M,unsigned matID);
+vtkPolyData* createVTKBoundary(const TetraMeshBase& M,unsigned matID);
 
-vtkPolyData* getVTKRegion(const TetraMesh& M,const vector<unsigned>& tetIDs);
+vtkPolyData* getVTKRegion(const TetraMeshBase& M,const vector<unsigned>& tetIDs);
 vector<unsigned> loadVector(const std::string& fn);
 vector<double> loadVectorDouble(const std::string& fn);
 vtkDataArray* getVTKDataArray(const vector<double>& v);
