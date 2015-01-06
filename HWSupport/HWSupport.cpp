@@ -5,27 +5,48 @@
  *      Author: jcassidy
  */
 
-//#include <boost/multiprecision/gmp.hpp>
+#include <boost/multiprecision/gmp.hpp>
 #include "../fm-postgres/fmdbexportcase.hpp"
 #include <iostream>
+#include <fstream>
 
 using namespace std;
 
 unsigned long long to_fixpoint(double d,bool signed_,int i,int f)
 {
-	bool neg = d < 0;
-
 	if (f<0)
-	{
-		f=-f;
-		d /= double(1ULL << f);
-	}
+		d /= double(1ULL << (-f));
 	else
 		d *= double(1ULL << f);
 
-	unsigned long long mask = (1ULL << (i+f)) - 1ULL;
+	unsigned long long o=0;
 
-	return llrint(d) & mask;
+	if (signed_)
+	{
+		long long minval = -(1LL << (i+f-1));
+		long long maxval = (1LL << (i+f-1))-1;
+
+		long long t = llrint(d);
+
+		if (t < minval)
+			o=minval;
+		else if (t > maxval)
+			o=maxval;
+		else
+			o = t;
+	}
+	else if (d < 0)
+		cout << "WARNING: Clipping negative value to zero" << endl;
+	else
+	{
+		unsigned long long maxval = (1ULL << (i+f))-1;
+		unsigned long long t = llrint(d);
+		if (t > maxval)
+			o=maxval;
+		else
+			o=t;
+	}
+	return o & ((1ULL << (i+f))-1ULL);
 }
 
 struct HWMaterial {
@@ -56,22 +77,60 @@ HWMaterial convert_to_hw(const Material& mat)
 	return hwmat;
 }
 
-boost::multiprecision::number<gmp_int>
+boost::multiprecision::number<boost::multiprecision::gmp_int> convert_to_hw(const TetraMesh& M)
 {
-	boost::multiprecision::number<gmp_int> t;
+	ofstream os("mesh.out.hex");
+	boost::multiprecision::number<boost::multiprecision::gmp_int> t;
 
 	// 4 TetraAdjacency, each:		(112)
 	//		InterfaceID		(u8)
 	//		TetraID			(u20)
-	// 4 FaceDef, each:				(296)
+	// 4 FaceDef, each:				(288)
 	//		c (s4.14)
 	//		n 3x (s0.18)
 	// 1 MaterialID					  (4)
 	//
-	//	TOTAL						(412)
+	//	TOTAL						(404)
 
-	for(unsigned i=0;i<;++i)
-		t |= ;
+	os << "# Created by HWSupport" << endl;
+
+	for(unsigned i=0; i<M.getNt()+1;++i)
+	{
+		t=0;
+		const Tetra& tet = M.getTetra(i);
+		for(int j=3;j >= 0;--j)
+		{
+			t <<= 28;
+			int adjt = tet.adjTetras[j];
+			if (adjt == 0)
+				adjt = abs(tet.IDfs[j]) | 0x80000;
+			t |= (0 << 20) | (adjt & 0xfffff);
+		}
+
+		float nx[4],ny[4],nz[4],C[4];
+		_mm_store_ps(nx,tet.nx);
+		_mm_store_ps(ny,tet.ny);
+		_mm_store_ps(nz,tet.nz);
+		_mm_store_ps(C,tet.C);
+
+		for(int j=3;j>=0;--j)
+		{
+			t <<= 18;
+			t |= to_fixpoint(C[j],true,4,14) & 0x3ffff;
+
+			t <<= 18;
+			t |= to_fixpoint(nz[j],true,1,17) & 0x3ffff;
+
+			t <<= 18;
+			t |= to_fixpoint(ny[j],true,1,17) & 0x3ffff;
+
+			t <<= 18;
+			t |= to_fixpoint(nx[j],true,1,17) & 0x3ffff;
+		}
+		t <<= 4;
+		t |= tet.matID & 0xf;
+		os << setw(101) << hex << setfill('0') << uppercase << t << endl;
+	}
 
 	return t;
 }
@@ -82,7 +141,10 @@ int main(int argc,char **argv)
 
 	vector<Material> mats;
 
+	TetraMesh* mesh = exportMesh(*conn,2);		// IDc=2 => cube_5med
+
 	exportMaterials(*conn,2,mats);
+	//exportMesh();
 
 	vector<HWMaterial> hwmats(mats.size());
 
@@ -107,4 +169,6 @@ int main(int argc,char **argv)
 		cout << "Material [" << i << "] mu_t = " << hwmats[i].mu_t << " recip_mu_t=" << hwmats[i].recip_mu_t << " absfrac=" << hwmats[i].absfrac <<
 				" hg_const=" << hwmats[i].hg_consts << endl;
 	}
+
+	convert_to_hw(*mesh);
 }
