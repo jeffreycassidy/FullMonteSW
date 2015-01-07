@@ -69,8 +69,12 @@ HWMaterial convert_to_hw(const Material& mat)
 	hwmat.mu_t 			= to_fixpoint(mat.getMuT()*recip_ln2,false,12,6);
 	hwmat.recip_mu_t 	= to_fixpoint(1.0/mat.getMuT()*ln2,false,6,12);
 	hwmat.absfrac		= to_fixpoint(mat.getAbsorbedFraction(),false,0,18);
-	hwmat.hg_consts		= (to_fixpoint((1.0+g*g)/2.0/g,false,-2,20) << 36) |
-							(to_fixpoint((1.0-g*g)/sqrtf(2.0*g),false,0,18) << 18) |
+
+	double c0 = (1.0+g*g)/2.0/g-1;
+	double c1 = (1.0-g*g)/sqrtf(2.0*g);
+	cout << "c0=" << c0 << "->" << to_fixpoint(c0,false,-2,20) << endl;
+	hwmat.hg_consts		= (to_fixpoint(c0,false,-2,20) << 36) |
+							(to_fixpoint(c1,false,0,18) << 18) |
 							to_fixpoint(g,false,0,18);
 
 	hwmat.prop=0;
