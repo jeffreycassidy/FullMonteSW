@@ -45,6 +45,8 @@ public:
 	virtual void summarize(ostream& os) const {
 		os << "<no summary available for " << getTypeString() << '>' << endl;
 	}
+
+	virtual void write_text_file(const std::string& fn) const {};
 };
 
 // set default to nop for all events (dangerous, may miss events unexpectedly if give bad args)

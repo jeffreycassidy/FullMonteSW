@@ -144,6 +144,9 @@ template<class Logger,class RNG>class ThreadManager : public AsyncWorker {
 	ResultsType* results=NULL;
 	ResultsType* results_final=NULL;
 
+	// handle results notification
+	vector<const LoggerResults*> res_v;
+
 	LoggerWorker* loggers=NULL;
 	WorkerThread<LoggerWorker,RNG>* workers=NULL;
 
@@ -254,13 +257,7 @@ protected:
 		return t.elapsed();
 	}
 
-    vector<const LoggerResults*> getResults() const
-		{
-    		vector<const LoggerResults*> res_v;
-    		// get pointers from results tuple
-    		tuple_for_each(*results, [&res_v] (const LoggerResults& r) { res_v.push_back(&r); });
-    		return res_v;
-		}
+    vector<const LoggerResults*> getResults() const { return res_v; }
 
     // TODO: Catch the error where this is called while still running (must pause first)
     //pair<boost::timer::cpu_times,results_type> results() { return make_pair(AsyncWorker::t.elapsed(),__get_result_tuple2(logger)); }
@@ -288,13 +285,12 @@ template<class Logger,class RNG> void ThreadManager<Logger,RNG>::wait_for_worker
 	done_flag=true;
 	done_cv.notify_all();
 
-	// handle results notification
-	vector<const LoggerResults*> res_v;
 
 	results_final = new ResultsType(get_results_tuple(logger));
 
 	// get pointers from results tuple
-	tuple_for_each(*results_final, [&res_v] (const LoggerResults& r) { res_v.push_back(&r); });
+	tuple_for_each(*results_final, [this] (const LoggerResults& r) { this->res_v.push_back(&r); });
+	cout << "Results vector is now available" << endl;
 	for(const LoggerResults* lr : res_v)
 		notify_result(*lr);
 }
@@ -366,16 +362,11 @@ template<class Logger,class RNG> class WorkerThread : public AsyncWorker {
 			while (!sim_en)
 				cv.wait(lck);
 
-			//cout << "  Thread " << t.get_id() << " received the go-ahead and is running" << endl;
-
 			for(;i<N && sim_en; ++i)
 			{
 		        tmp = emitter->emit(rng);
 				doOnePacket(pkt,IDt);
 			}
-
-			//if (i != N)
-				//cout << "  Thread " << t.get_id() << " has been paused" << endl;
 		}
 
 		log_event(logger,Events::commit);

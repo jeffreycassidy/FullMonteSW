@@ -3,6 +3,12 @@
 #include "AccumulationArray.hpp"
 #include "fluencemap.hpp"
 
+#include <boost/range/algorithm.hpp>
+#include <boost/range/adaptor/transformed.hpp>
+
+template<typename T>double get_energy(const T& v);
+template<>inline double get_energy(const double& v){ return v; }
+
 template<class T>class VolumeArray : public LoggerResults {
 	const TetraMesh& mesh;
 	vector<T> v;
@@ -17,6 +23,14 @@ public:
     /// Returns a VolumeFluenceMap for the absorption accumulated so far*/
     /** The value of asFluence determines whether it returns total energy (false) or fluence as E/V/mu_a (true) */
     void fluenceMap(VolumeFluenceMap&,const vector<Material>&,bool asFluence=true);
+
+    vector<double> absorbed_energy() const
+	{
+    	vector<double> ov(v.size());
+
+    	boost::copy(v | boost::adaptors::transformed(get_energy<T>), ov.begin());
+    	return ov;
+	}
 
     /// Returns (if available from AccumulatorT) a hit map
     void hitMap(map<unsigned,unsigned long long>& m);

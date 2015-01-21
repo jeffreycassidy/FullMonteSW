@@ -236,7 +236,6 @@ template<class LoggerType,class RNG>int WorkerThread<LoggerType,RNG>::doOnePacke
 
     	if (scatter(pkt,*this,currMat,currTetra))
     		log_event(logger,Events::scatter,pkt.d,pkt.d,currMat.getParam_g());
-    		//logger.eventScatter(pkt.d,pkt.d,currMat.getParam_g());
     }
 
     // should only fall through to here in abnormal circumstances (too many steps)

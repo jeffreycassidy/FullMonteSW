@@ -165,18 +165,8 @@ int main(int argc,char **argv)
 			cerr << "Sources required" << endl;
 			return -1;
 		}
-		cout << "Sources: " << endl;
 		for(const string& s : source_strs)
-		{
-			SourceDescription *src=parse_string(s);
-			cout << "  \"" << s << "\" => ";
-			if (src)
-				cout << *src << endl;
-			else
-				cout << endl;
-
-		}
-		return 0;
+			geom.sources.push_back(parse_string(s));
 	}
 	else if (!vm.count("materials"))
 	{
@@ -189,6 +179,10 @@ int main(int argc,char **argv)
 		geom.mats=readTIMOSMaterials(vm["materials"].as<string>());
 		geom.sources=readTIMOSSource(vm["sourcefile"].as<string>());
 	}
+
+	cout << "Sources: " << endl;
+	for(const auto& s : geom.sources)
+		cout << *s << endl;
 
 	try {
 
@@ -241,6 +235,30 @@ boost::timer::cpu_times runSimulation(const SimGeometry& geom,const RunConfig& c
 
     boost::timer::cpu_times elapsed = man.finish_async();
     vector<const LoggerResults*> results = man.getResults();
+
+    for(const LoggerResults * lr : results)
+    {
+    	if (!lr)
+    		cout << "Result pointer NULL" << endl;
+    	else if (const VolumeArray<double>* p = dynamic_cast<const VolumeArray<double>*>(lr))
+    	{
+    		cout << "Writing volume energy to file" << endl;
+    		ofstream os("energy.volume.out");
+    		os << "# per-element absorbed energy" << endl;
+    		for(double e : p->absorbed_energy())
+    			os << e << endl;
+    	}
+    	else if (const SurfaceArray<double>* p = dynamic_cast<const SurfaceArray<double>*>(lr))
+    	{
+    		cout << "Writing surface energy to file" << endl;
+    		ofstream os("energy.surface.out");
+    		os << "# per-element emitted energy" << endl;
+    		for (double e : p->emitted_energy())
+    			os << e << endl;
+    	}
+    	else
+    		cout << "Not saving results of type '" << lr->getTypeString() << '\'' << endl;
+    }
 
     return elapsed;
 }

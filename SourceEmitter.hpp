@@ -262,14 +262,12 @@ template<class RNG>pair<Packet,unsigned> FaceSourceEmitter<RNG>::emit(RNG& rng) 
 
 template<class RNG>pair<Packet,unsigned> IsotropicPointSourceEmitter<RNG>::emit(RNG& rng) const
 {
-    pair<Packet,unsigned> tmp;
-    Packet& pkt=tmp.first;
-    tmp.second=getTetraID();
+    Packet pkt;
 
     pkt.setPosition(getOrigin());
     pkt.setDirection(rng.draw_m128f3_uvect());
 
-    return tmp;
+    return make_pair(pkt,IDt);
 }
 
 //TODO: Avoid conversion to and from UnitVector<3,double> type

@@ -4,12 +4,18 @@
 #include "AccumulationArray.hpp"
 #include "Packet.hpp"
 
+#include <boost/range/algorithm.hpp>
+#include <boost/range/adaptor/transformed.hpp>
+
 /** Holds quantities accumulated over a surface, using sequential IDs ranging [0,N).
  * @tparam T	Type to be accumulated; must support operator[](unsigned), operator+=(double) and operator+=(T)
  */
 
 template<class T>class SurfaceArray;
 template<class T>ostream& operator<<(ostream&,const SurfaceArray<T>&);
+
+template<typename T>double get_emitted_energy(const T& v);
+template<>inline double get_emitted_energy(const double& v){ return v; }
 
 template<class T>class SurfaceArray : public LoggerResults {
 	const TetraMesh& mesh;
@@ -30,6 +36,13 @@ public:
     void hitMap(map<unsigned,unsigned long long>& m);
 
     void resultMap(map<FaceByPointID,double>& m,bool per_area=true);
+
+    vector<double> emitted_energy() const
+	{
+    	vector<double> ov(s.size());
+    	boost::copy(s | boost::adaptors::transformed(get_emitted_energy<T>), ov.begin());
+    	return ov;
+	}
 
     typename vector<T>::const_iterator begin() const { return s.begin(); }
     typename vector<T>::const_iterator end()   const { return s.end(); }
