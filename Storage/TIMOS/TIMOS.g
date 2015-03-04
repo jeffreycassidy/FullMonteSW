@@ -19,8 +19,13 @@ tokens {
     SOURCE;
     
     SOURCES;
+
+    MATFILE;
+
+    MATERIALS;
     
     MATERIAL;
+    EXTERIOR;
     
     SOURCE_PB;
     SOURCE_VOL;
@@ -32,6 +37,7 @@ tokens {
 	unsigned source_type=0;
     unsigned Np_expect=0;
     unsigned Nt_expect=0;
+    unsigned Nm_expect=0;
 }
 
 
@@ -45,8 +51,14 @@ meshfile: Np=INT { Np_expect=atoi((const char*)$Np->getText($Np)->chars); } '\n'
 points @init { unsigned Np=0; }: (point3 { ++Np; } '\n')* { Np==Np_expect }? -> ^(POINTS point3*)
 	;
 	
-matfile @init { unsigned Nm_expect=0,Nm=0; }: INT '\n'! Nmx=INT { Nm_expect=atoi((const char*)$Nmx->getText($Nmx)->chars); } '\n' (material { ++Nm; } '\n'!)* INT '\n'! floatconst? { Nm==Nm_expect }? 
+matfile: region=INT '\n' Nmx=INT { Nm_expect=atoi((const char*)$Nmx->getText($Nmx)->chars); } '\n' (material  '\n')* matched=INT '\n' n_ext=floatconst? -> ^(MATFILE $region material* $matched $n_ext)
 	;
+
+materials @init { unsigned Nm=0; }: material { ++Nm; } '\n' { Nm_expect==Nm }? -> ^(MATERIAL material)
+    ;
+
+matext: matched=INT '\n' n_ext=floatconst? -> ^(EXTERIOR $matched $n_ext)
+    ;
 	
 material: floatconst floatconst floatconst floatconst -> ^(MATERIAL floatconst floatconst floatconst floatconst)
 	;

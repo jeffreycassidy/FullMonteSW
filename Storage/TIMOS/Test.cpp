@@ -14,31 +14,32 @@
 #include "TIMOSParser.h"
 #include <antlr3.h>
 
+#define MAKE_LEXER_DEF(pfx) struct Lexer { \
+	typedef p##pfx##Lexer ptr_t; \
+	static ptr_t CreateLexer(pANTLR3_INPUT_STREAM i){ return pfx##LexerNew(i); } \
+};
+
+#define MAKE_PARSER_DEF(pfx,default_start_rule) struct Parser { \
+	typedef p##pfx##Parser ptr_t; \
+	typedef pfx##Parser_sourcefile_return startrule_return_t; \
+	static ptr_t CreateParser(pANTLR3_COMMON_TOKEN_STREAM i){ return pfx##ParserNew(i); } \
+	typedef startrule_return_t(*startrule_t)(ptr_t); \
+	static startrule_t startrule(ptr_t p){ return p->default_start_rule; } \
+};
+
+#define ADD_START_RULE(pfx,tag,rulename) struct tag { \
+	typedef pfx##Parser_##rulename##_return startrule_return_t; \
+	typedef startrule_return_t(*startrule_t)(Parser::ptr_t); \
+	static  startrule_t startrule(Parser::ptr_t p){ return p->rulename; } \
+};
+
 struct ANTLR_TIMOS {
-	struct Lexer {
-		typedef pTIMOSLexer		ptr_t;
-		static ptr_t CreateLexer(pANTLR3_INPUT_STREAM i){ return TIMOSLexerNew(i); }
-	};
+	MAKE_LEXER_DEF(TIMOS)
+	MAKE_PARSER_DEF(TIMOS,sourcefile)
 
-	struct Parser {
-		typedef pTIMOSParser							ptr_t;
-		typedef TIMOSParser_sourcefile_return			startrule_return_t;
-		typedef startrule_return_t(*startrule_t)(ptr_t);
-		static ptr_t CreateParser(pANTLR3_COMMON_TOKEN_STREAM s){ return TIMOSParserNew(s); }
-		static startrule_t startrule(ptr_t p){ return p->sourcefile; }
-	};
-
-	struct Mat {
-		typedef TIMOSParser_matfile_return startrule_return_t;
-		typedef startrule_return_t(*startrule_t)(Parser::ptr_t);
-		static startrule_t startrule(Parser::ptr_t p){ return p->matfile; }
-	};
-
-	struct Mesh {
-		typedef TIMOSParser_meshfile_return startrule_return_t;
-		typedef startrule_return_t(*startrule_t)(Parser::ptr_t);
-		static startrule_t startrule(Parser::ptr_t p){ return p->meshfile; }
-	};
+	ADD_START_RULE(TIMOS,Mat,matfile)
+	ADD_START_RULE(TIMOS,Mesh,meshfile)
+	ADD_START_RULE(TIMOS,Source,sourcefile)
 };
 
 
@@ -99,13 +100,33 @@ public:
 
 class optfile_ast_visitor : public ANTLR3CPP::ast_visitor {
 	vector<Material> mat_;
+	bool per_region_=true;
+	bool matched_=true;
+	float n_ext_=NAN;
+
 
 protected:
 	virtual void do_expand(ANTLR3CPP::base_tree bt)
 	{
 		array<float,4> a;
+		unsigned by_region,m;
 		switch(bt.getTokenType())
 		{
+		case MATFILE:
+			by_region = ANTLR3CPP::convert_string<unsigned>(bt.getChild(0).getTokenText());
+			assert(by_region == 1 || by_region == 2);
+
+			visit_children(bt);
+		break;
+
+		case EXTERIOR:
+			m = ANTLR3CPP::convert_string<unsigned>(bt.getChild(0).getTokenText());
+			assert(m == 1 || m == 2);
+			matched_ = m==1;
+			if (!matched_)
+				n_ext_ = ANTLR3CPP::convert_string<float>(bt.getChild(1).getTokenText());
+		break;
+
 		case MATERIAL:
 			a = ANTLR3CPP::convert_tuple<array<float,4>>(bt);		// mu_a,mu_s,g,n
 			mat_.emplace_back(a[0],a[1],a[2],a[3]);
@@ -117,9 +138,10 @@ protected:
 	}
 
 public:
-
+	bool matched() const { return matched_; }
+	float n_ext() const { return n_ext_; }
+	bool per_region() const { return per_region_; }
 	const vector<Material> materials() const { return mat_; }
-
 };
 
 
@@ -144,7 +166,6 @@ int main(int argc,char **argv)
 	MV.walk(mbt);
 
 
-
 	cout << "Read mesh with " << MV.points().size() << " points and " << MV.tetras().size() << " tetras" << endl;
 
 	ANTLRParser<ANTLR_TIMOS> O(fnroot + ".opt");
@@ -154,6 +175,12 @@ int main(int argc,char **argv)
 
 	for(const auto & m : OV.materials())
 		cout << m << endl;
+
+	cout << "Total " << OV.materials().size() << " materials" << endl;
+
+	cout << "Coding by region? " << OV.per_region() << endl;
+	cout << "Matched boundary? " << OV.matched() << endl;
+	cout << "  External n=" << OV.n_ext() << endl;
 
 	return 0;
 }
