@@ -115,6 +115,9 @@ template<class LA,class LB,class LC>std::tuple<typename LA::ThreadWorker,typenam
 template<class LA,class LB,class LC,class LD>std::tuple<typename LA::ThreadWorker,typename LB::ThreadWorker,typename LC::ThreadWorker,typename LD::ThreadWorker> get_worker(std::tuple<LA,LB,LC,LD>& t)
 		{ return make_tuple(get<0>(t).get_worker(),get<1>(t).get_worker(),get<2>(t).get_worker(),get<3>(t).get_worker()); }
 
+template<class LA,class LB,class LC,class LD,class LE>std::tuple<typename LA::ThreadWorker,typename LB::ThreadWorker,typename LC::ThreadWorker,typename LD::ThreadWorker,typename LE::ThreadWorker> get_worker(std::tuple<LA,LB,LC,LD,LE>& t)
+		{ return make_tuple(get<0>(t).get_worker(),get<1>(t).get_worker(),get<2>(t).get_worker(),get<3>(t).get_worker(),get<4>(t).get_worker()); }
+
 
 class LoggerNull {
     public:

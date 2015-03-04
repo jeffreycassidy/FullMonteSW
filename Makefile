@@ -56,20 +56,29 @@ Test_AccumulationArray: Test_AccumulationArray.cpp AccumulationArray.hpp
 %VTK.o: %VTK.cpp *.hpp
 	$(GXX) $(GCC_OPTS) $(INCLDIRS) -I/usr/local/include/vtk -fPIC -c $< -o $@
 
+
+tracelocal.o: simlocal.cpp *.hpp
+	$(GXX) $(GCC_OPTS) $(INCLDIRS) -DTRACE_ENABLE -fPIC -c $< -o $@
+
 %.o: %.cpp *.hpp
 	$(GXX) $(GCC_OPTS) $(INCLDIRS) -fPIC -c $*.cpp -o $@
+	
 
 montecarlo: montecarlo.o mainloop.o random.o FullMonte.o OStreamObserver.o PGObserver.o fmdb.o LocalObserver.o
 	$(GXX) $(GCC_OPTS) $^ -L$(BOOST_LIB) $(LIBS) -lmontecarlo -lFullMonteGeometry $(LIBDIRS) -o $@
 	
-simlocal: simlocal.o RandomAVX.o OStreamObserver.o
+simlocal: simlocal.o RandomAVX.o OStreamObserver.o Material.o
+	$(GXX) $(GXX_OPTS) -L$(BOOST_LIB) -I$(BOOST_INCLUDE) -L. -LSFMT -lFullMonteGeometry -lboost_program_options -lboost_system -lboost_timer -lboost_chrono -lmontecarlo -o $@ $^
+
+tracelocal: tracelocal.o RandomAVX.o OStreamObserver.o
 	$(GXX) $(GXX_OPTS) -L$(BOOST_LIB) -I$(BOOST_INCLUDE) -L. -LSFMT -lFullMonteGeometry -lboost_program_options -lboost_system -lboost_timer -lboost_chrono -lmontecarlo -o $@ $^
 
 libmontecarlo.so: helpers.o SourceDescription.o LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o blob.o sse.o RandomAVX.o LoggerConservation.o LoggerEvent.o LoggerVolume.o FullMonte.o
+
 	$(GXX) -shared -fPIC $(GXX_OPTS) $^ -L$(BOOST_LIB) -LSFMT -L. -lpq -lboost_program_options -lboost_system -lboost_timer -lFullMonteGeometry -lboost_chrono -Lfm-postgres -lSFMT -o $@
 
-rletrace: rletrace.cpp progress.cpp
-	$(GXX) -Wall -std=c++0x -lrt -DPOSIX_TIMER -O3 -o $@ $^
+rletrace: rletrace.cpp
+	$(GXX) -Wall -std=c++11 -O3 -o $@ $^
 
 meshquery: meshquery.cpp
 	$(GXX) -Wall -g -std=c++0x -O3 -mssse3 -msse4 -DSSE -I/usr/local/include -I. -I$(BOOST_INCLUDE) -L$(BOOST_LIB) -I/usr/local/include/pgsql -L. -Lfm-postgres -lfmpg -lpq -lboost_timer -lboost_system -lboost_program_options -lmontecarlo -o $@ $^

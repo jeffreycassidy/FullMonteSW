@@ -29,6 +29,8 @@
 
 #include "RandomAVX.hpp"
 
+#include "../Lib/Algorithm/percentile.hpp"
+
 namespace po=boost::program_options;
 
 namespace globalopts {
@@ -43,6 +45,7 @@ namespace globalopts {
 
 	// plain ol' options
 	double timerinterval=0.2;
+	bool meshstats=false;
 }
 
 using namespace std;
@@ -52,6 +55,9 @@ typedef std::tuple<
 		LoggerConservationMT,
 		LoggerSurface<QueuedAccumulatorMT<double>>,
 		LoggerVolume<QueuedAccumulatorMT<double>>
+#ifdef TRACE_ENABLE
+		,LoggerMemTraceMT
+#endif
 		>
 		LoggerType;
 
@@ -71,6 +77,8 @@ namespace __cmdline_opts {
     	double wmin;
     	Sequence<unsigned> seeds;
     }
+
+void mesh_stats(const TetraMesh& M);
 
 int main(int argc,char **argv)
 {
@@ -92,6 +100,7 @@ int main(int argc,char **argv)
         ("input,i",po::value<string>(&fn_mesh),"Input file")
         ("N,N",po::value<unsigned long long>(&__cmdline_opts::Npkt),"Number of packets")
         ("sourcefile,s",po::value<string>(&fn_sources),"Source location file (TIM-OS .source type)")
+        ("stats,S","Calculate/display mesh statistics")
         ("source",po::value<vector<string>>(&source_strs),"Source strings")
         ("materials,m",po::value<string>(&fn_materials),"Materials file (TIM-OS .opt type)")
         ("prefix,x",po::value<string>(&prefix),"File prefix for mesh/source/materials file")
@@ -126,6 +135,8 @@ int main(int argc,char **argv)
 
     if(vm.count("N"))
     	cfg.Npackets=__cmdline_opts::Npkt;
+    else
+    	cfg.Npackets=0;
 
     if(vm.count("threads"))
     	opts.Nthreads=__cmdline_opts::Nthread;
@@ -134,6 +145,8 @@ int main(int argc,char **argv)
     	globalopts::seeds = __cmdline_opts::seeds.as_vector();
     else
     	globalopts::seeds.push_back(1);
+
+    globalopts::meshstats = vm.count("stats");
 
 	opts.timerinterval=globalopts::timerinterval;
 
@@ -153,51 +166,62 @@ int main(int argc,char **argv)
 		geom.mats=readTIMOSMaterials(prefix+".opt");
 		geom.sources=readTIMOSSource(prefix+".source");
 	}
-	else if(!vm.count("input"))
-	{
-		cerr << "Input mesh required" << endl;
-		return -1;
-	}
-	else if (!vm.count("sourcefile"))
-	{
-		if (!vm.count("source"))
-		{
-			cerr << "Sources required" << endl;
-			return -1;
-		}
-		for(const string& s : source_strs)
-			geom.sources.push_back(parse_string(s));
-	}
-	else if (!vm.count("materials"))
-	{
-		cerr << "Materials required" << endl;
-		return -1;
-	}
 	else {
 		// load the problem def
 		geom.mesh=TetraMesh(vm["input"].as<string>(),TetraMesh::MatlabTP);
 		geom.mats=readTIMOSMaterials(vm["materials"].as<string>());
 		geom.sources=readTIMOSSource(vm["sourcefile"].as<string>());
+
+		if (vm.count("materials"))
+		{
+			cout << "Loading materials from " << vm["materials"].as<string>() << endl;
+			geom.mats=readTIMOSMaterials(vm["materials"].as<string>());
+		}
+
+		if (vm.count("sourcefile"))
+		{
+			cout << "Loading sources from " << vm["input"].as<string>() << endl;
+			geom.sources=readTIMOSSource(vm["sourcefile"].as<string>());
+		}
+
+		if (vm.count("source"))
+			for(const string& s : source_strs)
+				geom.sources.push_back(parse_string(s));
 	}
 
 	cout << "Sources: " << endl;
 	for(const auto& s : geom.sources)
 		cout << *s << endl;
 
+	cout << "Materials: " << endl;
+	for (const auto& m : geom.mats)
+		cout << m << endl;
+
+	if (globalopts::meshstats)
+	{
+		mesh_stats(geom.mesh);
+	}
+
+	cout << "Sources: " << endl;
+	for(const auto& s : geom.sources)
+		cout << *s << endl;
+
+	if (cfg.Npackets == 0)
+		return 0;
+
 	try {
 
+		for(unsigned seed : globalopts::seeds)
+		{
+			globalopts::randseed.reset(seed);
 
-	for(unsigned seed : globalopts::seeds)
-	{
-		globalopts::randseed.reset(seed);
+			OStreamObserver os_obs(cout);
 
-		OStreamObserver os_obs(cout);
+			vector<Observer*> obs;
+			obs.push_back(&os_obs);
 
-		vector<Observer*> obs;
-		obs.push_back(&os_obs);
-
-		boost::timer::cpu_times e = runSimulation(geom,cfg,opts,obs);
-	}
+			boost::timer::cpu_times e = runSimulation(geom,cfg,opts,obs);
+		}
 	}
 	catch (std::exception& e)
 	{
@@ -216,6 +240,10 @@ boost::timer::cpu_times runSimulation(const SimGeometry& geom,const RunConfig& c
     		LoggerConservationMT(),
     		LoggerSurface<QueuedAccumulatorMT<double>>(geom.mesh,1<<10),
     		LoggerVolume<QueuedAccumulatorMT<double>>(geom.mesh,1<<10)
+
+#ifdef TRACE_ENABLE
+    		,LoggerMemTraceMT("tetra")
+#endif
     		);
 
     // Run it
@@ -247,6 +275,28 @@ boost::timer::cpu_times runSimulation(const SimGeometry& geom,const RunConfig& c
     		os << "# per-element absorbed energy" << endl;
     		for(double e : p->absorbed_energy())
     			os << e << endl;
+
+            vector<double> E = p->absorbed_energy();
+
+    		os.close();
+    		os.open("fluence.volume.out");
+    		os << "# per-element volume fluence" << endl;
+
+    		double E_zero=0.0,E_trans=0.0;
+
+    		for(unsigned i=0;i<E.size(); ++i)
+    		{
+    			double phi = E[i] == 0 ? 0 : E[i] / geom.mesh.getTetraVolume(i) / geom.mats[geom.mesh.getMaterial(i)].getMuA();
+    			os << phi << endl;
+
+    			if (geom.mesh.getTetraVolume(i) == 0)
+    				E_zero += E[i];
+    			if (geom.mats[geom.mesh.getMaterial(i)].getMuA()==0)
+    				E_trans += E[i];
+    		}
+
+    		cout << "Disposed of " << E_zero << " energy in zero-volume elements" << endl;
+    		cout << "Disposed of " << E_trans << " energy in transparent elements" << endl;
     	}
     	else if (const SurfaceArray<double>* p = dynamic_cast<const SurfaceArray<double>*>(lr))
     	{
@@ -261,4 +311,57 @@ boost::timer::cpu_times runSimulation(const SimGeometry& geom,const RunConfig& c
     }
 
     return elapsed;
+}
+
+void mesh_stats(const TetraMesh& M)
+{
+	vector<double> V(M.getNt(),0.0);
+
+	for(unsigned i=0;i<M.getNt();++i)
+		V[i] = M.getTetraVolume(i);
+
+	{
+		vector<pair<float,double>> Vp = percentile(V);
+
+		ofstream os("element_volumes_by_count.hist.out");
+
+		for(const pair<float,double>& v : Vp)
+			os << v.first << ' ' << v.second << endl;
+
+
+		// display specified histogram points
+		cout << "% of elements with size less than" << endl;
+		vector<double> p_display;
+		for(unsigned i=0;i<11;++i)
+			p_display.push_back(0.1*i);
+
+		for(double p : p_display)
+		{
+			auto it = boost::lower_bound(Vp, p, [](pair<float,double> t,double v){ return t.first < v; });
+			cout << it->first << ' ' << it->second << endl;
+		}
+	}
+
+	{
+		vector<pair<float,double>> Vp = percentile(V,identity(),identity(),identity());
+
+		ofstream os("element_volumes_by_total_volume.hist.out");
+
+		for(const pair<float,double>& v : Vp)
+			os << v.first << ' ' << v.second << endl;
+
+		// display specified histogram points
+		cout << "% of volume held in elements of size less than" << endl;
+		vector<double> p_display;
+		for(unsigned i=0;i<11;++i)
+			p_display.push_back(0.1*i);
+
+		for(double p : p_display)
+		{
+			auto it = boost::lower_bound(Vp, p, [](pair<float,double> t,double v){ return t.first < v; });
+			if (it == Vp.end())
+				--it;
+			cout << it->first << ' ' << it->second << endl;
+		}
+	}
 }

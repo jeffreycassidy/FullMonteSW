@@ -27,6 +27,10 @@ class LoggerMemTrace : public LoggerNull {
     void logExit(int,unsigned);
 
     public:
+
+    typedef true_type single_result_tag;
+    typedef void results_type;
+
     LoggerMemTrace(string fnTetra_,string fnExit_) : fnTetra(fnTetra_),fnExit(fnExit_),os_tetra(fnTetra_),os_exit(fnExit_),
         IDf_last_exit(0),Nabs(-1),Nexit(-1){
             if (!os_tetra.good())
@@ -43,9 +47,11 @@ class LoggerMemTrace : public LoggerNull {
 
     void eventLaunch(const Ray3 r,unsigned IDt,double w);
     void eventAbsorb(const Point3 p,unsigned IDt,double w0,double dw);
-    void eventBoundary(const Point3 p,int,unsigned,unsigned);
+    void eventBoundary(const Point3 p,int,int,int);
     void eventInterface(const Ray3,int,unsigned);
     void eventRefract(const Point3,UVect3);
+
+    void eventCommit(){}
 
     // termination events
     void eventExit(const Ray3,int,double);
@@ -54,7 +60,11 @@ class LoggerMemTrace : public LoggerNull {
 class LoggerMemTraceMT {
 	unsigned Nth;
 	string fnroot;
+
     public:
+
+	typedef void logger_member_tag;
+	typedef true_type single_result_tag;
 
 	LoggerMemTraceMT(string fnroot_) : Nth(0),fnroot(fnroot_){}
 	LoggerMemTraceMT(LoggerMemTraceMT&& lm_) : Nth(lm_.Nth),fnroot(std::move(lm_.fnroot)){}
@@ -63,6 +73,7 @@ class LoggerMemTraceMT {
     // ThreadWorker is just a single-thread instance but with a different file name
     class WorkerThread : public LoggerMemTrace {
         public:
+		typedef void logger_member_tag;
         WorkerThread(string a,string b) : LoggerMemTrace(a,b){}
     };
 
@@ -75,6 +86,9 @@ class LoggerMemTraceMT {
         return WorkerThread(ss_tetra.str(),ss_exit.str());
     }
 
-    typedef string result_type;
-    result_type getResults() const { return ""; }
+    typedef WorkerThread ThreadWorker;
+    typedef LoggerResults ResultType;
+
+    typedef ResultType result_type;
+    result_type getResults() const { return LoggerResults(); }
 };

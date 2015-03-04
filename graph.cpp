@@ -437,15 +437,25 @@ unsigned TetraMesh::findNearestPoint(const Point<3,double>& p) const
 
 unsigned TetraMesh::findEnclosingTetra(const Point<3,double>& p) const
 {
-	unsigned id=0,c=1;
-	for(vector<TetraByFaceID>::const_iterator it=T_f.begin()+1; it != T_f.end(); ++it,++c)
-	{
-		int i;
-		for(i=0;i<4 && (F[abs((*it)[i])].pointAbove(p) ^ (((*it)[i])<0)); ++i){}
-		if (i==4)
-			id=c;
-	}
-	return id;
+	const float f[4]{ p[0], p[1], p[2], 0.0 };
+	__m128 pv = _mm_load_ps(f);
+	unsigned N=0,IDt=0;
+
+	for(unsigned i=1;i<tetras.size(); ++i)
+		if (getTetraVolume(i) > 0 && tetras[i].pointWithin(pv))
+		{
+			IDt=i;
+			++N;
+			cout << "Enclosed by tetra " << i << endl;
+		}
+
+	if (IDt == 0)
+		cerr << "Error: no enclosing tetra!" << endl;
+	else if (N == 1)
+		cout << "Single tetra only" << endl;
+	else if (N > 1)
+		cerr << "Warning: enclosed by " << N << " tetras" << endl;
+	return IDt;
 }
 
 // verifies that a point is within the specified tetrahedron

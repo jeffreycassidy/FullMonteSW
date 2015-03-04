@@ -21,7 +21,7 @@ void LoggerMemTrace::eventLaunch(const Ray3,unsigned IDt,double)
 }
 
 // At a boundary (no refractive index difference or matched boundary), write out previous tetra record
-void LoggerMemTrace::eventBoundary(const Point3,int,unsigned,unsigned IDte)
+void LoggerMemTrace::eventBoundary(const Point3,int,int,int IDte)
 {
     logTetraHits(IDt_current,Nabs);
     IDt_current=IDte;

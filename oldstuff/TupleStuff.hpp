@@ -186,7 +186,6 @@ template<class L>typename L::ResultType get_one_result_tuple(const L& l,typename
 	return l.getResults();
 }
 
-
 template<typename... Ts>typename LoggerResult<0,std::tuple<Ts...>,Ts...>::type get_results_tuple(const std::tuple<Ts...>& l)
 {
 	return LoggerResult<0,std::tuple<Ts...>,Ts...>::apply(l);

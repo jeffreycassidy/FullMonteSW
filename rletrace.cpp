@@ -11,8 +11,6 @@
 
 #include <boost/iterator/transform_iterator.hpp>
 
-#include "progress.hpp"
-
 using namespace std;
 
 template<class T>class ExtractionStream {
@@ -61,7 +59,7 @@ class SparseHistogram : private map<unsigned,unsigned> {
     public:
 
     SparseHistogram() : N(0){}
-    SparseHistogram(SparseHistogram&& a) : map<unsigned,unsigned>(std::move<map<unsigned,unsigned> >(a)),N(a.N){}
+    SparseHistogram(SparseHistogram&& a) : map<unsigned,unsigned>(std::move<map<unsigned,unsigned> >(static_cast<map<unsigned,unsigned>>(a))),N(a.N){}
 
     void operator()(pair<unsigned,unsigned> p){ add(p.first,p.second); }
     void operator()(unsigned b,unsigned N_=1){ add(b,N_); }
@@ -268,9 +266,9 @@ template<class AddressInputIterator>void getRecurrenceTime(AddressInputIterator 
 
     map<unsigned,unsigned>::iterator sa_it;
 
-    ProgressPrinter pp(cout,&seq,8);
+    //ProgressPrinter pp(cout,&seq,8);
 
-    NewTimer<ProgressPrinter> tmr(1.0,pp,true);
+    //NewTimer<ProgressPrinter> tmr(1.0,pp,true);
 
     for(AddressInputIterator curr=first; curr != last; ++curr,++seq)
     {
