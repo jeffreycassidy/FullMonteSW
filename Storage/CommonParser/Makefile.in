@@ -1,4 +1,4 @@
-CXX_OPTS=-Wall -std=c++11 -O3 -fPIC -g
+CXX_OPTS=-Wall -std=c++11 -O3 -fPIC -g -mavx
 CXX=g++
 
 ANTLR_INCLUDE=/usr/local/antlr3c-3.4/include

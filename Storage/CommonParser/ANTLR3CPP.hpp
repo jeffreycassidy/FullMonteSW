@@ -61,51 +61,6 @@ private:
 	const pANTLR3_BASE_TREE _p = nullptr;		// base_tree is a non-owning copy of a pANTLR3_BASE_TREE pointer
 };
 
-//class tree_node_flyweight {
-//public:
-//	virtual void do_visit(base_tree bt,unsigned indent=1) const
-//		{ std::cout << std::setw(indent) << ' ' << bt.getToken().getText() << std::endl; };
-//
-//	virtual void walk(base_tree bt,unsigned indent=1) const {
-//		do_visit(bt,indent);
-//		for(unsigned i=0; i<bt.getChildCount(); ++i)
-//		{
-//			base_tree ch = bt.getChild(i);
-//			const tree_node_flyweight *fw = get_flyweight(ch.getToken().getType());
-//			if (fw)
-//				fw->walk(ch,indent+1);
-//		}
-//	}
-//
-//	static void register_flyweight(int tokType,const tree_node_flyweight* fw)
-//	{
-//		if (tokType < 0)
-//		{
-//			std::cerr << "Trying to register a negative token type!" << std::endl;
-//			return;
-//		}
-//		else if (tokType > _flyweights.size())
-//			_flyweights.resize(tokType+1);
-//
-//		_flyweights[tokType] = fw;
-//	}
-//
-//	const tree_node_flyweight* get_flyweight(int tokType) const {
-//		if (tokType < 0 || tokType >= _flyweights.size() || _flyweights[tokType] == nullptr)
-//			return _default_flyweight;
-//		else
-//			return _flyweights[tokType];
-//	}
-//
-//private:
-//	static std::vector<const tree_node_flyweight*> 	_flyweights;
-//	static const tree_node_flyweight* 				_default_flyweight;
-//};
-//
-//const tree_node_flyweight* tree_node_flyweight::_default_flyweight = new tree_node_flyweight;
-//
-//std::vector<const tree_node_flyweight*> tree_node_flyweight::_flyweights;
-
 
 //// convert a string to a given type
 template<typename T>T convert_string(std::string s)
@@ -172,7 +127,7 @@ template<unsigned I=0,typename U>
 	typename std::enable_if< (I < std::tuple_size<U>::value), void>::type
 	convert_tuple_element(const base_tree bt,U& t)
 {
-	get<I>(t) = convert_string< typename std::tuple_element<I,U>::type>(bt.getChild(I).getToken().getText());
+	std::get<I>(t) = convert_string< typename std::tuple_element<I,U>::type>(bt.getChild(I).getToken().getText());
 	convert_tuple_element<I+1>(bt,t);
 }
 
@@ -188,155 +143,6 @@ template<class T>T convert_tuple(const base_tree bt)
 	return t;
 }
 
-//
-//template<class T>std::vector<T> convert_tuple_vector(const base_tree bt,int tokType)
-//{
-//	std::vector<T> v;
-//
-//	for(unsigned i=0; i<bt.getChildCount(); ++i)
-//	{
-//		base_tree c = bt.getChild(i);
-//		assert(c.getToken().getType() == tokType);
-//
-//		v.push_back(convert_tuple<T>(c));
-//	}
-//	return v;
-//}
 
-//class pinnacle_ast_visitor {
-//private:
-//	unsigned ind=1;
-//
-//	void visit_file(const base_tree bt)
-//	{
-//		++ind;
-//		std::map<string,string> pm;
-//		cout << setw(ind*2) << ' ' << "FILE" << endl;
-//		for(unsigned i=0; i<bt.getChildCount(); ++i)
-//		{
-//			base_tree c = bt.getChild(i);
-//			switch(c.getToken().getType())
-//			{
-//			case TOK_ROI:
-//				visit_roi(c);
-//				break;
-//			case PROP:
-//				visit_prop(c,pm);
-//				break;
-//			default:
-//				cout << "AST ERROR!" << endl;
-//			}
-//		}
-//		cout << setw(ind*2) << ' ' << "/FILE" << endl;
-//		--ind;
-//	}
-//
-//	void visit_roi(const base_tree bt)
-//	{
-//		++ind;
-//		std::map<string,string> pm;
-//
-//		//cout << setw(ind*2) << ' ' << "ROI" << endl;
-//		for(unsigned i=0; i<bt.getChildCount(); ++i)
-//		{
-//			base_tree c = bt.getChild(i);
-//			switch(c.getToken().getType())
-//			{
-//			case PROP:
-//				visit_prop(c,pm);
-//				break;
-//			case CURVE:
-//				visit_curve(c);
-//				cout << "Curve begins at " << c.getToken().getLine() << ':' << c.getToken().getCharPositionInLine() << endl;
-//				break;
-//			case SURFACEMESH:
-//			case MEANMESH:
-//				break;
-//			default:
-//				cout << "AST ERROR: Expecting PROP or CURVE, received token " << c.getToken().getText() << endl;
-//			}
-//		}
-//		--ind;
-//	}
-//
-//	void visit_curve(const base_tree bt)
-//	{
-//		++ind;
-//		std::vector<std::array<float,3>> P;
-//		std::map<string,string> props;
-//
-//		for(unsigned i=0; i<bt.getChildCount(); ++i)
-//		{
-//			base_tree c = bt.getChild(i);
-//
-//			switch(c.getToken().getType()){
-//			case PROP:
-//				visit_prop(c,props);
-//				break;
-//
-//			case POINTS:
-//				P = convert_tuple_vector<std::array<float,3>>(c,POINT);
-//				break;
-//
-//			default:
-//				cout << setw(2*ind) << ' ' << "AST ERROR: Expecting PROP or POINTS, received token " << c.getToken().getText() << endl;
-//			}
-//		}
-//
-//		cout << "Curve with " << P.size() << " points" << endl;
-//		--ind;
-//	}
-//
-//	void visit_prop(const base_tree bt,std::map<string,string>& pm)
-//	{
-//		++ind;
-//		pair<string,string> p = convert_tuple<std::pair<string,string>>(bt);
-//		if (!pm.insert(p).second)
-//			cout << "ERROR: duplicate property '" << p.first << '\'' << endl;
-//		--ind;
-//	}
-//
-//public:
-//	void walk(base_tree bt)
-//	{
-//		visit_file(bt);
-//	}
-//};
-//
-//}
-//
-//int main(int argc,char **argv)
-//{
-//	string fn="/home/jcassidy/src/FullMonteSW/Pinnacle/plan_HN.roi";
-//
-//	if (argc > 1)
-//		fn = argv[1];
-//
-//	pANTLR3_INPUT_STREAM input;
-//	ppinnacleLexer lex;
-//	pANTLR3_COMMON_TOKEN_STREAM tokens;
-//	ppinnacleParser parser;
-//
-//	input = antlr3FileStreamNew((pANTLR3_UINT8)fn.c_str(),ANTLR3_ENC_8BIT);
-//	lex = pinnacleLexerNew(input);
-//	tokens = antlr3CommonTokenStreamSourceNew(ANTLR3_SIZE_HINT,
-//			TOKENSOURCE(lex));
-//	parser = pinnacleParserNew(tokens);
-//
-//	cout << "Starting parse of " << fn << endl;
-//
-//	pinnacleParser_start_return r = parser->start(parser);
-//
-//	ANTLR3CPP::pinnacle_ast_visitor p;
-//
-//	p.walk(ANTLR3CPP::base_tree(r.tree));
-//
-//	parser->free(parser);
-//	tokens->free(tokens);
-//	lex->free(lex);
-//	input->close(input);
-//
-//	return 0;
-//}
 
 }

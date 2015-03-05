@@ -73,7 +73,7 @@ simlocal: simlocal.o RandomAVX.o OStreamObserver.o Material.o
 tracelocal: tracelocal.o RandomAVX.o OStreamObserver.o
 	$(GXX) $(GXX_OPTS) -L$(BOOST_LIB) -I$(BOOST_INCLUDE) -L. -LSFMT -lFullMonteGeometry -lboost_program_options -lboost_system -lboost_timer -lboost_chrono -lmontecarlo -o $@ $^
 
-libmontecarlo.so: helpers.o SourceDescription.o LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o blob.o sse.o RandomAVX.o LoggerConservation.o LoggerEvent.o LoggerVolume.o FullMonte.o
+libmontecarlo.so: helpers.o LoggerSurface.o io_timos.o progress.o linefile.o fluencemap.o blob.o sse.o RandomAVX.o LoggerConservation.o LoggerEvent.o LoggerVolume.o FullMonte.o
 
 	$(GXX) -shared -fPIC $(GXX_OPTS) $^ -L$(BOOST_LIB) -LSFMT -L. -lpq -lboost_program_options -lboost_system -lboost_timer -lFullMonteGeometry -lboost_chrono -Lfm-postgres -lSFMT -o $@
 
@@ -129,7 +129,7 @@ TetraMeshTCL.o: TetraMeshTCL.cpp
 TetraMeshTCL_wrap.o: TetraMeshTCL_wrap.cxx
 	$(GXX) -g -c -fPIC -Wall -std=c++11 -DUSE_TCL_STUBS -I/usr/local/include/pgsql -I/usr/local/include/vtk $^
 	
-libFullMonteGeometry.so: TetraMeshBase.o newgeom.o graph.o face.o helpers.o
+libFullMonteGeometry.so: TetraMeshBase.o newgeom.o graph.o face.o helpers.o SourceDescription.o Material.o
 	$(GXX) -fPIC -shared -Wall -o $@ $^
 
 libFullMonteVTK.so: TetraMeshBaseVTK.o VTKInterface.o
