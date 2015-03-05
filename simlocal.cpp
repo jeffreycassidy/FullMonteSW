@@ -14,9 +14,9 @@
 
 #include "FullMonte.hpp"
 
+#include "Storage/TIMOS/TIMOS.hpp"
+
 #include "SourceDescription.hpp"
-#include "io_timos.hpp"
-#include <signal.h>
 #include <boost/program_options.hpp>
 #include <boost/program_options/errors.hpp>
 #include <boost/timer/timer.hpp>
@@ -29,7 +29,9 @@
 
 #include "RandomAVX.hpp"
 
+#ifdef STATS
 #include "../Lib/Algorithm/percentile.hpp"
+#endif
 
 namespace po=boost::program_options;
 
@@ -162,31 +164,72 @@ int main(int argc,char **argv)
 	{
 		if (vm.count("input")||vm.count("sourcefile")||vm.count("materials"))
 			cout << "NOTE: --prefix option supersedes specification of input, sourcefile, and materials" << endl;
-		geom.mesh=TetraMesh(prefix+".mesh",TetraMesh::MatlabTP);
-		geom.mats=readTIMOSMaterials(prefix+".opt");
-		geom.sources=readTIMOSSource(prefix+".source");
-	}
-	else {
-		// load the problem def
-		geom.mesh=TetraMesh(vm["input"].as<string>(),TetraMesh::MatlabTP);
-		geom.mats=readTIMOSMaterials(vm["materials"].as<string>());
-		geom.sources=readTIMOSSource(vm["sourcefile"].as<string>());
 
-		if (vm.count("materials"))
+		TIMOS::Mesh M = TIMOS::parse_mesh(prefix+".mesh");
+		TIMOS::Optical opt = TIMOS::parse_optical(prefix+".opt");
+		std::vector<TIMOS::Source> src = TIMOS::parse_sources(prefix+".source");
+
+		for(TIMOS::Source& s : src)
+			cout << s << endl;
+
+		cout << "  TIMOS mesh read: " << M.P.size() << " points, " << M.T.size() << " tetras" << endl;
+
+		std::vector<Point<3,double>> P(M.P.size()+1);
+		std::vector<TetraByPointID> T(M.T.size()+1);
+		std::vector<unsigned> T_m(M.T.size()+1);
+
+		P[0] = Point<3,double>();
+		T[0] = TetraByPointID();
+		T_m[0] = 0;
+
+		for(unsigned i=0; i< M.P.size(); ++i)
+			P[i+1] = Point<3,double>(M.P[i]);
+
+		for(unsigned i=0; i< M.T.size(); ++i)
 		{
-			cout << "Loading materials from " << vm["materials"].as<string>() << endl;
-			geom.mats=readTIMOSMaterials(vm["materials"].as<string>());
+			T[i+1] = M.T[i].IDps;
+			T_m[i+1] = M.T[i].region;
 		}
 
-		if (vm.count("sourcefile"))
-		{
-			cout << "Loading sources from " << vm["input"].as<string>() << endl;
-			geom.sources=readTIMOSSource(vm["sourcefile"].as<string>());
-		}
+		geom.mesh=TetraMesh(P, T, T_m);
 
-		if (vm.count("source"))
-			for(const string& s : source_strs)
-				geom.sources.push_back(parse_string(s));
+		geom.mats.clear();
+		boost::copy(
+			opt.mat | boost::adaptors::transformed(
+					std::function<Material(TIMOS::Optical::Material)>([&opt](TIMOS::Optical::Material m)
+							{ return Material(m.mu_a,m.mu_s,m.g,m.n,0.0,opt.matched); })),
+			std::back_inserter(geom.mats));
+
+		geom.sources.clear();
+
+		for(const TIMOS::Source& s : src)
+		{
+			unsigned IDf=-1;
+			switch(s.type)
+			{
+			case TIMOS::Source::Types::Face:
+				geom.sources.push_back(new FaceSourceDescription(IDf,s.w));
+				break;
+
+			case TIMOS::Source::Types::PencilBeam:
+				geom.sources.push_back(new PencilBeamSourceDescription(
+						Point<3,double>(s.details.pencilbeam.pos),
+						UnitVector<3,double>(s.details.pencilbeam.dir.data()),
+						s.w,
+						s.details.pencilbeam.tetID));
+				break;
+			case TIMOS::Source::Types::Point:
+				geom.sources.push_back(new IsotropicPointSourceDescription(
+						Point<3,double>(s.details.point.pos.data()),
+						(double)s.w));
+				break;
+			case TIMOS::Source::Types::Volume:
+				geom.sources.push_back(new VolumeSourceDescription(s.details.vol.tetID,s.w));
+				break;
+			default:
+				assert(0);
+			}
+		}
 	}
 
 	cout << "Sources: " << endl;
@@ -197,10 +240,10 @@ int main(int argc,char **argv)
 	for (const auto& m : geom.mats)
 		cout << m << endl;
 
-	if (globalopts::meshstats)
-	{
-		mesh_stats(geom.mesh);
-	}
+//	if (globalopts::meshstats)
+//	{
+//		mesh_stats(geom.mesh);
+//	}
 
 	cout << "Sources: " << endl;
 	for(const auto& s : geom.sources)
@@ -313,6 +356,7 @@ boost::timer::cpu_times runSimulation(const SimGeometry& geom,const RunConfig& c
     return elapsed;
 }
 
+#ifdef STATS
 void mesh_stats(const TetraMesh& M)
 {
 	vector<double> V(M.getNt(),0.0);
@@ -365,3 +409,5 @@ void mesh_stats(const TetraMesh& M)
 		}
 	}
 }
+
+#endif

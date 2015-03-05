@@ -44,7 +44,7 @@ public:
 
 class IsotropicPointSourceDescription : public IsotropicSourceDescription, public PointSourceDescription {
 public:
-	IsotropicPointSourceDescription(Point<3,double>& p_,double w_=1.0) : PointSourceDescription(p_,w_){};
+	IsotropicPointSourceDescription(const Point<3,double>& p_,double w_=1.0) : PointSourceDescription(p_,w_){};
 
 	virtual string operator()() const { return "Isotropic point source"; }
 	virtual string timos_str(unsigned long long=0) const;

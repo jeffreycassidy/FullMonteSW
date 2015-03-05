@@ -11,6 +11,7 @@ options {
 
 tokens {
     TETRA;
+    ID4;
     TRI;
     POINT;
     TETRAS;
@@ -51,20 +52,23 @@ meshfile: Np=INT { Np_expect=atoi((const char*)$Np->getText($Np)->chars); } '\n'
 points @init { unsigned Np=0; }: (point3 { ++Np; } '\n')* { Np==Np_expect }? -> ^(POINTS point3*)
 	;
 	
-matfile: region=INT '\n' Nmx=INT { Nm_expect=atoi((const char*)$Nmx->getText($Nmx)->chars); } '\n' (material  '\n')* matched=INT '\n' n_ext=floatconst? -> ^(MATFILE $region material* $matched $n_ext)
+matfile: region=INT '\n' Nmx=INT { Nm_expect=atoi((const char*)$Nmx->getText($Nmx)->chars); } '\n' materials matext -> ^(MATFILE $region materials matext)
 	;
 
-materials @init { unsigned Nm=0; }: material { ++Nm; } '\n' { Nm_expect==Nm }? -> ^(MATERIAL material)
+materials @init { unsigned Nm=0; }: (material { ++Nm; } '\n')* { Nm_expect==Nm }? -> ^(MATERIALS material*)
     ;
 
 matext: matched=INT '\n' n_ext=floatconst? -> ^(EXTERIOR $matched $n_ext)
     ;
 	
-material: floatconst floatconst floatconst floatconst -> ^(MATERIAL floatconst floatconst floatconst floatconst)
+material: floatconst floatconst floatconst floatconst -> ^(MATERIAL floatconst*)
 	;
 	
-tetras @init { unsigned Nt=0; }: (id4 INT { ++Nt; } '\n')* {Nt==Nt_expect}? -> ^(TETRAS (id4 INT)*)
+tetras @init { unsigned Nt=0; }: (tetradef { ++Nt; } '\n')* {Nt==Nt_expect}? -> ^(TETRAS tetradef*)
 	;
+
+tetradef: id4 INT -> ^(TETRA ^(ID4 id4) INT)
+    ;
 	
 sources: (source '\n')* -> ^(SOURCES source*)
 	;
@@ -84,7 +88,7 @@ sourcedetails: { source_type==2 }? INT -> ^(SOURCE_VOL INT)
 floatconst: (INT|FLOAT)^
 	;
 
-id4: INT INT INT INT -> ^(TETRA INT INT INT INT)
+id4: INT INT INT INT
     ;
 
 id3: INT INT INT -> ^(TRI INT INT INT)

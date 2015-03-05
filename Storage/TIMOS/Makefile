@@ -9,7 +9,11 @@ include ../CommonParser/Makefile.in
 Test.o: Test.cpp TIMOSLexer.h TIMOSParser.h
 	$(CXX) $(CXX_OPTS) -I$(ANTLR_INCLUDE) -c $<
 	
-libFullMonteTIMOS.so: TIMOSParser.o TIMOSLexer.o
+TIMOSReader.o: TIMOSReader.cpp TIMOS_tokens.h
+	$(CXX) $(CXX_OPTS) -I$(ANTLR_INCLUDE) -c $<
+
+	
+libFullMonteTIMOS.so: TIMOSParser.o TIMOSLexer.o TIMOSReader.o
 	$(CXX) $(CXX_LIB_OPTS) -L$(ANTLR_LIB) -lantlr3c -o $@ $^
 
 test: Test.o libFullMonteTIMOS.so ../../libFullMonteGeometry.so

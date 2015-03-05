@@ -9,6 +9,8 @@
 #include <boost/serialization/nvp.hpp>
 #include <boost/serialization/access.hpp>
 
+#include <boost/range/adaptor/transformed.hpp>
+
 #include <boost/mpl/bool.hpp>
 
 using namespace std;

@@ -5,21 +5,26 @@
  *      Author: jcassidy
  */
 
-#ifndef TIMOS_HPP_
-#define TIMOS_HPP_
+#ifndef TIMOSREADER_HPP_
+#define TIMOSREADER_HPP_
+
+#include "TIMOS.hpp"
 
 #include "TIMOSLexer.h"
 #include "TIMOSParser.h"
 
-#include "../CommonParser/ANTLRParser.hpp"
+#include <string>
+#include <cmath>
+#include <array>
+#include <vector>
+#include <iostream>
 
-#include "../../SourceDescription.hpp"
-#include "../../Material.hpp"
+#include "../CommonParser/ANTLRParser.hpp"
 
 namespace TIMOS {
 
 class ParserDef {
-	static const std::unordered_map<int,string> toks;
+	static const std::unordered_map<int,std::string> toks;
 
 public:
 	MAKE_LEXER_DEF(TIMOS)
@@ -32,8 +37,10 @@ public:
 };
 
 
+
+
 class sourcefile_ast_visitor : public ANTLR3CPP::ast_visitor {
-	vector<SourceDescription*> src;
+	std::vector<Source> src;
 
 protected:
 	virtual void do_expand(ANTLR3CPP::base_tree bt)
@@ -46,75 +53,83 @@ protected:
 			unsigned w = ANTLR3CPP::convert_string<unsigned>(bt.getChild(0).getTokenText());
 
 			do_expand(bt.getChild(1));
-			src.back()->setPower(w);
-			cout << *src.back() << endl;
+
+			src.back().w = w;
 		}
 		else if (bt.getTokenType()==SOURCE_VOL)
 		{
 			assert(bt.getChildCount()==1);
 			assert(bt.getChild(0).getTokenType() == INT);
 
-			unsigned tet = ANTLR3CPP::convert_string<unsigned>(bt.getChild(0).getTokenText());
-			src.push_back(new VolumeSourceDescription(tet));
+			src.emplace_back();
+			src.back().type = Source::Types::Volume;
+			src.back().details.vol.tetID = ANTLR3CPP::convert_string<unsigned>(bt.getChild(0).getTokenText());
 		}
 		else
 			visit_children(bt);
 	}
+public:
+
+	const std::vector<Source>& sources() const { return src; }
 };
 
 class meshfile_ast_visitor : public ANTLR3CPP::ast_visitor {
-	std::vector<std::array<float,3>> 		P;
-	std::vector<std::array<unsigned,4>> 	T;
+	TIMOS::Mesh M_;
 
 protected:
 	virtual void do_expand(ANTLR3CPP::base_tree bt)
 	{
 		if (bt.getTokenType()==POINT)
-			P.push_back(ANTLR3CPP::convert_tuple<array<float,3>>(bt));
+			M_.P.push_back(ANTLR3CPP::convert_tuple<std::array<double,3>>(bt));
 		else if (bt.getTokenType()==TETRA)
-			T.push_back(ANTLR3CPP::convert_tuple<array<unsigned,4>>(bt));
+		{
+			assert(bt.getChildCount()==2);
+			M_.T.emplace_back(
+					ANTLR3CPP::convert_tuple<std::array<unsigned,4>>(bt.getChild(0)),
+					ANTLR3CPP::convert_string<unsigned>(bt.getChild(1).getTokenText()));
+		}
 		else
 			visit_children(bt);
 	}
 
 public:
-	const std::vector<std::array<float,3>> points() 	const { return P; }
-	const std::vector<std::array<unsigned,4>> tetras() 	const { return T; }
+
+	const TIMOS::Mesh& mesh() const { return M_; }
 };
 
 
 class optfile_ast_visitor : public ANTLR3CPP::ast_visitor {
-	vector<Material> mat_;
-	bool per_region_=true;
-	bool matched_=true;
-	float n_ext_=NAN;
-
+	Optical opt_;
 
 protected:
 	virtual void do_expand(ANTLR3CPP::base_tree bt)
 	{
-		array<float,4> a;
-		unsigned by_region,m;
+		unsigned tu;
 		switch(bt.getTokenType())
 		{
 		case MATFILE:
-			by_region = ANTLR3CPP::convert_string<unsigned>(bt.getChild(0).getTokenText());
-			assert(by_region == 1 || by_region == 2);
-
+			tu = ANTLR3CPP::convert_string<unsigned>(bt.getChild(0).getTokenText());
+			assert(tu == 1 || tu == 2);
+			opt_.by_region = (tu==1);
 			visit_children(bt);
 		break;
 
 		case EXTERIOR:
-			m = ANTLR3CPP::convert_string<unsigned>(bt.getChild(0).getTokenText());
-			assert(m == 1 || m == 2);
-			matched_ = m==1;
-			if (!matched_)
-				n_ext_ = ANTLR3CPP::convert_string<float>(bt.getChild(1).getTokenText());
+			tu = ANTLR3CPP::convert_string<unsigned>(bt.getChild(0).getTokenText());
+			assert(tu == 1 || tu == 2);
+			if ((opt_.matched = (tu==2)))
+				assert(bt.getChildCount()==1);
+			else
+			{
+				assert(bt.getChildCount()==2);
+				opt_.n_ext = ANTLR3CPP::convert_string<float>(bt.getChild(1).getTokenText());
+			}
 		break;
 
 		case MATERIAL:
-			a = ANTLR3CPP::convert_tuple<array<float,4>>(bt);		// mu_a,mu_s,g,n
-			mat_.emplace_back(a[0],a[1],a[2],a[3]);
+			opt_.mat.emplace_back();
+			std::tie(opt_.mat.back().mu_a,opt_.mat.back().mu_s,opt_.mat.back().g,opt_.mat.back().n)
+				= ANTLR3CPP::convert_tuple<std::tuple<float,float,float,float>>(bt);
 		break;
 
 		default:
@@ -123,11 +138,10 @@ protected:
 	}
 
 public:
-	bool matched() const { return matched_; }
-	float n_ext() const { return n_ext_; }
-	bool per_region() const { return per_region_; }
-	const vector<Material> materials() const { return mat_; }
+
+	const Optical& opt() const { return opt_; }
 };
+
 
 };
 

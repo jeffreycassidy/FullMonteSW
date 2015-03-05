@@ -5,8 +5,6 @@
  *      Author: jcassidy
  */
 
-
-
 #include "TIMOSReader.hpp"
 
 #include <string>
@@ -17,37 +15,17 @@ int main(int argc,char **argv)
 {
 	string fnroot="/home/jcassidy/src/FullMonteSW/data/mouse";
 
-	ANTLRParser<TIMOS::ParserDef> P(fnroot + ".source");
+	TIMOS::Mesh 				M 	= TIMOS::parse_mesh(fnroot+".mesh");
+	std::vector<TIMOS::Source>  src = TIMOS::parse_sources(fnroot+".source");
+	TIMOS::Optical 				opt = TIMOS::parse_optical(fnroot+".opt");
 
-	ANTLR3CPP::base_tree bt = P.parse();
+	cout << "Read mesh with " << M.P.size() << " points and " << M.T.size() << " tetras" << endl;
 
-	TIMOS::sourcefile_ast_visitor SV;
+	cout << "Total " << opt.mat.size() << " materials" << endl;
 
-	SV.walk(bt);
-
-	ANTLRParser<TIMOS::ParserDef> M(fnroot + ".mesh");
-	ANTLR3CPP::base_tree mbt = M.parse<TIMOS::ParserDef::Mesh>();
-
-	TIMOS::meshfile_ast_visitor MV;
-
-	MV.walk(mbt);
-
-
-	cout << "Read mesh with " << MV.points().size() << " points and " << MV.tetras().size() << " tetras" << endl;
-
-	ANTLRParser<TIMOS::ParserDef> O(fnroot + ".opt");
-	TIMOS::optfile_ast_visitor OV;
-
-	OV.walk(O.parse<TIMOS::ParserDef::Mat>());
-
-	for(const auto & m : OV.materials())
-		cout << m << endl;
-
-	cout << "Total " << OV.materials().size() << " materials" << endl;
-
-	cout << "Coding by region? " << OV.per_region() << endl;
-	cout << "Matched boundary? " << OV.matched() << endl;
-	cout << "  External n=" << OV.n_ext() << endl;
+	cout << "Coding by region? " << opt.by_region << endl;
+	cout << "Matched boundary? " << opt.matched << endl;
+	cout << "  External n=" << opt.n_ext << endl;
 
 	return 0;
 }

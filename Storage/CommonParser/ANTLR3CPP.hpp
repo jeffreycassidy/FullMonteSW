@@ -139,9 +139,11 @@ template<unsigned I,typename U>
 template<class T>T convert_tuple(const base_tree bt)
 {
 	T t;
+	assert(bt.getChildCount() == std::tuple_size<T>::value);
 	convert_tuple_element<0,T>(bt,t);
 	return t;
 }
+
 
 
 
