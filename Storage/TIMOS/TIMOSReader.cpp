@@ -66,11 +66,17 @@ ostream& operator<<(ostream& os,const Source& s)
 		" tetra ID=" << s.details.pencilbeam.tetID;
 		break;
 
+	case Source::Types::Face:
+		os << "Face source at face [" << s.details.face.IDps[0] << ',' << s.details.face.IDps[1] << ',' << s.details.face.IDps[2] << ']';
+		break;
+
 	case Source::Types::Volume:
 		os << "Volume source (" << s.type << ") in tetra " << s.details.vol.tetID;
 		break;
 
-	case Source::Types::Face:
+	case Source::Types::Point:
+		os << "Point source at (" << s.details.point.pos[0] << ',' << s.details.point.pos[1] << ',' << s.details.point.pos[2] << ')';
+
 	default:
 		os << "(unknown type - " << s.type << ')';
 	}

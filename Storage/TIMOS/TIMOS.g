@@ -39,10 +39,11 @@ tokens {
     unsigned Np_expect=0;
     unsigned Nt_expect=0;
     unsigned Nm_expect=0;
+    unsigned Ns_expect=0;
 }
 
 
-sourcefile: INT '\n'! sources
+sourcefile: Nsx=INT { Ns_expect=atoi((const char*)$Nsx->getText($Nsx)->chars); } '\n'! sources
 	;
 	
 	
@@ -70,20 +71,25 @@ tetras @init { unsigned Nt=0; }: (tetradef { ++Nt; } '\n')* {Nt==Nt_expect}? -> 
 tetradef: id4 INT -> ^(TETRA ^(ID4 id4) INT)
     ;
 	
-sources: (source '\n')* -> ^(SOURCES source*)
+sources @init { unsigned Ns=0; }: (source { ++Ns; } '\n')* { Ns==Ns_expect }? -> ^(SOURCES source*)
 	;
 
-source: type=INT { source_type=atoi((const char*)$type->getText($type)->chars); } sourcedetails w=INT-> ^(SOURCE $w sourcedetails)
+/*source: type=INT { source_type=atoi((const char*)$type->getText($type)->chars); printf("type \%d",source_type); } sourcedetails w=INT -> ^(SOURCE $w sourcedetails)
 	;
 	
-sourcedetails: { source_type==2 }? INT -> ^(SOURCE_VOL INT)
+sourcedetails:
+    { source_type==12 }? id3 -> ^(SOURCE_FACE id3)
+    | { source_type==2 }? INT { puts("vol"); } -> ^(SOURCE_VOL INT)
 	| { source_type==1 }? point3 -> ^(SOURCE_POINT point3)
 	| { source_type==11 }? INT point3 point3 -> ^(SOURCE_PB INT point3 point3)
-	;
-	
-	
-//facesource: type=INT { atoi((const char*)$type->getText($type))==1 }? INT point3 point3 INT
-//	;
+	;*/
+
+source: t=INT { atoi((const char*)$t->getText($t)->chars) == 12 }? id3 w=INT -> ^(SOURCE $w ^(SOURCE_FACE id3))
+    |   t=INT { atoi((const char*)$t->getText($t)->chars) == 11 }? tet=INT point3 point3 w=INT -> ^(SOURCE $w ^(SOURCE_PB $tet point3 point3))
+    |   t=INT { atoi((const char*)$t->getText($t)->chars) == 1  }? point3 w=INT -> ^(SOURCE $w ^(SOURCE_POINT point3))
+    |   t=INT { atoi((const char*)$t->getText($t)->chars) == 2  }? tet=INT w=INT -> ^(SOURCE $w ^(SOURCE_VOL $tet))
+    ;
+
 	
 floatconst: (INT|FLOAT)^
 	;

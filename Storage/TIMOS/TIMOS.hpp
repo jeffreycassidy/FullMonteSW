@@ -51,7 +51,7 @@ struct Source {
 		struct { std::array<double,3> pos; } point;
 		struct { unsigned tetID; } vol;
 		struct { std::array<double,3> pos,dir; unsigned tetID; } pencilbeam;
-		struct { } face;
+		struct { std::array<unsigned,3> IDps; } face;
 	} details;
 
 	friend std::ostream& operator<<(std::ostream& os,const Source& s);

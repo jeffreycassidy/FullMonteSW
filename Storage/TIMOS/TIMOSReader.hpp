@@ -65,6 +65,27 @@ protected:
 			src.back().type = Source::Types::Volume;
 			src.back().details.vol.tetID = ANTLR3CPP::convert_string<unsigned>(bt.getChild(0).getTokenText());
 		}
+		else if (bt.getTokenType()==SOURCE_FACE)
+		{
+			assert(bt.getChildCount()==1);
+			assert(bt.getChild(0).getTokenType() == TRI);
+			src.emplace_back();
+			src.back().type = Source::Types::Face;
+			src.back().details.face.IDps = ANTLR3CPP::convert_tuple<std::array<unsigned,3>>(bt.getChild(0));
+		}
+		else if (bt.getTokenType()==SOURCE_PB)
+		{
+			assert(bt.getChildCount()==3);
+			assert(bt.getChild(0).getTokenType() == INT);
+			assert(bt.getChild(1).getTokenType() == POINT);
+			assert(bt.getChild(2).getTokenType() == POINT);
+
+			src.emplace_back();
+			src.back().type = Source::Types::PencilBeam;
+			src.back().details.pencilbeam.tetID = ANTLR3CPP::convert_string<unsigned>(bt.getChild(0).getTokenText());
+			src.back().details.pencilbeam.pos = ANTLR3CPP::convert_tuple<std::array<double,3>>(bt.getChild(1));
+			src.back().details.pencilbeam.dir = ANTLR3CPP::convert_tuple<std::array<double,3>>(bt.getChild(2));
+		}
 		else
 			visit_children(bt);
 	}
