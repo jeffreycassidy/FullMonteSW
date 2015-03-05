@@ -4,10 +4,6 @@
 #include <cassert>
 #include "Packet.hpp"
 
-
-// Total kludge to get this to build for visualization purposes on non-AVX machines
-//#define SUPPRESS_AVX
-
 /** Describes material properties and provides facilities for calculating scattering and reflection/refraction at interfaces.
  * TODO: Incorporate reflection/refraction?
  * TODO: Fix nasty sign convention in propagation vector
@@ -98,7 +94,7 @@ public:
      * @param i_uv			Pointer to 8 random 2D unit vectors (2x8 floats, 32B aligned)
      * @param[out] o		Output location, 32 random floats (4x8 floats < cos(theta), sin(theta), cos(phi), sin(phi) > ) (32B aligned)
      */
-#ifndef SQUELCH_AVX
+
     inline void VectorHG(const float* i_rand,const float* i_uv,float* o) const {
     	VectorHG(_mm256_load_ps(i_rand),_mm256_load_ps(i_uv),_mm256_load_ps(i_uv+8),o);
     }
@@ -110,11 +106,6 @@ public:
     /// Evaluates the Henyey-Greenstein function 8x in parallel using AVX instructions.
     inline void VectorHG(__m256 i_rand,__m256 uva,__m256 uvb,float* o) const;
 
-
-#else
-    inline void VectorHG(const float*,const float*,float*) const {};
-
-#endif
 
     /// Evaluates Henyey-Greenstein ICDF for a scalar float U [-1,1) random number, returning cos(theta)
     inline float ScalarHG(float rnd) const {
@@ -146,7 +137,6 @@ public:
  * @param[out] o_uv		Output values (provides 32 floats: cos/sin x 8)
  */
 
-#ifndef SQUELCH_AVX
 
 inline void Material::VectorHG(__m256 i_rand,__m256 uva,__m256 uvb,float* o) const
 {
