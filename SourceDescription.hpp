@@ -14,6 +14,7 @@ class SourceDescription {
 public:
 	SourceDescription(double w_=1.0) : w(w_){}
 	double getPower() const { return w; }
+	void setPower(double w_){ w=w_; }
 
 	virtual string operator()() const=0;
 	virtual string timos_str(unsigned long long=0) const=0;
@@ -43,7 +44,7 @@ public:
 
 class IsotropicPointSourceDescription : public IsotropicSourceDescription, public PointSourceDescription {
 public:
-	IsotropicPointSourceDescription(Point<3,double>& p_,double w_=1.0) : PointSourceDescription(p_,w_){};
+	IsotropicPointSourceDescription(const Point<3,double>& p_,double w_=1.0) : PointSourceDescription(p_,w_){};
 
 	virtual string operator()() const { return "Isotropic point source"; }
 	virtual string timos_str(unsigned long long=0) const;

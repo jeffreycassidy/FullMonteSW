@@ -6,9 +6,6 @@
 #include <signal.h>
 #include <boost/range/adaptor/indexed.hpp>
 
-
-#include "blob.hpp"
-
 #include "Material.hpp"
 
 // constructor: loads a file of specified type & converts to internal representation

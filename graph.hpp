@@ -83,8 +83,6 @@ struct Tetra {
 
     bool pointWithin(__m128);
 
-    
-    //StepResult getIntersection(const Ray<3,double>& r,double s,unsigned IDfe=0) const;
     StepResult getIntersection(__m128,__m128,__m128 s) const;
     
 } __attribute__ ((aligned(64)));
@@ -175,7 +173,7 @@ class TetraMesh : public TetraMeshBase {
         vecFaceID_Tetra(Nf_+1),tetras(Nt_+1){}
 	TetraMesh(string,TetraFileType);
 	TetraMesh(const vector<Point<3,double> >& P_,const vector<TetraByPointID>& T_p_,const vector<unsigned>& T_m_)
-		: TetraMeshBase(P,T_p,T_m) { tetrasToFaces(F,T_p,P,T_f); }
+		: TetraMeshBase(P_,T_p_,T_m_) { tetrasToFaces(F,T_p,P,T_f); }
     TetraMesh(const double*,unsigned Np,const unsigned*,unsigned Nt);
     ~TetraMesh();
 
