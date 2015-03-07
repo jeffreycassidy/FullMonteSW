@@ -1,10 +1,10 @@
-CXX_OPTS=-Wall -std=c++11 -O3 -fPIC -g -mavx
-CXX_LIB_OPTS=-Wall -fPIC -shared -O3 -mavx
-CXX=g++
 
 default: test
 
 include ../CommonParser/Makefile.in
+
+CXX_LIB_OPTS=-Wall -fPIC -shared -O3 -mavx -Wa,-q
+CXX=g++
 
 Test.o: Test.cpp TIMOSLexer.h TIMOSParser.h
 	$(CXX) $(CXX_OPTS) -I$(ANTLR_INCLUDE) -c $<
