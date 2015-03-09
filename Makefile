@@ -118,6 +118,9 @@ Test_Adaptors: Test_Adaptors.cpp Adaptors.hpp
 	$(GXX) -g -Wall -I/usr/local/include -O3 -std=c++11 -o $@ $<
 
 
+BGLMesh: BGLMesh.cpp
+	$(GXX) -g -Wall -O3 -std=c++11 -lFullMonteGeometry -o $@ $^
+
 #### WRAPPING FUNCTIONS
 
 TetraMeshTCL_wrap.cxx: TetraMeshTCL.i

@@ -258,6 +258,8 @@ class TetraMesh : public TetraMeshBase {
     // functions for saving tetramesh representations
     pair<unsigned,boost::shared_array<const uint8_t> > tetrasAsBinary() const;
     pair<unsigned,boost::shared_array<const uint8_t> > pointsAsBinary() const;
+
+    friend class TetraGraph;
 };
 
 TetraMesh* buildMesh(const TetraMeshBase& M);
