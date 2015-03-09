@@ -4,6 +4,8 @@
 #include <set>
 #include <cassert>
 #include <signal.h>
+
+#include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/range/adaptor/indexed.hpp>
 
 
@@ -22,6 +24,17 @@ TetraMesh::TetraMesh(string fn,TetraFileType type)
 		break;
 	}
 	tetrasToFaces(F,T_p,P,T_f);
+}
+
+vector<unsigned> TetraMesh::tetras_close_to(const Point<3,double> p0,const float d) const
+{
+	vector<unsigned> Tlist;
+	const float d2=d*d;
+
+	for(unsigned i=1;i<T_p.size();++i)
+		if (boost::algorithm::any_of(T_p[i],[p0,d,this](unsigned i){ return Vector<3,double>(this->P[i],p0).norm2_l2()<d2; }))
+			Tlist.push_back(i);
+	return Tlist;
 }
 
 TetraMesh::TetraMesh(const double* p,unsigned Np_,const unsigned* t,unsigned Nt_)

@@ -241,6 +241,8 @@ class TetraMesh : public TetraMeshBase {
 	// checks if faces are oriented correctly
 	bool checkFaces() const;
 
+	std::vector<unsigned> tetras_close_to(Point<3,double> p0,float) const;
+
     // does a number of data-structure integrity checks
     bool checkIntegrity(bool printResults=true) const;
 

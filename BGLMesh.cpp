@@ -31,8 +31,8 @@ struct dfs_trivial_vis {
 	dfs_trivial_vis(TetraGraph& G) : visited(num_vertices(G),-1U){}
 
 	void initialize_vertex(TetraGraph::vertex_descriptor s,const TetraGraph& g){ visited[s]=0; }
-	void start_vertex(TetraGraph::vertex_descriptor s,const TetraGraph& g){ cout << "Start " << s << endl; }
-	void discover_vertex(TetraGraph::vertex_descriptor s,const TetraGraph& g){ cout << s << endl;}
+	void start_vertex(TetraGraph::vertex_descriptor s,const TetraGraph& g){ }
+	void discover_vertex(TetraGraph::vertex_descriptor s,const TetraGraph& g){ }
 	void examine_edge(TetraGraph::edge_descriptor e,const TetraGraph &g){}
 	void tree_edge(TetraGraph::edge_descriptor e,const TetraGraph &g){}
 	void back_edge(TetraGraph::edge_descriptor e,const TetraGraph &g){}
@@ -80,4 +80,14 @@ int main(int argc,char **argv)
 	cout << "Events: " << vis.Ne << endl;
 
 	cout << "Visited: " << vis.N_visited() << " unvisited: " << vis.N_unvisited() << " (total " << vis.N_unvisited()+vis.N_visited() << ")" << endl;
+
+	Point<3,double> p0{19.6,11.2,1.2};
+
+	for(float d : std::array<float,3>{ 1.0, 10.0, 10000.0 })
+	{
+
+	vector<unsigned> Tlist = M.tetras_close_to(p0,d);
+
+	cout << "There are " << Tlist.size() << " tetras within " << d << " of " << p0 << endl;
+	}
 }
