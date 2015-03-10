@@ -32,6 +32,10 @@ tokens {
     SOURCE_VOL;
     SOURCE_FACE;
     SOURCE_POINT;
+    
+    RGBCOLOUR;
+    LEGEND;
+    LEGENDENTRY;
 }
 
 @parser::members {
@@ -41,6 +45,15 @@ tokens {
     unsigned Nm_expect=0;
     unsigned Ns_expect=0;
 }
+
+legendfile: (legendentry '\n')* -> ^(LEGEND legendentry*)
+	;
+	
+legendentry: QUOTEDSTRING rgbcolour -> ^(LEGENDENTRY QUOTEDSTRING rgbcolour)
+	;
+	
+rgbcolour: floatconst floatconst floatconst -> ^(RGBCOLOUR floatconst floatconst floatconst)
+	;
 
 
 sourcefile: Nsx=INT { Ns_expect=atoi((const char*)$Nsx->getText($Nsx)->chars); } '\n'! sources
@@ -74,16 +87,6 @@ tetradef: id4 INT -> ^(TETRA ^(ID4 id4) INT)
 sources @init { unsigned Ns=0; }: (source { ++Ns; } '\n')* { Ns==Ns_expect }? -> ^(SOURCES source*)
 	;
 
-/*source: type=INT { source_type=atoi((const char*)$type->getText($type)->chars); printf("type \%d",source_type); } sourcedetails w=INT -> ^(SOURCE $w sourcedetails)
-	;
-	
-sourcedetails:
-    { source_type==12 }? id3 -> ^(SOURCE_FACE id3)
-    | { source_type==2 }? INT { puts("vol"); } -> ^(SOURCE_VOL INT)
-	| { source_type==1 }? point3 -> ^(SOURCE_POINT point3)
-	| { source_type==11 }? INT point3 point3 -> ^(SOURCE_PB INT point3 point3)
-	;*/
-
 source: t=INT { atoi((const char*)$t->getText($t)->chars) == 12 }? id3 w=INT -> ^(SOURCE $w ^(SOURCE_FACE id3))
     |   t=INT { atoi((const char*)$t->getText($t)->chars) == 11 }? tet=INT point3 point3 w=INT -> ^(SOURCE $w ^(SOURCE_PB $tet point3 point3))
     |   t=INT { atoi((const char*)$t->getText($t)->chars) == 1  }? point3 w=INT -> ^(SOURCE $w ^(SOURCE_POINT point3))
@@ -105,6 +108,9 @@ point3: floatconst floatconst floatconst -> ^(POINT floatconst floatconst floatc
 
 point2: floatconst floatconst -> ^(POINT floatconst floatconst)
     ;
+    
+QUOTEDSTRING: '"' ('a'..'z'|'A'..'Z'|' '|'_'|'0'..'9'|'('|')')* '"'
+	;
 
 ID  :	('a'..'z'|'A'..'Z'|'_') ('a'..'z'|'A'..'Z'|'0'..'9'|'_')*
     ;
