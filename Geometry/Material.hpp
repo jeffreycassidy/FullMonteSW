@@ -2,7 +2,6 @@
 #include <immintrin.h>
 #include <iostream>
 #include <cassert>
-#include "Packet.hpp"
 
 /** Describes material properties and provides facilities for calculating scattering and reflection/refraction at interfaces.
  * TODO: Incorporate reflection/refraction?
@@ -180,5 +179,3 @@ inline void Material::VectorHG(__m256 i_rand,__m256 uva,__m256 uvb,float* o) con
 	_mm256_store_ps(o+16,_mm256_shuffle_ps(vh,uvb,_MM_SHUFFLE(1,0,1,0)));
 	_mm256_store_ps(o+24,_mm256_shuffle_ps(vh,uvb,_MM_SHUFFLE(3,2,3,2)));
 }
-
-#endif

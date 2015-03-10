@@ -3,10 +3,6 @@
 // Points are ABC clockwise, with D above ABC
 // Faces are 0=ABC, 1=ACD, 2=ADB, 3=BDC
 
-template<> const Tolerance<double> UnitVector<2,double>::eps(1.0,1e-4);
-template<> const Tolerance<double> UnitVector<3,double>::eps(1.0,1e-4);
-template<> const Tolerance<float>  UnitVector<2,float>::eps(1.0,1e-3);
-
 // for a triangle with points T[0..2], determines if P+td is in the triangle for some t
 
 // tries to solve A + c0(B-A) + c1(C-A) = P - c2*d

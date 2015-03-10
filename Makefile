@@ -53,10 +53,6 @@ Testing: Testing.cpp RandomAVX.hpp
 Test_AccumulationArray: Test_AccumulationArray.cpp AccumulationArray.hpp
 	$(GXX) $(GCC_OPTS) $(INCLDIRS) -o $@ $^
 
-%VTK.o: %VTK.cpp *.hpp
-	$(GXX) $(GCC_OPTS) $(INCLDIRS) -I/usr/local/include/vtk -fPIC -c $< -o $@
-
-
 tracelocal.o: simlocal.cpp *.hpp
 	$(GXX) $(GCC_OPTS) $(INCLDIRS) -DTRACE_ENABLE -fPIC -c $< -o $@
 
@@ -97,11 +93,6 @@ clean:
 	make -C fm-postgres clean
 	rm -f *.o sse_int montecarlo blobmaint texwriter Test_VectorHG *.a *.so
 
-# target to synchronize source files with a remote host	
-sync-%:
-	@echo "Synchronizing $*"
-	rsync -crizt --delete --include 'Makefile' --include '*.c' --include '*.h' --include '*.?pp' --exclude '*' $*/ $(FULLMONTE_BUILD_USER)@$(FULLMONTE_BUILD_HOST):$(FULLMONTE_BUILD_PATH)/$*
-
 # target to compile remotely; remote-XXX builds XXX on the remote machine
 # user, host, path for build are specified by environment vars FULLMONTE_BUILD_USER/HOST/PATH
 #remote-%: sync-AVXMath sync-fm-postgres sync-. sync-SFMT sync-DBUtils
@@ -116,41 +107,3 @@ Test_RegionSet: Test_RegionSet.cpp RegionSet.cpp RegionSet.hpp
 
 Test_Adaptors: Test_Adaptors.cpp Adaptors.hpp
 	$(GXX) -g -Wall -I/usr/local/include -O3 -std=c++11 -o $@ $<
-
-
-#### WRAPPING FUNCTIONS
-
-TetraMeshTCL_wrap.cxx: TetraMeshTCL.i
-	$(SWIG) -c++ -tcl -o $@ $^
-	
-TetraMeshTCL.o: TetraMeshTCL.cpp
-	$(GXX) -g -c -fPIC -Wall -std=c++11 -I. -I/usr/local/include/pgsql -I/usr/local/include/vtk $^
-	
-TetraMeshTCL_wrap.o: TetraMeshTCL_wrap.cxx
-	$(GXX) -g -c -fPIC -Wall -std=c++11 -DUSE_TCL_STUBS -I/usr/local/include/pgsql -I/usr/local/include/vtk $^
-	
-libFullMonteGeometry.so: TetraMeshBase.o newgeom.o graph.o face.o helpers.o SourceDescription.o Material.o
-	$(GXX) -fPIC -shared -Wall -o $@ $^
-
-libFullMonteVTK.so: TetraMeshBaseVTK.o VTKInterface.o
-	$(GXX) -fPIC -shared -Wall -lFullMonteGeometry -L.			\
-		-lvtkCommonDataModel-6.1 								\
-		-lvtkCommonCore-6.1										\
-		-o $@ $^
-	
-TetraMeshTCL.so: TetraMeshTCL_wrap.o TetraMeshTCL.o	Parallelepiped.o
-	$(GXX) -g -Wall -fPIC -shared -L/usr/local/lib -Lfm-postgres	\
-		-lvtkCommonCore-6.1				\
-		-lvtkRenderingCoreTCL-6.1		\
-		-lvtkCommonDataModelTCL-6.1		\
-		-lvtkCommonCoreTCL-6.1			\
-		-lvtkRenderingCore-6.1			\
-		-lvtkCommonDataModel-6.1		\
-		-ltclstub8.5					\
-		-lFullMonteGeometry				\
-		-lFullMonteVTK					\
-        -lmontecarlo                    \
-		-lfmpg							\
-		-L.								\
-		-I$(VTK_INCLUDE)				\
-		-o $@ $^

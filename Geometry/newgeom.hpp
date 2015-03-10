@@ -12,9 +12,7 @@
 #include <boost/range/algorithm.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 
-
 #include <initializer_list>
-#include "helpers.hpp"
 
 using namespace std;
 
@@ -261,8 +259,6 @@ template<size_t D,class T>class UnitVector : public Vector<D,T>
 	using Vector<D,T>::operator*;
 	using Vector<D,T>::operator/;
 
-    const static Tolerance<T> eps;
-
 	UnitVector()                    { (*this)[0]=1;          for(unsigned i=1;i<D;++i){ (*this)[i]=0;      } };
     UnitVector(const T* v_,bool alreadyUnit=false){
         for (unsigned i=0;i<D;++i)
@@ -284,7 +280,7 @@ template<size_t D,class T>class UnitVector : public Vector<D,T>
             for(unsigned i=0;i<D;++i)
             	(*this)[i]=v[i]/L;
         }
-        assert(norm_l2()==eps);
+        //assert(norm_l2()==eps);
     };
     UnitVector(const UnitVector<D,T>& v){
         for(unsigned i=0;i<D;++i)

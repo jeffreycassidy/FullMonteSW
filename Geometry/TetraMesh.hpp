@@ -9,90 +9,33 @@
 #include <functional>
 
 #include "TriSurf.hpp"
+#include "Face.hpp"
+#include "Tetra.hpp"
 #include "TetraMeshBase.hpp"
 
 #include <boost/shared_array.hpp>
 
 #include "newgeom.hpp"
-#include "blob.hpp"
 
 #include <emmintrin.h>
 
-class MeshMapper;
-
 using namespace std;
 
-class Face {
-	// plane definition
-	UnitVector<3,double> normal;        // normal points into the tetrahedron
-	double               C;
-
-	public:
-
-	Face() : C(std::numeric_limits<double>::quiet_NaN()) {};
-    Face(const Point<3,double>&,const Point<3,double>&,const Point<3,double>&);
-	Face(const Point<3,double>&,const Point<3,double>&,const Point<3,double>&,const Point<3,double>&);
-
-	// flip the face orientation
-	void flip(){ C=-C; normal=-normal; }
-
-    // get the normal
-    UnitVector<3,double> getNormal() const { return normal; }
-    double getConstant() const { return C; }
-
-	// query points
-	bool   pointAbove(const Point<3,double>&)  const;
-	double pointHeight(const Point<3,double>&) const;
-
-	// Test if a ray intersects the face
-	pair<bool,double>           rayIntersect(const Ray<3,double>&,double=numeric_limits<double>::infinity(),bool=false) const;
-
-    // Gets the point where a ray intersects the face (returns false if no intersection)
-	pair<bool,Point<3,double> > rayIntersectPoint(const Ray<3,double>&,bool=false) const;
-
-    Face operator-() const { Face f; f.normal = -normal; f.C=-C; return f; }
-
-	// get projections of a vector onto the face
-	Vector<3,double> project(const Vector<3,double>&) const;
-	Vector<3,double> normalComponent(const Vector<3,double>&) const;
-	pair<UnitVector<2,double>,UnitVector<3,double> > reflectionBasis(const UnitVector<3,double>&,bool=false) const;
-
-    double nx() const { return normal[0]; }
-    double ny() const { return normal[1]; }
-    double nz() const { return normal[2]; }
-    double nC() const { return C; }
-
-	friend ostream& operator<<(ostream&,const Face&);
+struct LegendEntry {
+	std::string 		label;
+	std::array<float,3> colour;
 };
 
-
-typedef struct { 
-        __m128 Pe;          // 4x16B = 64 B
-        __m128 distance;
-        int IDfe;           // 4B
-        unsigned IDte;      // 4B
-        int idx;            // 4B
-        bool hit;           // 1B
-    } StepResult;
-
-struct Tetra {
-    __m128 nx,ny,nz,C;      // 4 x 16B = 64B
-    TetraByFaceID   IDfs;   // 4 x 4B = 16 B
-    unsigned adjTetras[4];  // 4 x 4B = 16 B
-    unsigned matID;         // 4 B
-
-    bool pointWithin(__m128);
-
-    StepResult getIntersection(__m128,__m128,__m128 s) const;
-    
-} __attribute__ ((aligned(64)));
-
 class TetraMesh : public TetraMeshBase {
-	vector<TetraByFaceID>	    T_f;        // tetra -> 4 face IDs
-    vector<FaceByPointID>       F_p;        // face ID -> 3 point IDs
-	vector<Face>			    F;          // faces (with normals and constants)
-	vector<pair<int,int> >      vecFaceID_Tetra;        // for each face f, vecFaceID_Tetra[f] gives the tetras adjacent to the face
-    vector<Tetra>               tetras;     // new SSE-friendly data structure
+	vector<TetraByFaceID>	    T_f;        		// tetra -> 4 face IDs
+    vector<FaceByPointID>       F_p;        		// face ID -> 3 point IDs
+	vector<Face>			    F;          		// faces (with normals and constants)
+	vector<pair<int,int> >      vecFaceID_Tetra;  	// for each face f, vecFaceID_Tetra[f] gives the tetras adjacent to the face
+    vector<Tetra>               tetras;     		// new SSE-friendly data structure
+
+    vector<vector<unsigned>>	tetra_perm;
+
+    void make_tetra_perm();
 
     // boundary data structures; map with key=volume-set ID, value=surface-set ID
     map<unsigned,unsigned> P_boundary_ID;
@@ -179,9 +122,10 @@ class TetraMesh : public TetraMeshBase {
 
     void fromBinary(const string& pts,const string& tetras,const string& faces=string());
 
+    vector<unsigned> facesBoundingRegion(unsigned i) const;
+    const vector<unsigned>& tetrasInRegion(unsigned i) const;
+
 	// query size of mesh
-	unsigned getNp() const { return P.size()-1; };
-	unsigned getNt() const { return T_f.size()-1; };
 	unsigned getNf() const { return F.size()-1; }
 
     unsigned getNf_boundary() const { return F_boundary_ID.size(); }
@@ -257,10 +201,3 @@ class TetraMesh : public TetraMeshBase {
     pair<unsigned,boost::shared_array<const uint8_t> > tetrasAsBinary() const;
     pair<unsigned,boost::shared_array<const uint8_t> > pointsAsBinary() const;
 };
-
-TetraMesh* buildMesh(const TetraMeshBase& M);
-
-template<class T>int signum(T a)
-{
-    return (a>T(0)) - (a<T(0));
-}
