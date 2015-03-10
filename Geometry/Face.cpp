@@ -1,12 +1,17 @@
-#include "graph.hpp"
-#include <limits>
-#include <map>
 #include <cassert>
+
+#include "Face.hpp"
 
 using namespace std;
 
 // TODO: Add a routine to calculate face area using cross product
 // TODO: Map from uniform square coords to face points (for face source type)
+
+template<class T>int signum(T a)
+{
+    return (a>T(0)) - (a<T(0));
+}
+
 
 double Face::pointHeight(const Point<3,double>& P) const
 {

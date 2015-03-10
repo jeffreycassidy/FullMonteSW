@@ -2,39 +2,6 @@
 #include <boost/serialization/vector.hpp>
 
 #include "TetraMeshBase.hpp"
-end_of_line_tag end_of_line;
-
-void TetraMeshBase::serialize(ASCIITextIStream& ar, const unsigned int version)
-{
-	unsigned Np,Nt;
-	ar & Np & end_of_line & Nt & end_of_line;
-	P.resize(Np+1);
-	P[0] = Point<3,double>{0,0,0};
-	T_p.resize(Nt+1);
-	T_p[0] = TetraByPointID{0,0,0,0};
-	T_m.resize(Nt+1);
-	T_m[0] = 0;
-
-	for(vector<Point<3,double>>::iterator it=P.begin()+1; it != P.end(); ++it)
-		ar & *it & end_of_line;
-
-	for(unsigned i=1; i<T_p.size(); ++i)
-		ar & T_p[i] & T_m[i] & end_of_line;
-}
-
-void TetraMeshBase::serialize(ASCIITextOStream& ar, const unsigned int version)
-{
-	ar & (P.size()-1) & end_of_line & (T_p.size()-1) & end_of_line;
-
-	// don't save first (dummy) element; Matlab is 1-based
-	if (P.size() >= 2)
-		for(vector<Point<3,double>>::const_iterator it = P.begin()+1; it != P.end(); ++it)
-			ar & *it & end_of_line;
-
-	if (T_p.size() >= 2)
-		for(unsigned i=1; i<T_p.size(); ++i)
-			ar & T_p[i] & ' ' & T_m[i] & end_of_line;
-}
 
 // Very naive search to find closest point
 //unsigned TetraMeshBase::findNearestPoint(const Point<3,double>& p) const
@@ -156,21 +123,6 @@ bool TetraMeshBase::checkValid(bool printResults) const
     return IDps_ok;
 }
 
-TetraMeshBase loadTetraMeshBaseText(const string& fn)
-{
-	ifstream is(fn.c_str());
-	ASCIITextIStream ia(is);
-	TetraMeshBase M;
-	serialize(ia,M,0);
-	return M;
-}
-
-void saveTetraMeshBaseText(const TetraMeshBase& M,const string& fn)
-{
-	ofstream os(fn.c_str());
-	ASCIITextOStream oa(os);
-	serialize(oa,M,0);
-}
 
 
 /*
@@ -191,59 +143,41 @@ Returns
 
 */
 
-bool TetraMeshBase::readFileMatlabTP(string fn)
-{
-	ifstream is(fn.c_str(),ios_base::in);
 
-    if(!is.good()){
-        cerr << "Failed to open " << fn << " for reading; abort" << endl;
-        return false;
-    }
-	int Nt,Np;
-
-    // read sizes
-    is >> Np;
-	is >> Nt;
-
-	// read point coordinates -- uses 1-based addressing
-	P.resize(Np+1);
-	P[0]=Point<3,double>();
-	for (vector<Point<3,double> >::iterator it = P.begin()+1; it != P.end(); ++it)
-		is >> *it;
-
-	T_p.resize(Nt+1);
-    T_m.resize(Nt+1);
-	unsigned t[4]={0,0,0,0},i=1,max_m=0;
-	T_p[0]=TetraByPointID(t);
-    T_m[0]=0;
-    TetraByPointID IDps;
-	for (vector<TetraByPointID>::iterator it=T_p.begin()+1; it != T_p.end(); ++it,++i)
-	{
-		is >> IDps;
-		is >> T_m[i];
-        *it=IDps.getSort();
-		max_m = max(max_m,T_m[i]);
-	}
-
-	return true;
-}
-
-bool TetraMeshBase::writeFileMatlabTP(string fn) const
-{
-    ofstream os(fn.c_str());
-
-    if(!os.good())
-        return false;
-
-    os << P.size()-1 << endl << T_p.size()-1 << endl;
-
-    for(vector<Point<3,double> >::const_iterator it=P.begin()+1; it != P.end(); ++it)
-        os << (*it)[0] << ' ' << (*it)[1] << ' ' << (*it)[2] << endl;
-
-    vector<TetraByPointID>::const_iterator T_it;
-    vector<unsigned>::const_iterator M_it;
-    for(M_it=T_m.begin()+1, T_it=T_p.begin()+1; T_it != T_p.end(); ++M_it,++T_it)
-        os << (*T_it)[0] << ' ' << (*T_it)[1] << ' ' << (*T_it)[2] << ' ' << (*T_it)[3] << ' ' << *M_it << endl;
-
-    return !os.fail();
-}
+//bool TetraMeshBase::readFileMatlabTP(string fn)
+//{
+//	ifstream is(fn.c_str(),ios_base::in);
+//
+//    if(!is.good()){
+//        cerr << "Failed to open " << fn << " for reading; abort" << endl;
+//        return false;
+//    }
+//	int Nt,Np;
+//
+//    // read sizes
+//    is >> Np;
+//	is >> Nt;
+//
+//	// read point coordinates -- uses 1-based addressing
+//	P.resize(Np+1);
+//	P[0]=Point<3,double>();
+//	for (vector<Point<3,double> >::iterator it = P.begin()+1; it != P.end(); ++it)
+//		is >> *it;
+//
+//	T_p.resize(Nt+1);
+//    T_m.resize(Nt+1);
+//	unsigned t[4]={0,0,0,0},i=1,max_m=0;
+//	T_p[0]=TetraByPointID(t);
+//    T_m[0]=0;
+//    TetraByPointID IDps;
+//	for (vector<TetraByPointID>::iterator it=T_p.begin()+1; it != T_p.end(); ++it,++i)
+//	{
+//		is >> IDps;
+//		is >> T_m[i];
+//        *it=IDps.getSort();
+//		max_m = max(max_m,T_m[i]);
+//	}
+//
+//	return true;
+//}
+//

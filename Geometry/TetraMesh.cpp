@@ -1,4 +1,3 @@
-#include "graph.hpp"
 #include <limits>
 #include <map>
 #include <set>
@@ -7,19 +6,9 @@
 #include <boost/range/adaptor/indexed.hpp>
 
 #include "Material.hpp"
+#include "TetraMesh.hpp"
 
-// constructor: loads a file of specified type & converts to internal representation
-TetraMesh::TetraMesh(string fn,TetraFileType type)
-{
-	switch(type){
-		case MatlabTP:
-		TetraMeshBase::readFileMatlabTP(fn);
-		
-		default:
-		break;
-	}
-	tetrasToFaces(F,T_p,P,T_f);
-}
+#include "../sse.hpp"
 
 TetraMesh::TetraMesh(const double* p,unsigned Np_,const unsigned* t,unsigned Nt_)
 {
@@ -46,10 +35,51 @@ TetraMesh::TetraMesh(const double* p,unsigned Np_,const unsigned* t,unsigned Nt_
     }
 
 	tetrasToFaces(F,T_p,P,T_f);
+
+	make_tetra_perm();
 }
 
 TetraMesh::~TetraMesh()
 {
+}
+
+vector<unsigned> TetraMesh::facesBoundingRegion(unsigned i) const
+{
+	vector<unsigned> idx;
+
+	for(const auto& f : vecFaceID_Tetra | boost::adaptors::indexed(0U))
+		if (f.value().first != f.value().second && (f.value().first==i || f.value().second==i))
+			idx.push_back(f.index());
+	return idx;
+}
+
+const vector<unsigned>& TetraMesh::tetrasInRegion(unsigned i) const
+{
+	return tetra_perm[i];
+}
+
+void TetraMesh::make_tetra_perm()
+{
+	// get max region code
+	unsigned max_region = *boost::max_element(T_m);
+
+	// init permutation vector
+	tetra_perm.resize(max_region+1);
+	for(auto& v : tetra_perm)
+		v.clear();
+
+	// create permutation vector
+	for(const auto r : T_m | boost::adaptors::indexed(0U))
+		tetra_perm[r.value()].push_back(r.index());
+
+	// print region summary
+	size_t sum=0;
+	for(const auto& v : tetra_perm | boost::adaptors::indexed(0U))
+	{
+		sum += v.value().size();
+		cout << "  Region " << v.index() << ": " << v.value().size() << " elements" << endl;
+	}
+	cout << "Total " << sum << " elements" << endl;
 }
 
 void TetraMesh::fromBinary(const string& pts,const string& tetras,const string& faces)
@@ -87,70 +117,70 @@ void TetraMesh::fromBinary(const string& pts,const string& tetras,const string& 
     }
 	tetrasToFaces(F,T_p,P,T_f);
 }
+//
+//vector<Material> loadMatFile(string fn)
+//{
+//    vector<Material> mat;
+//    float n,g,mu_s,mu_a;
+//    unsigned IDm;
+//
+//    ifstream is(fn.c_str());
+//
+//	while(!is.eof()){
+//		// ignore comments
+//		while(is.good() && is.peek()=='#')
+//		{
+//			char buf[100];
+//			is.get(buf,100,'\n');
+//			cout << "ignoring line || " << buf << endl;
+//			is.ignore(100,'\n');
+//		}
+//
+//		// check for default statement
+//		if(is.good())
+//		{
+//			if(is.peek()=='?')
+//			{
+//				is.ignore(100,'\t');
+//				if(is.eof())
+//					break;
+//				Material m_default;
+//				is >> n >> g >> mu_s >> mu_a;
+//                m_default = Material(mu_a,mu_s,g,n,0,false);
+//				fill(mat.begin(),mat.end(),m_default);
+//			}
+//			else {
+//				is >> IDm;
+//				if (is.good())
+//                {
+//					is >> n >> g >> mu_s >> mu_a;
+//                    mat[IDm] = Material(mu_a,mu_s,g,n,0,false);
+//                }
+//				else
+//					break;
+//			}
+//		}
+//	}
+//    return mat;
+//}
 
-vector<Material> loadMatFile(string fn)
-{
-    vector<Material> mat;
-    float n,g,mu_s,mu_a;
-    unsigned IDm;
-
-    ifstream is(fn.c_str());
-
-	while(!is.eof()){
-		// ignore comments
-		while(is.good() && is.peek()=='#')
-		{
-			char buf[100];
-			is.get(buf,100,'\n');
-			cout << "ignoring line || " << buf << endl;
-			is.ignore(100,'\n');
-		}
-
-		// check for default statement
-		if(is.good())
-		{
-			if(is.peek()=='?')
-			{
-				is.ignore(100,'\t');
-				if(is.eof())
-					break;
-				Material m_default;
-				is >> n >> g >> mu_s >> mu_a;
-                m_default = Material(mu_a,mu_s,g,n,0,false);
-				fill(mat.begin(),mat.end(),m_default);
-			}
-			else {
-				is >> IDm;
-				if (is.good())
-                {
-					is >> n >> g >> mu_s >> mu_a;
-                    mat[IDm] = Material(mu_a,mu_s,g,n,0,false);
-                }
-				else
-					break;
-			}
-		}
-	}
-    return mat;
-}
-
-
-// writes the face mapping to a Matlab-compatible file
-bool TetraMesh::writeFileMatlabF(string fn) const
-{
-	ofstream of(fn.c_str(),ios_base::out);
-
-	if (!of.good())
-		return false;
-
-	assert(F.size()==vecFaceID_Tetra.size());
-
-	of << vecFaceID_Tetra.size()-1 << endl;
-	for(vector<pair<int,int> >::const_iterator it=vecFaceID_Tetra.begin()+1; it != vecFaceID_Tetra.end(); ++it)
-		of << it->first << " " << it->second << endl;
-
-	return true;
-}
+//
+//// writes the face mapping to a Matlab-compatible file
+//bool TetraMesh::writeFileMatlabF(string fn) const
+//{
+//	ofstream of(fn.c_str(),ios_base::out);
+//
+//	if (!of.good())
+//		return false;
+//
+//	assert(F.size()==vecFaceID_Tetra.size());
+//
+//	of << vecFaceID_Tetra.size()-1 << endl;
+//	for(vector<pair<int,int> >::const_iterator it=vecFaceID_Tetra.begin()+1; it != vecFaceID_Tetra.end(); ++it)
+//		of << it->first << " " << it->second << endl;
+//
+//	return true;
+//}
 
 
 
@@ -456,7 +486,7 @@ unsigned TetraMesh::findEnclosingTetra(const Point<3,double>& p) const
 }
 
 // verifies that a point is within the specified tetrahedron
-bool Tetra::pointWithin(__m128 p)
+bool Tetra::pointWithin(__m128 p) const
 {
     // compute p (dot) n_i minus C_i for i in [0,3]
     __m128 dot =         _mm_mul_ps(nx,_mm_shuffle_ps(p,p,_MM_SHUFFLE(0,0,0,0)));
