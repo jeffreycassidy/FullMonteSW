@@ -1,5 +1,5 @@
 CXX=g++
-CXX_OPTS=-Wall -mfpmath=sse -g -DNDEBUG -O3 -mavx -std=c++11 -fPIC -Wa,-q -I/Users/jcassidy/src
+CXX_OPTS=-Wall -mfpmath=sse -g -DNDEBUG -O3 -mavx -std=c++11 -fPIC -Wa,-q -I/Users/jcassidy/src -fabi-version=6
 CXX_LIB_OPTS=$(CXX_OPTS) -shared
 
 # base options only

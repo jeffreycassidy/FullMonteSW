@@ -12,11 +12,13 @@
 #include "LoggerEvent.hpp"
 #include "LoggerMemTrace.cpp"
 
+#include <boost/range/adaptor/indexed.hpp>
+
 #include "FullMonte.hpp"
 
 #include "Storage/TIMOS/TIMOS.hpp"
 
-#include "SourceDescription.hpp"
+#include "Geometry/SourceDescription.hpp"
 #include <boost/program_options.hpp>
 #include <boost/program_options/errors.hpp>
 #include <boost/timer/timer.hpp>
@@ -169,8 +171,8 @@ int main(int argc,char **argv)
 		TIMOS::Optical opt = TIMOS::parse_optical(prefix+".opt");
 		std::vector<TIMOS::Source> src = TIMOS::parse_sources(prefix+".source");
 
-		for(TIMOS::Source& s : src)
-			cout << s << endl;
+//		for(TIMOS::Source& s : src)
+			//cout << s << endl;
 
 		cout << "  TIMOS mesh read: " << M.P.size() << " points, " << M.T.size() << " tetras" << endl;
 
@@ -194,6 +196,7 @@ int main(int argc,char **argv)
 		geom.mesh=TetraMesh(P, T, T_m);
 
 		geom.mats.clear();
+		geom.mats.emplace_back(0.0,0.0,0.0,opt.n_ext,0.0,opt.matched);
 		boost::copy(
 			opt.mat | boost::adaptors::transformed(
 					std::function<Material(TIMOS::Optical::Material)>([&opt](TIMOS::Optical::Material m)
@@ -232,22 +235,30 @@ int main(int argc,char **argv)
 		}
 	}
 
-	cout << "Sources: " << endl;
-	for(const auto& s : geom.sources)
-		cout << *s << endl;
+//	cout << "Sources: " << endl;
+//	for(const auto& s : geom.sources)
+//		cout << *s << endl;
 
 	cout << "Materials: " << endl;
 	for (const auto& m : geom.mats)
 		cout << m << endl;
 
+	vector<unsigned> hist;
+	for(unsigned i=0;i<=geom.mesh.getNt(); ++i)
+	{
+		unsigned mat = geom.mesh.getMaterial(i);
+		if (mat >= hist.size())
+			hist.resize(mat+1);
+		hist[mat]++;
+	}
+
+	for(auto h : hist | boost::adaptors::indexed(0U))
+		cout << h.index() << ": " << h.value() << endl;
+
 //	if (globalopts::meshstats)
 //	{
 //		mesh_stats(geom.mesh);
 //	}
-
-	cout << "Sources: " << endl;
-	for(const auto& s : geom.sources)
-		cout << *s << endl;
 
 	if (cfg.Npackets == 0)
 		return 0;

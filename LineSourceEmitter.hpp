@@ -1,7 +1,6 @@
 #pragma once
-#include "SourceDescription.hpp"
+#include "Geometry/SourceDescription.hpp"
 #include "SourceEmitter.hpp"
-#include "graph.hpp"
 #include <math.h>
 
 #include <boost/math/constants/constants.hpp>

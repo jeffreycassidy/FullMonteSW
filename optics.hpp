@@ -1,6 +1,6 @@
 #ifndef INCLUDE_OPTICS
 #define INCLUDE_OPTICS
-#include "newgeom.hpp"
+#include "Geometry/newgeom.hpp"
 #include <boost/math/constants/constants.hpp>
 
 template<class T>UnitVector<2,T> Refract(double n1,double n2,const UnitVector<2,T>& v_i);
@@ -127,7 +127,7 @@ template<class T>UnitVector<3,T> Scatter(double g,const UnitVector<3,T>& d0,doub
     double t=(1-g*g)/(1+g*(2*rnd0-1));
 
     // choose angles: HG function for component along d0, uniform circle for normal components
-    costheta = (g==Tolerance<double>(0.0,1e-6)) ? 2*rnd0-1 : 1.0/2.0/g*(1+g*g-t*t);
+    costheta = fabs(g)<1e-6 ? 2*rnd0-1 : 1.0/2.0/g*(1+g*g-t*t);
     assert (costheta <= 1.0 && costheta >= -1.0);
     sintheta = sqrt(1-costheta*costheta);
 

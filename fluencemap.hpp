@@ -2,16 +2,15 @@
 #include <inttypes.h>
 #include <map>
 
-#include "newgeom.hpp"
+#include "Geometry/newgeom.hpp"
+#include "Geometry/TetraMesh.hpp"
 
-#include "Material.hpp"
+#include "Geometry/Material.hpp"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 
-#include "graph.hpp"
-
-#include "blob.hpp"
+#include "Geometry/TetraMesh.hpp"
 
 using namespace std;
 

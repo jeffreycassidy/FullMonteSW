@@ -1,7 +1,7 @@
 #ifndef PACKET_INCLUDED
 #define PACKET_INCLUDED
 #include <immintrin.h>
-#include "newgeom.hpp"
+#include "Geometry/newgeom.hpp"
 #include "sse.hpp"
 
 // TODO: Relocate this somewhere more appropriate

@@ -1,7 +1,5 @@
 #include <iostream>
 #include <sstream>
-#include "linefile.hpp"
-#include "newgeom.hpp"
 #include "fluencemap.hpp"
 
 using namespace std;

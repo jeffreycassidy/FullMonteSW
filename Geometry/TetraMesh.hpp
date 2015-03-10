@@ -173,7 +173,7 @@ class TetraMesh : public TetraMeshBase {
     bool isWithinByPoints(int,const Point<3,double>&) const;
 
     // check if a ray intersects a face of a tetra
-    StepResult getIntersection(unsigned,const Ray<3,double>&,double=std::numeric_limits<double>::infinity(),int=0) const;
+    //StepResult getIntersection(unsigned,const Ray<3,double>&,double=std::numeric_limits<double>::infinity(),int=0) const;
 
     // find the surface element hit by an incoming ray
     pair<pair<unsigned,int>,Point<3,double> > getSurfaceElement(const Ray<3,double>&) const;

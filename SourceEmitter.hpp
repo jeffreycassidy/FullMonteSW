@@ -1,6 +1,5 @@
 #pragma once
-#include "SourceDescription.hpp"
-#include "graph.hpp"
+#include "Geometry/SourceDescription.hpp"
 #include "Packet.hpp"
 
 using std::pair;

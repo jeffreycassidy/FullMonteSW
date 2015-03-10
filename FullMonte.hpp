@@ -1,7 +1,7 @@
 #pragma once
-#include "graph.hpp"
-#include "SourceDescription.hpp"
-#include "Material.hpp"
+#include "Geometry/SourceDescription.hpp"
+#include "Geometry/Material.hpp"
+#include "Geometry/TetraMesh.hpp"
 
 // simulator ID for database
 

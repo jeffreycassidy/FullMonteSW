@@ -1,10 +1,10 @@
-#include "graph.hpp"
 #include <boost/timer/timer.hpp>
 
 #include <boost/random/additive_combine.hpp>
 
 #include "FullMonte.hpp"
-#include "Material.hpp"
+#include "Geometry/Material.hpp"
+#include "Geometry/Tetra.hpp"
 
 #include <mutex>
 #include <condition_variable>

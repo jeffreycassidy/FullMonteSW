@@ -4,9 +4,8 @@
 #include <string>
 #include <iomanip>
 #include "Logger.hpp"
-#include "graph.hpp"
 #include "optics.hpp"
-#include "SourceDescription.hpp"
+#include "Geometry/SourceDescription.hpp"
 
 #include "mainloop.hpp"
 

@@ -3,7 +3,7 @@
 
 include Makefile.in
 
-GCC_OPTS=-Wall -mfpmath=sse -Wstrict-aliasing=2 -g -DNDEBUG -O3 -mavx -fpermissive -std=c++11 -fPIC -fabi-version=6 -Wno-deprecated-declarations -Wa,-q
+GCC_OPTS=-Wall -mfpmath=sse -Wstrict-aliasing=2 -g -DNDEBUG -O3 -mavx -fpermissive -std=c++11 -fPIC -Wno-deprecated-declarations -Wa,-q -fabi-version=6
 LIBS=-lboost_program_options -lboost_timer -lpq -lcrypto -lboost_system -lboost_chrono -lSFMT -lfmpg
 LIBDIRS=-L/usr/local/lib -L$(BOOST_LIB) -LSFMT -L. -Lfm-postgres
 INCLDIRS=-I$(BOOST_INCLUDE) -I/usr/local/include -I. -I/usr/local/include/pgsql -I$(VTK_INCLUDE) -I..
@@ -63,15 +63,15 @@ tracelocal.o: simlocal.cpp *.hpp
 montecarlo: montecarlo.o mainloop.o random.o FullMonte.o OStreamObserver.o PGObserver.o fmdb.o LocalObserver.o
 	$(GXX) $(GCC_OPTS) $^ -L$(BOOST_LIB) $(LIBS) -lmontecarlo -lFullMonteGeometry $(LIBDIRS) -o $@
 	
-simlocal: simlocal.o RandomAVX.o OStreamObserver.o Material.o
-	$(GXX) $(GXX_OPTS) -L$(BOOST_LIB) -I$(BOOST_INCLUDE) -LStorage/TIMOS -L. -LSFMT -lFullMonteTIMOS -lFullMonteGeometry -lboost_program_options -lboost_system -lboost_timer -lboost_chrono -lmontecarlo -o $@ $^
+simlocal: simlocal.o RandomAVX.o OStreamObserver.o
+	$(GXX) $(GXX_OPTS) -L$(BOOST_LIB) -I$(BOOST_INCLUDE) -LStorage/TIMOS -L. -LSFMT -lFullMonteTIMOS -LGeometry -L. -lFullMonteGeometry -lboost_program_options -lboost_system -lboost_timer -lboost_chrono -lmontecarlo -o $@ $^
 
 tracelocal: tracelocal.o RandomAVX.o OStreamObserver.o
 	$(GXX) $(GXX_OPTS) -L$(BOOST_LIB) -I$(BOOST_INCLUDE) -L. -LSFMT -lFullMonteGeometry -lboost_program_options -lboost_system -lboost_timer -lboost_chrono -lmontecarlo -o $@ $^
 
-libmontecarlo.so: helpers.o LoggerSurface.o io_timos.o progress.o fluencemap.o blob.o sse.o RandomAVX.o LoggerConservation.o LoggerEvent.o LoggerVolume.o FullMonte.o
+libmontecarlo.so: helpers.o LoggerSurface.o progress.o fluencemap.o blob.o sse.o RandomAVX.o LoggerConservation.o LoggerEvent.o LoggerVolume.o FullMonte.o
 
-	$(GXX) -shared -fPIC $(GXX_OPTS) $^ -L$(BOOST_LIB) -LSFMT -L. -lpq -lboost_program_options -lboost_system -lboost_timer -lFullMonteGeometry -lboost_chrono -Lfm-postgres -lSFMT -o $@
+	$(GXX) -shared -fPIC $(GXX_OPTS) $^ -L$(BOOST_LIB) -LSFMT -L. -lpq -lboost_program_options -lboost_system -lboost_timer -LGeometry -lFullMonteGeometry -lboost_chrono -Lfm-postgres -lSFMT -o $@
 
 rletrace: rletrace.cpp
 	$(GXX) -Wall -std=c++11 -O3 -o $@ $^
