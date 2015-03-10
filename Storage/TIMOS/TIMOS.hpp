@@ -12,6 +12,8 @@
 #include <vector>
 #include <cmath>
 
+#include <string>
+
 namespace TIMOS {
 
 struct Tetra {
@@ -57,10 +59,17 @@ struct Source {
 	friend std::ostream& operator<<(std::ostream& os,const Source& s);
 };
 
+struct LegendEntry {
+	std::string 		label;
+	std::array<float,3> colour;
+};
 
-Optical 			parse_optical(std::string fn);
-std::vector<Source>	parse_sources(std::string fn);
-Mesh				parse_mesh(std::string fn);
+
+
+Optical 					parse_optical(std::string fn);
+std::vector<Source>			parse_sources(std::string fn);
+Mesh						parse_mesh(std::string fn);
+std::vector<LegendEntry> 	parse_legend(std::string fn);
 
 };
 

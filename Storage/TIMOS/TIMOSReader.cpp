@@ -11,16 +11,111 @@
 #include <cassert>
 #include <sstream>
 
+#include <sys/stat.h>
+
 #include <unordered_map>
 
 #include "TIMOSReader.hpp"
-
 
 using namespace std;
 
 const std::unordered_map<int,string> TIMOS::ParserDef::toks{
 #include "TIMOS_tokens.h"
 };
+
+
+TetraMesh TIMOSReader::mesh() const
+{
+	TIMOS::Mesh tm = TIMOS::parse_mesh(meshFn_);
+
+	std::vector<TetraByPointID> T(tm.T.size()+1);
+	std::vector<unsigned> T_m(tm.T.size()+1);
+	std::vector<Point<3,double>> P(tm.P.size()+1);
+
+	P[0] = Point<3,double>{.0,.0,.0};
+	for(unsigned i=0; i<tm.P.size(); ++i)
+		P[i+1] = Point<3,double>{tm.P[i][0], tm.P[i][1], tm.P[i][2]};
+
+	T[0] = TetraByPointID(0,0,0,0);
+	for(unsigned i=0; i<tm.T.size(); ++i)
+	{
+		T[i+1] = tm.T[i].IDps;
+		T_m[i+1] = tm.T[i].region;
+	}
+
+	TetraMesh M(P,T,T_m);
+	return M;
+}
+
+std::vector<Material> TIMOSReader::materials() const
+{
+	TIMOS::Optical opt = TIMOS::parse_optical(optFn_);
+	std::vector<Material> mat(opt.mat.size()+1);
+
+	assert(opt.by_region);
+	assert(!opt.matched);
+
+	mat[0] = Material(0,0,0,0);
+	for(unsigned i=0; i<opt.mat.size(); ++i)
+		mat[i+1] = Material(opt.mat[i].mu_a,opt.mat[i].mu_s,opt.mat[i].g,opt.mat[i].n);
+
+	return mat;
+}
+
+std::vector<SourceDescription*> TIMOSReader::sources() const
+{
+	std::vector<TIMOS::Source> ts = TIMOS::parse_sources(sourceFn_);
+	std::vector<SourceDescription*> src(ts.size(),nullptr);
+
+	for(unsigned i=0;i<ts.size();++i)
+	{
+		switch(ts[i].type)
+		{
+		case TIMOS::Source::Types::Volume:
+			src[i] = new VolumeSourceDescription(ts[i].details.vol.tetID,ts[i].w);
+			break;
+
+		case TIMOS::Source::Types::PencilBeam:
+			src[i] = new PencilBeamSourceDescription(
+					Point<3,double>(ts[i].details.pencilbeam.pos.data()),
+					UnitVector<3,double>(ts[i].details.pencilbeam.dir.data()),
+					ts[i].w,
+					ts[i].details.pencilbeam.tetID);
+			break;
+
+		case TIMOS::Source::Types::Face:
+			src[i] = new FaceSourceDescription(
+					FaceByPointID(ts[i].details.face.IDps),
+					ts[i].w);
+			break;
+
+		case TIMOS::Source::Types::Point:
+			src[i] = new IsotropicPointSourceDescription(
+					Point<3,double>(ts[i].details.point.pos.data()),
+					ts[i].w);
+			break;
+
+		default:
+			cerr << "Unsupported source type #" << ts[i].type << endl;
+		}
+	}
+
+	return src;
+}
+
+std::vector<LegendEntry> TIMOSReader::legend() const
+{
+	std::vector<TIMOS::LegendEntry> l = TIMOS::parse_legend(legendFn_);
+
+	std::vector<LegendEntry> L(l.size());
+
+	for(unsigned i=0; i<L.size(); ++i)
+	{
+		L[i].label = l[i].label;
+		L[i].colour = l[i].colour;
+	}
+	return L;
+}
 
 namespace TIMOS {
 
@@ -54,6 +149,20 @@ Optical parse_optical(std::string fn)
 	OV.walk(O.parse<ParserDef::Mat>());
 	return OV.opt();
 }
+
+std::vector<LegendEntry> parse_legend(std::string fn)
+{
+	struct stat info;
+	if ( stat(fn.c_str(),&info) != 0 )
+		return std::vector<LegendEntry>();
+
+	ANTLRParser<ParserDef> R(fn);
+	TIMOS::legendfile_ast_visitor RV;
+
+	RV.walk(R.parse<ParserDef::Legend>());
+	return RV.legend();
+}
+
 
 ostream& operator<<(ostream& os,const Source& s)
 {

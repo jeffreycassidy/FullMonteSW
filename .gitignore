@@ -58,5 +58,7 @@ output
 timetest
 exportmulti
 TetraMeshTCL_wrap.cxx
-
+tracelocal
 simlocal
+*_wrap.cxx
+GenDVH

@@ -21,6 +21,32 @@
 
 #include "../CommonParser/ANTLRParser.hpp"
 
+#include <FullMonteSW/Geometry/TetraMesh.hpp>
+#include <FullMonteSW/Geometry/Material.hpp>
+#include <FullMonteSW/Geometry/SourceDescription.hpp>
+
+class Reader {
+public:
+	virtual TetraMesh 						mesh()			const=0;
+	virtual std::vector<Material> 			materials() 	const=0;
+	virtual std::vector<SourceDescription*> sources()		const=0;
+
+	virtual void clear()=0;
+};
+
+class TIMOSReader {
+	std::string sourceFn_,optFn_,meshFn_,legendFn_;
+public:
+	TIMOSReader(std::string pfx) : sourceFn_(pfx+".source"),optFn_(pfx+".opt"),meshFn_(pfx+".mesh"),legendFn_(pfx+".legend"){}
+	virtual TetraMesh						mesh() const;
+	virtual std::vector<Material>			materials() const;
+	virtual std::vector<SourceDescription*>	sources() const;
+
+	virtual std::vector<LegendEntry> legend() const;
+
+	virtual void clear(){}
+};
+
 namespace TIMOS {
 
 class ParserDef {
@@ -33,6 +59,7 @@ public:
 	ADD_START_RULE(TIMOS,Mat,matfile)
 	ADD_START_RULE(TIMOS,Mesh,meshfile)
 	ADD_START_RULE(TIMOS,Source,sourcefile)
+	ADD_START_RULE(TIMOS,Legend,legendfile)
 
 };
 
@@ -161,6 +188,42 @@ protected:
 public:
 
 	const Optical& opt() const { return opt_; }
+};
+
+
+class legendfile_ast_visitor : public ANTLR3CPP::ast_visitor {
+	std::vector<LegendEntry> legend_;
+
+protected:
+	virtual void do_expand(ANTLR3CPP::base_tree bt)
+	{
+		string s;
+		switch(bt.getTokenType())
+		{
+		case LEGEND:
+			legend_.reserve(bt.getChildCount());
+			visit_children(bt);
+		break;
+
+		case LEGENDENTRY:
+			assert(bt.getChildCount()==2);
+			assert(bt.getChild(0).getTokenType()==QUOTEDSTRING);
+			assert(bt.getChild(1).getTokenType()==RGBCOLOUR);
+
+			legend_.emplace_back();
+			s = ANTLR3CPP::convert_string<std::string>(bt.getChild(0).getTokenText());
+			legend_.back().label  = s.substr(1,s.size()-2);
+			legend_.back().colour = ANTLR3CPP::convert_tuple<std::array<float,3>>(bt.getChild(1));
+		break;
+
+		default:
+			assert(/* Invalid AST in legendfile_ast_visitor*/ 0);
+		}
+	}
+
+public:
+
+	const std::vector<LegendEntry>& legend() const { return legend_; }
 };
 
 
