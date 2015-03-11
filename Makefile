@@ -92,18 +92,13 @@ clean:
 	make -C DBUtils clean
 	make -C fm-postgres clean
 	rm -f *.o sse_int montecarlo blobmaint texwriter Test_VectorHG *.a *.so
-
-# target to compile remotely; remote-XXX builds XXX on the remote machine
-# user, host, path for build are specified by environment vars FULLMONTE_BUILD_USER/HOST/PATH
-#remote-%: sync-AVXMath sync-fm-postgres sync-. sync-SFMT sync-DBUtils
-#	echo "Building target $* remotely on $(FULLMONTE_BUILD_USER)@$(FULLMONTE_BUILD_HOST):$(FULLMONTE_BUILD_PATH)"
-#	ssh $(FULLMONTE_BUILD_USER)@$(FULLMONTE_BUILD_HOST) "cd $(FULLMONTE_BUILD_PATH); make $*"
-	
-#remote-debug: remote-montecarlo
-#	ssh $(FULLMONTE_BUILD_USER)@$(FULLMONTE_BUILD_HOST)/$(FULLMONTE_BUILD_PATH)/$* .
 	
 Test_RegionSet: Test_RegionSet.cpp RegionSet.cpp RegionSet.hpp
 	$(GXX) -g -Wall -I/usr/local/include -O3 -std=c++11 -o $@ $^
 
 Test_Adaptors: Test_Adaptors.cpp Adaptors.hpp
 	$(GXX) -g -Wall -I/usr/local/include -O3 -std=c++11 -o $@ $<
+
+
+BGLMesh: BGLMesh.cpp
+	$(GXX) -g -Wall -O3 -std=c++11 -lFullMonteGeometry -o $@ $^

@@ -183,6 +183,8 @@ class TetraMesh : public TetraMeshBase {
 	// checks if faces are oriented correctly
 	bool checkFaces() const;
 
+	std::vector<unsigned> tetras_close_to(Point<3,double> p0,float) const;
+
     // does a number of data-structure integrity checks
     bool checkIntegrity(bool printResults=true) const;
 
@@ -200,4 +202,6 @@ class TetraMesh : public TetraMeshBase {
     // functions for saving tetramesh representations
     pair<unsigned,boost::shared_array<const uint8_t> > tetrasAsBinary() const;
     pair<unsigned,boost::shared_array<const uint8_t> > pointsAsBinary() const;
+
+    friend class TetraGraph;
 };
