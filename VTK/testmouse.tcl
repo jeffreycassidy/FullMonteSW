@@ -1,8 +1,8 @@
 package require vtk
 
 load libFullMonteVTK.so
-load libFullMonteTIMOSTCL.so
-load ../libBLIKernelTCL.so
+load libFullMonteTIMOS_TCL.so
+load ../libFullMonteBLI_TCL.so
 
 #default file prefix
 set pfx "/Users/jcassidy/src/FullMonteSW/data/mouse"

@@ -34,7 +34,7 @@ std::vector<double> BLIKernel(const TetraMesh& mesh,const std::vector<Material>&
 
 std::vector<double> BLIKernel(const TetraMesh& mesh,const std::vector<Material>& mats,const BallSourceDescription& bsd,unsigned long long Npkt)
 {
-	return BLIKernel(mesh,mats,std::vector<SourceDescription*>{ &bsd },Npkt);
+	return BLIKernel(mesh,mats,std::vector<SourceDescription*>{ (SourceDescription*)&bsd },Npkt);
 }
 
 
@@ -48,7 +48,7 @@ typedef std::tuple<
 std::vector<double> runSimulation(const SimGeometry& sim,const RunConfig& cfg,const RunOptions& opts,const vector<Observer*>& obs_);
 
 
-void write_fluence(const std::string fn,const TetraMesh& mesh,const std::vector<double>& E,const std::string comm="")
+void write_fluence(const std::string fn,const TetraMesh& mesh,const std::vector<double>& E,const std::string comm)
 {
 	std::ofstream os(fn.c_str());
 

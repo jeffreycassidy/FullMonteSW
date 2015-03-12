@@ -22,3 +22,6 @@ libFullMonteVTK.so: FullMonteVTK.o FullMonteVTK_wrap.o TetraMeshTCL.o
 		-lvtkCommonCoreTCL-6.1									\
 		-lvtkRenderingCore-6.1									\
 		-o $@ $^
+
+clean:
+	rm -f *.so *.o *.a *_wrap.cxx

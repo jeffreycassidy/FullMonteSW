@@ -63,3 +63,5 @@ simlocal
 *_wrap.cxx
 GenDVH
 *.out
+*.log
+humandata

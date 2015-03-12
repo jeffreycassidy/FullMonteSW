@@ -1,6 +1,5 @@
 #pragma once
 #include "Observer.hpp"
-#include "LocalObserver.hpp"
 
 class OStreamObserver : public Observer {
 	ostream& os;

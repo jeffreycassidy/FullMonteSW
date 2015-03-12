@@ -1,4 +1,4 @@
-%module BLIKernelTCL
+%module FullMonteBLI_TCL
 
 %include "std_string.i"
 

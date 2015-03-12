@@ -1,8 +1,0 @@
-output
-parser
-pinnacle.tokens
-pinnacleLexer.*
-pinnacleParser.*
-sub.txt
-roi.*.txt
-Test_Pinnacle

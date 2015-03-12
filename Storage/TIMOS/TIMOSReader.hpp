@@ -19,7 +19,7 @@
 #include <vector>
 #include <iostream>
 
-#include "../CommonParser/ANTLRParser.hpp"
+#include <FullMonteSW/Storage/CommonParser/ANTLRParser.hpp>
 
 #include <FullMonteSW/Geometry/TetraMesh.hpp>
 #include <FullMonteSW/Geometry/Material.hpp>
@@ -39,6 +39,8 @@ class TIMOSReader {
 public:
 	TIMOSReader() {}
 	TIMOSReader(std::string pfx) : sourceFn_(pfx+".source"),optFn_(pfx+".opt"),meshFn_(pfx+".mesh"),legendFn_(pfx+".legend"){}
+
+	virtual ~TIMOSReader(){}
 
 	void setMeshFileName(std::string fn){ meshFn_=fn; }
 	void setOpticalFileName(std::string fn){ optFn_=fn; }

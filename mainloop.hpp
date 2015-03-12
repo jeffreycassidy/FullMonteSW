@@ -12,7 +12,6 @@
 
 #include "Observer.hpp"
 #include "oldstuff/TupleStuff.hpp"
-#include "progress.hpp"
 
 #include "SourceEmitter.hpp"
 #include "LineSourceEmitter.hpp"

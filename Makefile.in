@@ -10,10 +10,27 @@ ifndef VTK_INCLUDE
 	VTK_INCLUDE=/usr/local/include/vtk
 endif
 
-ifndef GXX
-	GXX=g++
+ifndef VTK_LIB
+	VTK_LIB=/usr/local/lib
+endif
+
+ifndef CXX
+	CXX=g++
 endif
 
 ifndef SWIG
 	SWIG=swig
+endif
+
+ifndef SOURCE_ROOT
+	SOURCE_ROOT=/Users/jcassidy/src
+endif
+
+
+CXX_OPTS=-Wall -std=c++11 -O3 -g -mavx -msse4 -fPIC -fabi-version=6 -I$(SOURCE_ROOT)
+
+# Check for Mac OS (no POSIX timer among other things)
+OS:=$(shell uname)
+ifeq ($(OS),Darwin)
+	CXX_OPTS += -DPLATFORM_DARWIN -Wa,-q
 endif

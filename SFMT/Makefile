@@ -5,3 +5,6 @@ SFMT.o: SFMT.c SFMT*.h
 
 libSFMT.a: SFMT.o
 	ar rcs $@ $^
+
+clean:
+	rm -f *.a *.o

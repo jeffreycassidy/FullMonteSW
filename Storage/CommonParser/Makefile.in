@@ -1,13 +1,28 @@
 CXX_OPTS=-Wall -std=c++11 -O3 -fPIC -g -mavx -Wa,-q
 CXX=g++
 
-ANTLR_INCLUDE=/usr/local/antlr3c-3.4/include
-ANTLR_LIB=/usr/local/antlr3c-3.4/lib
+ifndef SOURCE_ROOT
+SOURCE_ROOT=/Users/jcassidy/src
+endif
 
+ifndef ANTLR_INCLUDE
+ANTLR_INCLUDE=/usr/local/antlr3c-3.4/include
+endif
+
+ifndef ANTLR_LIB
+ANTLR_LIB=/usr/local/antlr3c-3.4/lib
+endif
+
+ifndef ANTLR
 ANTLR=java -jar /usr/local/antlrv3/antlr-3.5.2-complete-no-st3.jar
+endif
+
+ifndef TCL_LIB
+TCL_LIB=/usr/local/lib
+endif
 
 %_tokens.h: %.tokens
-	cat $^ | ../CommonParser/mktok.pl > $@
+	cat $^ | $(SOURCE_ROOT)/FullMonteSW/Storage/CommonParser/mktok.pl > $@
 
 %Parser.c %Lexer.c %Parser.h %Lexer.h %.tokens: %.g
 	$(ANTLR) $^
@@ -20,3 +35,5 @@ ANTLR=java -jar /usr/local/antlrv3/antlr-3.5.2-complete-no-st3.jar
 	
 parser-clean:
 	rm -f *Parser.h *Parser.c *Lexer.c *Lexer.h *_tokens.h *.tokens *Parser.o *Lexer.o
+
+clean: parser-clean
