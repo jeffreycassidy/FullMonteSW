@@ -4,7 +4,6 @@
 
 using std::pair;
 
-
 // SourceEmitter has the actual guts to emit photons; SourceDescription just tells you what it is
 // avoids the need to include Random classes, AVX math, etc.
 
@@ -30,7 +29,7 @@ public:
 		: SourceEmitter<RNG>(mesh_),IsotropicPointSourceDescription(ips_){
 
 		IDt=mesh_.findEnclosingTetra(getOrigin());
-	    cout << "Enclosing tetra is " << IDt << endl;
+	    //cout << "Enclosing tetra is " << IDt << endl;
 	}
 
 	virtual ~IsotropicPointSourceEmitter(){};
@@ -97,14 +96,10 @@ public:
 
 
 template<class RNG>class VolumeSourceEmitter : virtual public SourceEmitter<RNG>,virtual public VolumeSourceDescription {
-public:
-	virtual ~VolumeSourceEmitter(){};
-	virtual pair<Packet,unsigned> emit(RNG& rng) const;
 
-	virtual pair<Point<3,double>,unsigned> getOrigin(RNG& rng) const;
-
-	VolumeSourceEmitter(const TetraMesh& m,const VolumeSourceDescription& vsd) : SourceEmitter<RNG>(m),VolumeSourceDescription(vsd)
-		{
+private:
+	void prepare(const TetraMesh& m)
+	{
 		Point<3,double> A=m.getTetraPoint(IDt,0);
 		Point<3,double> B=m.getTetraPoint(IDt,1);
 		Point<3,double> C=m.getTetraPoint(IDt,2);
@@ -127,8 +122,19 @@ public:
 		M[0][2]=D[0]-P0[0];
 		M[1][2]=D[1]-P0[1];
 		M[2][2]=D[2]-P0[2];
-		}
+	}
 
+public:
+	virtual ~VolumeSourceEmitter(){};
+	virtual pair<Packet,unsigned> emit(RNG& rng) const;
+
+	virtual pair<Point<3,double>,unsigned> getOrigin(RNG& rng) const;
+
+	VolumeSourceEmitter(const TetraMesh& m,const VolumeSourceDescription& vsd) : SourceEmitter<RNG>(m),VolumeSourceDescription(vsd)
+		{ prepare(m); }
+
+	VolumeSourceEmitter(const TetraMesh& m,unsigned IDt,double w_=1.0) : SourceEmitter<RNG>(m),VolumeSourceDescription(IDt,w_)
+		{ prepare(m); }
 };
 
 
@@ -175,6 +181,7 @@ public:
 
 	template<class ConstIterator>SourceMultiEmitter(const TetraMesh& mesh_,ConstIterator begin,ConstIterator end) :
 	SourceEmitter<RNG>(mesh_),
+	SourceMultiDescription(begin,end),
 	source_dist(
 			boost::make_transform_iterator(begin,std::mem_fn(&SourceMultiDescription::getPower)),
 			boost::make_transform_iterator(end,std::mem_fn(&SourceMultiDescription::getPower)))
@@ -208,6 +215,29 @@ template<class RNG>SourceEmitter<RNG>* SourceEmitterFactory(const TetraMesh& mes
 		return new FaceSourceEmitter<RNG>(mesh,*fsd);
 	else if (const LineSourceDescription* lsd=dynamic_cast<const LineSourceDescription*>(&sd))
 		return new LineSourceEmitter<RNG>(mesh,*lsd);
+	else if (const BallSourceDescription* bsd=dynamic_cast<const BallSourceDescription*>(&sd))
+	{
+		vector<unsigned> Ts = mesh.tetras_close_to(bsd->getCentre(),bsd->getRadius());
+		vector<double> w(Ts.size(),0.0);
+		vector<SourceEmitter<RNG>*> s;
+		double wsum=0.0;
+
+				s.reserve(Ts.size());
+
+		for(unsigned i=0;i<Ts.size();++i)
+		{
+			w[i] = mesh.getTetraVolume(Ts[i]);
+			wsum += w[i];
+		}
+
+		for(unsigned i=0;i<Ts.size();++i)
+		{
+			w[i] = w[i]*bsd->getPower()/wsum;
+			s.push_back(new VolumeSourceEmitter<RNG>(mesh,Ts[i],w[i]));
+			s.back()->setPower(w[i]);
+		}
+		return new SourceMultiEmitter<RNG>(mesh,s.begin(),s.end());
+	}
 	else
 	{
 		cerr << "ERROR: Unknown source type!" << endl;

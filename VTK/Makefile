@@ -6,7 +6,7 @@ CXX_LIB_OPTS=$(CXX_OPTS) -shared
 %.o: %.cpp
 	$(CXX) $(CXX_OPTS) -c -o $@ $<
 
-FullMonteVTK_wrap.cxx: FullMonteVTK.i
+FullMonteVTK_wrap.cxx: FullMonteVTK.hpp
 	$(SWIG) -c++ -tcl -o $@ $^
 	
 FullMonteVTK_wrap.o: FullMonteVTK_wrap.cxx
@@ -20,4 +20,5 @@ libFullMonteVTK.so: FullMonteVTK.o FullMonteVTK_wrap.o TetraMeshTCL.o
 		-lvtkCommonDataModelTCL-6.1								\
 		-lvtkCommonCore-6.1										\
 		-lvtkCommonCoreTCL-6.1									\
+		-lvtkRenderingCore-6.1									\
 		-o $@ $^

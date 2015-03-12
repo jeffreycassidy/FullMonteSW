@@ -98,7 +98,21 @@ Test_RegionSet: Test_RegionSet.cpp RegionSet.cpp RegionSet.hpp
 
 Test_Adaptors: Test_Adaptors.cpp Adaptors.hpp
 	$(GXX) -g -Wall -I/usr/local/include -O3 -std=c++11 -o $@ $<
+	
+Test_BLI: Test_BLI.o libFullMonteBLI.so
+	$(GXX) $(GXX_OPTS) -L. -LSFMT -lSFMT -LFullMonteBLI -o $@ $<
+	
+libFullMonteBLI.so: BLIKernel.o RandomAVX.o OStreamObserver.o FullMonte.o LoggerSurface.o LoggerConservation.o LoggerEvent.o sse.o
+	$(GXX) $(GXX_OPTS) -shared -L. -lFullMonteGeometry -LSFMT -lSFMT -LGeometry -lboost_system -lboost_chrono -lboost_timer -o $@ $^
 
+BLIKernel_wrap.cxx: BLIKernel.i
+	swig -tcl -c++ $<
+	
+BLIKernel_wrap.o: BLIKernel_wrap.cxx
+	$(GXX) $(GCC_OPTS) -I/Users/jcassidy/src -DUSE_TCL_STUBS -c $<
+	
+libBLIKernelTCL.so: BLIKernel_wrap.o
+	$(GXX) -shared -fPIC $(GCC_OPTS) -ltclstub8.5 -L. -lFullMonteBLI -LGeometry -lFullMonteGeometry -o $@ $^
 
 BGLMesh: BGLMesh.cpp
 	$(GXX) -g -Wall -O3 -std=c++11 -lFullMonteGeometry -o $@ $^

@@ -162,17 +162,15 @@ int main(int argc,char **argv)
     }
 	cout << endl;
 
-	if (vm.count("prefix"))
+	if (vm.count("prefix") || vm.count("input"))
 	{
-		if (vm.count("input")||vm.count("sourcefile")||vm.count("materials"))
-			cout << "NOTE: --prefix option supersedes specification of input, sourcefile, and materials" << endl;
+		// fn_mesh will be set if input is specified
+		if (!vm.count("input"))
+			fn_mesh = prefix+".mesh";
 
-		TIMOS::Mesh M = TIMOS::parse_mesh(prefix+".mesh");
-		TIMOS::Optical opt = TIMOS::parse_optical(prefix+".opt");
-		std::vector<TIMOS::Source> src = TIMOS::parse_sources(prefix+".source");
+		cout << "Loading mesh from " << fn_mesh << endl;
 
-//		for(TIMOS::Source& s : src)
-			//cout << s << endl;
+		TIMOS::Mesh M = TIMOS::parse_mesh(fn_mesh);
 
 		cout << "  TIMOS mesh read: " << M.P.size() << " points, " << M.T.size() << " tetras" << endl;
 
@@ -195,6 +193,65 @@ int main(int argc,char **argv)
 
 		geom.mesh=TetraMesh(P, T, T_m);
 
+	}
+
+	if (vm.count("prefix") || vm.count("sourcefile") || vm.count("source"))
+	{
+		if (vm.count("source"))
+		{
+			cout << "Using command-line specified sources: " << endl;
+			for(const string& s : source_strs)
+			{
+				cout << "  " << s << endl;
+				geom.sources.push_back(parse_string(s));
+			}
+		}
+		else
+		{
+			if (!vm.count("sourcefile"))
+				fn_sources=prefix+".source";
+
+			std::vector<TIMOS::Source> src = TIMOS::parse_sources(fn_sources);
+			geom.sources.clear();
+
+			for(const TIMOS::Source& s : src)
+			{
+				unsigned IDf=-1;
+				switch(s.type)
+				{
+				case TIMOS::Source::Types::Face:
+					geom.sources.push_back(new FaceSourceDescription(IDf,s.w));
+					break;
+
+				case TIMOS::Source::Types::PencilBeam:
+					geom.sources.push_back(new PencilBeamSourceDescription(
+							Point<3,double>(s.details.pencilbeam.pos),
+							UnitVector<3,double>(s.details.pencilbeam.dir.data()),
+							s.w,
+							s.details.pencilbeam.tetID));
+					break;
+				case TIMOS::Source::Types::Point:
+					geom.sources.push_back(new IsotropicPointSourceDescription(
+							Point<3,double>(s.details.point.pos.data()),
+							(double)s.w));
+					break;
+				case TIMOS::Source::Types::Volume:
+					geom.sources.push_back(new VolumeSourceDescription(s.details.vol.tetID,s.w));
+					break;
+				default:
+					assert(0);
+				}
+			}
+		}
+	}
+
+	if (vm.count("prefix") || vm.count("matfile"))
+	{
+		if (!vm.count("matfile"))
+			fn_materials = prefix+".opt";
+
+		TIMOS::Optical opt = TIMOS::parse_optical(fn_materials);
+
 		geom.mats.clear();
 		geom.mats.emplace_back(0.0,0.0,0.0,opt.n_ext,0.0,opt.matched);
 		boost::copy(
@@ -202,42 +259,11 @@ int main(int argc,char **argv)
 					std::function<Material(TIMOS::Optical::Material)>([&opt](TIMOS::Optical::Material m)
 							{ return Material(m.mu_a,m.mu_s,m.g,m.n,0.0,opt.matched); })),
 			std::back_inserter(geom.mats));
-
-		geom.sources.clear();
-
-		for(const TIMOS::Source& s : src)
-		{
-			unsigned IDf=-1;
-			switch(s.type)
-			{
-			case TIMOS::Source::Types::Face:
-				geom.sources.push_back(new FaceSourceDescription(IDf,s.w));
-				break;
-
-			case TIMOS::Source::Types::PencilBeam:
-				geom.sources.push_back(new PencilBeamSourceDescription(
-						Point<3,double>(s.details.pencilbeam.pos),
-						UnitVector<3,double>(s.details.pencilbeam.dir.data()),
-						s.w,
-						s.details.pencilbeam.tetID));
-				break;
-			case TIMOS::Source::Types::Point:
-				geom.sources.push_back(new IsotropicPointSourceDescription(
-						Point<3,double>(s.details.point.pos.data()),
-						(double)s.w));
-				break;
-			case TIMOS::Source::Types::Volume:
-				geom.sources.push_back(new VolumeSourceDescription(s.details.vol.tetID,s.w));
-				break;
-			default:
-				assert(0);
-			}
-		}
 	}
 
-//	cout << "Sources: " << endl;
-//	for(const auto& s : geom.sources)
-//		cout << *s << endl;
+	cout << "Sources: " << endl;
+	for(const auto& s : geom.sources)
+		cout << *s << endl;
 
 	cout << "Materials: " << endl;
 	for (const auto& m : geom.mats)
@@ -252,8 +278,12 @@ int main(int argc,char **argv)
 		hist[mat]++;
 	}
 
+	cout << "Material | Tetra Count" << endl;
 	for(auto h : hist | boost::adaptors::indexed(0U))
 		cout << h.index() << ": " << h.value() << endl;
+
+	SourceEmitter<RNG_SFMT_AVX>* S = SourceEmitterFactory<RNG_SFMT_AVX>(geom.mesh,geom.sources);
+	cout << "Source emitters: " << endl << *S << endl;
 
 //	if (globalopts::meshstats)
 //	{

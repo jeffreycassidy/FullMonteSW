@@ -14,6 +14,12 @@
 #include <vtkIdTypeArray.h>
 #include <vtkCellArray.h>
 #include <vtkLookupTable.h>
+#include <vtkDataSetMapper.h>
+#include <vtkActor.h>
+#include <vtkPolyDataMapper.h>
+#include <vtkFloatArray.h>
+
+#include <limits>
 
 using namespace std;
 
@@ -34,6 +40,7 @@ void VTKMeshRep::updatePoints()
 	if(!P_)
 		P_=vtkPoints::New();
 	P_->SetNumberOfPoints(mesh_->getNp()+1);
+
 	unsigned i=0;
 	for(Point<3,double> p : mesh_->points())
 		P_->SetPoint(i++,p.data());
@@ -222,4 +229,130 @@ vtkLookupTable* VTKMeshRep::getRegionMapLUT() const
 	}
 
 	return lut;
+}
+
+vtkActor* VTKMeshRep::getSourceActor(const SourceDescription* sd) const
+{
+	if (const BallSourceDescription* bsd = dynamic_cast<const BallSourceDescription*>(sd))
+		return getSourceActor(bsd);
+	assert(!"Unrecognized source in getSourceActor");
+}
+
+vtkActor* VTKMeshRep::getSourceActor(const BallSourceDescription* bsd) const
+{
+	assert(mesh_);
+	Point<3,double> p0 = bsd->getCentre();
+	float r = bsd->getRadius();
+
+	std::vector<unsigned> T = mesh_->tetras_close_to(p0,r);
+	cout << "There are " << T.size() << " tetras in the source" << endl;
+
+	vtkUnstructuredGrid* ug = getSubsetMesh(T);
+
+	vtkDataSetMapper *map = vtkDataSetMapper::New();
+	map->SetInputData(ug);
+
+	vtkActor *actor = vtkActor::New();
+	actor->SetMapper(map);
+
+	return actor;
+}
+
+vtkPolyData* VTKMeshRep::getSurfaceOfRegion(unsigned r) const
+{
+	assert(mesh_);
+	vector<unsigned> tri = mesh_->getRegionBoundaryTris(r);
+
+	return getSubsetFaces(tri);
+}
+
+
+
+void VTKBallSourceRep::Update()
+{
+	assert(bsd_);
+	T_ = meshrep_.getMesh().tetras_close_to(bsd_->getCentre(),bsd_->getRadius());
+
+	if (!actor_)
+	{
+		actor_ = vtkActor::New();
+
+		vtkDataSetMapper* mapper = vtkDataSetMapper::New();
+		actor_->SetMapper(mapper);
+	}
+	else
+		actor_->GetMapper()->GetInput()->Delete();
+
+	dynamic_cast<vtkDataSetMapper*>(actor_->GetMapper())->SetInputData(meshrep_.getSubsetMesh(T_));
+}
+
+void VTKSurfaceFluenceRep::Update(const std::vector<double>& E,bool is_per_area)
+{
+	if (!pd_)
+	{
+		pd_ = vtkPolyData::New();
+		pd_->SetPoints(meshrep_.getPoints());
+
+		pd_->SetPolys(vtkCellArray::New());
+
+		pd_->GetCellData()->SetActiveScalars("fluence");
+		pd_->GetCellData()->SetScalars(vtkFloatArray::New());
+	}
+
+	vtkFloatArray *phi_field = vtkFloatArray::SafeDownCast(pd_->GetCellData()->GetScalars());
+	assert(phi_field);
+	phi_field->Initialize();
+
+	vtkCellArray *ca = pd_->GetPolys();
+	ca->Initialize();
+
+	double phi_min=std::numeric_limits<double>::infinity();
+	double phi_max=-phi_min;
+	double phi;
+
+	unsigned nnz=0;
+	for(unsigned i=0;i<E.size(); ++i)
+	{
+		if (E[i] > 0.0)
+		{
+			++nnz;
+			std::array<unsigned,3>  IDps = meshrep_.getMesh().getFacePointIDs(i);
+			std::array<vtkIdType,3> IDps_vtk;
+			boost::copy(IDps, IDps_vtk.begin());
+			ca->InsertNextCell(3,IDps_vtk.data());
+			phi = is_per_area ? E[i] : E[i]/meshrep_.getMesh().getFaceArea(i);
+			phi_min = min(phi_min,phi);
+			phi_max = max(phi_max,phi);
+			phi_field->InsertNextTuple1(phi);
+		}
+	}
+
+	pd_->SetPolys(ca);
+	pd_->SetPoints(meshrep_.getPoints());
+
+//	cout << "INFO: Updated vector using the " << nnz << '/' << E.size() << " nonzero elements" << endl;
+//	cout << "  Container reports " << pd_->GetNumberOfPolys() << " polys, " << pd_->GetNumberOfPoints() << " points" << endl;
+
+
+	if (!actor_)
+	{
+		actor_ = vtkActor::New();
+
+		vtkPolyDataMapper* mapper = vtkPolyDataMapper::New();
+		actor_->SetMapper(mapper);
+	}
+
+	vtkPolyDataMapper *mapper = vtkPolyDataMapper::SafeDownCast(actor_->GetMapper());
+	assert(mapper);
+
+	mapper->SetInputData(pd_);
+
+	if (!mapper->GetLookupTable())
+		mapper->CreateDefaultLookupTable();
+
+	mapper->ScalarVisibilityOn();
+	mapper->SetScalarRange(0,phi_max);
+	mapper->GetLookupTable()->SetRange(0,phi_max);
+
+	actor_->GetMapper()->Update();
 }

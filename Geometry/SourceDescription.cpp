@@ -31,6 +31,11 @@ string FaceSourceDescription::timos_str(unsigned long long Np) const
     return ss.str();
 }
 
+ostream& BallSourceDescription::print(ostream& os) const
+{
+	return os << "Ball of radius " << r_ << " centred at " << p0_ << " with weight " << getPower();
+}
+
 
 ostream& IsotropicPointSourceDescription::print(ostream& os) const
 {
@@ -116,6 +121,15 @@ SourceDescription* parse_string(const string& s)
 		if (!ss.fail() && ss.eof())
 			src = new IsotropicPointSourceDescription(p,w);
 	}
+	else if (type=="ball")
+	{
+		Point<3,double> p;
+		double r;
+
+		ss >> p >> r;
+		if (!ss.fail() && ss.eof())
+			src = new BallSourceDescription(p,r,w);
+	}
 	else if(type=="pencil")
 	{
 		Point<3,double> p;
@@ -128,7 +142,7 @@ SourceDescription* parse_string(const string& s)
 		cerr << "Invalid source type in string: \"" << s << '"' << endl;
 
 	if (!src)
-		cerr << "Source failed to parse: \"" << s << '"' << endl;
+		cerr << "Source of type " << type << " failed to parse: \"" << s << '"' << endl;
 
 	return src;
 }

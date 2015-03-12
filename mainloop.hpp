@@ -220,7 +220,7 @@ protected:
     ~ThreadManager(){
     	if(mgrthread.joinable())
     	{
-    		cout << "Waiting for manager thread" << endl;
+    		//cout << "Waiting for manager thread" << endl;
     		mgrthread.join();
     	}
     	else
@@ -290,7 +290,7 @@ template<class Logger,class RNG> void ThreadManager<Logger,RNG>::wait_for_worker
 
 	// get pointers from results tuple
 	tuple_for_each(*results_final, [this] (const LoggerResults& r) { this->res_v.push_back(&r); });
-	cout << "Results vector is now available" << endl;
+//	cout << "Results vector is now available" << endl;
 	for(const LoggerResults* lr : res_v)
 		notify_result(*lr);
 }

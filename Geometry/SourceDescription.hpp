@@ -27,6 +27,24 @@ public:
 	}
 };
 
+class BallSourceDescription : virtual public SourceDescription {
+	Point<3,double> p0_;
+	double r_=0.0;
+public:
+
+	BallSourceDescription(const Point<3,double>& p0,double r,double w_=1.0) : SourceDescription(w_),p0_(p0),r_(r){}
+
+	Point<3,double> getCentre() const { return p0_; }
+	void setCentre(const Point<3,double> p0){ p0_=p0; }
+
+	double getRadius() const { return r_; }
+	void setRadius(double r){ r_=r; }
+
+	virtual string operator()() const{ return "BallSourceDescription"; }
+	virtual ostream& print(ostream& os) const;
+	virtual string timos_str(unsigned long long=0) const { return "(invalid; ball source)"; }
+};
+
 class PointSourceDescription : virtual public SourceDescription {
 	pair<Point<3,double>, unsigned> origin;
 
@@ -81,7 +99,7 @@ protected:
 	unsigned IDt;
 
 public:
-	VolumeSourceDescription(unsigned IDt_=0,double w=1.0) : SourceDescription(w),IDt(IDt_){}
+	VolumeSourceDescription(unsigned IDt_=0,double w_=1.0) : SourceDescription(w_),IDt(IDt_){}
 	virtual string timos_str(unsigned long long=0) const;
 	string operator()() const { return "Volume source"; }
 
@@ -126,7 +144,7 @@ public:
 	// Create from a pair of iterators that dereference to a Source*
 	SourceMultiDescription(){}
 	template<class ConstIterator> SourceMultiDescription(ConstIterator begin,ConstIterator end) :
-	sources(begin,end),
+			sources(begin,end),
 			w_total(0.0)
 			{ for(; begin != end; ++begin) w_total += (*begin)->getPower(); }
 

@@ -37,7 +37,14 @@ public:
 class TIMOSReader {
 	std::string sourceFn_,optFn_,meshFn_,legendFn_;
 public:
+	TIMOSReader() {}
 	TIMOSReader(std::string pfx) : sourceFn_(pfx+".source"),optFn_(pfx+".opt"),meshFn_(pfx+".mesh"),legendFn_(pfx+".legend"){}
+
+	void setMeshFileName(std::string fn){ meshFn_=fn; }
+	void setOpticalFileName(std::string fn){ optFn_=fn; }
+	void setSourceFileName(std::string fn){ sourceFn_=fn; }
+	void setLegendFileName(std::string fn){ legendFn_=fn; }
+
 	virtual TetraMesh						mesh() const;
 	virtual std::vector<Material>			materials() const;
 	virtual std::vector<SourceDescription*>	sources() const;

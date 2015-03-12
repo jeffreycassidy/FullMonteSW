@@ -110,6 +110,8 @@ class TetraMesh : public TetraMeshBase {
 
 	enum TetraFileType { MatlabTP };
 
+	virtual void Delete(){ delete this; }
+
 	TetraMesh(){};
 	TetraMesh(const TetraMeshBase& Mb) : TetraMeshBase(Mb){ tetrasToFaces(F,T_p,P,T_f); }
     TetraMesh(unsigned Np_,unsigned Nt_,unsigned Nf_) : TetraMeshBase(Np_,Nt_),T_f(Nf_+1),F_p(Nf_+1),F(Nf_+1),
@@ -196,6 +198,7 @@ class TetraMesh : public TetraMeshBase {
 
     /// Creates a copy of the points and faces comprising the boundary of given material
     TriSurf extractMaterialBoundary(unsigned matID) const;
+    vector<unsigned> getRegionBoundaryTris(unsigned r) const;
 
     TriSurf extractRegionSurface(const vector<unsigned>& tetIDs) const;
 

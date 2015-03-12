@@ -26,6 +26,7 @@ const std::unordered_map<int,string> TIMOS::ParserDef::toks{
 
 TetraMesh TIMOSReader::mesh() const
 {
+	assert (!meshFn_.empty() || !"No filename specified for TIMOSReader::mesh");
 	TIMOS::Mesh tm = TIMOS::parse_mesh(meshFn_);
 
 	std::vector<TetraByPointID> T(tm.T.size()+1);
@@ -49,13 +50,14 @@ TetraMesh TIMOSReader::mesh() const
 
 std::vector<Material> TIMOSReader::materials() const
 {
+	assert (!optFn_.empty() || !"No filename specified for TIMOSReader::materials");
 	TIMOS::Optical opt = TIMOS::parse_optical(optFn_);
 	std::vector<Material> mat(opt.mat.size()+1);
 
 	assert(opt.by_region);
 	assert(!opt.matched);
 
-	mat[0] = Material(0,0,0,0);
+	mat[0] = Material(0,0,0,1.0);
 	for(unsigned i=0; i<opt.mat.size(); ++i)
 		mat[i+1] = Material(opt.mat[i].mu_a,opt.mat[i].mu_s,opt.mat[i].g,opt.mat[i].n);
 
@@ -64,6 +66,7 @@ std::vector<Material> TIMOSReader::materials() const
 
 std::vector<SourceDescription*> TIMOSReader::sources() const
 {
+	assert (!sourceFn_.empty() || !"No filename specified for TIMOSReader::sources");
 	std::vector<TIMOS::Source> ts = TIMOS::parse_sources(sourceFn_);
 	std::vector<SourceDescription*> src(ts.size(),nullptr);
 

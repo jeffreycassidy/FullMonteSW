@@ -12,13 +12,20 @@
 
 #include "../sse.hpp"
 
-vector<unsigned> TetraMesh::tetras_close_to(const Point<3,double> p0,const float d) const
+
+/** Returns a vector<unsigned> of tetra IDs for tetras which have at least one point within a radius r of point p0
+ *
+ */
+
+vector<unsigned> TetraMesh::tetras_close_to(const Point<3,double> p0,const float r) const
 {
 	vector<unsigned> Tlist;
-	const float d2=d*d;
+	const float r2=r*r;
 
 	for(unsigned i=1;i<T_p.size();++i)
-		if (boost::algorithm::any_of(T_p[i],[p0,d,this](unsigned i){ return Vector<3,double>(this->P[i],p0).norm2_l2()<d2; }))
+		if (boost::algorithm::any_of(
+				T_p[i],
+				[p0,r2,this](unsigned i){ return Vector<3,double>(this->P[i],p0).norm2_l2()<r2; }))
 			Tlist.push_back(i);
 	return Tlist;
 }
@@ -803,6 +810,17 @@ TriSurf TetraMesh::extractMaterialBoundary(unsigned matID) const
     }
 
     return TriSurf(P_out,F_out);
+}
+
+
+vector<unsigned> TetraMesh::getRegionBoundaryTris(unsigned r) const
+{
+	vector<unsigned> tri;
+    for(unsigned IDf=0; IDf<F.size(); ++IDf)
+    	if(faceBoundsRegion(r,IDf))
+    		tri.push_back(IDf);
+
+    return tri;
 }
 
 

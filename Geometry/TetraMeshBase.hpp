@@ -30,6 +30,10 @@ protected:
 
 public:
 
+	virtual void Delete(){ delete this; }
+
+	virtual ~TetraMeshBase(){}
+
 	const vector<Point<3,double>>& 	points() const 	 	{ return P; }
 	const vector<TetraByPointID>& 	tetrasByID() const 	{ return T_p; }
 
