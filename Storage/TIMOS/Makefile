@@ -13,7 +13,7 @@ Test.o: Test.cpp TIMOSLexer.h TIMOSParser.h
 %.o: %.cpp TIMOS_tokens.h
 	$(CXX) $(CXX_OPTS) -I$(ANTLR_INCLUDE) $<
 
-libFullMonteTIMOS.so: TIMOSParser.o TIMOSLexer.o TIMOSReader.o TIMOSWriter.o | TIMOS_tokens.h
+libFullMonteTIMOS.so: TIMOSParser.o TIMOSLexer.o TIMOSReader.o | TIMOS_tokens.h
 	$(CXX) $(CXX_LIB_OPTS) -L$(ANTLR_LIB) -L../../Geometry -lantlr3c -lFullMonteGeometry -o $@ $^
 	
 TIMOSReader_wrap.cxx: TIMOSReader.i TIMOSReader.hpp

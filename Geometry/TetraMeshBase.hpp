@@ -1,4 +1,5 @@
-#pragma once
+#ifndef TETRAMESHBASE_INCLUDED_
+#define TETRAMESHBASE_INCLUDED_
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -98,3 +99,5 @@ public:
 //
 //	return TetraMeshBase(P,out_T_p,out_T_m);
 //}
+
+#endif

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef NEWGEOM_INCLUDED_
+#define NEWGEOM_INCLUDED_
 #include <array>
 
 #include <math.h>
@@ -419,3 +420,5 @@ std::istream& operator>>(std::istream& is,TetraByPointID& P);
 std::istream& operator>>(std::istream& is,FaceByPointID& F);
 std::ostream& operator<<(std::ostream& os,TetraByPointID& T);
 std::ostream& operator<<(std::ostream& os,FaceByPointID& T);
+
+#endif
