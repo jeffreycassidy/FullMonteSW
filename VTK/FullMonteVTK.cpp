@@ -37,13 +37,18 @@ VTKMeshRep::VTKMeshRep(const TetraMesh* M)
 void VTKMeshRep::updatePoints()
 {
 	assert(mesh_);
+
 	if(!P_)
 		P_=vtkPoints::New();
+
 	P_->SetNumberOfPoints(mesh_->getNp()+1);
 
 	unsigned i=0;
 	for(Point<3,double> p : mesh_->points())
-		P_->SetPoint(i++,p.data());
+		if (i==0)
+			P_->SetPoint(i++,std::array<double,3>{ NAN, NAN, NAN}.data());
+		else
+			P_->SetPoint(i++,p.data());
 }
 
 void VTKMeshRep::updateTetras()
@@ -265,6 +270,7 @@ vtkPolyData* VTKMeshRep::getSurfaceOfRegion(unsigned r) const
 
 	return getSubsetFaces(tri);
 }
+
 
 
 

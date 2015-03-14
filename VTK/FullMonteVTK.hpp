@@ -75,8 +75,8 @@ struct LegendEntry {
 #include <vtkMapper.h>
 #include <vtkScalarBarActor.h>
 
-#include <FullMonteSW/Geometry/TetraMesh.hpp>
-#include <FullMonteSW/Geometry/SourceDescription.hpp>
+#include <FullMonte/Geometry/TetraMesh.hpp>
+#include <FullMonte/Geometry/SourceDescription.hpp>
 
 #endif // SWIG
 

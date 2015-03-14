@@ -4,8 +4,8 @@
 #include <string>
 #include <iomanip>
 #include "Logger.hpp"
-#include "optics.hpp"
-#include "Geometry/SourceDescription.hpp"
+#include <FullMonte/optics.hpp>
+#include <FullMonte/Geometry/SourceDescription.hpp>
 
 #include "mainloop.hpp"
 

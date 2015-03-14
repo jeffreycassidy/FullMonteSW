@@ -2,16 +2,16 @@
 
 #include <boost/random/additive_combine.hpp>
 
-#include "FullMonte.hpp"
-#include "Geometry/Material.hpp"
-#include "Geometry/Tetra.hpp"
+#include <FullMonte/Kernels/Software/FullMonte.hpp>
+#include <FullMonte/Geometry/Material.hpp>
+#include <FullMonte/Geometry/Tetra.hpp>
 
 #include <mutex>
 #include <condition_variable>
 #include <thread>
 
 #include "Observer.hpp"
-#include "oldstuff/TupleStuff.hpp"
+#include <FullMonte/oldstuff/TupleStuff.hpp>
 
 #include "SourceEmitter.hpp"
 #include "LineSourceEmitter.hpp"

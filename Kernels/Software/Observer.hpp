@@ -2,7 +2,7 @@
 #include <boost/timer/timer.hpp>
 #include "Logger.hpp"
 
-#include "FullMonte.hpp"
+#include <FullMonte/Kernels/Software/FullMonte.hpp>
 
 
 using namespace std;

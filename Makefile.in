@@ -27,7 +27,7 @@ ifndef SOURCE_ROOT
 endif
 
 
-CXX_OPTS=-Wall -std=c++11 -O3 -g -mavx -msse4 -fPIC -fabi-version=6 -I$(SOURCE_ROOT)
+CXX_OPTS=-Wall -std=c++11 -O3 -g -mavx -msse4 -fPIC -fabi-version=6 -I$(SOURCE_ROOT) -DNDEBUG
 
 # Check for Mac OS (no POSIX timer among other things)
 OS:=$(shell uname)

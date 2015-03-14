@@ -200,6 +200,9 @@ class TetraMesh : public TetraMeshBase {
     TriSurf extractMaterialBoundary(unsigned matID) const;
     vector<unsigned> getRegionBoundaryTris(unsigned r) const;
 
+    /// Extracts the face point IDs and tetra IDs corresponding to a given surface
+    vector<pair<FaceByPointID,unsigned>> getRegionBoundaryTrisAndTetras(unsigned r) const;
+
     TriSurf extractRegionSurface(const vector<unsigned>& tetIDs) const;
 
     // functions for saving tetramesh representations

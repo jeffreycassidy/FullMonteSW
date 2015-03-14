@@ -3,6 +3,13 @@
 #include <iostream>
 #include <cassert>
 
+struct SimpleMaterial {
+	double mu_a,mu_s,g,n;
+
+	double albedo() const { double msp=mu_s_prime(); return msp/(msp+mu_a); }
+	double mu_s_prime() const { return mu_s*(1.0-g); }
+};
+
 /** Describes material properties and provides facilities for calculating scattering and reflection/refraction at interfaces.
  * TODO: Incorporate reflection/refraction?
  * TODO: Fix nasty sign convention in propagation vector
@@ -19,7 +26,7 @@ public:
     	float recip_2g;			///< 1/2g
     } HGParams;
 
-private:
+public:
 
     static constexpr float const_c0=299.792458;    		///< Speed of light in vacuum (mm/ns) (3e8 m/s = 3e11 mm/s = 3e2 mm/ns)
     float mu_s, mu_a, mu_p, mu_t, n, albedo, absfrac;

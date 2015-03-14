@@ -1,30 +1,30 @@
-#include "AccumulationArray.hpp"
+#include <FullMonte/Kernels/Software/AccumulationArray.hpp>
 #include <iostream>
 #include <vector>
 #include <utility>
 #include <string>
 #include <iomanip>
 
-#include "Logger.hpp"
-#include "LoggerConservation.hpp"
-#include "LoggerSurface.hpp"
-#include "LoggerEvent.hpp"
+#include <FullMonte/Kernels/Software/Logger.hpp>
+#include <FullMonte/Kernels/Software/LoggerConservation.hpp>
+#include <FullMonte/Kernels/Software/LoggerSurface.hpp>
+#include <FullMonte/Kernels/Software/LoggerEvent.hpp>
 
 #include <boost/range/algorithm.hpp>
 #include <boost/range/adaptor/indexed.hpp>
 #include <boost/range/adaptor/filtered.hpp>
 
-#include "FullMonte.hpp"
+#include <FullMonte/Kernels/Software/FullMonte.hpp>
 
 #include "Geometry/SourceDescription.hpp"
 
 #include <boost/timer/timer.hpp>
 
-#include "OStreamObserver.hpp"
+#include <FullMonte/Kernels/Software/OStreamObserver.hpp>
 
-#include "mainloop.cpp"
+#include <FullMonte/Kernels/Software/mainloop.cpp>
 
-#include "RandomAVX.hpp"
+#include <FullMonte/Kernels/Software/RandomAVX.hpp>
 
 
 using namespace std;

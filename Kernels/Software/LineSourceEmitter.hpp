@@ -1,5 +1,5 @@
 #pragma once
-#include "Geometry/SourceDescription.hpp"
+#include <FullMonte/Geometry/SourceDescription.hpp>
 #include "SourceEmitter.hpp"
 #include <math.h>
 

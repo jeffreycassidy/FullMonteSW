@@ -1,6 +1,6 @@
-SWIG=swig
-CXX=g++
-CXX_OPTS=-Wall -O3 -g -std=c++11 -fPIC -I/usr/local/include/vtk -I/Users/jcassidy/src
+include ../Makefile.in
+
+CXX_OPTS:=$(CXX_OPTS) -fPIC -I/usr/local/include/vtk
 CXX_LIB_OPTS=$(CXX_OPTS) -shared
 
 %.o: %.cpp
@@ -24,4 +24,5 @@ libFullMonteVTK.so: FullMonteVTK.o FullMonteVTK_wrap.o TetraMeshTCL.o
 		-o $@ $^
 
 clean:
+	rm -rf *.dSYM
 	rm -f *.so *.o *.a *_wrap.cxx

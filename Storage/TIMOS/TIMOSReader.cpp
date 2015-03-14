@@ -64,6 +64,31 @@ std::vector<Material> TIMOSReader::materials() const
 	return mat;
 }
 
+std::vector<SimpleMaterial> TIMOSReader::materials_simple() const
+{
+	assert (!optFn_.empty() || !"No filename specified for TIMOSReader::materials");
+	TIMOS::Optical opt = TIMOS::parse_optical(optFn_);
+	std::vector<SimpleMaterial> mat(opt.mat.size()+1);
+
+	assert(opt.by_region);
+	assert(!opt.matched);
+
+	mat[0].mu_s=0.0;
+	mat[0].mu_a=0.0;
+	mat[0].g=1.0;
+	mat[0].n=opt.n_ext;
+
+	for(unsigned i=0; i<opt.mat.size(); ++i)
+	{
+		mat[i+1].mu_s = opt.mat[i].mu_s;
+		mat[i+1].mu_a = opt.mat[i].mu_a;
+		mat[i+1].g = opt.mat[i].g;
+		mat[i+1].n = opt.mat[i].n;
+	}
+
+	return mat;
+}
+
 std::vector<SourceDescription*> TIMOSReader::sources() const
 {
 	assert (!sourceFn_.empty() || !"No filename specified for TIMOSReader::sources");

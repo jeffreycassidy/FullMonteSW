@@ -14,7 +14,7 @@
 
 #include <boost/mpl/bool.hpp>
 
-#include <FullMonteSW/Geometry/TetraMeshBase.hpp>
+#include <FullMonte/Geometry/TetraMeshBase.hpp>
 
 using namespace std;
 

@@ -19,11 +19,11 @@
 #include <vector>
 #include <iostream>
 
-#include <FullMonteSW/Storage/CommonParser/ANTLRParser.hpp>
+#include <FullMonte/Storage/CommonParser/ANTLRParser.hpp>
 
-#include <FullMonteSW/Geometry/TetraMesh.hpp>
-#include <FullMonteSW/Geometry/Material.hpp>
-#include <FullMonteSW/Geometry/SourceDescription.hpp>
+#include <FullMonte/Geometry/TetraMesh.hpp>
+#include <FullMonte/Geometry/Material.hpp>
+#include <FullMonte/Geometry/SourceDescription.hpp>
 
 class Reader {
 public:
@@ -51,7 +51,9 @@ public:
 	virtual std::vector<Material>			materials() const;
 	virtual std::vector<SourceDescription*>	sources() const;
 
-	virtual std::vector<LegendEntry> legend() const;
+	virtual std::vector<SimpleMaterial>		materials_simple() const;
+
+	virtual std::vector<LegendEntry> 		legend() const;
 
 	virtual void clear(){}
 };

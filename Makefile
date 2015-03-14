@@ -4,6 +4,8 @@ default: libs
 
 include Makefile.in
 
+SUBDIRS=Geometry Storage VTK SFMT Software
+
 Geometry/%:
 	make -C Geometry $*
 	
@@ -15,29 +17,21 @@ VTK/%:
 	
 SFMT/%:
 	make -C SFMT $*
+	
+Kernels/Software/%:
+	make -C Kernels/Software $* 
 
 libs: Geometry/libFullMonteGeometry.so Storage/TIMOS/libFullMonteTIMOS.so Storage/TIMOS/libFullMonteTIMOS_TCL.so SFMT/libSFMT.a \
-	VTK/libFullMonteVTK.so libFullMonteCore.so libFullMonteBLI.so libFullMonteBLI_TCL.so
+	VTK/libFullMonteVTK.so Kernels/Software/libFullMonteCore.so libFullMonteBLI.so libFullMonteBLI_TCL.so
 
 %.o: %.cpp *.hpp
 	$(CXX) $(CXX_OPTS) -c $< -o $@
 	
 
-
-##### Core functions (RNG, basic loggers, result types, and OStreamObserver)
-
-random.o: random.cpp random.hpp
-	$(CXX) -O1 -msse4 -g -Wall -mavx -DNDEBUG -DPLATFORM_DARWIN $< -fPIC -c -o $@
-
-libFullMonteCore.so: LoggerSurface.o LoggerConservation.o LoggerEvent.o sse.o  RandomAVX.o OStreamObserver.o FullMonte.o \
-	fluencemap.o LoggerEvent.o LoggerVolume.o FullMonte.o
-	$(CXX) $(CXX_OPTS) -shared -L. -lFullMonteGeometry -LSFMT -lSFMT -LGeometry -lboost_system -lboost_timer -lboost_chrono -o $@ $^
-
-
-##### BLI-kernel related items
+##### BLI-kernel related items (surface logging only)
 
 libFullMonteBLI.so: BLIKernel.o
-	$(CXX) $(CXX_OPTS) -shared -L. -lFullMonteGeometry -LGeometry -lboost_system -lboost_chrono -lFullMonteCore -o $@ $^
+	$(CXX) $(CXX_OPTS) -shared -L. -lFullMonteGeometry -LKernels/Software -LGeometry -lboost_system -lboost_chrono -lFullMonteCore -o $@ $^
 
 
 

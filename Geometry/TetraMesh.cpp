@@ -10,7 +10,7 @@
 #include "Material.hpp"
 #include "TetraMesh.hpp"
 
-#include "../sse.hpp"
+#include "../Kernels/Software/sse.hpp"
 
 
 /** Returns a vector<unsigned> of tetra IDs for tetras which have at least one point within a radius r of point p0
@@ -137,52 +137,7 @@ void TetraMesh::fromBinary(const string& pts,const string& tetras,const string& 
     }
 	tetrasToFaces(F,T_p,P,T_f);
 }
-//
-//vector<Material> loadMatFile(string fn)
-//{
-//    vector<Material> mat;
-//    float n,g,mu_s,mu_a;
-//    unsigned IDm;
-//
-//    ifstream is(fn.c_str());
-//
-//	while(!is.eof()){
-//		// ignore comments
-//		while(is.good() && is.peek()=='#')
-//		{
-//			char buf[100];
-//			is.get(buf,100,'\n');
-//			cout << "ignoring line || " << buf << endl;
-//			is.ignore(100,'\n');
-//		}
-//
-//		// check for default statement
-//		if(is.good())
-//		{
-//			if(is.peek()=='?')
-//			{
-//				is.ignore(100,'\t');
-//				if(is.eof())
-//					break;
-//				Material m_default;
-//				is >> n >> g >> mu_s >> mu_a;
-//                m_default = Material(mu_a,mu_s,g,n,0,false);
-//				fill(mat.begin(),mat.end(),m_default);
-//			}
-//			else {
-//				is >> IDm;
-//				if (is.good())
-//                {
-//					is >> n >> g >> mu_s >> mu_a;
-//                    mat[IDm] = Material(mu_a,mu_s,g,n,0,false);
-//                }
-//				else
-//					break;
-//			}
-//		}
-//	}
-//    return mat;
-//}
+
 
 //
 //// writes the face mapping to a Matlab-compatible file
@@ -821,6 +776,32 @@ vector<unsigned> TetraMesh::getRegionBoundaryTris(unsigned r) const
     		tri.push_back(IDf);
 
     return tri;
+}
+
+vector<pair<FaceByPointID,unsigned>> TetraMesh::getRegionBoundaryTrisAndTetras(unsigned r) const
+{
+	vector<pair<FaceByPointID,unsigned>> v;
+
+	for(unsigned i=0;i<vecFaceID_Tetra.size();++i)
+	{
+		int Ta = vecFaceID_Tetra[i].first, Tb = vecFaceID_Tetra[i].second;
+		if (Ta < 0 || Tb < 0)
+		{
+			cerr << "ERROR: Invalid vecFaceID_Tetra map" << endl;
+			return v;
+		}
+
+		unsigned ma = T_m[Ta], mb = T_m[Tb];
+
+		if (ma == mb)								// no boundary
+			continue;
+		else if (ma == r)							// boundary; Ta is within region
+			v.push_back(make_pair(F_p[i],Ta));
+		else if (mb == r)							// boundary; Tb is within region
+			v.push_back(make_pair(F_p[i],Tb));
+	}
+
+	return v;
 }
 
 

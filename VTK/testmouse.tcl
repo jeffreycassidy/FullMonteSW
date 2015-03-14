@@ -2,13 +2,13 @@ package require vtk
 
 load libFullMonteVTK.so
 load libFullMonteTIMOS_TCL.so
-load ../libFullMonteBLI_TCL.so
+load libFullMonteBLI_TCL.so
 
 #default file prefix
 set pfx "/Users/jcassidy/src/FullMonteSW/data/mouse"
 
 #override with 1st cmdline arg
-if { $argc > 1 } { set pfx $argv(1) }
+if { $argc >= 1 } { set pfx [lindex $argv 0] }
 
 set meshfn "$pfx.mesh"
 set legendfn "$pfx.legend"

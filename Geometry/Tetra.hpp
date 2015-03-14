@@ -2,7 +2,7 @@
 
 #include "TetraMeshBase.hpp"
 #include "newgeom.hpp"
-#include "../sse.hpp"
+#include "../Kernels/Software/sse.hpp"
 
 using namespace std;
 

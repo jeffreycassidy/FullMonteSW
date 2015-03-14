@@ -22,6 +22,7 @@
 namespace std{
 	%template(vectorlegend) vector<LegendEntry>;
 	%template(sourcevector) vector<SourceDescription*>;
+	%template(materialvector) vector<SimpleMaterial>;
 };
 
 struct LegendEntry {
@@ -41,9 +42,15 @@ class TIMOSReader {
 	
 	virtual TetraMesh						mesh() const;
 	virtual std::vector<Material>			materials() const;
+	
+	virtual std::vector<SimpleMaterial>		materials_simple() const;
 	virtual std::vector<SourceDescription*>	sources() const;
 
 	virtual std::vector<LegendEntry> legend() const;
 
 	virtual void clear(){}
+};
+
+struct SimpleMaterial {
+	double mu_a,mu_s,g,n;
 };

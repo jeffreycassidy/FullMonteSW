@@ -4,9 +4,9 @@
 
 %{
 
-#include <FullMonteSW/Geometry/TetraMesh.hpp>
-#include <FullMonteSW/Geometry/Material.hpp>
-#include <FullMonteSW/Geometry/SourceDescription.hpp>
+#include <FullMonte/Geometry/TetraMesh.hpp>
+#include <FullMonte/Geometry/Material.hpp>
+#include <FullMonte/Geometry/SourceDescription.hpp>
 #include <vector>
 #include <string>
 

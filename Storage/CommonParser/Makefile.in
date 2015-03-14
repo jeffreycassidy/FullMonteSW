@@ -22,7 +22,7 @@ TCL_LIB=/usr/local/lib
 endif
 
 %_tokens.h: %.tokens
-	cat $^ | $(SOURCE_ROOT)/FullMonteSW/Storage/CommonParser/mktok.pl > $@
+	cat $^ | $(SOURCE_ROOT)/FullMonte/Storage/CommonParser/mktok.pl > $@
 
 %Parser.c %Lexer.c %Parser.h %Lexer.h %.tokens: %.g
 	$(ANTLR) $^

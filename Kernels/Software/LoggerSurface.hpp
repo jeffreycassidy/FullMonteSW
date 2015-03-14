@@ -1,6 +1,6 @@
 #pragma once
 #include "Logger.hpp"
-#include "fluencemap.hpp"
+#include <FullMonte/Kernels/Software/fluencemap.hpp>
 #include "AccumulationArray.hpp"
 #include "Packet.hpp"
 
