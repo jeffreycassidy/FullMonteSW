@@ -207,8 +207,8 @@ pack .output.comment
 
 button .output.save -text "Calculate & Save" -command {
     global mesh opt ofn
-    set E [BLIKernel $mesh $opt [bsr getDescription] $Npkt]
-    fluencerep Update $E 0
+    set phi_s [BLIKernel $mesh $opt [bsr getDescription] $Npkt]
+    fluencerep Update $phi_s 1
     set comm [.output.comment get 1.0 end]
     write_fluence "$ofn" $mesh $E "$comm"
     renwin Render

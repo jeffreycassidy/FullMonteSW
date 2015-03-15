@@ -75,7 +75,7 @@ template<typename T>T convert_string(std::string s)
 	return t;
 }
 
-template<>std::string convert_string(std::string s){ return s; }
+template<>inline std::string convert_string(std::string s){ return s; }
 
 
 class ast_visitor {

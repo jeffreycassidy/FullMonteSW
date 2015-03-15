@@ -8,56 +8,6 @@
 #ifndef TIMOSREADER_HPP_
 #define TIMOSREADER_HPP_
 
-#include "TIMOS.hpp"
-
-#include "TIMOSLexer.h"
-#include "TIMOSParser.h"
-
-#include <string>
-#include <cmath>
-#include <array>
-#include <vector>
-#include <iostream>
-
-#include <FullMonte/Storage/CommonParser/ANTLRParser.hpp>
-
-#include <FullMonte/Geometry/TetraMesh.hpp>
-#include <FullMonte/Geometry/Material.hpp>
-#include <FullMonte/Geometry/SourceDescription.hpp>
-
-class Reader {
-public:
-	virtual TetraMesh 						mesh()			const=0;
-	virtual std::vector<Material> 			materials() 	const=0;
-	virtual std::vector<SourceDescription*> sources()		const=0;
-
-	virtual void clear()=0;
-};
-
-class TIMOSReader {
-	std::string sourceFn_,optFn_,meshFn_,legendFn_;
-public:
-	TIMOSReader() {}
-	TIMOSReader(std::string pfx) : sourceFn_(pfx+".source"),optFn_(pfx+".opt"),meshFn_(pfx+".mesh"),legendFn_(pfx+".legend"){}
-
-	virtual ~TIMOSReader(){}
-
-	void setMeshFileName(std::string fn){ meshFn_=fn; }
-	void setOpticalFileName(std::string fn){ optFn_=fn; }
-	void setSourceFileName(std::string fn){ sourceFn_=fn; }
-	void setLegendFileName(std::string fn){ legendFn_=fn; }
-
-	virtual TetraMesh						mesh() const;
-	virtual std::vector<Material>			materials() const;
-	virtual std::vector<SourceDescription*>	sources() const;
-
-	virtual std::vector<SimpleMaterial>		materials_simple() const;
-
-	virtual std::vector<LegendEntry> 		legend() const;
-
-	virtual void clear(){}
-};
-
 namespace TIMOS {
 
 class ParserDef {
@@ -73,9 +23,6 @@ public:
 	ADD_START_RULE(TIMOS,Legend,legendfile)
 
 };
-
-
-
 
 class sourcefile_ast_visitor : public ANTLR3CPP::ast_visitor {
 	std::vector<Source> src;
@@ -239,8 +186,6 @@ public:
 
 
 };
-
-
 
 
 #endif /* TIMOS_HPP_ */

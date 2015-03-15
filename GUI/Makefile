@@ -1,0 +1,2 @@
+test:
+	wish bladdergui.tcl

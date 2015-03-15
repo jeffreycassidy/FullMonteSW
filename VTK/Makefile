@@ -21,6 +21,8 @@ libFullMonteVTK.so: FullMonteVTK.o FullMonteVTK_wrap.o TetraMeshTCL.o
 		-lvtkCommonCore-6.1										\
 		-lvtkCommonCoreTCL-6.1									\
 		-lvtkRenderingCore-6.1									\
+		-lvtkInteractionWidgets-6.1								\
+		-lvtkFiltersGeneral-6.1									\
 		-o $@ $^
 
 clean:

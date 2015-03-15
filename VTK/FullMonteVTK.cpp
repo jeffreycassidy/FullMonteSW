@@ -18,6 +18,7 @@
 #include <vtkActor.h>
 #include <vtkPolyDataMapper.h>
 #include <vtkFloatArray.h>
+#include <vtkCommand.h>
 
 #include <limits>
 
@@ -241,6 +242,7 @@ vtkActor* VTKMeshRep::getSourceActor(const SourceDescription* sd) const
 	if (const BallSourceDescription* bsd = dynamic_cast<const BallSourceDescription*>(sd))
 		return getSourceActor(bsd);
 	assert(!"Unrecognized source in getSourceActor");
+	return nullptr;
 }
 
 vtkActor* VTKMeshRep::getSourceActor(const BallSourceDescription* bsd) const
@@ -361,4 +363,69 @@ void VTKSurfaceFluenceRep::Update(const std::vector<double>& E,bool is_per_area)
 	mapper->GetLookupTable()->SetRange(0,phi_max);
 
 	actor_->GetMapper()->Update();
+}
+
+
+
+
+void VTKPointSourceRep::moveTo(const std::array<double,3> p)
+{
+	assert(ips_);
+	ips_->setOrigin(p);
+
+	assert(pw_);
+	pw_->SetPosition(p[0],p[1],p[2]);
+
+	cout << "VTKPointSourceRep moved to " << p[0] << ' ' << p[1] << ' ' << p[2] << endl;
+};
+
+std::array<double,3> VTKPointSourceRep::getPosition() const
+{
+	Point<3,double> p;
+	assert(pw_);
+
+	pw_->GetPosition(p.data());
+
+	return p;
+}
+
+
+// callback function called when the user moves the point
+void VTKPointSourceRep::callbackFunc(vtkObject* caller,unsigned long eid,void *clientdata,void *calldata)
+{
+	assert(clientdata);
+	assert(eid==EndInteractionEvent);
+
+	VTKPointSourceRep *psr = static_cast<VTKPointSourceRep*>(clientdata);
+
+	Point<3,double> p = Point<3,double>(psr->getPosition());
+	psr->ips_->setOrigin(p);
+
+	cout << "VTKPointSourceRep updated to " << p << endl;
+}
+
+void VTKPointSourceRep::Update()
+{
+	if (!pw_)
+		pw_=vtkPointWidget::New();
+	if (!cb_)
+		cb_=vtkCallbackCommand::New();
+
+	// set up the widget for manipulating the point source
+	pw_->OutlineOn();
+	pw_->ZShadowsOn();
+	pw_->XShadowsOn();
+	pw_->YShadowsOn();
+	//pw_->SetEnabled(1);
+	meshrep_.getPoints()->ComputeBounds();
+	pw_->PlaceWidget(meshrep_.getPoints()->GetBounds());
+
+	// setup callback object
+	cb_->SetClientData(this);
+	cb_->SetCallback(callbackFunc);
+
+	pw_->AddObserver(vtkCommand::EndInteractionEvent,cb_);
+
+	//std::function<void(vtkObject*,unsigned long,void*,void*)>
+		//([this](vtkObject* obj,unsigned long eid,void* clientdata,void* calldata)))
 }

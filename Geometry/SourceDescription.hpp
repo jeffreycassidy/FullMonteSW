@@ -51,6 +51,9 @@ class PointSourceDescription : virtual public SourceDescription {
 public:
 	PointSourceDescription(const Point<3,double>& p_,double w_=1.0) : SourceDescription(w_),origin(make_pair(p_,0)){}
 
+	void setOrigin(const Point<3,double> p){ origin.first=p; }
+	void setOrigin(const std::array<double,3> p){ origin.first=Point<3,double>(p); }
+
 	Point<3,double> getOrigin() const { return origin.first; }
 	unsigned getTetraID() const { return origin.second; }
 };
@@ -61,8 +64,9 @@ public:
 };
 
 class IsotropicPointSourceDescription : public IsotropicSourceDescription, public PointSourceDescription {
+	static constexpr double nan = std::numeric_limits<double>::quiet_NaN();
 public:
-	IsotropicPointSourceDescription(const Point<3,double>& p_,double w_=1.0) : PointSourceDescription(p_,w_){};
+	IsotropicPointSourceDescription(const Point<3,double>& p_=Point<3,double>{nan,nan,nan},double w_=1.0) : PointSourceDescription(p_,w_){};
 
 	virtual string operator()() const { return "Isotropic point source"; }
 	virtual string timos_str(unsigned long long=0) const;

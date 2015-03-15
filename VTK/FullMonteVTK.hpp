@@ -28,6 +28,29 @@
 	$1 = a;
 }
 
+%typemap(out) std::array<double,3>
+{
+	std::array<double,3> a=$1;
+	Tcl_Obj* const p[] = {
+		Tcl_NewDoubleObj(a[0]),
+		Tcl_NewDoubleObj(a[1]),
+		Tcl_NewDoubleObj(a[2])};
+
+	Tcl_Obj* obj = Tcl_NewListObj(3,p);
+	Tcl_SetObjResult(interp,obj);
+}
+
+
+%typemap(in) std::array<double,3>
+{
+	std::array<double,3> a;
+	std::stringstream ss(Tcl_GetString($input));
+	for(unsigned i=0;i<3;++i)
+		ss >> a[i];
+	$1 = a;
+}
+
+
 %typemap(in) Point<3,double>
 {
 	Point<3,double> p;
@@ -46,6 +69,7 @@ VTK_TYPEMAP(vtkLegendBoxActor)
 VTK_TYPEMAP(vtkLookupTable)
 VTK_TYPEMAP(vtkActor)
 VTK_TYPEMAP(vtkScalarBarActor)
+VTK_TYPEMAP(vtkPointWidget)
 
 %{
 
@@ -74,6 +98,9 @@ struct LegendEntry {
 #include <vtkActor.h>
 #include <vtkMapper.h>
 #include <vtkScalarBarActor.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkPointWidget.h>
+#include <vtkCallbackCommand.h>
 
 #include <FullMonte/Geometry/TetraMesh.hpp>
 #include <FullMonte/Geometry/SourceDescription.hpp>
@@ -165,6 +192,50 @@ public:
 	void Update();
 
 	vtkActor* getActor(){ if (!actor_) Update(); return actor_; }
+};
+
+class VTKPointSourceRep {
+	const VTKMeshRep& meshrep_;
+
+	vtkPointWidget* pw_=nullptr;
+	//vtkRenderWindowInteractor* iren_=nullptr;
+	IsotropicPointSourceDescription *ips_=nullptr;
+
+	// VTK callback function
+	static void callbackFunc(vtkObject* caller,unsigned long eid,void *clientdata,void *calldata);
+
+	vtkCallbackCommand* cb_=nullptr;
+
+public:
+
+	VTKPointSourceRep(const VTKMeshRep& mesh,const std::array<double,3> p0) :
+		meshrep_(mesh), ips_(new IsotropicPointSourceDescription(Point<3,double>(p0))){ Update(); }
+
+	// in this case, ips is a non-owning pointer
+//	VTKPointSourceRep(const VTKMeshRep& mesh,vtkRenderWindowInteractor* iren_,IsotropicPointSourceDescription* ips) :
+//		meshrep_(mesh),iren_(iren_),ips_(ips){ Update(); }
+
+	~VTKPointSourceRep()
+	{
+		if(cb_)
+			cb_->Delete();
+		if(pw_)
+			pw_->Delete();
+	}
+
+	// move point using means other than the interactor (eg. text entry) and update interactor appropriately
+	void moveTo(std::array<double,3>);
+
+	// gets the current position of the interactor
+	std::array<double,3> getPosition() const;
+
+	// not sure if Update is the right name here - really more of a create?
+	void Update();
+
+	IsotropicPointSourceDescription getSourceDescription() const { return *ips_; }
+
+	vtkPointWidget* getWidget() { if(!pw_) Update(); return pw_; }
+	//vtkActor*		getActor() 	{ if (!actor_) Update(); return actor_; }
 };
 
 class VTKSurfaceFluenceRep {

@@ -15,6 +15,7 @@
 
 #include <unordered_map>
 
+#include "TIMOS.hpp"
 #include "TIMOSReader.hpp"
 
 using namespace std;
@@ -133,7 +134,7 @@ std::vector<SourceDescription*> TIMOSReader::sources() const
 
 std::vector<LegendEntry> TIMOSReader::legend() const
 {
-	std::vector<TIMOS::LegendEntry> l = TIMOS::parse_legend(legendFn_);
+	std::vector<LegendEntry> l = TIMOS::parse_legend(legendFn_);
 
 	std::vector<LegendEntry> L(l.size());
 

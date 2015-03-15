@@ -163,7 +163,7 @@ template<size_t D,class T>class Point : public array<T,D>
 	Point(const Point& P_) : array<T,D>(P_){};
 	Point(const T* p_)     { copy(p_,p_+3,array<T,D>::begin()); }
 
-	template<typename U>explicit Point(std::array<U,D> a){ boost::copy(a,array<T,D>::begin()); }
+	template<typename U>explicit Point(const std::array<U,D> a){ boost::copy(a,array<T,D>::begin()); }
 	template<typename U>explicit Point(const U* p){ boost::copy(p,array<T,D>::begin()); }
 
 	Point operator+(const Vector<D,T>& v) const { Point t; for(unsigned i=0;i<D;++i){ t[i]=(*this)[i]+v[i]; } return t; }
