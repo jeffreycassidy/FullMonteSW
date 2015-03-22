@@ -19,6 +19,7 @@
 #include <vtkPolyDataMapper.h>
 #include <vtkFloatArray.h>
 #include <vtkCommand.h>
+#include <vtkProperty.h>
 
 #include <limits>
 
@@ -366,6 +367,93 @@ void VTKSurfaceFluenceRep::Update(const std::vector<double>& E,bool is_per_area)
 }
 
 
+void VTKVolumeSurfaceRep::Update(const std::vector<double>& phi_v)
+{
+	if (!pd_)
+	{
+		pd_ = vtkPolyData::New();
+		pd_->SetPoints(meshrep_.getPoints());
+
+		pd_->SetPolys(vtkCellArray::New());
+
+		pd_->GetCellData()->SetActiveScalars("fluence");
+		pd_->GetCellData()->SetScalars(vtkFloatArray::New());
+	}
+
+	vtkFloatArray *phi_field = vtkFloatArray::SafeDownCast(pd_->GetCellData()->GetScalars());
+	assert(phi_field);
+	phi_field->Initialize();
+
+	vtkCellArray *ca = pd_->GetPolys();
+	ca->Initialize();
+
+	if (!phi_v.size())
+		return;
+
+	double phi_min=std::numeric_limits<double>::infinity();
+	double phi_max=-phi_min;
+	double phi;
+
+	size_t Nf = meshrep_.getMesh().getNf()+1;
+
+	unsigned nnz=0;
+	for(unsigned i=0;i<surfaceElements_.size(); ++i)
+	{
+		assert(surfaceElements_[i].second < phi_v.size());
+		if ((phi = phi_v[surfaceElements_[i].second]) > 0.0 && meshrep_.getMesh().getTetraVolume(surfaceElements_[i].second) > 1e-6)
+		{
+			++nnz;
+			assert(surfaceElements_[i].first < Nf);
+			std::array<unsigned,3>  IDps = meshrep_.getMesh().getFacePointIDs(surfaceElements_[i].first);
+			std::array<vtkIdType,3> IDps_vtk;
+			boost::copy(IDps, IDps_vtk.begin());
+			ca->InsertNextCell(3,IDps_vtk.data());
+			phi_min = min(phi_min,phi);
+			phi_max = max(phi_max,phi);
+			phi_field->InsertNextTuple1(phi);
+		}
+	}
+
+	pd_->SetPolys(ca);
+	pd_->SetPoints(meshrep_.getPoints());
+
+	if (!actor_)
+	{
+		actor_ = vtkActor::New();
+
+		vtkPolyDataMapper* mapper = vtkPolyDataMapper::New();
+		actor_->SetMapper(mapper);
+	}
+
+	vtkPolyDataMapper *mapper = vtkPolyDataMapper::SafeDownCast(actor_->GetMapper());
+	assert(mapper);
+
+	mapper->SetInputData(pd_);
+
+	vtkLookupTable* lut = vtkLookupTable::New();
+
+	//assert(!mapper->GetLookupTable());
+	mapper->SetLookupTable(lut);
+
+	cout << "  added " << nnz << " nonzero elements ranging [" << phi_min << ',' << phi_max << ']' << endl;
+
+	if (!isnan(range_.first))
+		phi_min=range_.first;
+	if (!isnan(range_.second))
+		phi_max=range_.second;
+
+
+	cout << "  displaying fluence range [" << phi_min << ',' << phi_max << ']' << endl;
+
+	mapper->ScalarVisibilityOn();
+	mapper->UseLookupTableScalarRangeOn();
+
+	lut->SetRange(phi_min,phi_max);
+	lut->SetNanColor(1.0,0.8,0.2,1.0);
+
+	actor_->GetMapper()->Update();
+}
+
 
 
 void VTKPointSourceRep::moveTo(const std::array<double,3> p)
@@ -394,7 +482,7 @@ std::array<double,3> VTKPointSourceRep::getPosition() const
 void VTKPointSourceRep::callbackFunc(vtkObject* caller,unsigned long eid,void *clientdata,void *calldata)
 {
 	assert(clientdata);
-	assert(eid==EndInteractionEvent);
+	assert(eid==vtkCommand::EndInteractionEvent);
 
 	VTKPointSourceRep *psr = static_cast<VTKPointSourceRep*>(clientdata);
 

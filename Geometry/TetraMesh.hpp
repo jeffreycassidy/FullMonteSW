@@ -200,8 +200,8 @@ class TetraMesh : public TetraMeshBase {
     TriSurf extractMaterialBoundary(unsigned matID) const;
     vector<unsigned> getRegionBoundaryTris(unsigned r) const;
 
-    /// Extracts the face point IDs and tetra IDs corresponding to a given surface
-    vector<pair<FaceByPointID,unsigned>> getRegionBoundaryTrisAndTetras(unsigned r) const;
+    /// Extracts the face IDs and tetra IDs corresponding to a given surface
+    vector<pair<unsigned,unsigned>> getRegionBoundaryTrisAndTetras(unsigned r0,unsigned r1=-1U) const;
 
     TriSurf extractRegionSurface(const vector<unsigned>& tetIDs) const;
 

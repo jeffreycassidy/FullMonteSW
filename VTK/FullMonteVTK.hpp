@@ -294,5 +294,80 @@ public:
 	}
 };
 
+class VTKVolumeSurfaceRep {
+	const VTKMeshRep& meshrep_;
+	std::pair<double,double> range_=make_pair(std::numeric_limits<double>::quiet_NaN(),std::numeric_limits<double>::quiet_NaN());
+
+	// each pair contains (face ID, tetra ID)
+	std::vector<std::pair<unsigned,unsigned>> surfaceElements_;
+
+	vtkActor* actor_=nullptr;
+	vtkPolyData* pd_=nullptr;
+	vtkScalarBarActor *scale_=nullptr;
+
+public:
+
+	VTKVolumeSurfaceRep(const VTKMeshRep& meshrep,unsigned r0) : meshrep_(meshrep),
+		surfaceElements_(meshrep.getMesh().getRegionBoundaryTrisAndTetras(r0,-1U))
+			{ Update(std::vector<double>(meshrep.getMesh().getNt()+1,0.0)); }
+
+	VTKVolumeSurfaceRep(const VTKMeshRep& meshrep,unsigned r0,unsigned r1) : meshrep_(meshrep),
+	surfaceElements_(meshrep.getMesh().getRegionBoundaryTrisAndTetras(r0,r1))
+		{ Update(std::vector<double>(meshrep.getMesh().getNt()+1,0.0)); }
+
+//	VTKVolumeSurfaceRep(const VTKMeshRep& meshrep,const std::vector<double>& E,bool is_per_area) : meshrep_(meshrep)
+//		{ Update(E,is_per_area); }
+
+	VTKVolumeSurfaceRep(const VTKVolumeSurfaceRep&) = delete;
+	VTKVolumeSurfaceRep(VTKVolumeSurfaceRep&&) = delete;
+
+	~VTKVolumeSurfaceRep(){
+		if (actor_)
+		{
+			actor_->GetMapper()->Delete();
+			actor_->Delete();
+		}
+		if (pd_)
+			pd_->Delete();
+		if (scale_)
+			scale_->Delete();
+	}
+
+	void setRange(double rmin,double rmax){
+		range_=make_pair(rmin,rmax);
+		if (scale_)
+			scale_->SetLookupTable(actor_->GetMapper()->GetLookupTable());
+	}
+
+	// updates the rep to use fluence vector phi_v and region r
+	void Update(const std::vector<double>& phi_v);
+
+	vtkScalarBarActor* getScaleBar()
+	{
+		if (!actor_)
+			Update(std::vector<double>());
+
+		assert(actor_);
+
+		if (!scale_)
+		{
+			scale_ = vtkScalarBarActor::New();
+			scale_->SetLookupTable(actor_->GetMapper()->GetLookupTable());
+			scale_->SetOrientationToVertical();
+			scale_->SetTitle("Fluence at region surface (ph/mm2)");
+			scale_->DrawColorBarOn();
+			scale_->DrawTickLabelsOn();
+		}
+		return scale_;
+	}
+
+	vtkActor* getActor(){
+		if (!actor_)
+			Update(std::vector<double>());
+		return actor_;
+	}
+
+};
+
 
 #endif /* FULLMONTEVTK_HPP_ */

@@ -778,27 +778,30 @@ vector<unsigned> TetraMesh::getRegionBoundaryTris(unsigned r) const
     return tri;
 }
 
-vector<pair<FaceByPointID,unsigned>> TetraMesh::getRegionBoundaryTrisAndTetras(unsigned r) const
+/** returns a vector containing (face ID, tetra ID) for each face on the boundary of r0; if r1 is specified, then
+ * it also requires that the face bound r1 (ie. is an r0-r1 boundary)
+ *
+ * The tetra ID returned is the tetra in region r0.
+ */
+
+vector<pair<unsigned,unsigned>> TetraMesh::getRegionBoundaryTrisAndTetras(unsigned r0,unsigned r1) const
 {
-	vector<pair<FaceByPointID,unsigned>> v;
+	vector<pair<unsigned,unsigned>> v;
 
 	for(unsigned i=0;i<vecFaceID_Tetra.size();++i)
 	{
 		int Ta = vecFaceID_Tetra[i].first, Tb = vecFaceID_Tetra[i].second;
-		if (Ta < 0 || Tb < 0)
-		{
-			cerr << "ERROR: Invalid vecFaceID_Tetra map" << endl;
-			return v;
-		}
+		assert(Ta >= 0 && Tb >= 0);
+		assert(Ta < T_m.size() && Tb < T_m.size());
 
 		unsigned ma = T_m[Ta], mb = T_m[Tb];
 
-		if (ma == mb)								// no boundary
+		if (ma == mb)														// no boundary
 			continue;
-		else if (ma == r)							// boundary; Ta is within region
-			v.push_back(make_pair(F_p[i],Ta));
-		else if (mb == r)							// boundary; Tb is within region
-			v.push_back(make_pair(F_p[i],Tb));
+		else if (ma == r0 && (r1==-1U || mb==r1))							// boundary; Ta is within region
+			v.push_back(make_pair(i,Ta));
+		else if (mb == r0 && (r1 ==-1U || ma == r1))						// boundary; Tb is within region
+			v.push_back(make_pair(i,Tb));
 	}
 
 	return v;

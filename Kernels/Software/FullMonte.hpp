@@ -51,7 +51,7 @@ public:
 	unsigned randseed=100;
 	unsigned Nthreads=8;
 	unsigned Nstep_max=10000;
-	unsigned Nhit_max=1000;
+	unsigned Nhit_max=10000;
 };
 
 ostream& operator<<(ostream& os,const RunOptions& opts);

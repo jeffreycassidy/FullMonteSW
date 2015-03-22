@@ -5,7 +5,7 @@ load libFullMonteTIMOS_TCL.so
 load libFullMonteBLI_TCL.so
 
 #default file prefix
-set pfx "/Users/jcassidy/src/FullMonteSW/data/mouse"
+set pfx "/Users/jcassidy/src/FullMonteSW/FullMonte/data/mouse"
 
 #override with 1st cmdline arg
 if { $argc >= 1 } { set pfx [lindex $argv 0] }
@@ -210,7 +210,7 @@ button .output.save -text "Calculate & Save" -command {
     set phi_s [BLIKernel $mesh $opt [bsr getDescription] $Npkt]
     fluencerep Update $phi_s 1
     set comm [.output.comment get 1.0 end]
-    write_fluence "$ofn" $mesh $E "$comm"
+    write_fluence "$ofn" $mesh $phi_s "$comm"
     renwin Render
 }
 pack .output.save

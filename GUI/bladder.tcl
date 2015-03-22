@@ -55,8 +55,27 @@ puts "Extracted cell mesh, total [$ug GetNumberOfCells] cells and [$ug GetNumber
 
 # Create GUI
 
+global phimin phimax
+set phimin 0.0
+set phimax 50.0
+
+proc updatescale {} {
+    if { [info exists ::phi_v]==1 } {
+        global phi_v phimin phimax
+        fluencerep setRange $phimin $phimax
+        fluencerep Update $phi_v
+        renwin Render
+    } else {
+        puts "INFO: updatescale{}: No fluence vector yet"
+    }
+    return 1
+}
+
+global scalevar
+set scalevar "cm"
+
 labelframe .geom -text "Problem geometry"
-makeMeshFrame .geom $meshfn $mesh V
+makeMeshFrame .geom $meshfn $mesh V scalevar
 pack .geom
 
 labelframe .source -text "Source properties"
@@ -71,18 +90,24 @@ labelframe .sim -text "Simulation options"
 makeSimFrame .sim doSim
 pack .sim
 
+global phi_v
 
 proc doSim {} {
-    global mesh mats src
+    global mesh mats src scalevar phi_v E
     for { set i 0 } { $i < [llength $mats] } { incr i } {
         foreach p [list mu_a mu_s g n] {
             set $p [.opt.mats.$p$i get]
             SimpleMaterial_${p}_set [lindex $mats $i] [.opt.mats.$p$i get]
         }
     }
+    
+    if { $scalevar == "mm" } { set units_per_cm 10 } elseif { $scalevar == "cm" } { set units_per_cm 1 } else {
+        puts "WARNING: Invalid scale unit $scalevar" }
 
-
-    VolumeKernel $mesh $mats [psr getSourceDescription] [.sim.opts.npkt get]
+    set phi_v [VolumeKernel $mesh $mats [psr getSourceDescription] [.sim.opts.npkt get] $units_per_cm $E]
+    fluencerep Update $phi_v
+    
+    renwin Render
 }
 
 
@@ -143,19 +168,24 @@ for { set i 0 } { $i < [llength $legend] } { incr i } {
 
 # actor: surface fluence dataset
 
-VTKSurfaceFluenceRep fluencerep V
+#VTKSurfaceFluenceRep fluencerep V
+
+VTKVolumeSurfaceRep fluencerep V 2 1
 
 set fluenceactor [fluencerep getActor]
-    ren AddActor $fluenceactor
+ren AddActor $fluenceactor
+
+#set fluenceactor [fluencerep getActor]
+#    ren AddActor $fluenceactor
 
 
 ren AddViewProp $legendactor
 
-#set scalebar [fluencerep getScaleBar]
-#    $scalebar SetPosition 0.1  0.3
-#    $scalebar SetPosition2 0.2 0.7
+set scalebar [fluencerep getScaleBar]
+    $scalebar SetPosition 0.1  0.3
+    $scalebar SetPosition2 0.15 0.7
 
-#ren AddViewProp $scalebar
+ren AddViewProp $scalebar
 
 
 

@@ -137,18 +137,31 @@ proc makePointSourceFrame { parent name } {
 
 
 ####################################################################################################################################
-## Mesh properties (display only)
+## Mesh properties
 
-proc makeMeshFrame { parent meshfn mesh meshrep } {
-
+proc makeMeshFrame { parent meshfn mesh meshrep scalevar } {
     frame $parent.mesh
 
     label $parent.mesh.meshlabel -text "Mesh file: "
     label $parent.mesh.meshfntext  -text $meshfn
 
+
     grid $parent.mesh.meshlabel    -row 0 -column 0
     grid $parent.mesh.meshfntext     -row 0 -column 1
+
     pack $parent.mesh
+
+    frame $parent.scale
+
+    label $parent.scale.sclabel -text "Scale: "
+    radiobutton $parent.scale.mm -text "mm" -variable $scalevar -value "mm"
+    radiobutton $parent.scale.cm -text "cm" -variable $scalevar -value "cm"
+
+    pack $parent.scale.sclabel -side left
+    pack $parent.scale.mm -side left
+    pack $parent.scale.cm -side left
+    pack $parent.scale
+
 }
 
 
@@ -159,6 +172,8 @@ proc makeMeshFrame { parent meshfn mesh meshrep } {
 
 proc makeSimFrame { parent simcmd } {
     frame $parent.opts
+
+    global phimin phimax
     
     set Npkt 1000000
     
@@ -173,16 +188,35 @@ proc makeSimFrame { parent simcmd } {
     
     label $parent.opts.nthlabel -text "Threads: "
     entry $parent.opts.nth -textvariable Nth
-    $parent.opts.nth insert 0 "$Nth"
+    $parent.opts.nth insert 0 $Nth
     
     grid $parent.opts.nthlabel 	-column 0 	-row 1
     grid $parent.opts.nth			-column 1	-row 1
+
+    set E 50
+    label $parent.opts.elabel -text "Total energy (J): "
+    entry $parent.opts.e -textvariable E
+    $parent.opts.e insert 0 $E
+
+    grid $parent.opts.elabel -column 0 -row 2
+    grid $parent.opts.e -column 1 -row 2
+
+    set phimin [format "%6.3f" $phimin]
+    set phimax [format "%6.3f" $phimax]
+
+    label $parent.opts.fluencerange -text "Fluence range to show (J/cm2):"
+    entry $parent.opts.fluencemin -textvariable phimin -validate focusout -validatecommand "updatescale"
+    entry $parent.opts.fluencemax -textvariable phimax -validate focusout -validatecommand "updatescale"
+
+    grid $parent.opts.fluencerange -column 0 -row 3
+    grid $parent.opts.fluencemin -column 1 -row 3
+    grid $parent.opts.fluencemax -column 2 -row 3
     
     label $parent.opts.ofnlabel -text "Output file name: "
     entry $parent.opts.ofn -textvariable ofn
     
-    grid $parent.opts.ofnlabel 	-column 0 	-row 2
-    grid $parent.opts.ofn			-column 1	-row 2
+    grid $parent.opts.ofnlabel 	-column 0 	-row 4
+    grid $parent.opts.ofn			-column 1	-row 4
     
     pack $parent.opts
     
