@@ -78,17 +78,17 @@ FaceByPointID TetraByPointID::getFace(unsigned faceNum)
 	return FaceByPointID(tmp);
 }
 
-unsigned TetraByPointID::getOppositePoint(unsigned faceNum) const
-{
-	switch(faceNum){
-		case 0: return (*this)[3];
-		case 1: return (*this)[1];
-		case 2: return (*this)[2];
-		case 3: return (*this)[0];
-		default: assert(0); 
-	}
-    return -1;
-}
+//unsigned TetraByPointID::getOppositePoint(unsigned faceNum) const
+//{
+//	switch(faceNum){
+//		case 0: return (*this)[3];
+//		case 1: return (*this)[1];
+//		case 2: return (*this)[2];
+//		case 3: return (*this)[0];
+//		default: assert(0);
+//	}
+//    return -1;
+//}
 
 UnitVector<3,double> uvect3FromPolar(double phi,double lambda)
 {

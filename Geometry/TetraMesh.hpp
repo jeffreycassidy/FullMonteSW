@@ -7,6 +7,7 @@
 #include <map>
 #include <inttypes.h>
 #include <functional>
+#include <unordered_map>
 
 #include "TriSurf.hpp"
 #include "Face.hpp"
@@ -14,10 +15,39 @@
 #include "TetraMeshBase.hpp"
 
 #include <boost/shared_array.hpp>
+#include <boost/functional/hash.hpp>
 
 #include "newgeom.hpp"
 
 #include <emmintrin.h>
+
+constexpr std::array<std::array<unsigned char,3>,4> tetra_face_indices {
+	std::array<unsigned char,3>{ 0, 1, 2 },
+	std::array<unsigned char,3>{ 0, 1, 3 },
+	std::array<unsigned char,3>{ 0, 2, 3 },
+	std::array<unsigned char,3>{ 1, 2, 3 }
+};
+
+struct face_opposite {
+	std::array<unsigned char,3> faceidx;
+	unsigned oppidx;
+};
+
+constexpr std::array<face_opposite,4> tetra_face_opposite_point_indices {
+	face_opposite{std::array<unsigned char,3>{ 0, 1, 2 },3},
+	face_opposite{std::array<unsigned char,3>{ 0, 1, 3 },2},
+	face_opposite{std::array<unsigned char,3>{ 0, 2, 3 },1},
+	face_opposite{std::array<unsigned char,3>{ 1, 2, 3 },0}
+};
+
+constexpr std::array<std::array<unsigned char,2>,6> tetra_edge_indices {
+	std::array<unsigned char,2>{ 0, 1},
+	std::array<unsigned char,2>{ 0, 2},
+	std::array<unsigned char,2>{ 0, 3},
+	std::array<unsigned char,2>{ 1, 2},
+	std::array<unsigned char,2>{ 1, 3},
+	std::array<unsigned char,2>{ 2, 3}
+};
 
 using namespace std;
 
@@ -30,22 +60,29 @@ class TetraMesh : public TetraMeshBase {
 	vector<TetraByFaceID>	    T_f;        		// tetra -> 4 face IDs
     vector<FaceByPointID>       F_p;        		// face ID -> 3 point IDs
 	vector<Face>			    F;          		// faces (with normals and constants)
-	vector<pair<int,int> >      vecFaceID_Tetra;  	// for each face f, vecFaceID_Tetra[f] gives the tetras adjacent to the face
+	vector<std::array<unsigned,2>>      F_t;  	// for each face f, vecFaceID_Tetra[f] gives the tetras adjacent to the face
     vector<Tetra>               tetras;     		// new SSE-friendly data structure
 
     vector<vector<unsigned>>	tetra_perm;
 
+    template<class Archive>void serialize(Archive& ar,const unsigned ver)
+    {
+    	ar & boost::serialization::base_object<TetraMesh>(*this);
+    	tetrasToFaces();
+    }
+
     void make_tetra_perm();
 
     // boundary data structures; map with key=volume-set ID, value=surface-set ID
-    map<unsigned,unsigned> P_boundary_ID;
-	map<unsigned,unsigned> F_boundary_ID;
+//    map<unsigned,unsigned> P_boundary_ID;
+//	map<unsigned,unsigned> F_boundary_ID;
 
-    map<TetraByPointID,unsigned> tetraMap;
+    std::unordered_map<TetraByPointID,unsigned,boost::hash<std::array<unsigned,4>>> tetraMap;
 
-	int  tetrasToFaces(vector<Face>&,vector<TetraByPointID>&,const vector<Point<3,double> >&,vector<TetraByFaceID>&);
+	void tetrasToFaces();
+	vector<Tetra> makeKernelTetras() const;
 
-    map<FaceByPointID,unsigned> faceMap;
+    std::unordered_map<FaceByPointID,unsigned,boost::hash<std::array<unsigned,3>>> faceMap;
 
 	public:
 
@@ -66,39 +103,39 @@ class TetraMesh : public TetraMeshBase {
     tetra_const_iterator tetraIDBegin() const { return T_p.begin()+1; }
     tetra_const_iterator tetraIDEnd()   const { return T_p.end();     }
 
-    class boundary_f_const_iterator : public map<unsigned,unsigned>::const_iterator {
-        const TetraMesh& __m;
-
-        public:
-        using map<unsigned,unsigned>::const_iterator::operator++;
-        using map<unsigned,unsigned>::const_iterator::operator==;
-        using map<unsigned,unsigned>::const_iterator::operator!=;
-        boundary_f_const_iterator(const TetraMesh& m_,map<unsigned,unsigned>::const_iterator it_) :
-            map<unsigned,unsigned>::const_iterator(it_),__m(m_){ };
-
-        // returns the current face in terms of its surface point IDs (indexes into the boundary point set)
-        FaceByPointID operator*() const {
-            assert((*this)->first != 0);
-            FaceByPointID f_original(__m.F_p[(*this)->first]);
-
-            map<unsigned,unsigned>::const_iterator it=__m.P_boundary_ID.find((unsigned)abs((int)f_original[0]));
-            assert(it != __m.P_boundary_ID.end());
-            f_original[0] = it->second;
-
-            it = __m.P_boundary_ID.find((unsigned)abs((int)f_original[1]));
-            assert(it != __m.P_boundary_ID.end());
-            f_original[1] = it->second;
-
-            it = __m.P_boundary_ID.find((unsigned)abs((int)f_original[2]));
-            assert(it != __m.P_boundary_ID.end());
-            f_original[2] = it->second;
-
-            return f_original;
-            };
-    };
-
-    boundary_f_const_iterator boundaryFaceBegin() const { return boundary_f_const_iterator(*this,F_boundary_ID.begin()); }
-    boundary_f_const_iterator boundaryFaceEnd()   const { return boundary_f_const_iterator(*this,F_boundary_ID.end());   }
+//    class boundary_f_const_iterator : public map<unsigned,unsigned>::const_iterator {
+//        const TetraMesh& __m;
+//
+//        public:
+//        using map<unsigned,unsigned>::const_iterator::operator++;
+//        using map<unsigned,unsigned>::const_iterator::operator==;
+//        using map<unsigned,unsigned>::const_iterator::operator!=;
+//        boundary_f_const_iterator(const TetraMesh& m_,map<unsigned,unsigned>::const_iterator it_) :
+//            map<unsigned,unsigned>::const_iterator(it_),__m(m_){ };
+//
+//        // returns the current face in terms of its surface point IDs (indexes into the boundary point set)
+//        FaceByPointID operator*() const {
+//            assert((*this)->first != 0);
+//            FaceByPointID f_original(__m.F_p[(*this)->first]);
+//
+//            map<unsigned,unsigned>::const_iterator it=__m.P_boundary_ID.find((unsigned)abs((int)f_original[0]));
+//            assert(it != __m.P_boundary_ID.end());
+//            f_original[0] = it->second;
+//
+//            it = __m.P_boundary_ID.find((unsigned)abs((int)f_original[1]));
+//            assert(it != __m.P_boundary_ID.end());
+//            f_original[1] = it->second;
+//
+//            it = __m.P_boundary_ID.find((unsigned)abs((int)f_original[2]));
+//            assert(it != __m.P_boundary_ID.end());
+//            f_original[2] = it->second;
+//
+//            return f_original;
+//            };
+//    };
+//
+//    boundary_f_const_iterator boundaryFaceBegin() const { return boundary_f_const_iterator(*this,F_boundary_ID.begin()); }
+//    boundary_f_const_iterator boundaryFaceEnd()   const { return boundary_f_const_iterator(*this,F_boundary_ID.end());   }
 
     typedef vector<Tetra>::const_iterator tetra_struct_const_iterator;
 
@@ -113,12 +150,14 @@ class TetraMesh : public TetraMeshBase {
 	virtual void Delete(){ delete this; }
 
 	TetraMesh(){};
-	TetraMesh(const TetraMeshBase& Mb) : TetraMeshBase(Mb){ tetrasToFaces(F,T_p,P,T_f); }
+	TetraMesh(const TetraMeshBase& Mb) : TetraMeshBase(Mb)
+		{ tetrasToFaces(); }
+
     TetraMesh(unsigned Np_,unsigned Nt_,unsigned Nf_) : TetraMeshBase(Np_,Nt_),T_f(Nf_+1),F_p(Nf_+1),F(Nf_+1),
-        vecFaceID_Tetra(Nf_+1),tetras(Nt_+1){}
+        F_t(Nf_+1),tetras(Nt_+1){}
 	TetraMesh(string,TetraFileType);
 	TetraMesh(const vector<Point<3,double> >& P_,const vector<TetraByPointID>& T_p_,const vector<unsigned>& T_m_)
-		: TetraMeshBase(P_,T_p_,T_m_) { tetrasToFaces(F,T_p,P,T_f); }
+		: TetraMeshBase(P_,T_p_,T_m_) { tetrasToFaces(); }
     TetraMesh(const double*,unsigned Np,const unsigned*,unsigned Nt);
     ~TetraMesh();
 
@@ -129,9 +168,9 @@ class TetraMesh : public TetraMeshBase {
 
 	// query size of mesh
 	unsigned getNf() const { return F.size()-1; }
-
-    unsigned getNf_boundary() const { return F_boundary_ID.size(); }
-    unsigned getNp_boundary() const { return P_boundary_ID.size(); }
+//
+//    unsigned getNf_boundary() const { return F_boundary_ID.size(); }
+//    unsigned getNp_boundary() const { return P_boundary_ID.size(); }
 
 	// Accessors for various point/face constructs
 	const Point<3,double>&  getPoint(unsigned id)           const { return P[id]; }
@@ -144,7 +183,7 @@ class TetraMesh : public TetraMeshBase {
     Point<3,double>         getTetraPoint(unsigned IDt,unsigned i) const { return P[T_p[IDt][i]]; }
 
     unsigned                getTetraID(TetraByPointID IDt) const {
-        map<TetraByPointID,unsigned>::const_iterator it = tetraMap.find(IDt);
+        auto it = tetraMap.find(IDt);
         return (it == tetraMap.end() ? 0 : it->second);
     }
 
@@ -153,7 +192,7 @@ class TetraMesh : public TetraMeshBase {
 
     // returns the tetra that the given face points into
     unsigned                getTetraIDFromFaceID(int IDf) const
-        { return IDf > 0 ? vecFaceID_Tetra[IDf].first : vecFaceID_Tetra[-IDf].second; }
+        { return IDf > 0 ? F_t[IDf][0] : F_t[-IDf][1]; }
 
     double                  getFaceArea(const FaceByPointID&)   const;
     double                  getFaceArea(int IDf)                const { return getFaceArea(F_p[abs(IDf)]); }
@@ -191,8 +230,8 @@ class TetraMesh : public TetraMeshBase {
     bool checkIntegrity(bool printResults=true) const;
 
     bool faceBoundsRegion(unsigned region,int IDf) const {
-        	pair<unsigned,unsigned> p = vecFaceID_Tetra[abs(IDf)];		// Get the two incident tetras
-        	unsigned r0 = T_m[p.first], r1 = T_m[p.second];				// check material types
+        	array<unsigned,2> p = F_t[abs(IDf)];		// Get the two incident tetras
+        	unsigned r0 = T_m[p[0]], r1 = T_m[p[1]];				// check material types
         	return r0!=r1 && (r1==region || r0==region);
         }
 

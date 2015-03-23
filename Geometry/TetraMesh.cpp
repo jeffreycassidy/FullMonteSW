@@ -6,11 +6,15 @@
 
 #include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/range/adaptor/indexed.hpp>
+#include <boost/range/counting_range.hpp>
+#include <boost/range/adaptor/filtered.hpp>
 
 #include "Material.hpp"
 #include "TetraMesh.hpp"
 
 #include "../Kernels/Software/sse.hpp"
+
+using namespace std;
 
 
 /** Returns a vector<unsigned> of tetra IDs for tetras which have at least one point within a radius r of point p0
@@ -54,7 +58,7 @@ TetraMesh::TetraMesh(const double* p,unsigned Np_,const unsigned* t,unsigned Nt_
         T_m[i]=t[4];
     }
 
-	tetrasToFaces(F,T_p,P,T_f);
+	tetrasToFaces();
 
 	make_tetra_perm();
 }
@@ -67,8 +71,8 @@ vector<unsigned> TetraMesh::facesBoundingRegion(unsigned i) const
 {
 	vector<unsigned> idx;
 
-	for(const auto& f : vecFaceID_Tetra | boost::adaptors::indexed(0U))
-		if (f.value().first != f.value().second && (f.value().first==i || f.value().second==i))
+	for(const auto& f : F_t | boost::adaptors::indexed(0U))
+		if (f.value()[0] != f.value()[1] && (f.value()[0]==i || f.value()[1]==i))
 			idx.push_back(f.index());
 	return idx;
 }
@@ -135,27 +139,8 @@ void TetraMesh::fromBinary(const string& pts,const string& tetras,const string& 
         T_p[i][3] = p[3];
         T_m[i] = p[4];
     }
-	tetrasToFaces(F,T_p,P,T_f);
+	tetrasToFaces();
 }
-
-
-//
-//// writes the face mapping to a Matlab-compatible file
-//bool TetraMesh::writeFileMatlabF(string fn) const
-//{
-//	ofstream of(fn.c_str(),ios_base::out);
-//
-//	if (!of.good())
-//		return false;
-//
-//	assert(F.size()==vecFaceID_Tetra.size());
-//
-//	of << vecFaceID_Tetra.size()-1 << endl;
-//	for(vector<pair<int,int> >::const_iterator it=vecFaceID_Tetra.begin()+1; it != vecFaceID_Tetra.end(); ++it)
-//		of << it->first << " " << it->second << endl;
-//
-//	return true;
-//}
 
 
 
@@ -176,218 +161,157 @@ int TetraMesh::getFaceID(FaceByPointID f) const
 
 	FaceByPointID tmpR = f.getRotateMin();
 
-	map<FaceByPointID,unsigned>::const_iterator it;
-
 	if ((neg = (tmpR[2] < tmpR[1])))
 		swap(tmpR[2],tmpR[1]);
 
-	it = faceMap.find(tmpR);
+	auto it = faceMap.find(tmpR);
 	assert(it != faceMap.end());
 
     return it == faceMap.end() ? 0 : (neg ? it->second : -it->second);
 }
 
 
-/* TetrasToFaces(v,vecTetra_PointID,P)
-
-	v					Vector of Face objects (ID# is index)
-	vecTetra_PointID	Vector of TetraByPointID (4-element lists of point IDs corresponding to v)
-	P					Vector of Point<3,double> coordinates referenced by values above
-
-*/
-
-int TetraMesh::tetrasToFaces(vector<Face>& v,vector<TetraByPointID>& vecTetra_PointID,const vector<Point<3,double> >& P,vector<TetraByFaceID>& vecTetra_FaceID)
+void TetraMesh::tetrasToFaces()
 {
-	typedef pair<FaceByPointID,int> value_type;
-	typedef FaceByPointID mm_key_type;
-	typedef pair<mm_key_type,unsigned> mm_pair_type;
-	multimap <mm_key_type,unsigned> m;
+	cout << "Building mesh data structures" << endl;
+	Point<3,double> O{0.0,0.0,0.0};
 
-	for(auto el : T_p | boost::adaptors::indexed(0))
-		tetraMap.insert(make_pair(el.value(),(unsigned)el.index()));
+	faceMap.clear();
+	tetraMap.clear();
 
-	unsigned i=1;
-	// loop through list of tetrahedra defined by point IDs, creating the tetraGraph
-	for(vector<TetraByPointID>::const_iterator it=vecTetra_PointID.begin()+1; it != vecTetra_PointID.end(); ++it,++i)
+	F.clear();
+	F_p.clear();
+	F_t.clear();
+
+	F.push_back(Face(O,O,O));
+	F_p.push_back(FaceByPointID(0,0,0));
+	F_t.push_back(array<unsigned,2>{0,0});
+
+	T_f = vector<TetraByFaceID>(T_p.size(),TetraByFaceID{0,0,0,0});
+
+	for(auto T : T_p | boost::adaptors::indexed(0U))
 	{
+		TetraByPointID IDps_sort = T.value();
+		boost::sort(IDps_sort);
 
-        assert((*it)[0] > 0 && (*it)[1] > 0 && (*it)[2] > 0 && (*it)[3] > 0);
-        assert((*it)[0] <= P.size() && (*it)[1] <= P.size() && (*it)[2] <= P.size() && (*it)[3] <= P.size());
+        tetraMap.insert(make_pair(IDps_sort,T.index()));
 
-		// Create list of faces from tetrahedra (always sorting ascending)
-		TetraByPointID tmp = it->getSort();
-
-		// multimap m will map a sorted FaceByPointID to a Tetra vertex descriptor & the corresponding opposite point ID
-		m.insert(mm_pair_type(FaceByPointID(tmp[0],tmp[1],tmp[2]),tmp[3]));
-		m.insert(mm_pair_type(FaceByPointID(tmp[0],tmp[2],tmp[3]),tmp[1]));
-		m.insert(mm_pair_type(FaceByPointID(tmp[0],tmp[1],tmp[3]),tmp[2]));
-		m.insert(mm_pair_type(FaceByPointID(tmp[1],tmp[2],tmp[3]),tmp[0]));
-
-        tetraMap.insert(make_pair(tmp,i));
-
-		faceMap.insert(value_type(FaceByPointID(tmp[0],tmp[1],tmp[2]),0));
-		faceMap.insert(value_type(FaceByPointID(tmp[0],tmp[2],tmp[3]),0));
-		faceMap.insert(value_type(FaceByPointID(tmp[0],tmp[1],tmp[3]),0));
-		faceMap.insert(value_type(FaceByPointID(tmp[1],tmp[2],tmp[3]),0));
-	}
-
-    // number faces from 1
-    i=1;
-    for(map<FaceByPointID,unsigned>::iterator it=faceMap.begin(); it != faceMap.end(); ++it,++i)
-        it->second=i;
-
-	// fill in edges of tetraGraph
-	mm_pair_type a,b;
-	unsigned Nf_regular=0;
-
-    // P_boundary_ID maps a point ID to a new 1-based index of the boundary set
-	for(multimap<FaceByPointID,unsigned>::const_iterator it=m.begin(); it != m.end();)
-	{
-		a=*(it++);
-		if (it != m.end() && (*it).first==a.first)
-		{
-			++it;
-			++Nf_regular;
-
-			// check that there is not a face connecting more than two tetrahedra
-			assert(!((*it).first == a.first));
-		}
-		else
+        for(const auto& perm : tetra_face_opposite_point_indices | boost::adaptors::indexed(0U))
         {
-			// we do not have two tetrahedra adjoining this face: it is a boundary
-            P_boundary_ID.insert(make_pair(a.first[0],0));
-            P_boundary_ID.insert(make_pair(a.first[1],0));
-            P_boundary_ID.insert(make_pair(a.first[2],0));
+        	FaceByPointID Ft(
+        			IDps_sort[perm.value().faceidx[0]],
+        			IDps_sort[perm.value().faceidx[1]],
+        			IDps_sort[perm.value().faceidx[2]]);
 
-            map<FaceByPointID,unsigned>::const_iterator dIt = faceMap.find(a.first);
-            assert(dIt != faceMap.end());
+        	auto p = faceMap.insert(make_pair(Ft,F.size()));
 
-			F_boundary_ID.insert(make_pair(dIt->second,0));
+        	if(p.second)			// new tuple inserted; ensure face is such that opposite point is above face
+        	{
+        		F.push_back(Face(P[Ft[0]], P[Ft[1]], P[Ft[2]]));
+
+        		if (F.back().pointHeight(P[IDps_sort[perm.value().oppidx]]) < 0)
+        			F.back().flip();
+        		F_t.push_back(array<unsigned,2>{T.index(),0});
+        		F_p.push_back(Ft);
+        		T_f[T.index()][perm.index()] = p.first->second;			// link the tetra to the face
+        	}
+        	else				// already exists -> up-face already assigned -> this is down-face
+        	{
+        		F_t[p.first->second][1] = T.index();
+        		T_f[T.index()][perm.index()] = -p.first->second;			// link the tetra to the face
+        	}
         }
 	}
 
-    // renumber points from one
-    i=1;
-    for(map<unsigned,unsigned>::iterator it=P_boundary_ID.begin(); it != P_boundary_ID.end(); ++it,++i)
-        it->second=i;
+	unsigned Nf_surf = boost::size(F_t
+			| boost::adaptors::filtered([](array<unsigned,2> i){ return i[1]==0; }));
 
-    // renumber faces from one
-    i=1;
-    for(map<unsigned,unsigned>::iterator it=F_boundary_ID.begin(); it != F_boundary_ID.end(); ++it,++i)
-        it->second=i;
+	cout << "New mesh construction: " << P.size() << " points, " << T_p.size() << " tetras, " << faceMap.size() <<
+			" faces (" << Nf_surf << " surface)" << endl;
 
-    // make sure point ID 0 is not included
-    assert(P_boundary_ID.begin()->first != 0);
-
-    // check that all faces are accounted for
-	assert(2*Nf_regular+F_boundary_ID.size()==m.size());
-
-	cout << "Of " << faceMap.size() << " faces, there are " << Nf_regular << " interior and " << F_boundary_ID.size() << " on the boundary " << endl;
-    cout << "Of " << P.size() << " points, there are " << P_boundary_ID.size() << " on the boundary surface" << endl;
-
-	//================================================================================
-	// Create Face vector
-
-	v.clear();
-	v.resize(faceMap.size()+1); 
-	vector<Face>::iterator vIt=v.begin()+1;
-
-    F_p.clear();
-	F_p.resize(faceMap.size()+1);
-	vector<FaceByPointID>::iterator fIt=F_p.begin()+1;
-
-	// Assign FaceByPointIDs to distinct faces, create vector of Face objects
-	i=1;
-	for(map<FaceByPointID,unsigned>::iterator it=faceMap.begin(); it != faceMap.end(); ++it)
-	{
-        assert(it->first[0] > 0 && it->first[0] <= P.size());
-        assert(it->first[1] > 0 && it->first[1] <= P.size());
-        assert(it->first[2] > 0 && it->first[2] <= P.size());
-		it->second = i++;
-		*(vIt++)=Face(P[it->first[0]],P[it->first[1]],P[it->first[2]]);
-		*(fIt++)=it->first;
-	}
-
-	// Create vector of Tetra objects holding faceID tuples
-	// and a vector mapping from faceID to Tetra
-	// vecFaceID_Tetra[faceID].first is the up-face, and .second is the down-face
-	vecTetra_FaceID.clear();
-	vecTetra_FaceID.resize(vecTetra_PointID.size());
-	vecFaceID_Tetra.clear();
-	vecFaceID_Tetra.resize(v.size());
-
-	i=1;
-	for(vector<TetraByPointID>::const_iterator it=vecTetra_PointID.begin()+1; it != vecTetra_PointID.end(); ++i,++it){
-		unsigned tmp[4];
-		copy(&(*it)[0],&(*it)[4],tmp);
-
-		// find the IDs of the 4 faces enclosing this tetra
-		int id[4]= {
-			getFaceID(FaceByPointID(tmp[0],tmp[1],tmp[2])),
-			getFaceID(FaceByPointID(tmp[0],tmp[2],tmp[3])),
-			getFaceID(FaceByPointID(tmp[0],tmp[3],tmp[1])),
-			getFaceID(FaceByPointID(tmp[1],tmp[3],tmp[2])) };
-
-		vecTetra_FaceID[i] = TetraByFaceID(id);
-
-		// flip faces so that height of the point opposite each face is positive
-		for(int j=0;j<4;++j){
-			unsigned pID=it->getOppositePoint(j);
-			assert(i>0);
-			bool flip=vecTetra_FaceID[i][j]<0;
-			if ((v[abs(vecTetra_FaceID[i][j])].pointHeight(P[pID])<0) ^ flip)
-			{
-				vecTetra_FaceID[i][j] = -vecTetra_FaceID[i][j];
-				id[j]=-id[j];
-			}
-		}
-
-		assert((unsigned)abs(id[0]) <= v.size() && (unsigned)abs(id[1]) <= v.size() &&
-            (unsigned)abs(id[2]) <= v.size() && (unsigned)abs(id[3]) <= v.size()); 
-
-		for(unsigned j=0;j<4;++j){
-			if (id[j]>0)
-				vecFaceID_Tetra[id[j]].first=i;
-			else
-				vecFaceID_Tetra[-id[j]].second=i;
-		}
-
-	}
-
-	/* Validate by calculating height of point over opposite face */
-	cout << setw(100) << setfill('=') << "" << setfill(' ') << endl;
-	cout << "Post-check" << endl;
-	checkFaces();
-
-    cout << "Loading tetra structure" << endl;
-
-    tetras.resize(getNt()+1);
-
-    for(unsigned i=1;i<getNt()+1; ++i)
-    {
-        tetras[i].IDfs = getTetraByFaceID(i);
-        tetras[i].matID = getMaterial(i);
-
-        UnitVector<3,double> n[4];
-        double C[4];
-        Face F_tmp;
-        for(unsigned j=0;j<4;++j)
-        {
-            F_tmp = getFace(tetras[i].IDfs[j]);
-            tetras[i].adjTetras[j] = getTetraIDFromFaceID(-tetras[i].IDfs[j]);
-            n[j] = F_tmp.getNormal();
-            C[j] = F_tmp.getConstant();
-        }
-
-        tetras[i].nx=_mm_setr_ps(n[0][0],n[1][0],n[2][0],n[3][0]);
-        tetras[i].ny=_mm_setr_ps(n[0][1],n[1][1],n[2][1],n[3][1]);
-        tetras[i].nz=_mm_setr_ps(n[0][2],n[1][2],n[2][2],n[3][2]);
-        tetras[i].C =_mm_setr_ps(C[0],C[1],C[2],C[3]);
-    }
+	assert(T_p.size() == T_f.size());
 
 
-	return v.size();
+	// stable partition to place all surface faces first
+//	vector<NewFaceDef>::const_iterator end_surf = boost::stable_partition(faces,[](const NewFaceDef& f){ return f.IDts[1] == 0; });
+//	unsigned Nfsurf = end_surf-faces.cbegin();
+
+	// create vector to permute back to "old-style" FullMonte ordering
+//	vector<unsigned> perm(faceMap.size());
+//
+//	boost::copy(
+//			boost::counting_range(0U,(unsigned)(faceMap.size())),
+//			perm.begin());
+
+	//checkFaces();
+
+	tetras = makeKernelTetras();
 }
+
+
+/** Converts the TetraMesh representation to the packed data structures used by the kernel
+ *
+ */
+
+vector<Tetra> TetraMesh::makeKernelTetras() const
+{
+	vector<Tetra> T(T_p.size());
+
+	assert(T.size()   == T_p.size());
+	assert(T_f.size() == T_p.size());
+	assert(T_m.size() == T_p.size());
+
+	assert(F.size() == F_p.size());
+	assert(F_t.size() == F_p.size());
+
+	for(auto tet : T | boost::adaptors::indexed(0U))
+	{
+		tet.value().IDfs  = T_f[tet.index()];
+		tet.value().matID = T_m[tet.index()];
+
+		UnitVector<3,double> n[4];
+		double C[4];
+
+		for(unsigned i=0; i<4; ++i)
+		{
+			int IDf = tet.value().IDfs[i];
+
+			if (IDf < 0)
+			{
+				IDf = -IDf;
+				n[i] = -F[IDf].getNormal();
+				C[i] = -F[IDf].getConstant();
+			}
+			else
+			{
+				n[i] = F[IDf].getNormal();
+				C[i] = F[IDf].getConstant();
+			}
+
+			assert(IDf >= 0);
+			array<unsigned,2> IDts_adj = F_t[IDf];
+
+			assert(IDts_adj[0] == tet.index() || IDts_adj[1] == tet.index() || tet.index()==0);
+			assert(IDts_adj[0] >= 0 && IDts_adj[1] >= 0);
+
+			if (IDts_adj[0] == tet.index())
+				tet.value().adjTetras[i] = IDts_adj[1];
+			else if (IDts_adj[1] == tet.index())
+				tet.value().adjTetras[i] = IDts_adj[0];
+			else
+				assert(tet.index()==0);
+		}
+
+		tet.value().nx=_mm_setr_ps(n[0][0],n[1][0],n[2][0],n[3][0]);
+		tet.value().ny=_mm_setr_ps(n[0][1],n[1][1],n[2][1],n[3][1]);
+		tet.value().nz=_mm_setr_ps(n[0][2],n[1][2],n[2][2],n[3][2]);
+		tet.value().C =_mm_setr_ps(C[0],C[1],C[2],C[3]);
+	}
+
+	return T;
+}
+
+
 
 // checks validity of TetraMesh construct
 bool TetraMesh::checkValid() const
@@ -407,12 +331,13 @@ bool TetraMesh::checkFaces() const
 	for(vector<TetraByPointID>::const_iterator it=T_p.begin()+1; it != T_p.end(); ++it,++i){
 		for(int j=0;j<4;++j)
 		{
-			unsigned pID=it->getOppositePoint(j);
+			unsigned pID = (*it)[tetra_face_opposite_point_indices[j].oppidx];
 			Point<3,double> pt=P[pID];
 			int f=T_f[i][j];
-			if ((f<0?-1:1)*F[abs(f)].pointHeight(pt) < 0){
+			double h;
+			if ((h=(f<0?-1:1)*F[abs(f)].pointHeight(pt)) < 0){
 				status_ok=false;
-				cout << "Error: height of opposite point to face " << f << " on tetrahedron " << i << " is negative" << endl;
+				cout << "Error: height of opposite point to face " << f << " on tetrahedron " << i << " is negative (" << h << ")" << endl;
 			}
 		}
 	}
@@ -444,7 +369,7 @@ unsigned TetraMesh::findEnclosingTetra(const Point<3,double>& p) const
 	unsigned N=0,IDt=0;
 
 	for(unsigned i=1;i<tetras.size(); ++i)
-		if (getTetraVolume(i) > 0 && tetras[i].pointWithin(pv))
+		if (getTetraVolume(i) > 1e-3 && tetras[i].pointWithin(pv))
 		{
 			IDt=i;
 			++N;
@@ -615,48 +540,48 @@ bool TetraMesh::isWithinByPoints(int tID,const Point<3,double>& p) const
 
 // alg needs improvement; currently scans all boundary faces
 // returns a pair of <tetraID,faceID>
-pair<pair<unsigned,int>,Point<3,double> > TetraMesh::getSurfaceElement(const Ray<3,double>& r) const
-{
-    const UnitVector<3,double> &d=r.getDirection();
-    const Point<3,double> &p=r.getOrigin();
-    Point<3,double> Q;
-    int IDf=0;
-    unsigned IDt=0;
-    double t,t_min = std::numeric_limits<double>::infinity();
-
-    for(map<unsigned,unsigned>::const_iterator it=F_boundary_ID.begin(); it != F_boundary_ID.end(); ++it)
-    {
-        Point<3,double> A(P[F_p[it->first][0]]),B(P[F_p[it->first][1]]),C(P[F_p[it->first][2]]);
-        Vector<3,double> OA(p,A),OB(p,B),OC(p,C);
-        Vector<3,double> AB(A,B),AC(A,C);
-        if (F[it->first].pointHeight(p) < 0 &&            // make sure we're on correct side
-            dot(F[it->first].getNormal(),d) > 0        // and face is directed the correct way
-            )
-            {
-                double c1,c2;
-                pair<bool,Point<3,double> > tmp(F[it->first].rayIntersectPoint(r,t_min));
-                Vector<3,double> PQ(p,tmp.second);
-                if ((t=PQ.norm_l2()) < t_min){
-                    Vector<3,double> AQ(A,tmp.second);
-                    c1 = dot(AB,AQ)/AB.norm2_l2();
-                    c2 = dot(Vector<3,double>(PQ-AB*c1),AC)/AC.norm2_l2();
-                    // check that intersection point is within the face
-
-                    if (0.0 <= c1 && c1 <= 1.0 && 0.0 <= c2 && c2 <= 1.0 && c1+c2 <= 1.0)
-                    {
-                        t_min = t;
-                        IDf=it->first;
-                        Q=tmp.second;
-                    }
-                }
-            }
-    }
-
-    assert(IDf>0);
-    IDt = vecFaceID_Tetra[IDf].first;
-
-    return make_pair(make_pair(IDt,IDf),Q);
-}
+//pair<pair<unsigned,int>,Point<3,double> > TetraMesh::getSurfaceElement(const Ray<3,double>& r) const
+//{
+//    const UnitVector<3,double> &d=r.getDirection();
+//    const Point<3,double> &p=r.getOrigin();
+//    Point<3,double> Q;
+//    int IDf=0;
+//    unsigned IDt=0;
+//    double t,t_min = std::numeric_limits<double>::infinity();
+//
+//    for(map<unsigned,unsigned>::const_iterator it=F_boundary_ID.begin(); it != F_boundary_ID.end(); ++it)
+//    {
+//        Point<3,double> A(P[F_p[it->first][0]]),B(P[F_p[it->first][1]]),C(P[F_p[it->first][2]]);
+//        Vector<3,double> OA(p,A),OB(p,B),OC(p,C);
+//        Vector<3,double> AB(A,B),AC(A,C);
+//        if (F[it->first].pointHeight(p) < 0 &&            // make sure we're on correct side
+//            dot(F[it->first].getNormal(),d) > 0        // and face is directed the correct way
+//            )
+//            {
+//                double c1,c2;
+//                pair<bool,Point<3,double> > tmp(F[it->first].rayIntersectPoint(r,t_min));
+//                Vector<3,double> PQ(p,tmp.second);
+//                if ((t=PQ.norm_l2()) < t_min){
+//                    Vector<3,double> AQ(A,tmp.second);
+//                    c1 = dot(AB,AQ)/AB.norm2_l2();
+//                    c2 = dot(Vector<3,double>(PQ-AB*c1),AC)/AC.norm2_l2();
+//                    // check that intersection point is within the face
+//
+//                    if (0.0 <= c1 && c1 <= 1.0 && 0.0 <= c2 && c2 <= 1.0 && c1+c2 <= 1.0)
+//                    {
+//                        t_min = t;
+//                        IDf=it->first;
+//                        Q=tmp.second;
+//                    }
+//                }
+//            }
+//    }
+//
+//    assert(IDf>0);
+//    IDt = vecFaceID_Tetra[IDf].first;
+//
+//    return make_pair(make_pair(IDt,IDf),Q);
+//}
 
 
 bool sameOrientation(FaceByPointID f0,FaceByPointID f1)
@@ -666,7 +591,7 @@ bool sameOrientation(FaceByPointID f0,FaceByPointID f1)
 
 unsigned TetraMesh::getTetraFromFace(int IDf) const
 {
-    return IDf > 0 ? vecFaceID_Tetra[IDf].first : vecFaceID_Tetra[-IDf].second;
+    return IDf > 0 ? F_t[IDf][0] : F_t[-IDf][1];
 }
 
 double TetraMesh::getFaceArea(const FaceByPointID& f) const
@@ -788,9 +713,9 @@ vector<pair<unsigned,unsigned>> TetraMesh::getRegionBoundaryTrisAndTetras(unsign
 {
 	vector<pair<unsigned,unsigned>> v;
 
-	for(unsigned i=0;i<vecFaceID_Tetra.size();++i)
+	for(unsigned i=0;i<F_t.size();++i)
 	{
-		int Ta = vecFaceID_Tetra[i].first, Tb = vecFaceID_Tetra[i].second;
+		int Ta = F_t[i][0], Tb = F_t[i][1];
 		assert(Ta >= 0 && Tb >= 0);
 		assert(Ta < T_m.size() && Tb < T_m.size());
 
@@ -821,8 +746,8 @@ TriSurf TetraMesh::extractRegionSurface(const vector<unsigned>& tetIDs) const
     for(unsigned IDf=0; IDf<F.size(); ++IDf)
     {
     	// add iff one tetra incident to the face is in the set and the other is not
-    	if (binary_search(tetIDs.begin(),tetIDs.end(),vecFaceID_Tetra[IDf].first)
-    			^ binary_search(tetIDs.begin(),tetIDs.end(),vecFaceID_Tetra[IDf].second))
+    	if (binary_search(tetIDs.begin(),tetIDs.end(),F_t[IDf][0])
+    			^ binary_search(tetIDs.begin(),tetIDs.end(),F_t[IDf][1]))
     		F_out.push_back(F_p[IDf]);
     }
 

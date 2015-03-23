@@ -27,6 +27,7 @@ template<unsigned long D,class T>class FixedArrayID : public array<T,D> {
 	FixedArrayID()                       { array<T,D>::fill(T()); }
 	FixedArrayID(const T* p_)            { copy(p_,p_+D,array<T,D>::begin()); }
 	FixedArrayID(const array<T,D>& a_) : array<T,D>(a_){}
+	FixedArrayID(const std::initializer_list<T> il){ boost::copy(il,std::array<T,D>::begin()); }
 
 	// find min/max elements
 	unsigned findMin() const;
@@ -80,13 +81,14 @@ class TetraByPointID : public FixedArrayID<4,unsigned> {
     TetraByPointID(unsigned p0,unsigned p1,unsigned p2,unsigned p3){ (*this)[0]=p0; (*this)[1]=p1; (*this)[2]=p2; (*this)[3]=p3; }
 
 	FaceByPointID getFace         (unsigned faceNum);
-	unsigned      getOppositePoint(unsigned faceNum) const;
+	//unsigned      getOppositePoint(unsigned faceNum) const;
 };
 
 class TetraByFaceID : public FixedArrayID<4,int> {
 	public:
 	TetraByFaceID()              : FixedArrayID<4,int>(){}
 	TetraByFaceID(const int* p_) : FixedArrayID<4,int>(p_){}
+	TetraByFaceID(std::initializer_list<int> il) : FixedArrayID<4,int>(il){}
 
 	void flipFace(unsigned faceNum){
 		array<int,4>& p=*this;
