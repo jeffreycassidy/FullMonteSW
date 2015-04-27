@@ -1,14 +1,19 @@
-#pragma once
-#include "Observer.hpp"
+#ifndef OSTREAMOBSERVER_HPP_INCLUDED_
+#define OSTREAMOBSERVER_HPP_INCLUDED_
 
-class OStreamObserver : public Observer {
+#include <FullMonte/Kernels/KernelObserver.hpp>
+
+class OStreamObserver : public KernelObserver {
 	ostream& os;
 
 public:
 	OStreamObserver(ostream& os_) : os(os_){}
 
-	virtual void notify_create(const SimGeometry&,const RunConfig& cfg,const RunOptions& opts);
-	virtual void notify_start();
-	virtual void notify_finish(boost::timer::cpu_times t);
-	virtual void notify_result(const LoggerResults& lr);
+	virtual void notify_create(const Kernel&);
+	virtual void notify_start(const Kernel&);
+	virtual void notify_finish(const Kernel&);
+	virtual void notify_result(const Kernel&,const LoggerResults* lr);
 };
+
+
+#endif

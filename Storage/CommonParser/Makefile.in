@@ -1,6 +1,8 @@
 CXX_OPTS=-Wall -std=c++11 -O3 -fPIC -g -mavx -Wa,-q
 CXX=g++
 
+include ../../Makefile.in
+
 ifndef SOURCE_ROOT
 SOURCE_ROOT=/Users/jcassidy/src
 endif

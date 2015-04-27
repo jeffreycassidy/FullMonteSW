@@ -1,22 +1,22 @@
 #include "OStreamObserver.hpp"
-#include "Logger.hpp"
+#include <FullMonte/Kernels/Software/Logger/Logger.hpp>
 
-void OStreamObserver::notify_create(const SimGeometry& geom,const RunConfig& cfg,const RunOptions& opts)
+void OStreamObserver::notify_create(const Kernel& k)
 {
-	os << "Run created; problem definition:" << endl << geom << cfg << endl << opts << endl;
+	os << "Run created" << endl;
 }
 
-void OStreamObserver::notify_start()
+void OStreamObserver::notify_start(const Kernel& k)
 {
 	os << "Run started" << endl;
 }
 
-void OStreamObserver::notify_finish(boost::timer::cpu_times t)
+void OStreamObserver::notify_finish(const Kernel& k)
 {
-	os << "Run finished, elapsed time: " << format(t) << endl;
+	os << "Run finished" << endl;
 }
 
-void OStreamObserver::notify_result(const LoggerResults& lr)
+void OStreamObserver::notify_result(const Kernel& k,const LoggerResults* lr)
 {
-	lr.summarize(cout);
+	lr->summarize(cout);
 }

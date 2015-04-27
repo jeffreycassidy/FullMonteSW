@@ -3,7 +3,7 @@
 #include <utility>
 #include <string>
 #include <iomanip>
-#include "Logger.hpp"
+#include <FullMonte/Kernels/Software/Logger/Logger.hpp>
 #include <FullMonte/optics.hpp>
 #include <FullMonte/Geometry/SourceDescription.hpp>
 
@@ -25,15 +25,15 @@ enum TerminationResult { Continue=0, RouletteWin, RouletteLose, TimeGate, Other=
 
 typedef Tetra Region;
 
-template<class RNG>pair<TerminationResult,double> terminationCheck(const RunConfig& cfg,RNG& rng,Packet& pkt,const Material& mat,const Region& region)
+template<class RNG>pair<TerminationResult,double> terminationCheck(const double wmin,const double prwin,RNG& rng,Packet& pkt,const Material& mat,const Region& region)
 {
     // do roulette
 	double w0=pkt.w;
-    if (pkt.w < cfg.wmin)
+    if (pkt.w < wmin)
     {
-    	if (rng.draw_float_u01() < cfg.prwin)
+    	if (rng.draw_float_u01() < prwin)
     	{
-    		pkt.w /= cfg.prwin;
+    		pkt.w /= prwin;
     		return make_pair(RouletteWin,pkt.w-w0);
     	}
     	else
@@ -64,12 +64,12 @@ inline pair<float,float> absorb(const Packet& pkt,const Material& mat,const Tetr
 }
 
 
-template<class LoggerType,class RNG>int WorkerThread<LoggerType,RNG>::doOnePacket(Packet pkt,unsigned IDt)
+template<class LoggerType,class RNG>int TetraMCKernelThread<LoggerType,RNG>::doOnePacket(Packet pkt,unsigned IDt)
 {
     unsigned Nhit,Nstep;
     StepResult stepResult;
-    Tetra currTetra = geom.mesh.getTetra(IDt);
-    Material currMat = geom.mats[currTetra.matID];
+    Tetra currTetra = K_.M_.getTetra(IDt);
+    Material currMat = K_.mat_[currTetra.matID];
 
     float f_tmp[4] __attribute__((aligned(16)));
     float &n1 = f_tmp[0];
@@ -80,7 +80,7 @@ template<class LoggerType,class RNG>int WorkerThread<LoggerType,RNG>::doOnePacke
     log_event(logger,Events::launch,make_pair(pkt.p,pkt.d),IDt,1.0);
 
     // start another hop
-    for(Nstep=0; Nstep < opts.Nstep_max; ++Nstep)
+    for(Nstep=0; Nstep < K_.Nstep_max_; ++Nstep)
     {
         // draw a hop length; pkt.s = { physical distance, MFPs to go, time, 0 }
         pkt.s = _mm_mul_ps(rng.draw_m128f1_exp(),currMat.s_init);
@@ -90,7 +90,7 @@ template<class LoggerType,class RNG>int WorkerThread<LoggerType,RNG>::doOnePacke
         pkt.p      = stepResult.Pe;
 
         // loop while hitting a face in current step
-        for(Nhit=0; stepResult.hit && Nhit < opts.Nhit_max; ++Nhit)
+        for(Nhit=0; stepResult.hit && Nhit < K_.Nhit_max_; ++Nhit)
         {
             // extremely rarely, this can be a problem; we get no match in the getIntersection routine
             if(stepResult.idx > 3)
@@ -101,17 +101,17 @@ template<class LoggerType,class RNG>int WorkerThread<LoggerType,RNG>::doOnePacke
                 return -1;
             }
             pkt.s = _mm_add_ps(pkt.s,_mm_mul_ps(stepResult.distance,currMat.s_prop));
-            IDm_bound = geom.mesh.getMaterial(stepResult.IDte);
+            IDm_bound = K_.M_.getMaterial(stepResult.IDte);
             if (IDm == IDm_bound) { // no material change
             	log_event(logger,Events::boundary,pkt.p,stepResult.IDfe,IDt,stepResult.IDte);
                 IDt_next = stepResult.IDte;
             }
             else // boundary with material change
             {
-                n2 = geom.mats[IDm_bound].getn();
+                n2 = K_.mat_[IDm_bound].getn();
                 n1 = currMat.getn();
 
-                if (n1 == n2 || geom.mats[IDm_bound].isMatched()) // no refractive index difference
+                if (n1 == n2 || K_.mat_[IDm_bound].isMatched()) // no refractive index difference
                 {
                 	log_event(logger,Events::boundary,pkt.p,stepResult.IDfe,IDt,stepResult.IDte);
                     IDt_next = stepResult.IDte;
@@ -178,19 +178,19 @@ template<class LoggerType,class RNG>int WorkerThread<LoggerType,RNG>::doOnePacke
             {
                 IDt = IDt_next;
                 IDm_next = IDm_bound;
-                currTetra = geom.mesh.getTetra(IDt);
+                currTetra = K_.M_.getTetra(IDt);
             }
 
             if (IDm != IDm_next)
             {
                 IDm = IDm_next;
-                currMat = geom.mats[IDm];
+                currMat = K_.mat_[IDm];
                 pkt.s = _mm_div_ss(_mm_movehdup_ps(pkt.s), _mm_set_ss(currMat.getMuT()));
             }
             stepResult=currTetra.getIntersection(pkt.p,pkt.d,pkt.s);
             pkt.p   = stepResult.Pe;
         }
-        if (Nhit >= opts.Nhit_max)
+        if (Nhit >= K_.Nhit_max_)
         {
         	cerr << "Terminated due to unusual number of interface hits" << endl;
         	log_event(logger,Events::abnormal,pkt,Nstep,Nhit);
@@ -208,7 +208,7 @@ template<class LoggerType,class RNG>int WorkerThread<LoggerType,RNG>::doOnePacke
         TerminationResult term;
         w0=pkt.w;
 
-        tie(term,dw)=terminationCheck(cfg,rng,pkt,currMat,currTetra);
+        tie(term,dw)=terminationCheck(K_.wmin_,K_.prwin_,rng,pkt,currMat,currTetra);
 
         switch(term){
         case Continue:								// Continues, no roulette

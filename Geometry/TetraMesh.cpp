@@ -211,7 +211,7 @@ void TetraMesh::tetrasToFaces()
 
         		if (F.back().pointHeight(P[IDps_sort[perm.value().oppidx]]) < 0)
         			F.back().flip();
-        		F_t.push_back(array<unsigned,2>{T.index(),0});
+        		F_t.push_back(array<unsigned,2>{(unsigned)T.index(),0});
         		F_p.push_back(Ft);
         		T_f[T.index()][perm.index()] = p.first->second;			// link the tetra to the face
         	}
@@ -364,7 +364,7 @@ unsigned TetraMesh::findNearestPoint(const Point<3,double>& p) const
 
 unsigned TetraMesh::findEnclosingTetra(const Point<3,double>& p) const
 {
-	const float f[4]{ p[0], p[1], p[2], 0.0 };
+	const float f[4]{ (float)p[0], (float)p[1], (float)p[2], 0.0 };
 	__m128 pv = _mm_load_ps(f);
 	unsigned N=0,IDt=0;
 
@@ -715,8 +715,7 @@ vector<pair<unsigned,unsigned>> TetraMesh::getRegionBoundaryTrisAndTetras(unsign
 
 	for(unsigned i=0;i<F_t.size();++i)
 	{
-		int Ta = F_t[i][0], Tb = F_t[i][1];
-		assert(Ta >= 0 && Tb >= 0);
+		unsigned Ta = F_t[i][0], Tb = F_t[i][1];
 		assert(Ta < T_m.size() && Tb < T_m.size());
 
 		unsigned ma = T_m[Ta], mb = T_m[Tb];

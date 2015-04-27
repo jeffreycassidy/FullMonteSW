@@ -230,8 +230,8 @@ proc makeSimFrame { parent simcmd } {
     pack $parent.comment
     
     button $parent.save -text "Calculate & Save" -command {
-        global mesh opt ofn
-        set E [BLIKernel $mesh $opt [bsr getDescription] $Npkt]
+        global mesh mats ofn
+        set E [BLIKernel $mesh $mats [psr getDescription] $Npkt]
         fluencerep Update $E 0
         set comm [$parent.comment get 1.0 end]
         write_fluence "$ofn" $mesh $E "$comm"

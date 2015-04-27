@@ -14,6 +14,13 @@
 %module FullMonteVTK
 
 %include "std_string.i"
+%include "std_vector.i"
+
+%{
+#include <FullMonte/Geometry/SourceDescription.hpp>
+%}
+
+%template(sourcedescriptionvector) std::vector<SourceDescription*>;
 
 // This line tells SWIG to pass the Tcl_Interp* whenever requested in wrapped function args, without consuming any input args
 // Needed for VTK commands
@@ -184,7 +191,7 @@ public:
 		{ Update(); }
 #endif
 
-	BallSourceDescription* getDescription() const { return bsd_; }
+	SourceDescription* getDescription() const { return bsd_; }
 
 	void setCentre(const Point<3,double> p0){ assert(bsd_); bsd_->setCentre(p0); }
 	void setRadius(double r){ assert(bsd_); bsd_->setRadius(r); }

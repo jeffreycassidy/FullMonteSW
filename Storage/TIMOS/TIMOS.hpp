@@ -1,6 +1,9 @@
 #ifndef TIMOS_HPP_INCLUDED_
 #define TIMOS_HPP_INCLUDED_
 
+#include "../Reader.hpp"
+#include "../Writer.hpp"
+
 #ifndef SWIG
 
 #include "TIMOSLexer.h"
@@ -12,25 +15,11 @@
 #include <vector>
 #include <iostream>
 
+#include <FullMonte/Geometry/SimpleMaterial.hpp>
 #include <FullMonte/Storage/CommonParser/ANTLRParser.hpp>
-
-#include <FullMonte/Geometry/TetraMesh.hpp>
-#include <FullMonte/Geometry/Material.hpp>
-#include <FullMonte/Geometry/SourceDescription.hpp>
 
 #endif
 
-
-class Reader {
-public:
-	virtual TetraMesh 						mesh()			const=0;
-	virtual std::vector<Material> 			materials() 	const=0;
-	virtual std::vector<SourceDescription*> sources()		const=0;
-
-	virtual ~Reader(){}
-
-	virtual void clear()=0;
-};
 
 class TIMOSReader : public Reader {
 	std::string sourceFn_,optFn_,meshFn_,legendFn_;
@@ -57,35 +46,6 @@ public:
 };
 
 
-class Writer {
-public:
-	Writer(){}
-	virtual void write(const TetraMesh&) const=0;
-	virtual void write(const std::vector<SourceDescription*>&) const=0;
-	virtual void write(const std::vector<Material>&) const=0;
-
-	virtual ~Writer(){}
-
-#ifndef SWIG
-
-	class writer_exception : public std::exception {
-		const char* msg_=nullptr;
-	public:
-		writer_exception(const char* e) : msg_(e){}
-		virtual const char* what() const noexcept { return msg_; }
-	};
-
-	class write_exception : public writer_exception {
-	public:
-		write_exception(const char* e) : writer_exception(e){}
-	};
-
-	class open_for_write_exception : public writer_exception {
-	public:
-		open_for_write_exception(const char* e) : writer_exception(e){}
-	};
-#endif
-};
 
 
 class TIMOSWriter : public Writer {

@@ -1,6 +1,10 @@
 include ../../Makefile.in
 
-all: libFullMonteCore.so
+libs:
+
+all: libs
+
+libs: libFullMonteCore.so
 
 ##### Core functions (RNG, basic loggers, result types, and OStreamObserver)
 
@@ -9,7 +13,11 @@ all: libFullMonteCore.so
 
 random.o: random.cpp random.hpp
 	$(CXX) -O1 -msse4 -g -Wall -mavx -DNDEBUG -DPLATFORM_DARWIN $< -fPIC -c -o $@
+	
+	
+Logger%.o: Logger/Logger%.cpp
+	$(CXX) $(CXX_OPTS) -c $^
 
 libFullMonteCore.so: LoggerSurface.o LoggerConservation.o LoggerEvent.o sse.o  RandomAVX.o OStreamObserver.o FullMonte.o \
-	fluencemap.o LoggerEvent.o LoggerVolume.o FullMonte.o
-	$(CXX) $(CXX_OPTS) -shared -L. -lFullMonteGeometry -L../../SFMT -lSFMT -L../../Geometry -lboost_system -lboost_timer -lboost_chrono -o $@ $^
+	LoggerEvent.o LoggerVolume.o FullMonte.o
+	$(CXX) $(CXX_LIB_OPTS) -shared -L. -lFullMonteGeometry -lFullMonteData -L../../SFMT -lSFMT -lboost_system -lboost_timer -lboost_chrono -o $@ $^

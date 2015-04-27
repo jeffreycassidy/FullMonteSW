@@ -24,7 +24,3 @@ libFullMonteVTK.so: FullMonteVTK.o FullMonteVTK_wrap.o TetraMeshTCL.o
 		-lvtkInteractionWidgets-6.1								\
 		-lvtkFiltersGeneral-6.1									\
 		-o $@ $^
-
-clean:
-	rm -rf *.dSYM
-	rm -f *.so *.o *.a *_wrap.cxx

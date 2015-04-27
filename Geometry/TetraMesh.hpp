@@ -103,40 +103,6 @@ class TetraMesh : public TetraMeshBase {
     tetra_const_iterator tetraIDBegin() const { return T_p.begin()+1; }
     tetra_const_iterator tetraIDEnd()   const { return T_p.end();     }
 
-//    class boundary_f_const_iterator : public map<unsigned,unsigned>::const_iterator {
-//        const TetraMesh& __m;
-//
-//        public:
-//        using map<unsigned,unsigned>::const_iterator::operator++;
-//        using map<unsigned,unsigned>::const_iterator::operator==;
-//        using map<unsigned,unsigned>::const_iterator::operator!=;
-//        boundary_f_const_iterator(const TetraMesh& m_,map<unsigned,unsigned>::const_iterator it_) :
-//            map<unsigned,unsigned>::const_iterator(it_),__m(m_){ };
-//
-//        // returns the current face in terms of its surface point IDs (indexes into the boundary point set)
-//        FaceByPointID operator*() const {
-//            assert((*this)->first != 0);
-//            FaceByPointID f_original(__m.F_p[(*this)->first]);
-//
-//            map<unsigned,unsigned>::const_iterator it=__m.P_boundary_ID.find((unsigned)abs((int)f_original[0]));
-//            assert(it != __m.P_boundary_ID.end());
-//            f_original[0] = it->second;
-//
-//            it = __m.P_boundary_ID.find((unsigned)abs((int)f_original[1]));
-//            assert(it != __m.P_boundary_ID.end());
-//            f_original[1] = it->second;
-//
-//            it = __m.P_boundary_ID.find((unsigned)abs((int)f_original[2]));
-//            assert(it != __m.P_boundary_ID.end());
-//            f_original[2] = it->second;
-//
-//            return f_original;
-//            };
-//    };
-//
-//    boundary_f_const_iterator boundaryFaceBegin() const { return boundary_f_const_iterator(*this,F_boundary_ID.begin()); }
-//    boundary_f_const_iterator boundaryFaceEnd()   const { return boundary_f_const_iterator(*this,F_boundary_ID.end());   }
-
     typedef vector<Tetra>::const_iterator tetra_struct_const_iterator;
 
     tetra_struct_const_iterator tetra_begin() const { return tetras.begin(); }
@@ -202,8 +168,6 @@ class TetraMesh : public TetraMeshBase {
         { return abs(scalartriple(P[IDps[0]],P[IDps[1]],P[IDps[2]],P[IDps[3]])/6); }
     double                  getTetraVolume(unsigned IDt) const { return getTetraVolume(T_p[IDt]); }
 
-    const vector<Point<3,double> >& getPoints() const { return P; }
-    const vector<TetraByPointID>& getTetrasByPointID() const { return T_p; }
 
 	// find nearest point or enclosing tetra
 	unsigned findEnclosingTetra(const Point<3,double>&) const;

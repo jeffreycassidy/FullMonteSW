@@ -24,7 +24,7 @@ FullMonteTIMOS_wrap.cxx: FullMonteTIMOS.i
 FullMonteTIMOS_wrap.o: FullMonteTIMOS_wrap.cxx
 	$(CXX) $(CXX_OPTS) -DUSE_TCL_STUBS -c $^
 	
-libFullMonteTIMOS_TCL.so: FullMonteTIMOS_wrap.o
+libFullMonteTIMOS_TCL.so: FullMonteTIMOS_wrap.o | libFullMonteTIMOS.so
 	$(CXX) $(CXX_LIB_OPTS) -ltclstub8.5 -L../../Geometry -L. -lFullMonteTIMOS -lFullMonteGeometry -o $@ $^ 
 
 test: Test.o libFullMonteTIMOS.so

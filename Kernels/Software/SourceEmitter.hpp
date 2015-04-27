@@ -7,11 +7,15 @@ using std::pair;
 // SourceEmitter has the actual guts to emit photons; SourceDescription just tells you what it is
 // avoids the need to include Random classes, AVX math, etc.
 
-template<class RNG>class SourceEmitter : virtual public SourceDescription {
+template<class RNG>class SourceEmitter {
 protected:
 	const TetraMesh& mesh;
+	double power_;
 
 public:
+
+	void setPower(double p){ power_=p; }
+	double getPower() const { return power_; }
 
 	SourceEmitter(const TetraMesh& mesh_) : mesh(mesh_){};
 	virtual ~SourceEmitter(){};
@@ -173,21 +177,22 @@ public:
 };
 
 
-template<class RNG>class SourceMultiEmitter : virtual public SourceEmitter<RNG>,virtual public SourceMultiDescription {
+template<class RNG>class SourceMultiEmitter : public SourceEmitter<RNG> {
 	boost::random::discrete_distribution<unsigned> source_dist;
 	vector<SourceEmitter<RNG>*> emitters;
 
 public:
 
+	// ConstIterator should dereference to a SourceEmitter*
 	template<class ConstIterator>SourceMultiEmitter(const TetraMesh& mesh_,ConstIterator begin,ConstIterator end) :
-	SourceEmitter<RNG>(mesh_),
-	SourceMultiDescription(begin,end),
+		SourceEmitter<RNG>(mesh_),
 	source_dist(
-			boost::make_transform_iterator(begin,std::mem_fn(&SourceMultiDescription::getPower)),
-			boost::make_transform_iterator(end,std::mem_fn(&SourceMultiDescription::getPower)))
+			boost::make_transform_iterator(begin,std::mem_fn(&SourceEmitter<RNG>::getPower)),
+			boost::make_transform_iterator(end,std::mem_fn(&SourceEmitter<RNG>::getPower)))
 	{
 		for(; begin != end; ++begin)
-			emitters.push_back(SourceEmitterFactory<RNG>(mesh_,**begin));
+			//emitters.push_back(SourceEmitterFactory<RNG>(mesh_,**begin));
+			emitters.push_back(*begin);
 	}
 
 	pair<Packet,unsigned> emit(RNG& rng) const
@@ -255,7 +260,28 @@ template<class RNG>SourceEmitter<RNG>* SourceEmitterFactory(const TetraMesh& mes
 	else if (sdv.size()==1)
 		return SourceEmitterFactory<RNG>(mesh,*sdv.front());
 	else
-		return new SourceMultiEmitter<RNG>(mesh,sdv.begin(),sdv.end());
+	{
+		auto r = sdv | boost::adaptors::transformed([&mesh](const SourceDescription* sd){ return SourceEmitterFactory<RNG>(mesh,*sd); });
+		return new SourceMultiEmitter<RNG>(mesh,begin(r),end(r));
+	}
+}
+
+template<class RNG,class ForwardIterator>SourceEmitter<RNG>* SourceEmitterFactory(const TetraMesh& mesh,ForwardIterator begin,ForwardIterator end)
+{
+	return SourceEmitterFactory(mesh,boost::iterator_range<ForwardIterator>(begin,end));
+}
+
+template<class RNG,class ForwardRange>SourceEmitter<RNG>* SourceEmitterFactory(const TetraMesh& mesh,ForwardRange range)
+{
+	if (boost::empty(range))
+	{
+		cerr << "ERROR: No sources specified in emitter factory" << endl;
+		return NULL;
+	}
+	else if (boost::size(range)==1)
+		return SourceEmitterFactory<RNG>(mesh,*begin(range));
+	else
+		return new SourceMultiEmitter<RNG>(mesh,begin(range),end(range));
 }
 
 

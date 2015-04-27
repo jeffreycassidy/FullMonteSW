@@ -108,47 +108,6 @@ template<unsigned I=1,typename T,typename... Ts>typename tuple_drop<I,0,std::tup
 
 
 
-// Code BELOW ALMOST WORKED
-/*
-//template<class... Ls>struct LoggerResult{};
-
-template<class... Ls>typename LoggerResult<std::tuple<Ls...>>::type get_one_result_tuple(const std::tuple<Ls...>& l);
-template<class L>std::tuple<typename L::ResultType> get_one_result_tuple(const L& l,typename L::single_result_tag::type =true_type());
-template<class L>typename L::ResultType get_one_result_tuple(const L& l,typename L::tuple_result_tag::type =true_type());
-
-
-
-template<class L>struct LoggerResult<const L> {
-	typedef L logger_type;
-	typedef typename L::ResultType type;
-
-	static type get_result_tuple(const logger_type& l){ return l.getResults(); }
-};
-
-
-// Specialization for tuples of loggers
-
-template<typename L,typename... Ls>struct LoggerResult<std::tuple<L,Ls...>>
-{
-	typedef std::tuple<L,Ls...> logger_type;
-
-	typedef decltype(tuple_cat(
-			get_one_result_tuple(get<0>(std::declval<logger_type>())),
-			LoggerResult<std::tuple<Ls...>>::get_result_tuple(drop<1>(std::declval<logger_type>())))) type;
-
-	static type get_result_tuple(const logger_type& l){ return tuple_cat(
-			get_one_result_tuple(get<0>(l)),
-			LoggerResult<std::tuple<Ls...>>::get_result_tuple(drop<1>(l))); }
-};
-
-template<>struct LoggerResult<std::tuple<>> {
-	typedef const std::tuple<> logger_type;
-	typedef const std::tuple<> type;
-
-	static type get_result_tuple(const logger_type&){ return make_tuple(); }
-};*/
-
-
 template<unsigned I,typename TupleType,typename... Ts>struct LoggerResult {};
 
 template<class L>std::tuple<typename L::ResultType> get_one_result_tuple(const L& l,typename L::single_result_tag::type =true_type());

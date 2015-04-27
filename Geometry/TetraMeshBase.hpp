@@ -60,6 +60,10 @@ public:
 
     double                  getTetraVolume(unsigned IDt) const { return getTetraVolume(T_p[IDt]); }
 
+    const vector<Point<3,double> >& getPoints() const { return P; }
+    const vector<TetraByPointID>& getTetrasByPointID() const { return T_p; }
+
+    const vector<unsigned>& getMaterials() const { return T_m; }
 
     // check if tetra has any point within the region
     array<Point<3,double>,4> tetraPoints(unsigned IDt) const {

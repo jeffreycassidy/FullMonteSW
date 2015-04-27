@@ -23,14 +23,30 @@ ifndef SWIG
 endif
 
 ifndef SOURCE_ROOT
-	SOURCE_ROOT=/Users/jcassidy/src
+	SOURCE_ROOT=/Users/jcassidy/src/FullMonteSW
+endif
+
+ifndef LIB_ROOT
+	LIB_ROOT=/Users/jcassidy/src/FullMonteSW/FullMonte
 endif
 
 
-CXX_OPTS=-Wall -std=c++11 -O3 -g -mavx -msse4 -fPIC -fabi-version=6 -I$(SOURCE_ROOT) # -DNDEBUG
+CXX_OPTS=-Wall -std=c++11 -O3 -g -mavx -msse4 -fPIC -fabi-version=6 -I$(SOURCE_ROOT) -L$(LIB_ROOT)
+CXX_LIB_OPTS=-Wall -fabi-version=6 -mavx -msse4 -fPIC -shared -L$(LIB_ROOT)
 
 # Check for Mac OS (no POSIX timer among other things)
 OS:=$(shell uname)
 ifeq ($(OS),Darwin)
 	CXX_OPTS += -DPLATFORM_DARWIN -Wa,-q
 endif
+
+%.o: %.cpp *.hpp
+	$(CXX) $(CXX_OPTS) -c $<
+
+defaultclean:
+	rm -rf *.so *.a *_wrap.cxx *.o
+	
+# allow each folder to override the make clean command
+clean:
+	rm -rf *.so *.a *_wrap.cxx *.o a.out
+	

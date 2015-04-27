@@ -3,6 +3,7 @@ package require vtk
 load libFullMonteVTK.so
 load libFullMonteTIMOS_TCL.so
 load libFullMonteVolume_TCL.so
+load libFullMonteBinFile_TCL.so
 
 # load common GUI elements
 source commongui.tcl
@@ -13,7 +14,7 @@ doVTKWindow
 
 
 #default file prefix
-set pfx "/Users/jcassidy/src/FullMonteSW/FullMonte/data/mouse"
+set pfx "/Users/jcassidy/src/FullMonteSW/humandata/bladder"
 
 #override with 1st cmdline arg
 if { $argc >= 1 } { set pfx [lindex $argv 0] }
@@ -46,7 +47,9 @@ puts "Loaded [llength $legend] regions"
 
 
 # Load mesh and create VTK representation
-set mesh [R mesh]
+#set mesh [R mesh]
+BinFileReader BR "../Storage/BinFile/bladder"
+set mesh [BR mesh]
 VTKMeshRep V $mesh
 
 set ug [V getMeshWithRegions]
@@ -154,6 +157,12 @@ for { set i 0 } { $i < [llength $legend] } { incr i } {
             surfactor$i SetMapper pdm$i
     
             eval "[surfactor$i GetProperty] SetColor [LegendEntry_colour_get [lindex $legend $i]]"
+
+        vtkPolyDataWriter pdw
+        pdw SetInputData $surfpd($i)
+        pdw SetFileName "surface.$i.vtk"
+        pdw Write
+        pdw Delete
 
 
 # treat exterior surface specially (lower opacity, white colour)

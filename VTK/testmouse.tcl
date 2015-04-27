@@ -2,21 +2,23 @@ package require vtk
 
 load libFullMonteVTK.so
 load libFullMonteTIMOS_TCL.so
-load libFullMonteBLI_TCL.so
+load libFullMonteBinFile_TCL.so
+
+load libFullMonteKernels_TCL.so
+load libFullMonteTIMOS_TCL.so
 
 #default file prefix
-set pfx "/Users/jcassidy/src/FullMonteSW/FullMonte/data/mouse"
+set pfx "/Users/jcassidy/src/FullMonteSW/data/mouse"
+
+set optfn "$pfx.opt"
+set meshfn "$pfx.mesh"
+set legendfn "$pfx.legend"
+
 
 #override with 1st cmdline arg
 if { $argc >= 1 } { set pfx [lindex $argv 0] }
 
-set meshfn "$pfx.mesh"
-set legendfn "$pfx.legend"
-set optfn "$pfx.opt"
-
 set ofn "fluence.out"
-
-
 
 # create and set up the reader
 
@@ -34,8 +36,7 @@ proc loadoptical { optfn } {
     global opt
     R setOpticalFileName $optfn
 
-    if { [info exists opt] } { delete_std__vectorT_Material_t $opt }
-    set opt [R materials]
+    set opt [R materials_simple]
 }
 
 loadoptical $optfn
@@ -43,7 +44,11 @@ loadoptical $optfn
 
 # Load mesh
 
-set mesh [R mesh]
+#set mesh [R mesh]
+
+set meshfn "../Storage/BinFile/mouse"
+BinFileReader BR $meshfn
+set mesh [BR mesh]
 VTKMeshRep V $mesh
 
 set ug [V getMeshWithRegions]
@@ -65,6 +70,41 @@ set legendactor [V getLegendActor "0.5 0.1" "0.9 0.9"]
 
 
 
+## Create sim kernel
+
+TetraSurfaceKernel k
+
+# Kernel properties
+#k setSources            $src
+k setEnergy             50
+k setMaterials          $opt
+k setUnitsToMM
+
+# Monte Carlo kernel properties
+k setRoulettePrWin      0.1
+k setRouletteWMin       1e-5
+k setMaxSteps           10000
+k setMaxHits            100
+k setPacketCount        1000000
+k setThreadCount        8
+k setRandSeed           1
+
+# Tetra mesh MC kernel properties
+k setMesh               $mesh
+
+
+# Launch it
+#k startAsync
+
+#puts "Launched"
+
+# display progress
+#while { ![k done] } {
+#    after 100
+#    puts "TCL progress says: [k getProgressFraction]"
+#}
+
+#k awaitFinish
 
 
 
@@ -205,13 +245,30 @@ pack .output.commentlabel -side top
 text  .output.comment 
 pack .output.comment
 
+ttk::progressbar .output.progress -maximum 100 -length 400 -variable progress
+pack .output.progress
+
+proc progresstimerevent {} {
+    global phi_s progress
+    after 50 {
+        set progress [k getProgressFraction]
+        puts "Progress update: $progress"
+        if { ![k done] } { progresstimerevent } else {
+            k awaitFinish
+            set phi_s [k getSurfaceFluenceVector]
+            fluencerep Update $phi_s 1
+            renwin Render
+        }
+    }
+}
+
 button .output.save -text "Calculate & Save" -command {
-    global mesh opt ofn
-    set phi_s [BLIKernel $mesh $opt [bsr getDescription] $Npkt]
-    fluencerep Update $phi_s 1
-    set comm [.output.comment get 1.0 end]
-    write_fluence "$ofn" $mesh $phi_s "$comm"
-    renwin Render
+    global mesh opt ofn progress
+    set progress 0
+    k setSource [bsr getDescription]
+    k startAsync
+
+    progresstimerevent
 }
 pack .output.save
 

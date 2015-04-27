@@ -8,11 +8,27 @@
 // A collection of sources can also be a Source (SourceMulti)
 // Framework should be relatively simple to introduce new types
 
+template<typename Base,typename Derived>struct cloner : public Base {
+	// provide covariant clone method
+	virtual Base* clone() const override { return new Derived(static_cast<Derived const&>(*this)); }
+
+	// provide forwarding constructor
+	template<typename... Args>explicit cloner(Args... args) : Base(args...){}
+
+	// make sure destructor is virtual
+	~cloner() override {}
+};
+
 class SourceDescription {
 	double w;
 
 public:
+
+	virtual SourceDescription* clone() const=0;
+	virtual ~SourceDescription(){};
+
 	SourceDescription(double w_=1.0) : w(w_){}
+
 	double getPower() const { return w; }
 	void setPower(double w_){ w=w_; }
 
@@ -27,12 +43,12 @@ public:
 	}
 };
 
-class BallSourceDescription : virtual public SourceDescription {
+class BallSourceDescription : public cloner<SourceDescription,BallSourceDescription> {
 	Point<3,double> p0_;
 	double r_=0.0;
 public:
 
-	BallSourceDescription(const Point<3,double>& p0,double r,double w_=1.0) : SourceDescription(w_),p0_(p0),r_(r){}
+	BallSourceDescription(const Point<3,double>& p0,double r,double w_=1.0) : cloner(w_),p0_(p0),r_(r){}
 
 	Point<3,double> getCentre() const { return p0_; }
 	void setCentre(const Point<3,double> p0){ p0_=p0; }
@@ -45,11 +61,11 @@ public:
 	virtual string timos_str(unsigned long long=0) const { return "(invalid; ball source)"; }
 };
 
-class PointSourceDescription : virtual public SourceDescription {
+class PointSourceDescription  {
 	pair<Point<3,double>, unsigned> origin;
 
 public:
-	PointSourceDescription(const Point<3,double>& p_,double w_=1.0) : SourceDescription(w_),origin(make_pair(p_,0)){}
+	PointSourceDescription(const Point<3,double>& p_) : origin(make_pair(p_,0)){}
 
 	void setOrigin(const Point<3,double> p){ origin.first=p; }
 	void setOrigin(const std::array<double,3> p){ origin.first=Point<3,double>(p); }
@@ -58,28 +74,28 @@ public:
 	unsigned getTetraID() const { return origin.second; }
 };
 
-class IsotropicSourceDescription : virtual public SourceDescription {
+class IsotropicSourceDescription {
 public:
-	IsotropicSourceDescription(double w_=1.0) : SourceDescription(w_){}
+	IsotropicSourceDescription(){}
 };
 
-class IsotropicPointSourceDescription : public IsotropicSourceDescription, public PointSourceDescription {
+class IsotropicPointSourceDescription : public IsotropicSourceDescription, public PointSourceDescription, public cloner<SourceDescription,IsotropicPointSourceDescription> {
 	static constexpr double nan = std::numeric_limits<double>::quiet_NaN();
 public:
-	IsotropicPointSourceDescription(const Point<3,double>& p_=Point<3,double>{nan,nan,nan},double w_=1.0) : PointSourceDescription(p_,w_){};
+	IsotropicPointSourceDescription(const Point<3,double>& p_=Point<3,double>{nan,nan,nan},double w_=1.0) : PointSourceDescription(p_), cloner(w_){};
 
 	virtual string operator()() const { return "Isotropic point source"; }
 	virtual string timos_str(unsigned long long=0) const;
 	virtual ostream& print(ostream&)  const;
 };
 
-class PencilBeamSourceDescription : public PointSourceDescription {
+class PencilBeamSourceDescription : public cloner<SourceDescription,PencilBeamSourceDescription>, public PointSourceDescription {
 	UnitVector<3,double> r;
 	int IDt,IDf;
 public:
-	PencilBeamSourceDescription(Ray<3,double> r_,double w=1.0) : PointSourceDescription(r_.getOrigin(),w),r(r_.getDirection()){ }
+	PencilBeamSourceDescription(Ray<3,double> r_,double w=1.0) : cloner(w), PointSourceDescription(r_.getOrigin()),r(r_.getDirection()){ }
 
-	PencilBeamSourceDescription(Point<3,double> p_,UnitVector<3,double> d_,double w=1.0,int IDt_=0) : PointSourceDescription(p_,w),
+	PencilBeamSourceDescription(Point<3,double> p_,UnitVector<3,double> d_,double w=1.0,int IDt_=0) : cloner(w),PointSourceDescription(p_),
 			r(d_),IDt(IDt_){ }
 
 	UnitVector<3,double> getDirection() const { return r; }
@@ -95,7 +111,7 @@ public:
 
 ostream& operator<<(ostream& os,SourceDescription& src);
 
-class VolumeSourceDescription : public IsotropicSourceDescription {
+class VolumeSourceDescription : public IsotropicSourceDescription, public cloner<SourceDescription,VolumeSourceDescription> {
 	// creates a random tetrahedral source by shearing the unit cube
 protected:
 	double M[3][3];
@@ -103,17 +119,15 @@ protected:
 	unsigned IDt;
 
 public:
-	VolumeSourceDescription(unsigned IDt_=0,double w_=1.0) : SourceDescription(w_),IDt(IDt_){}
+	VolumeSourceDescription(unsigned IDt_=0,double w_=1.0) : cloner(w_),IDt(IDt_){}
 	virtual string timos_str(unsigned long long=0) const;
 	string operator()() const { return "Volume source"; }
-
-
 
 	virtual ostream& print(ostream&) const;
 	unsigned getIDt() const { return IDt; }
 };
 
-class FaceSourceDescription : virtual public SourceDescription {
+class FaceSourceDescription : public cloner<SourceDescription,FaceSourceDescription> {
 protected:
 	FaceByPointID f;
 	unsigned IDt;
@@ -130,7 +144,7 @@ public:
 
 	double w;
 public:
-	FaceSourceDescription(FaceByPointID f_,double w_=1.0) : SourceDescription(w_),f(f_),IDt(0),IDf(0){}
+	FaceSourceDescription(FaceByPointID f_,double w_=1.0) : cloner(w_),f(f_),IDt(0),IDf(0){}
 	virtual string operator()() const { return "Face Source"; }
 
 	virtual ostream& print(ostream& os) const;
@@ -158,11 +172,11 @@ public:
 	virtual ostream& print(ostream& os) const;
 };
 
-class LineSourceDescription : virtual public SourceDescription {
+class LineSourceDescription : public cloner<SourceDescription,LineSourceDescription> {
 protected:
 	Point<3,double> a,b;
 public:
-	LineSourceDescription(const Point<3,double>& a_,const Point<3,double>& b_,double w_=1.0) : SourceDescription(w_),a(a_),b(b_){}
+	LineSourceDescription(const Point<3,double>& a_,const Point<3,double>& b_,double w_=1.0) : cloner(w_),a(a_),b(b_){}
 
 	std::pair<Point<3,double>,Point<3,double>> getEndPoints() const { return make_pair(a,b); }
 

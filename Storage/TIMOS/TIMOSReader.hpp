@@ -8,6 +8,9 @@
 #ifndef TIMOSREADER_HPP_
 #define TIMOSREADER_HPP_
 
+#include "TIMOS.hpp"
+#include <unordered_map>
+
 namespace TIMOS {
 
 class ParserDef {

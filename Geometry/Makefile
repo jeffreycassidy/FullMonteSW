@@ -2,6 +2,10 @@ include ../Makefile.in
 
 CXX_LIB_OPTS=$(CXX_OPTS) -shared
 
+all: libs
+
+libs: libFullMonteGeometry.so
+
 Test_TetraMeshBase: Test_TetraMeshBase.o TetraMeshBase.o TetraMesh.o Face.o Tetra.o newgeom.o
 	$(CXX) $(CXX_OPTS) -o $@ $^
 
@@ -10,6 +14,3 @@ Test_TetraMeshBase: Test_TetraMeshBase.o TetraMeshBase.o TetraMesh.o Face.o Tetr
 
 libFullMonteGeometry.so: TetraMeshBase.o newgeom.o TetraMesh.o TetraMeshBase.o Face.o SourceDescription.o Material.o
 	$(CXX) $(CXX_LIB_OPTS) -o $@ $^
-
-clean:
-	rm -f *.o *.so *.a

@@ -1,0 +1,27 @@
+include ../Makefile.in
+
+SUBDIRS=CAPI Software
+
+libs: libFullMonteKernels.so libFullMonteKernels_TCL.so
+	for d in $(SUBDIRS); do make -C $$d libs; done;
+	
+clean:
+	for d in $(SUBDIRS); do make -C $$d clean; done;
+	
+libFullMonteKernels.so: Kernel.o OStreamObserver.o
+	$(CXX) $(CXX_LIB_OPTS) -lboost_system -lFullMonteGeometry -lFullMonteCore -o $@ $^
+	
+libFullMonteKernels_TCL.so: Kernel_wrap.o | libFullMonteKernels.so
+	$(CXX) $(CXX_LIB_OPTS) -lFullMonteKernels -lboost_system -lFullMonteGeometry -o $@ $^ /usr/lib/libtclstub8.5.a
+	
+Kernel_wrap.cxx: Kernel.hpp
+	$(SWIG) -c++ -tcl -DSWIG_OPENBRACE=%{ -DSWIG_CLOSEBRACE=%} -o $@ $^
+	
+Kernel_wrap.o: Kernel_wrap.cxx
+	$(CXX) $(CXX_OPTS) -DUSE_TCL_STUBS -c $^
+	
+Kernel.o: Kernel.cpp *.hpp
+	$(CXX) $(CXX_OPTS) -c $<
+	
+OStreamObserver.o: Software/OStreamObserver.cpp
+	$(CXX) $(CXX_OPTS) -c $<
