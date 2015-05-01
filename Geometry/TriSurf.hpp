@@ -24,5 +24,5 @@ public:
 	void writeASCII(const string& fn) const;
 	//void writeMatFile(ostream& os);
 
-	friend boost::serialization::access;
+	friend class boost::serialization::access;
 };

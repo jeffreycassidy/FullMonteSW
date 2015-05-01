@@ -5,7 +5,10 @@ include Makefile.in
 SUBDIRS=DVH Geometry GUI Kernels Storage VTK SFMT Test vis VTK
 
 all:
-	for d in $(SUBDIRS); do make -C $$d all; done; 
+	for d in $(SUBDIRS); do make -C $$d all; done;
+	
+ubuntu12:
+	ssh jcassidy@10.211.55.7 "cd src/FullMonte; make SOURCE_ROOT=/home/jcassidy/src ANTLR_DIR=/usr/local/antlr3 libs" 
 
 libs:
 	for d in $(SUBDIRS); do make -C $$d libs; done;

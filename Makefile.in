@@ -30,8 +30,28 @@ ifndef LIB_ROOT
 	LIB_ROOT=/Users/jcassidy/src/FullMonteSW/FullMonte
 endif
 
+ifndef ANTLR_DIR
+	ANTLR_DIR=/usr/local/antlr3c-3.4
+endif
 
-CXX_OPTS=-Wall -std=c++11 -O3 -g -mavx -msse4 -fPIC -fabi-version=6 -I$(SOURCE_ROOT) -L$(LIB_ROOT)
+ifndef ANTLR_INCLUDE
+	ANTLR_INCLUDE=$(ANTLR_DIR)/include
+endif
+
+ifndef ANTLR_LIB
+	ANTLR_LIB=$(ANTLR_DIR)/lib
+endif
+
+ifndef ANTLR
+ANTLR=java -jar /usr/local/antlrv3/antlr-3.5.2-complete-no-st3.jar
+endif
+
+ifndef TCL_LIB
+TCL_LIB=/usr/local/lib
+endif
+
+
+CXX_OPTS=-Wall -std=c++11 -O3 -g -Wno-missing-braces -mavx -msse4 -fPIC -fabi-version=6 -I$(SOURCE_ROOT) -L$(LIB_ROOT)
 CXX_LIB_OPTS=-Wall -fabi-version=6 -mavx -msse4 -fPIC -shared -L$(LIB_ROOT)
 
 # Check for Mac OS (no POSIX timer among other things)

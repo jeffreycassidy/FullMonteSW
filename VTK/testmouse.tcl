@@ -75,7 +75,8 @@ set legendactor [V getLegendActor "0.5 0.1" "0.9 0.9"]
 TetraSurfaceKernel k
 
 # Kernel properties
-#k setSources            $src
+# k setSource bsr ## do this later
+# k startAsync
 k setEnergy             50
 k setMaterials          $opt
 k setUnitsToMM
@@ -91,21 +92,6 @@ k setRandSeed           1
 
 # Tetra mesh MC kernel properties
 k setMesh               $mesh
-
-
-# Launch it
-#k startAsync
-
-#puts "Launched"
-
-# display progress
-#while { ![k done] } {
-#    after 100
-#    puts "TCL progress says: [k getProgressFraction]"
-#}
-
-#k awaitFinish
-
 
 
 # set up VTK render window and interactor
