@@ -1,4 +1,7 @@
-#pragma once
+#ifndef TETRAMESH_HPP_INCLUDED_
+#define TETRAMESH_HPP_INCLUDED_
+
+#ifndef SWIG
 #include <set>
 #include <iostream>
 #include <fstream>
@@ -51,6 +54,8 @@ constexpr std::array<std::array<unsigned char,2>,6> tetra_edge_indices {
 
 using namespace std;
 
+#endif // SWIG
+
 struct LegendEntry {
 	std::string 		label;
 	std::array<float,3> colour;
@@ -72,10 +77,6 @@ class TetraMesh : public TetraMeshBase {
     }
 
     void make_tetra_perm();
-
-    // boundary data structures; map with key=volume-set ID, value=surface-set ID
-//    map<unsigned,unsigned> P_boundary_ID;
-//	map<unsigned,unsigned> F_boundary_ID;
 
     std::unordered_map<TetraByPointID,unsigned,boost::hash<std::array<unsigned,4>>> tetraMap;
 
@@ -109,7 +110,6 @@ class TetraMesh : public TetraMeshBase {
     tetra_struct_const_iterator tetra_end()   const { return tetras.end(); }
 
 	bool checkValid() const;
-	bool writeFileMatlabF(string) const; 
 
 	enum TetraFileType { MatlabTP };
 
@@ -121,7 +121,7 @@ class TetraMesh : public TetraMeshBase {
 
     TetraMesh(unsigned Np_,unsigned Nt_,unsigned Nf_) : TetraMeshBase(Np_,Nt_),T_f(Nf_+1),F_p(Nf_+1),F(Nf_+1),
         F_t(Nf_+1),tetras(Nt_+1){}
-	TetraMesh(string,TetraFileType);
+	//TetraMesh(string,TetraFileType);
 	TetraMesh(const vector<Point<3,double> >& P_,const vector<TetraByPointID>& T_p_,const vector<unsigned>& T_m_)
 		: TetraMeshBase(P_,T_p_,T_m_) { tetrasToFaces(); }
     TetraMesh(const double*,unsigned Np,const unsigned*,unsigned Nt);
@@ -139,14 +139,11 @@ class TetraMesh : public TetraMeshBase {
 //    unsigned getNp_boundary() const { return P_boundary_ID.size(); }
 
 	// Accessors for various point/face constructs
-	const Point<3,double>&  getPoint(unsigned id)           const { return P[id]; }
     Face                    getFace(int id)                 const { Face f = F[abs(id)]; if(id<0){ f.flip(); } return f; }
     int                     getFaceID(FaceByPointID)        const;
     const FaceByPointID&    getFacePointIDs(unsigned id)    const { assert(id < F_p.size()); return F_p[id]; }
 	const TetraByFaceID&    getTetraByFaceID(unsigned id)   const { return T_f[id]; }
-	const TetraByPointID&   getTetraPointIDs(unsigned id)  const { return T_p[id]; }
     unsigned                getTetraFromFace(int IDf)       const;
-    Point<3,double>         getTetraPoint(unsigned IDt,unsigned i) const { return P[T_p[IDt][i]]; }
 
     unsigned                getTetraID(TetraByPointID IDt) const {
         auto it = tetraMap.find(IDt);
@@ -164,15 +161,11 @@ class TetraMesh : public TetraMeshBase {
     double                  getFaceArea(int IDf)                const { return getFaceArea(F_p[abs(IDf)]); }
     double                  getFaceArea(unsigned IDf)           const { return getFaceArea(F_p[IDf]); }
 
-    double                  getTetraVolume(TetraByPointID IDps) const
-        { return abs(scalartriple(P[IDps[0]],P[IDps[1]],P[IDps[2]],P[IDps[3]])/6); }
-    double                  getTetraVolume(unsigned IDt) const { return getTetraVolume(T_p[IDt]); }
-
 
 	// find nearest point or enclosing tetra
 	unsigned findEnclosingTetra(const Point<3,double>&) const;
 	unsigned findNearestPoint  (const Point<3,double>&) const;
-	pair<Point<3,double>,double> findNearestDelaunay(const Point<3,double>&) const;
+	//pair<Point<3,double>,double> findNearestDelaunay(const Point<3,double>&) const;
 
     // checks if a point is within a given tetra by expressing as a linear combination of the corner points
     bool isWithinByPoints(int,const Point<3,double>&) const;
@@ -181,7 +174,7 @@ class TetraMesh : public TetraMeshBase {
     //StepResult getIntersection(unsigned,const Ray<3,double>&,double=std::numeric_limits<double>::infinity(),int=0) const;
 
     // find the surface element hit by an incoming ray
-    pair<pair<unsigned,int>,Point<3,double> > getSurfaceElement(const Ray<3,double>&) const;
+    //pair<pair<unsigned,int>,Point<3,double> > getSurfaceElement(const Ray<3,double>&) const;
 
     vector<unsigned> getMaterialMap() const { return T_m; }
 
@@ -214,3 +207,5 @@ class TetraMesh : public TetraMeshBase {
 
     friend class TetraGraph;
 };
+
+#endif

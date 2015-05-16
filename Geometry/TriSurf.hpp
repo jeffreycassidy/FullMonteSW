@@ -9,6 +9,8 @@ public:
 
 	template<class Archive>void serialize(Archive& ar,const int version){ ar & P & F; }
 
+	TriSurf(){}
+
 	/// Create a TriSurf by copying existing vectors
 	TriSurf(const vector<Point<3,double>>& P_,const vector<FaceByPointID>& F_) : P(P_),F(F_){}
 

@@ -369,7 +369,7 @@ unsigned TetraMesh::findEnclosingTetra(const Point<3,double>& p) const
 	unsigned N=0,IDt=0;
 
 	for(unsigned i=1;i<tetras.size(); ++i)
-		if (getTetraVolume(i) > 1e-3 && tetras[i].pointWithin(pv))
+		if (tetras[i].pointWithin(pv))
 		{
 			IDt=i;
 			++N;

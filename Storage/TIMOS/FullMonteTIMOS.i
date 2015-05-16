@@ -3,13 +3,7 @@
 %include "std_string.i"
 %apply std::string { const std::string* }
 
-%typemap(out) std::array<float,3> {
-	stringstream ss;
-	std::array<float,3> a=$1;
-	for(unsigned i=0;i<3;++i)
-		ss << a[i] << ' ';
-	Tcl_AppendResult(interp,ss.str().c_str());
-}
+%include "../../Geometry/Geometry_types.i"
 
 %{
 	

@@ -123,6 +123,13 @@ bool TetraMeshBase::checkValid(bool printResults) const
     return IDps_ok;
 }
 
+void TetraMeshBase::remapMaterial(unsigned from,unsigned to)
+{
+	for(unsigned& m : T_m)
+		if (m == from)
+			m = to;
+}
+
 
 
 /*

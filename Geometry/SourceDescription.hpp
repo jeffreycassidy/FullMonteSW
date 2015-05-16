@@ -82,7 +82,8 @@ public:
 class IsotropicPointSourceDescription : public IsotropicSourceDescription, public PointSourceDescription, public cloner<SourceDescription,IsotropicPointSourceDescription> {
 	static constexpr double nan = std::numeric_limits<double>::quiet_NaN();
 public:
-	IsotropicPointSourceDescription(const Point<3,double>& p_=Point<3,double>{nan,nan,nan},double w_=1.0) : PointSourceDescription(p_), cloner(w_){};
+	IsotropicPointSourceDescription(const Point<3,double>& p_=Point<3,double>{nan,nan,nan},double w_=1.0) :
+		PointSourceDescription(p_), cloner(w_){};
 
 	virtual string operator()() const { return "Isotropic point source"; }
 	virtual string timos_str(unsigned long long=0) const;
