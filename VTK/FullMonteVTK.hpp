@@ -245,6 +245,30 @@ public:
 	//vtkActor*		getActor() 	{ if (!actor_) Update(); return actor_; }
 };
 
+
+class VTKLineSourceRep {
+	const VTKMeshRep& meshrep_;
+	LineSourceDescription* lsd_=nullptr;
+
+	vtkActor* actor_=nullptr;
+
+public:
+	VTKLineSourceRep(const VTKMeshRep& mesh,const Point<3,double> p0,const Point<3,double> p1) :
+		meshrep_(mesh), lsd_(new LineSourceDescription(p0,p1,1.0)){ Update(); }
+#ifndef SWIG
+	VTKLineSourceRep(const VTKMeshRep& mesh,LineSourceDescription* lsd) : meshrep_(mesh),lsd_(lsd)
+		{ Update(); }
+#endif
+
+	SourceDescription* getDescription() const { return lsd_; }
+
+	void point(unsigned i,const Point<3,double> p){ assert(lsd_); lsd_->endpoint(i,p); }
+
+	void Update();
+
+	vtkActor* getActor(){ if (!actor_) Update(); return actor_; }
+};
+
 class VTKSurfaceFluenceRep {
 	const VTKMeshRep& meshrep_;
 
@@ -375,6 +399,7 @@ public:
 	}
 
 };
+
 
 
 #endif /* FULLMONTEVTK_HPP_ */

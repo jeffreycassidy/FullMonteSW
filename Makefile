@@ -11,6 +11,17 @@ ubuntu12:
 	ssh jcassidy@10.211.55.7 "cd src/FullMonte; make SOURCE_ROOT=/home/jcassidy/src ANTLR_DIR=/usr/local/antlr3 libs" 
 
 libs:
+	ln -sf SFMT/libSFMT.a
+	ln -sf Kernels/libFullMonteKernels.so
+	ln -sf Kernels/Software/libFullMonteCore.so
+	ln -sf OutputTypes/libFullMonteData.so
+	ln -sf Kernels/libFullMonteKernels_TCL.so
+	ln -sf Geometry/libFullMonteGeometry.so
+	ln -sf Storage/TIMOS/libFullMonteTIMOS.so
+	ln -sf Storage/TIMOS/libFullMonteTIMOS_TCL.so
+	ln -sf VTK/libFullMonteVTK.so
+	ln -sf Storage/BinFile/libFullMonteBinFile.so
+	ln -sf Storage/BinFile/libFullMonteBinFile_TCL.so
 	for d in $(SUBDIRS); do make -C $$d libs; done;
 
 #### Cleanup targets

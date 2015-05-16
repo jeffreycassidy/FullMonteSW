@@ -175,8 +175,12 @@ public:
 class LineSourceDescription : public cloner<SourceDescription,LineSourceDescription> {
 protected:
 	Point<3,double> a,b;
+
 public:
 	LineSourceDescription(const Point<3,double>& a_,const Point<3,double>& b_,double w_=1.0) : cloner(w_),a(a_),b(b_){}
+
+	Point<3,double> endpoint(unsigned i) const { assert(i<2); return i==0 ? a : b; }
+	void endpoint(unsigned i,const Point<3,double> p) { assert(i<2); if (i==0) a=p; else b=p; }
 
 	std::pair<Point<3,double>,Point<3,double>> getEndPoints() const { return make_pair(a,b); }
 

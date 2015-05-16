@@ -295,6 +295,24 @@ void VTKBallSourceRep::Update()
 	dynamic_cast<vtkDataSetMapper*>(actor_->GetMapper())->SetInputData(meshrep_.getSubsetMesh(T_));
 }
 
+
+void VTKLineSourceRep::Update()
+{
+	assert(lsd_);
+
+	if (!actor_)
+	{
+		actor_ = vtkActor::New();
+
+		vtkDataSetMapper* mapper = vtkDataSetMapper::New();
+		actor_->SetMapper(mapper);
+	}
+	else
+		actor_->GetMapper()->GetInput()->Delete();
+
+	//dynamic_cast<vtkDataSetMapper*>(actor_->GetMapper())->SetInputData(meshrep_.getSubsetMesh(T_));
+}
+
 void VTKSurfaceFluenceRep::Update(const std::vector<double>& E,bool is_per_area)
 {
 	if (!pd_)

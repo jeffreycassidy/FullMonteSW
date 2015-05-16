@@ -2,14 +2,16 @@ include ../Makefile.in
 
 SUBDIRS=CAPI Software
 
-libs: libFullMonteKernels.so libFullMonteKernels_TCL.so
+libs: sublibs libFullMonteKernels.so libFullMonteKernels_TCL.so
+	
+sublibs: 
 	for d in $(SUBDIRS); do make -C $$d libs; done;
 	
 clean:
 	for d in $(SUBDIRS); do make -C $$d clean; done;
 	
 libFullMonteKernels.so: Kernel.o OStreamObserver.o
-	$(CXX) $(CXX_LIB_OPTS) -lboost_system -lFullMonteGeometry -lFullMonteCore -o $@ $^
+	$(CXX) $(CXX_LIB_OPTS) -lboost_system -lFullMonteGeometry -lFullMonteCore -L$(SOURCE_ROOT)/FullMonte -lSFMT -o $@ $^
 	
 libFullMonteKernels_TCL.so: Kernel_wrap.o | libFullMonteKernels.so
 	$(CXX) $(CXX_LIB_OPTS) -lFullMonteKernels -lboost_system -lFullMonteGeometry -o $@ $^ /usr/lib/libtclstub8.5.a
