@@ -36,6 +36,19 @@ VTKMeshRep::VTKMeshRep(const TetraMesh* M)
 	}
 }
 
+
+VTKMeshRep::VTKMeshRep(const TetraMeshBase* M)
+{
+	mesh_ = new TetraMesh(*M);
+	cout << "INFO: Creating copy of TetraMeshBase to satisfy VTKMeshRep (will need to be deleted to avoid a leak)" << endl;
+	if (mesh_)
+	{
+		updatePoints();
+		updateTetras();
+		updateRegions();
+	}
+}
+
 void VTKMeshRep::updatePoints()
 {
 	assert(mesh_);
@@ -43,12 +56,12 @@ void VTKMeshRep::updatePoints()
 	if(!P_)
 		P_=vtkPoints::New();
 
-	P_->SetNumberOfPoints(mesh_->getNp()+1);
+	P_->SetNumberOfPoints(mesh_->getNp());
 
-	unsigned i=0;
+	unsigned i=-1;
 	for(Point<3,double> p : mesh_->points())
-		if (i==0)
-			P_->SetPoint(i++,std::array<double,3>{ NAN, NAN, NAN}.data());
+		if (i==-1)
+			i=0;
 		else
 			P_->SetPoint(i++,p.data());
 }
@@ -58,19 +71,24 @@ void VTKMeshRep::updateTetras()
 	assert(mesh_);
 	assert(P_);
 
-	size_t Nt=mesh_->getNt()+1;
+	size_t Nt=mesh_->getNt();
 
 	// Create tetra ID array
 	vtkIdTypeArray *ids = vtkIdTypeArray::New();
 	ids->SetNumberOfComponents(1);
 	ids->SetNumberOfTuples(5*Nt);
 
-	unsigned j=0;
+	unsigned j=-1;
 	for(TetraByPointID IDps : mesh_->getTetrasByPointID())
 	{
-		ids->SetTuple1(j++,4);
-		for(unsigned k=0;k<4;++k)
-			ids->SetTuple1(j++,IDps[k]);
+		if (j==-1)
+			j=0;
+		else
+		{
+			ids->SetTuple1(j++,4);
+			for(unsigned k=0;k<4;++k)
+				ids->SetTuple1(j++,IDps[k]-1);
+		}
 	}
 
 	// Form cell array
@@ -97,10 +115,10 @@ void VTKMeshRep::updateRegions()
 		regions_ = vtkUnsignedShortArray::New();
 
 	regions_->SetNumberOfComponents(1);
-	regions_->SetNumberOfTuples(mesh_->getNt()+1);
+	regions_->SetNumberOfTuples(mesh_->getNt());
 
-	for(unsigned i=0; i<=mesh_->getNt(); ++i)
-		regions_->SetTuple1(i,mesh_->getMaterial(i));
+	for(unsigned i=1; i<=mesh_->getNt(); ++i)
+		regions_->SetTuple1(i-1,mesh_->getMaterial(i));
 }
 
 // Returns a vtkUnstructuredGrid with a subset of the mesh in it (indices specified by idx)

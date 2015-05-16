@@ -7,4 +7,4 @@ puts "Converting STL binary file '$ifn' to text file '$ofn'"
 
 set p [loadSTLBinary $ifn]
 
-writeSTLText $ofn [pairPT_first_get $p] [pairPT_second_get $p] "foobar"
+writeSTLText $ofn [pairPT_first_get $p] [pairPT_second_get $p] ""

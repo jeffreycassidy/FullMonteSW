@@ -1,6 +1,6 @@
 include ../Makefile.in
 
-SUBDIRS=CommonParser NIRFAST Postgres STL TIMOS
+SUBDIRS=CommonParser NIRFAST Postgres STL TIMOS TetGen
 
 clean:
 	for d in $(SUBDIRS); do make -C $$d clean; done

@@ -138,6 +138,7 @@ class VTKMeshRep {
 
 public:
 	VTKMeshRep(const TetraMesh* M);
+	VTKMeshRep(const TetraMeshBase* M);
 
 	~VTKMeshRep(){
 		if (P_) P_->Delete();

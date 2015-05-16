@@ -160,6 +160,8 @@ template<size_t D,class T>class Point : public array<T,D>
 {
 	public:
 
+	using std::array<T,D>::operator=;
+
 	Point()                { array<T,D>::fill(T()); };
 	Point(const std::initializer_list<double>& il_){ copy(il_.begin(),il_.end(),array<T,D>::begin()); }
 	Point(const Point& P_) : array<T,D>(P_){};

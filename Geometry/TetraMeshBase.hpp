@@ -66,6 +66,8 @@ public:
     const std::vector<Point<3,double> >& getPoints() const { return P; }
     const std::vector<TetraByPointID>& getTetrasByPointID() const { return T_p; }
 
+
+    unsigned                getMaterial(unsigned IDt) const { return T_m[IDt]; }
     const std::vector<unsigned>& getMaterials() const { return T_m; }
 
     // check if tetra has any point within the region

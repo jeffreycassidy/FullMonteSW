@@ -22,6 +22,10 @@ libs:
 	ln -sf VTK/libFullMonteVTK.so
 	ln -sf Storage/BinFile/libFullMonteBinFile.so
 	ln -sf Storage/BinFile/libFullMonteBinFile_TCL.so
+	ln -sf Storage/STL/libFullMonteSTL.so
+	ln -sf Storage/STL/libFullMonteSTL_TCL.so
+	ln -sf Storage/TetGen/libFullMonteTetGen.so
+	ln -sf Storage/TetGen/libFullMonteTetGen_TCL.so
 	for d in $(SUBDIRS); do make -C $$d libs; done;
 
 #### Cleanup targets
