@@ -9,7 +9,7 @@
 template<typename T>double get_energy(const T& v);
 template<>inline double get_energy(const double& v){ return v; }
 
-template<class T>class VolumeArray : public LoggerResults {
+template<class T>class VolumeArray : public clonable<LoggerResults,VolumeArray<T>> {
 	const TetraMesh& mesh;
 	vector<T> v;
 

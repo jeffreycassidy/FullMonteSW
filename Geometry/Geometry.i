@@ -3,9 +3,6 @@
 %include "std_string.i"
 %include "std_vector.i"
 
-%include "Geometry_types.i"
-
-
 %{
 
 #include <vector>
@@ -17,6 +14,8 @@
 
 %}
 
-//%include "SourceDescription.hpp"
+%include "Geometry_types.i"
+
+%include "SourceDescription.hpp"
 %include "TetraMeshBase.hpp"
 %include "TetraMesh.hpp"

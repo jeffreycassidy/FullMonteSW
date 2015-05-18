@@ -24,7 +24,7 @@
  *
  */
 
-template<class Logger,class RNG> class TetraMCKernelThread : public SimMCThread {
+template<class Logger,class RNG> class TetraMCKernelThread : public SimMCThreadBase {
 	const TetraMCKernel<RNG>& K_;
 
 	std::thread t;

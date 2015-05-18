@@ -47,8 +47,9 @@ loadoptical $optfn
 #set mesh [R mesh]
 
 set meshfn "../Storage/BinFile/mouse"
-BinFileReader BR $meshfn
-set mesh [BR mesh]
+#BinFileReader BR $meshfn
+#set mesh [BR mesh]
+set mesh [R mesh]
 VTKMeshRep V $mesh
 
 set ug [V getMeshWithRegions]
@@ -72,7 +73,7 @@ set legendactor [V getLegendActor "0.5 0.1" "0.9 0.9"]
 
 ## Create sim kernel
 
-TetraSurfaceKernel k
+TetraVolumeKernel k
 
 # Kernel properties
 # k setSource bsr ## do this later
@@ -155,12 +156,10 @@ for { set i 0 } { $i < [llength $legend] } { incr i } {
     }
 }
 
-# actor: surface fluence dataset
+VTKVolumeFluenceRep fluencerep V
 
-VTKSurfaceFluenceRep fluencerep V
-
-set fluenceactor [fluencerep getActor]
-    ren AddActor $fluenceactor
+#set fluenceactor [fluencerep getActor]
+#    ren AddActor $fluenceactor
 
 
 ren AddViewProp $legendactor
@@ -170,6 +169,58 @@ set scalebar [fluencerep getScaleBar]
     $scalebar SetPosition2 0.2 0.7
 
 ren AddViewProp $scalebar
+
+
+set p0x 19
+set p0y 14
+set p0z 12 
+
+set p1x 20
+set p1y 22 
+set p1z 13
+
+VTKLineSourceRep lsr V "$p0x $p0y $p0z" "$p1x $p1y $p1z"
+
+vtkLineWidget2 lsrwidget
+    lsrwidget SetInteractor iren
+    lsrwidget CreateDefaultRepresentation
+    $ug ComputeBounds
+    puts "Bounds are: [$ug GetBounds]"
+    eval [lsrwidget GetRepresentation] PlaceWidget [$ug GetBounds]
+    [lsrwidget GetRepresentation] SetPoint1WorldPosition $p0x $p0y $p0z
+    [lsrwidget GetRepresentation] SetPoint2WorldPosition $p1x $p1y $p1z
+    lsrwidget SetEnabled 1
+    lsrwidget On
+
+lsrwidget AddObserver InteractionEvent {
+    puts "A: [[lsrwidget GetRepresentation] GetPoint1WorldPosition]"
+    puts "B: [[lsrwidget GetRepresentation] GetPoint2WorldPosition]"
+}
+
+
+lsrwidget AddObserver EndInteractionEvent {
+    set p0 [split [[lsrwidget GetLineRepresentation] GetPoint1WorldPosition]]
+    set p1 [split [[lsrwidget GetLineRepresentation] GetPoint2WorldPosition]]
+    puts "Start: $p0"
+    puts "End:   $p1"
+
+    set p0x [lindex $p0 1]
+    set p0y [lindex $p0 2]
+    set p0z [lindex $p0 3]
+
+    set p1x [lindex $p1 1]
+    set p1y [lindex $p1 2]
+    set p1z [lindex $p1 3]
+
+
+}
+
+set lsactor [lsr getActor]
+    [$lsactor GetProperty] SetOpacity 0.5
+
+ren AddActor [lsrwidget GetRepresentation]
+
+
 
 
 
@@ -191,13 +242,51 @@ pack .input.opt
 pack .input
 
 
-labelframe .source -text "Source placement"
-proc scalecallback { newval } { global bsractor; bsr setRadius $newval; bsr Update; renwin Render; }
-scale .source.radius -label "Radius" -from 0.0 -to 10.0 -resolution 0.1 -orient horizontal -command scalecallback
-pack .source.radius
+labelframe .source -text "Line source placement"
 
-label .source.pos -text "Position: (+000.00 +000.00 +000.0)"
-pack .source.pos
+proc sourcecallback { } {
+    global lsactor p0x p0y p0z p1x p1y p1z
+    lsr endpoint 0 "$p0x $p0y $p0z"
+    lsr endpoint 1 "$p1x $p1y $p1z"
+    puts "Source moved to $p0x $p0y $p0z -- $p1x $p1y $p1z"
+    lsr Update
+    renwin Render
+    return 1
+}
+
+frame .source.p0
+
+entry .source.p0.x -validate focusout -vcmd sourcecallback -textvariable p0x
+pack .source.p0.x
+
+entry .source.p0.y -validate focusout -vcmd sourcecallback -textvariable p0y
+pack .source.p0.y
+
+entry .source.p0.z -validate focusout -vcmd sourcecallback -textvariable p0z
+pack .source.p0.z
+
+pack .source.p0
+
+frame .source.p1
+entry .source.p1.x -validate focusout -vcmd sourcecallback -textvariable p1x
+pack .source.p1.x
+
+entry .source.p1.y -validate focusout -vcmd sourcecallback -textvariable p1y
+pack .source.p1.y
+
+entry .source.p1.z -validate focusout -vcmd sourcecallback -textvariable p1z
+pack .source.p1.z
+
+
+pack .source.p1
+
+pack .source
+
+#scale .source.radius -label "Radius" -from 0.0 -to 10.0 -resolution 0.1 -orient horizontal -command sourcecallback
+#pack .source.radius
+
+#label .source.pos -text "Position: (+000.00 +000.00 +000.0)"
+#pack .source.pos
 
 
 pack .source
@@ -241,9 +330,20 @@ proc progresstimerevent {} {
         puts "Progress update: $progress"
         if { ![k done] } { progresstimerevent } else {
             k awaitFinish
-            set phi_s [k getSurfaceFluenceVector]
-            fluencerep Update $phi_s 1
+            set phi_s [k getVolumeFluenceVector]
+            fluencerep Update "$phi_s"
+
+            ren AddActor [fluencerep getActor]
             renwin Render
+
+            set ofn "lastrender.vtk"
+
+            vtkUnstructuredGridWriter W
+            W SetFileName $ofn
+            W SetInputData [fluencerep getData]
+            W Update
+            W Delete
+            puts "Wrote to $ofn"
         }
     }
 }
@@ -251,8 +351,7 @@ proc progresstimerevent {} {
 button .output.save -text "Calculate & Save" -command {
     global mesh opt ofn progress
     set progress 0
-    k setSource [bsr getDescription]
-    k setPacketCount $Npkt
+    k setSource [lsr getDescription]
     k startAsync
 
     progresstimerevent
@@ -280,35 +379,6 @@ proc fluencecallback {} {
 button .fluenceenable -text "Show Fluence" -command { fluencecallback }
 pack .fluenceenable
 
-
-# add placement interactor
-vtkPointWidget pointwidget
-    pointwidget OutlineOn
-    pointwidget ZShadowsOn
-    pointwidget XShadowsOn
-    pointwidget YShadowsOn
-    pointwidget SetInteractor iren
-    pointwidget SetEnabled 1
-    $ug ComputeBounds
-    puts "Bounds: [$ug GetBounds]"
-    eval pointwidget PlaceWidget [$ug GetBounds]
-
-pointwidget AddObserver EndInteractionEvent {
-    set pos [eval "format {Position: (%6.2f %6.2f %6.2f)} [pointwidget GetPosition]"]
-    .source.pos configure -text $pos
-    bsr setCentre [pointwidget GetPosition];
-    bsr Update;
-    renwin Render;
-}
-
-
-VTKBallSourceRep bsr V "1.0 1.0 1.0" 10.0
-
-set bsractor [bsr getActor]
-    [$bsractor GetProperty] SetOpacity 0.5
-
-ren AddActor $bsractor
-
-
+ren ResetCamera
 renwin Render
 puts "Depth peeling: [ren GetLastRenderingUsedDepthPeeling]"

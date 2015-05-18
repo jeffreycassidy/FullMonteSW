@@ -43,6 +43,7 @@ void Kernel::setSource(SourceDescription* s)
 
 void MonteCarloKernelBase::setMaterials(const vector<SimpleMaterial>& mats)
 {
+	mats_=mats;
 	mat_.resize(mats.size());
 	boost::copy(
 		mats | boost::adaptors::transformed([](SimpleMaterial sm){ return Material(sm.mu_a,sm.mu_s,sm.g,sm.n); }),
@@ -86,12 +87,6 @@ template<class RNG>void TetraMCKernel<RNG>::prepare_()
 		cout << ++i << ": " << h << endl;
 }
 
-void TetraSurfaceKernel::prepare_()
-{
-	// display debug output
-	TetraMCKernel::prepare_();
-}
-
 //void TetraVolumeKernel::start()
 //{
 //	// Set up logger
@@ -125,7 +120,7 @@ void TetraSurfaceKernel::start_()
 	}
 
 	cout << "Starting " << Nth_ << " threads" << endl;
-	boost::for_each(workers_, [](SimMCThread* w){ assert(w); w->startAsync(); });
+	boost::for_each(workers_, [](SimMCThreadBase* w){ assert(w); w->startAsync(); });
 }
 
 void TetraSurfaceKernel::finish_()
@@ -152,3 +147,58 @@ void TetraSurfaceKernel::finish_()
 
 	cout << "Kernel is finished" << endl;
 }
+
+
+
+void TetraVolumeKernel::start_()
+{
+	logger_.reset(new LoggerType(make_tuple(
+			LoggerEventMT(),
+			LoggerConservationMT(),
+			LoggerVolume<QueuedAccumulatorMT<double>>(M_,1<<10)
+	)));
+
+	workers_.resize(Nth_,nullptr);
+
+	boost::random::ecuyer1988 seeds_generator(rngSeed_);
+
+	seeds_generator.discard(10000);
+
+	for(unsigned i=0;i<Nth_;++i)
+	{
+		workers_[i] = new TetraMCKernelThread<LoggerWorker,RNG_SFMT_AVX>(*this,get_worker(*logger_),seeds_generator(),Npkt_/Nth_);
+		seeds_generator.discard(100);
+	}
+
+	cout << "Starting " << Nth_ << " threads" << endl;
+	boost::for_each(workers_, [](SimMCThreadBase* w){ assert(w); w->startAsync(); });
+}
+
+
+void TetraVolumeKernel::finish_()
+{
+	auto res = std::make_tuple(
+			get<0>(*logger_).getResults(),
+			get<1>(*logger_).getResults(),
+			get<2>(*logger_).getResults());
+
+	results_.clear();
+
+	// clone because storage above is of automatic duration
+	tuple_for_each(res, [this] (const LoggerResults& r) { this->results_.push_back(std::shared_ptr<const LoggerResults>(r.clone())); });
+
+	cout << "Results are available" << endl;
+
+	for(auto p : results_)
+		p->summarize(cout);
+
+	cout << endl << endl << "Result types available: ";
+	for(auto p : results_)
+		cout << " " << p->getTypeString();
+	cout << endl;
+
+	cout << "Kernel is finished" << endl;
+}
+
+
+

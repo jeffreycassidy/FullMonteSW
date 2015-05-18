@@ -4,9 +4,6 @@
 #include <boost/iterator/transform_iterator.hpp>
 #include <boost/random/discrete_distribution.hpp>
 
-// Source classes (isotropic point, directed face, isotropic volume, directed point (pencil beam)
-// A collection of sources can also be a Source (SourceMulti)
-// Framework should be relatively simple to introduce new types
 
 template<typename Base,typename Derived>struct cloner : public Base {
 	// provide covariant clone method
@@ -32,8 +29,6 @@ public:
 	double getPower() const { return w; }
 	void setPower(double w_){ w=w_; }
 
-	virtual string operator()() const=0;
-	virtual string timos_str(unsigned long long=0) const=0;
 	virtual ostream& print(ostream& os) const=0;
 
 	friend ostream& operator<<(ostream& os,const SourceDescription& sd)
@@ -42,6 +37,10 @@ public:
 		return os;
 	}
 };
+
+#ifdef SWIG
+%template (BallSourceDescriptionCloner) cloner<SourceDescription,BallSourceDescription>;
+#endif
 
 class BallSourceDescription : public cloner<SourceDescription,BallSourceDescription> {
 	Point<3,double> p0_;
@@ -56,9 +55,7 @@ public:
 	double getRadius() const { return r_; }
 	void setRadius(double r){ r_=r; }
 
-	virtual string operator()() const{ return "BallSourceDescription"; }
 	virtual ostream& print(ostream& os) const;
-	virtual string timos_str(unsigned long long=0) const { return "(invalid; ball source)"; }
 };
 
 class PointSourceDescription  {
@@ -79,16 +76,28 @@ public:
 	IsotropicSourceDescription(){}
 };
 
+#ifdef SWIG
+%template (IsotropicPointSourceDescriptionCloner) cloner<SourceDescription,IsotropicPointSourceDescription>;
+#endif
+
 class IsotropicPointSourceDescription : public IsotropicSourceDescription, public PointSourceDescription, public cloner<SourceDescription,IsotropicPointSourceDescription> {
 	static constexpr double nan = std::numeric_limits<double>::quiet_NaN();
 public:
+#ifndef SWIG
 	IsotropicPointSourceDescription(const Point<3,double>& p_=Point<3,double>{nan,nan,nan},double w_=1.0) :
 		PointSourceDescription(p_), cloner(w_){};
+#else
+	IsotropicPointSourceDescription(const Point<3,double>& p_,double w_=1.0) :
+		PointSourceDescription(p_), cloner(w_){};
+#endif
 
-	virtual string operator()() const { return "Isotropic point source"; }
-	virtual string timos_str(unsigned long long=0) const;
 	virtual ostream& print(ostream&)  const;
 };
+
+#ifdef SWIG
+%template (PencilBeamSourceDescriptionCloner) cloner<SourceDescription,PencilBeamSourceDescription>;
+#endif
+
 
 class PencilBeamSourceDescription : public cloner<SourceDescription,PencilBeamSourceDescription>, public PointSourceDescription {
 	UnitVector<3,double> r;
@@ -100,10 +109,6 @@ public:
 			r(d_),IDt(IDt_){ }
 
 	UnitVector<3,double> getDirection() const { return r; }
-
-	virtual string operator()() const { return "Pencil beam source"; }
-
-	virtual string timos_str(unsigned long long=0) const;
 
 	virtual ostream& print(ostream&) const;
 
@@ -121,8 +126,6 @@ protected:
 
 public:
 	VolumeSourceDescription(unsigned IDt_=0,double w_=1.0) : cloner(w_),IDt(IDt_){}
-	virtual string timos_str(unsigned long long=0) const;
-	string operator()() const { return "Volume source"; }
 
 	virtual ostream& print(ostream&) const;
 	unsigned getIDt() const { return IDt; }
@@ -146,10 +149,8 @@ public:
 	double w;
 public:
 	FaceSourceDescription(FaceByPointID f_,double w_=1.0) : cloner(w_),f(f_),IDt(0),IDf(0){}
-	virtual string operator()() const { return "Face Source"; }
 
 	virtual ostream& print(ostream& os) const;
-	virtual string timos_str(unsigned long long=0) const;
 
 	unsigned getIDt() const { return IDt; }
 	FaceByPointID getIDps() const { return f; }
@@ -167,26 +168,33 @@ public:
 			w_total(0.0)
 			{ for(; begin != end; ++begin) w_total += (*begin)->getPower(); }
 
-	virtual string operator()() const { return "Multiple sources"; }
-	virtual string timos_str(unsigned long long=0) const;
-
 	virtual ostream& print(ostream& os) const;
 };
+
+#ifdef SWIG
+%template (LineSourceDescriptionCloner) cloner<SourceDescription,LineSourceDescription>;
+#endif
+
+//%template (PencilBeamSourceDescriptionCloner) cloner<SourceDescription,PencilBeamSourceDescription>;
 
 class LineSourceDescription : public cloner<SourceDescription,LineSourceDescription> {
 protected:
 	Point<3,double> a,b;
 
 public:
-	LineSourceDescription(const Point<3,double>& a_,const Point<3,double>& b_,double w_=1.0) : cloner(w_),a(a_),b(b_){}
+
+#ifndef SWIG
+	LineSourceDescription() : cloner(1.0){}
+	LineSourceDescription(const Point<3,double> a_,const Point<3,double> b_,const double w_=1.0) : cloner(w_),a(a_),b(b_){}
+#else
+	LineSourceDescription(const Point<3,double> a_,const Point<3,double> b_) : cloner(1.0),a(a_),b(b_){}
+#endif
 
 	Point<3,double> endpoint(unsigned i) const { assert(i<2); return i==0 ? a : b; }
 	void endpoint(unsigned i,const Point<3,double> p) { assert(i<2); if (i==0) a=p; else b=p; }
 
 	std::pair<Point<3,double>,Point<3,double>> getEndPoints() const { return make_pair(a,b); }
 
-	virtual string operator()() const { return "Line source"; }
-	virtual string timos_str(unsigned long long=0) const { return "???Line source???"; }
 	virtual ostream& print(ostream& os) const
 	{
 		return os << "Line source from " << a << " to " << b;

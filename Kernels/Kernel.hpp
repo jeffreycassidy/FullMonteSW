@@ -19,6 +19,8 @@
 %include "std_vector.i"
 %include "std_string.i"
 
+%template(DoubleVector) std::vector<double>;
+
 %{
 #include "Kernel.hpp"
 #include "KernelObserver.hpp"
@@ -62,6 +64,7 @@
 
 %include "KernelObserver.hpp"
 %include "Software/OStreamObserver.hpp"
+%include "../Geometry/Geometry_types.i"
 
 #endif
 
@@ -99,12 +102,23 @@ public:
 
 	void setSources(const vector<SourceDescription*>& S);
 	void setSource(SourceDescription* s);
+
+	// unit of simulation energy, measured in Joules
 	void setEnergy(float E){ E_=E; }
 
-	void setUnitsToCM(){ units_per_cm_=1.0;  }
-	void setUnitsToMM(){ units_per_cm_=10.0; }
+	// length of simulation unit, measured in cm
+	void setUnitsToCM(){ L_=1.0;  }
+	void setUnitsToMM(){ L_=0.1; }
+	void setUnitsToMetre(){ L_=100.0; }
 
 	const LoggerResults* getResult(std::string,std::string="") const;
+
+	// Fluence in joules per cm from simulation units
+	//
+
+	double fluenceJPerCM() const {
+		return E_/(L_*L_);
+	}
 
 protected:
 
@@ -119,7 +133,7 @@ private:
 	virtual void start_(){};
 
 	// scale
-	float units_per_cm_=1.0;
+	float L_=1.0;
 
 	// total energy launched
 	float E_=1.0;
@@ -161,6 +175,7 @@ public:
 
 protected:
 	unsigned long long Npkt_=0;
+	double Etotal_=1.0;
 	unsigned Nstep_max_=10000;
 	unsigned Nhit_max_=10000;
 	float wmin_=1e-4;
@@ -184,14 +199,53 @@ protected:
 
 template<class Logger,class RNG>class TetraMCKernelThread;
 
+
+class SimMCThreadBase {
+public:
+	virtual ~SimMCThreadBase(){}
+	virtual void startAsync()=0;
+	virtual bool done() const=0;
+
+	virtual void awaitFinish()=0;
+
+	virtual unsigned long long getSimulatedPacketCount() const=0;
+
+};
+
+template<class Logger>class SimMCThread : public SimMCThreadBase {
+public:
+
+
+};
+
+
 template<class RNG>class TetraMCKernel : public MonteCarloKernelBase {
 public:
 	void setMesh(const TetraMesh& M){ M_=M; }
 
+	virtual void awaitFinish()
+	{
+		for(auto* t : workers_)
+			t->awaitFinish();
+		finish_();
+	}
+
+	unsigned long long getSimulatedPacketCount() const {
+		unsigned long long sum=0;
+		for(const SimMCThreadBase* t : workers_)
+			sum += t ? t->getSimulatedPacketCount() : 0;
+		return sum;
+	}
+
+
 protected:
+
+	virtual bool done() const { return boost::algorithm::all_of(workers_, [](const SimMCThreadBase* w){ return w->done(); }); }
 
 	void prepare_sources_();
 	TetraMesh M_;
+
+	vector<SimMCThreadBase*> workers_;
 
 	void prepare_();
 
@@ -214,8 +268,6 @@ template<class RNG>void TetraMCKernel<RNG>::prepare_sources_()
 //
 //private:
 //
-//	virtual void prepare_() override;
-//
 //	//ThreadManager<LoggerType,RNG_SFMT_AVX> man_;
 //
 //	typedef std::tuple<
@@ -231,27 +283,9 @@ template<class RNG>void TetraMCKernel<RNG>::prepare_sources_()
 %template(TetraMCKernelAVX) TetraMCKernel<RNG_SFMT_AVX>;
 #endif
 
-class SimMCThread {
-public:
-	virtual ~SimMCThread(){}
-	virtual void startAsync()=0;
-	virtual bool done() const=0;
-
-	virtual void awaitFinish()=0;
-
-	virtual unsigned long long getSimulatedPacketCount() const=0;
-};
-
 class TetraSurfaceKernel : public TetraMCKernel<RNG_SFMT_AVX> {
 public:
 	TetraSurfaceKernel(){}
-
-	virtual void awaitFinish()
-	{
-		for(auto* t : workers_)
-			t->awaitFinish();
-		finish_();
-	}
 
 	vector<double> getSurfaceFluenceVector() const
 	{
@@ -269,16 +303,8 @@ public:
 
 
 private:
-	virtual void prepare_() override;
 
 	virtual void start_() override;
-
-	unsigned long long getSimulatedPacketCount() const {
-		unsigned long long sum=0;
-		for(const SimMCThread* t : workers_)
-			sum += t ? t->getSimulatedPacketCount() : 0;
-		return sum;
-	}
 
 	typedef std::tuple<
 			LoggerEventMT,
@@ -295,23 +321,68 @@ private:
 
 	typedef TetraMCKernelThread<LoggerWorker,RNG_SFMT_AVX> TetraMCThread;
 
-	vector<SimMCThread*> workers_;
+	void finish_();
+
+};
+
+class TetraVolumeKernel : public TetraMCKernel<RNG_SFMT_AVX> {
+public:
+	TetraVolumeKernel(){}
+
+	vector<double> getVolumeFluenceVector() const
+	{
+		const LoggerResults* lr = getResult("logger.results.volume.energy");
+		const VolumeArray<double>& d = dynamic_cast<const VolumeArray<double>&>(*lr);
+
+		vector<double> E = d.absorbed_energy();
+
+		cout << "Fetched an energy vector with total value " << d.getTotal() << endl;
+
+		double k = fluenceJPerCM()/Npkt_;
+
+		for(unsigned i=0; i<E.size(); ++i)
+		{
+			assert (i <= M_.getNt());
+			unsigned mat = M_.getMaterial(i);
+			assert (mat < mats_.size());
+
+			double V = M_.getTetraVolume(i), mu_a = mats_[mat].mu_a;
+
+			if (E[i] > 0)
+			{
+				if (V==0)
+					cout << "WARNING: Nonzero absorption in an element with zero volume" << endl;
+				else if (mu_a==0)
+					cout << "WARNING: Nonzero absorption in an element with zero absorption coefficient" << endl;
+				else
+					E[i] *= k / (V * mats_[mat].mu_a);
+			}
+		}
+		return E;
+	}
+
+
+private:
+
+	virtual void start_() override;
+
+	typedef std::tuple<
+			LoggerEventMT,
+			LoggerConservationMT,
+			LoggerVolume<QueuedAccumulatorMT<double>>
+			>
+			LoggerType;
+
+	std::unique_ptr<LoggerType> logger_;
+
+#ifndef SWIG
+	typedef decltype(get_worker(std::declval<LoggerType&>())) LoggerWorker;
+#endif
+
+	typedef TetraMCKernelThread<LoggerWorker,RNG_SFMT_AVX> TetraMCThread;
 
 	void finish_();
 
-	virtual bool done() const { return boost::algorithm::all_of(workers_, [](const SimMCThread* w){ return w->done(); }); }
 };
-
-
-
-//	// get pointers from results tuple
-
-//do {
-//	double usecs = 1e6*opts.timerinterval;
-//	tie(completed,total) = man.getProgress();
-//	cout << '\r' << "  Progress: " << completed << '/' << total << " (" << fixed << setprecision(2) << double(completed)/double(total)*100.0 << "%)" << flush;
-//	usleep(usecs);
-//}
-//while(!man.done());
 
 #endif /* KERNELS_KERNEL_HPP_ */

@@ -1,4 +1,3 @@
-
 %typemap(out) std::array<float,3> {
 	stringstream ss;
 	std::array<float,3> a=$1;
@@ -27,4 +26,12 @@
 	for(unsigned i=0;i<3;++i)
 		ss >> p[i];
 	$1 = &p;
+}
+
+%typemap(in) Point<3,double> {
+	Point<3,double> p;
+	stringstream ss(Tcl_GetString($input));
+	for(unsigned i=0;i<3;++i)
+		ss >> p[i];
+	$1 = p;
 }

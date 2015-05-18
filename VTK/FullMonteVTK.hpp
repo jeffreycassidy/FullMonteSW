@@ -21,6 +21,7 @@
 %}
 
 %template(sourcedescriptionvector) std::vector<SourceDescription*>;
+%template(doublevector) std::vector<double>;
 
 // This line tells SWIG to pass the Tcl_Interp* whenever requested in wrapped function args, without consuming any input args
 // Needed for VTK commands
@@ -138,7 +139,6 @@ class VTKMeshRep {
 
 public:
 	VTKMeshRep(const TetraMesh* M);
-	VTKMeshRep(const TetraMeshBase* M);
 
 	~VTKMeshRep(){
 		if (P_) P_->Delete();
@@ -263,11 +263,11 @@ public:
 
 	SourceDescription* getDescription() const { return lsd_; }
 
-	void point(unsigned i,const Point<3,double> p){ assert(lsd_); lsd_->endpoint(i,p); }
+	void endpoint(unsigned i,const Point<3,double> p){ assert(lsd_); lsd_->endpoint(i,p); Update(); }
 
 	void Update();
 
-	vtkActor* getActor(){ if (!actor_) Update(); return actor_; }
+	vtkActor* getActor(){ assert(lsd_); if (!actor_) Update(); return actor_; }
 };
 
 class VTKSurfaceFluenceRep {
@@ -325,6 +325,66 @@ public:
 		return actor_;
 	}
 };
+
+
+class VTKVolumeFluenceRep {
+	const VTKMeshRep& meshrep_;
+
+	vtkActor* actor_=nullptr;
+	vtkUnstructuredGrid* ug_=nullptr;
+	vtkScalarBarActor *scale_=nullptr;
+
+public:
+
+	VTKVolumeFluenceRep(const VTKMeshRep& meshrep) : meshrep_(meshrep){}
+	VTKVolumeFluenceRep(const VTKMeshRep& meshrep,const std::vector<double>& phi) : meshrep_(meshrep)
+		{ Update(phi); }
+
+	VTKVolumeFluenceRep(const VTKVolumeFluenceRep&) = delete;
+	VTKVolumeFluenceRep(VTKVolumeFluenceRep&&) = default;
+
+	~VTKVolumeFluenceRep(){
+		if (actor_)
+		{
+			actor_->GetMapper()->Delete();
+			actor_->Delete();
+		}
+		if (ug_)
+			ug_->Delete();
+		if (scale_)
+			scale_->Delete();
+	}
+
+	void Update(const std::vector<double>& phi);
+
+	vtkScalarBarActor* getScaleBar()
+	{
+		if (!actor_)
+			Update(std::vector<double>());
+
+		assert(actor_);
+
+		if (!scale_)
+		{
+			scale_ = vtkScalarBarActor::New();
+			scale_->SetLookupTable(actor_->GetMapper()->GetLookupTable());
+			scale_->SetOrientationToVertical();
+			scale_->SetTitle("Volume fluence (J/cm2)");
+			scale_->DrawColorBarOn();
+			scale_->DrawTickLabelsOn();
+		}
+		return scale_;
+	}
+
+	vtkActor* getActor(){
+		if (!actor_)
+			Update(std::vector<double>());
+		return actor_;
+	}
+
+	vtkUnstructuredGrid* getData() const { return ug_; }
+};
+
 
 class VTKVolumeSurfaceRep {
 	const VTKMeshRep& meshrep_;
@@ -386,7 +446,7 @@ public:
 			scale_ = vtkScalarBarActor::New();
 			scale_->SetLookupTable(actor_->GetMapper()->GetLookupTable());
 			scale_->SetOrientationToVertical();
-			scale_->SetTitle("Fluence at region surface (ph/mm2)");
+			scale_->SetTitle("Volume fluence (J/cm2)");
 			scale_->DrawColorBarOn();
 			scale_->DrawTickLabelsOn();
 		}

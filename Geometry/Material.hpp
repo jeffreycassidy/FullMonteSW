@@ -48,8 +48,8 @@ public:
     Material(double mu_a_=0,double mu_s_=0,double g_=0,double n_=1.0,double mu_p_=0.0,bool matchedboundary_=false) :
         mu_s(mu_s_),mu_a(mu_a_),mu_p(mu_p_),mu_t(mu_s_+mu_a_+mu_p_),
         n(n_),
-        albedo((mu_s_+mu_p_)/(mu_a_+mu_s_+mu_p_)),
-        absfrac(mu_a_/(mu_a_+mu_s_+mu_p_)),
+        albedo((mu_a_+mu_s_+mu_p_) > 0 ? (mu_s_+mu_p_)/(mu_a_+mu_s_+mu_p_) : 1),
+        absfrac((mu_a_+mu_s_+mu_p_) > 0 ? mu_a_/(mu_a_+mu_s_+mu_p_) : 0),
         matchedboundary(matchedboundary_),
         s_prop(_mm_set_ps(0,n_/const_c0,-mu_t,-1)),
         s_init(_mm_set_ps(0,0,1,1/mu_t))

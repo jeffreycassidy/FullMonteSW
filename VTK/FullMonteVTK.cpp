@@ -21,6 +21,8 @@
 #include <vtkCommand.h>
 #include <vtkProperty.h>
 
+#include <FullMonte/Geometry/BoundingBox.hpp>
+
 #include <limits>
 
 using namespace std;
@@ -36,19 +38,6 @@ VTKMeshRep::VTKMeshRep(const TetraMesh* M)
 	}
 }
 
-
-VTKMeshRep::VTKMeshRep(const TetraMeshBase* M)
-{
-	mesh_ = new TetraMesh(*M);
-	cout << "INFO: Creating copy of TetraMeshBase to satisfy VTKMeshRep (will need to be deleted to avoid a leak)" << endl;
-	if (mesh_)
-	{
-		updatePoints();
-		updateTetras();
-		updateRegions();
-	}
-}
-
 void VTKMeshRep::updatePoints()
 {
 	assert(mesh_);
@@ -56,14 +45,18 @@ void VTKMeshRep::updatePoints()
 	if(!P_)
 		P_=vtkPoints::New();
 
-	P_->SetNumberOfPoints(mesh_->getNp());
+	P_->SetNumberOfPoints(mesh_->getNp()+1);
 
-	unsigned i=-1;
+	OrthoBoundingBox<double,3> bb;
+
+	unsigned i=0;
 	for(Point<3,double> p : mesh_->points())
-		if (i==-1)
-			i=0;
-		else
-			P_->SetPoint(i++,p.data());
+	{
+		if (i!=0)
+			bb.insert(p);
+		P_->SetPoint(i++,p.data());
+	}
+	P_->SetPoint(0,bb.corners().first.data());
 }
 
 void VTKMeshRep::updateTetras()
@@ -78,17 +71,12 @@ void VTKMeshRep::updateTetras()
 	ids->SetNumberOfComponents(1);
 	ids->SetNumberOfTuples(5*Nt);
 
-	unsigned j=-1;
+	unsigned j=0;
 	for(TetraByPointID IDps : mesh_->getTetrasByPointID())
 	{
-		if (j==-1)
-			j=0;
-		else
-		{
-			ids->SetTuple1(j++,4);
-			for(unsigned k=0;k<4;++k)
-				ids->SetTuple1(j++,IDps[k]-1);
-		}
+		ids->SetTuple1(j++,4);
+		for(unsigned k=0;k<4;++k)
+			ids->SetTuple1(j++,IDps[k]);
 	}
 
 	// Form cell array
@@ -326,7 +314,8 @@ void VTKLineSourceRep::Update()
 		actor_->SetMapper(mapper);
 	}
 	else
-		actor_->GetMapper()->GetInput()->Delete();
+		if(actor_->GetMapper()->GetInput())
+			actor_->GetMapper()->GetInput()->Delete();
 
 	//dynamic_cast<vtkDataSetMapper*>(actor_->GetMapper())->SetInputData(meshrep_.getSubsetMesh(T_));
 }
@@ -398,6 +387,77 @@ void VTKSurfaceFluenceRep::Update(const std::vector<double>& E,bool is_per_area)
 	mapper->ScalarVisibilityOn();
 	mapper->SetScalarRange(0,phi_max);
 	mapper->GetLookupTable()->SetRange(0,phi_max);
+
+	actor_->GetMapper()->Update();
+}
+
+
+void VTKVolumeFluenceRep::Update(const std::vector<double>& phi)
+{
+	if (!ug_)
+	{
+		ug_ = vtkUnstructuredGrid::New();
+		ug_->SetPoints(meshrep_.getPoints());
+
+		ug_->GetCellData()->SetActiveScalars("fluence");
+		ug_->GetCellData()->SetScalars(vtkFloatArray::New());
+	}
+
+	vtkFloatArray *phi_field = vtkFloatArray::SafeDownCast(ug_->GetCellData()->GetScalars());
+	assert(phi_field);
+	phi_field->Initialize();
+
+	ug_->GetCells()->Initialize();
+
+	double phi_min=std::numeric_limits<double>::infinity();
+	double phi_max=-phi_min;
+
+	unsigned nnz=0;
+	for(unsigned i=0;i<phi.size(); ++i)
+	{
+		if (phi[i] > 0.0)
+		{
+			++nnz;
+			std::array<unsigned,4>  IDps = meshrep_.getMesh().getTetraPointIDs(i);
+			std::array<vtkIdType,4> IDps_vtk;
+			boost::copy(IDps, IDps_vtk.begin());
+			ug_->InsertNextCell(VTK_TETRA,4,IDps_vtk.data());
+			phi_min = min(phi_min,phi[i]);
+			phi_max = max(phi_max,phi[i]);
+			phi_field->InsertNextTuple1(phi[i]);
+		}
+	}
+
+	ug_->SetPoints(meshrep_.getPoints());
+
+	if (!actor_)
+	{
+		actor_ = vtkActor::New();
+
+		vtkDataSetMapper* mapper = vtkDataSetMapper::New();
+		actor_->SetMapper(mapper);
+	}
+
+	vtkDataSetMapper *mapper = vtkDataSetMapper::SafeDownCast(actor_->GetMapper());
+	assert(mapper);
+
+	mapper->SetInputData(ug_);
+
+
+	mapper->ScalarVisibilityOn();
+	mapper->SetScalarRange(0,phi_max);
+
+	if (!mapper->GetLookupTable())
+	{
+		mapper->CreateDefaultLookupTable();
+	}
+
+	mapper->GetLookupTable()->IndexedLookupOff();
+	mapper->GetLookupTable()->Build();
+	mapper->GetLookupTable()->SetRange(0,phi_max);
+
+	cout << "Updated volume fluence rep with " << nnz << " nonzero elements" << endl;
+	cout << "  Has " << ug_->GetNumberOfCells() << " cells and " << ug_->GetNumberOfPoints() << " points" << endl;
 
 	actor_->GetMapper()->Update();
 }
