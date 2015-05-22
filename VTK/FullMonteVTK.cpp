@@ -20,6 +20,7 @@
 #include <vtkFloatArray.h>
 #include <vtkCommand.h>
 #include <vtkProperty.h>
+#include <vtkDiscretizableColorTransferFunction.h>
 
 #include <FullMonte/Geometry/BoundingBox.hpp>
 
@@ -428,6 +429,9 @@ void VTKVolumeFluenceRep::Update(const std::vector<double>& phi)
 		}
 	}
 
+	phiRange_ = make_pair(phi_min,phi_max);
+	lutRange_ = phiRange_;
+
 	ug_->SetPoints(meshrep_.getPoints());
 
 	if (!actor_)
@@ -436,28 +440,29 @@ void VTKVolumeFluenceRep::Update(const std::vector<double>& phi)
 
 		vtkDataSetMapper* mapper = vtkDataSetMapper::New();
 		actor_->SetMapper(mapper);
+
+		mapper->SetLookupTable(getLookupTable());
 	}
 
 	vtkDataSetMapper *mapper = vtkDataSetMapper::SafeDownCast(actor_->GetMapper());
+
 	assert(mapper);
 
 	mapper->SetInputData(ug_);
 
-
 	mapper->ScalarVisibilityOn();
+
+	if (scale_)
+		scale_->SetLookupTable(lut_);
+
 	mapper->SetScalarRange(0,phi_max);
-
-	if (!mapper->GetLookupTable())
-	{
-		mapper->CreateDefaultLookupTable();
-	}
-
-	mapper->GetLookupTable()->IndexedLookupOff();
-	mapper->GetLookupTable()->Build();
-	mapper->GetLookupTable()->SetRange(0,phi_max);
+	lut_->SetRange(0,phi_max);
 
 	cout << "Updated volume fluence rep with " << nnz << " nonzero elements" << endl;
 	cout << "  Has " << ug_->GetNumberOfCells() << " cells and " << ug_->GetNumberOfPoints() << " points" << endl;
+	cout << "  Fluence range is [" << phi_min << "," << phi_max << "]" << endl;
+
+	ug_->Modified();
 
 	actor_->GetMapper()->Update();
 }
@@ -513,23 +518,23 @@ void VTKVolumeSurfaceRep::Update(const std::vector<double>& phi_v)
 	pd_->SetPolys(ca);
 	pd_->SetPoints(meshrep_.getPoints());
 
+	vtkLookupTable* lut=nullptr;
+
 	if (!actor_)
 	{
 		actor_ = vtkActor::New();
 
 		vtkPolyDataMapper* mapper = vtkPolyDataMapper::New();
 		actor_->SetMapper(mapper);
+
+		lut = vtkLookupTable::New();
+		mapper->SetLookupTable(lut);
 	}
 
 	vtkPolyDataMapper *mapper = vtkPolyDataMapper::SafeDownCast(actor_->GetMapper());
 	assert(mapper);
 
 	mapper->SetInputData(pd_);
-
-	vtkLookupTable* lut = vtkLookupTable::New();
-
-	//assert(!mapper->GetLookupTable());
-	mapper->SetLookupTable(lut);
 
 	cout << "  added " << nnz << " nonzero elements ranging [" << phi_min << ',' << phi_max << ']' << endl;
 
@@ -544,8 +549,9 @@ void VTKVolumeSurfaceRep::Update(const std::vector<double>& phi_v)
 	mapper->ScalarVisibilityOn();
 	mapper->UseLookupTableScalarRangeOn();
 
-	lut->SetRange(phi_min,phi_max);
+	lut->SetRange(0.0,4*phi_max);
 	lut->SetNanColor(1.0,0.8,0.2,1.0);
+	lut->Build();
 
 	actor_->GetMapper()->Update();
 }

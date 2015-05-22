@@ -84,10 +84,9 @@ k setUnitsToMM
 
 # Monte Carlo kernel properties
 k setRoulettePrWin      0.1
-k setRouletteWMin       1e-5
+k setRouletteWMin       1e-3
 k setMaxSteps           10000
 k setMaxHits            100
-k setPacketCount        1000000
 k setThreadCount        8
 k setRandSeed           1
 
@@ -121,9 +120,9 @@ vtkDataSetMapper dsm
     dsm SetInputData $ug
     dsm SetLookupTable [V getRegionMapLUT]
 
-vtkActor meshactor
-    meshactor SetMapper dsm
-    [meshactor GetProperty] SetColor 1.0 1.0 1.0
+#vtkActor meshactor
+#    meshactor SetMapper dsm
+#    [meshactor GetProperty] SetColor 1.0 1.0 1.0
 
 #ren AddActor meshactor
 
@@ -157,10 +156,6 @@ for { set i 0 } { $i < [llength $legend] } { incr i } {
 }
 
 VTKVolumeFluenceRep fluencerep V
-
-#set fluenceactor [fluencerep getActor]
-#    ren AddActor $fluenceactor
-
 
 ren AddViewProp $legendactor
 
@@ -330,28 +325,76 @@ proc progresstimerevent {} {
         puts "Progress update: $progress"
         if { ![k done] } { progresstimerevent } else {
             k awaitFinish
-            set phi_s [k getVolumeFluenceVector]
-            fluencerep Update "$phi_s"
-
-            ren AddActor [fluencerep getActor]
-            renwin Render
-
-            set ofn "lastrender.vtk"
-
-            vtkUnstructuredGridWriter W
-            W SetFileName $ofn
-            W SetInputData [fluencerep getData]
-            W Update
-            W Delete
-            puts "Wrote to $ofn"
+            onSimFinish
         }
     }
+}
+
+proc onSimFinish {} {
+    set phi_s [k getVolumeFluenceVector]
+    fluencerep Update "$phi_s"
+    [fluencerep getData] Modified
+
+    global clipper
+
+    if { [llength [info commands fluencecutactor]] == 0 } {
+        # clip the fluence along a plane
+#        vtkClipDataSet fluenceclipper
+#            fluenceclipper SetInputData []
+#            fluenceclipper SetClipFunction
+
+        vtkPlane fluencecutplane
+            fluencecutplane SetNormal 1 0 0
+            fluencecutplane SetOrigin 19 14 12
+
+        vtkCutter fluencecutter
+            fluencecutter SetInputData [fluencerep getData]
+            fluencecutter SetValue 0 0
+            fluencecutter SetGenerateTriangles 1
+            fluencecutter SetCutFunction fluencecutplane
+            fluencecutter GenerateCutScalarsOff
+
+        vtkPolyDataMapper fluencecutmapper
+            fluencecutmapper SetInputConnection [fluencecutter GetOutputPort]
+            fluencecutmapper ScalarVisibilityOn
+#            puts "lut: [fluencerep getLookupTable]"
+#            puts "data range: [fluencerep getRange]"
+#            [fluencerep getLookupTable] AddRGBSegment 0.0 0 0 0   500  0   0 1.0
+#            [fluencerep getLookupTable] AddRGBSegment 500 0 0 1.0 1000 1.0  0 0.0
+
+            set r [fluencerep getRange]
+
+            fluencecutmapper SetLookupTable [fluencerep getLookupTable]
+            fluencecutmapper SetScalarRange 0 [lindex $r 1]
+            fluencecutmapper SetUseLookupTableScalarRange 0
+
+        vtkActor fluencecutactor
+            fluencecutactor SetMapper fluencecutmapper
+
+        ren AddActor fluencecutactor
+        renwin Render
+    } else {
+        renwin Render
+    }
+
+#    ren AddActor [fluencerep getActor]
+#    renwin Render
+
+    set ofn "lastrender.vtk"
+
+    vtkUnstructuredGridWriter W
+    W SetFileName $ofn
+    W SetInputData [fluencerep getData]
+    W Update
+    W Delete
+    puts "Wrote to $ofn"
 }
 
 button .output.save -text "Calculate & Save" -command {
     global mesh opt ofn progress
     set progress 0
     k setSource [lsr getDescription]
+    k setPacketCount        $Npkt
     k startAsync
 
     progresstimerevent
@@ -363,16 +406,16 @@ pack .output
 # add fluence toggle button
 set showfluence 0
 proc fluencecallback {} {
-    global showfluence fluenceactor
+    global showfluence
     if { $showfluence==0 } {
         set showfluence 1
         .fluenceenable configure -text "Hide fluence"
-        ren AddActor $fluenceactor
+        ren AddActor fluencecutactor
         renwin Render
     } else {
         set showfluence 0
         .fluenceenable configure -text "Show fluence"
-        ren RemoveActor $fluenceactor
+        ren RemoveActor fluencecutactor
         renwin Render
     }
 }

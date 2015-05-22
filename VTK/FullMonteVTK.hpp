@@ -36,6 +36,13 @@
 	$1 = a;
 }
 
+%typemap(out) std::pair<double,double>
+{
+	std::stringstream ss;
+	ss << $1.first << ' ' << $1.second;
+	Tcl_AppendResult(interp,ss.str().c_str(),NULL);
+}
+
 %typemap(out) std::array<double,3>
 {
 	std::array<double,3> a=$1;
@@ -78,6 +85,7 @@ VTK_TYPEMAP(vtkLookupTable)
 VTK_TYPEMAP(vtkActor)
 VTK_TYPEMAP(vtkScalarBarActor)
 VTK_TYPEMAP(vtkPointWidget)
+VTK_TYPEMAP(vtkScalarsToColors)
 
 %{
 
@@ -108,6 +116,8 @@ struct LegendEntry {
 #include <vtkScalarBarActor.h>
 #include <vtkRenderWindowInteractor.h>
 #include <vtkPointWidget.h>
+#include <vtkLookupTable.h>
+#include <vtkDiscretizableColorTransferFunction.h>
 #include <vtkCallbackCommand.h>
 
 #include <FullMonte/Geometry/TetraMesh.hpp>
@@ -330,9 +340,14 @@ public:
 class VTKVolumeFluenceRep {
 	const VTKMeshRep& meshrep_;
 
+	std::pair<double,double> phiRange_=std::make_pair(0,0);
+	std::pair<double,double> lutRange_=std::make_pair(0,0);
+
 	vtkActor* actor_=nullptr;
 	vtkUnstructuredGrid* ug_=nullptr;
 	vtkScalarBarActor *scale_=nullptr;
+
+	vtkLookupTable* lut_=nullptr;
 
 public:
 
@@ -367,7 +382,7 @@ public:
 		if (!scale_)
 		{
 			scale_ = vtkScalarBarActor::New();
-			scale_->SetLookupTable(actor_->GetMapper()->GetLookupTable());
+			scale_->SetLookupTable(getLookupTable());
 			scale_->SetOrientationToVertical();
 			scale_->SetTitle("Volume fluence (J/cm2)");
 			scale_->DrawColorBarOn();
@@ -375,6 +390,24 @@ public:
 		}
 		return scale_;
 	}
+
+	vtkScalarsToColors* getLookupTable()
+	{
+		if (!lut_)
+		{
+			lut_=vtkLookupTable::New();
+			//vtkDiscretizableColorTransferFunction* tlut_=vtkDiscretizableColorTransferFunction::New();
+			lut_->SetNumberOfTableValues(256);
+			lut_->SetRange(0,2000);
+			lut_->Build();
+			lut_->IndexedLookupOff();
+		}
+
+		return lut_;
+	}
+
+	std::pair<double,double> getRange() const { return phiRange_; }
+	std::pair<double,double> getDisplayRange() const { return lutRange_; }
 
 	vtkActor* getActor(){
 		if (!actor_)
@@ -424,6 +457,8 @@ public:
 		if (scale_)
 			scale_->Delete();
 	}
+
+
 
 	void setRange(double rmin,double rmax){
 		range_=make_pair(rmin,rmax);

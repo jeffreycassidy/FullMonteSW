@@ -1,8 +1,9 @@
 package require vtk
 
 load libFullMonteVTK.so
+load libFullMonteGeometry_TCL.so
 load libFullMonteTIMOS_TCL.so
-load libFullMonteVolume_TCL.so
+load libFullMonteKernels_TCL.so
 load libFullMonteBinFile_TCL.so
 
 # load common GUI elements
@@ -95,6 +96,27 @@ pack .sim
 
 global phi_v
 
+TetraVolumeKernel k
+
+# Kernel properties
+# k setSource bsr ## do this later
+# k startAsync
+k setEnergy             90
+k setMaterials          $mats
+k setUnitsToCM
+
+# Monte Carlo kernel properties
+k setRoulettePrWin      0.1
+k setRouletteWMin       1e-3
+k setMaxSteps           10000
+k setMaxHits            100
+k setThreadCount        8
+k setRandSeed           1
+
+# Tetra mesh MC kernel properties
+k setMesh               $mesh
+
+
 proc doSim {} {
     global mesh mats src scalevar phi_v E
     for { set i 0 } { $i < [llength $mats] } { incr i } {
@@ -107,8 +129,23 @@ proc doSim {} {
     if { $scalevar == "mm" } { set units_per_cm 10 } elseif { $scalevar == "cm" } { set units_per_cm 1 } else {
         puts "WARNING: Invalid scale unit $scalevar" }
 
-    set phi_v [VolumeKernel $mesh $mats [psr getSourceDescription] [.sim.opts.npkt get] $units_per_cm $E]
-    fluencerep Update $phi_v
+    k setSource [psr getSourceDescription]
+    k setPacketCount 1000000
+    k startAsync
+
+    k awaitFinish
+
+    set phi_v [k getVolumeFluenceVector]
+    fluencerep Update "$phi_v"
+
+    set ofn "bladder.vtk"
+
+    vtkUnstructuredGridWriter W
+    W SetFileName $ofn
+    W SetInputData [fluencerep getData]
+    W Update
+    W Delete
+    puts "Wrote to $ofn"
     
     renwin Render
 }
@@ -248,6 +285,15 @@ psr Update
 
 ####################################################################################################################################
 ## Final render before entering event loop
+
+set p [psr getPosition]
+
+set px [lindex $p 0]
+set py [lindex $p 1]
+set pz [lindex $p 2]
+
+[ren GetActiveCamera] SetFocalPoint $px $py $pz
+ren ResetCamera
 
 renwin Render
 puts "Depth peeling: [ren GetLastRenderingUsedDepthPeeling]"
