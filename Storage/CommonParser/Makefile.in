@@ -5,12 +5,13 @@ include ../../Makefile.in
 
 
 %_tokens.h: %.tokens
+
 	cat $^ | $(SOURCE_ROOT)/FullMonte/Storage/CommonParser/mktok.pl > $@
 
 %Parser.c %Lexer.c %Parser.h %Lexer.h %.tokens: %.g
 	$(ANTLR) $^
 	
-%Parser.o: %Parser.c %Parser.h
+%Parser.o: %Parser.c %Parser.h %_tokens.h
 	$(CXX) $(CXX_OPTS) -Wno-unused-variable -Wno-unused-but-set-variable -Wno-unused-function -I$(ANTLR_INCLUDE) -D_empty=NULL -c $*Parser.c 
 	
 %Lexer.o: %Lexer.c %Lexer.h

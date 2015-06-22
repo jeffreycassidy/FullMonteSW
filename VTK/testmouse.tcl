@@ -1,14 +1,14 @@
 package require vtk
 
-load libFullMonteVTK.so
-load libFullMonteTIMOS_TCL.so
-load libFullMonteBinFile_TCL.so
+load ./libFullMonteVTK.so 
+load ./libFullMonteTIMOS_TCL.so
+load ./libFullMonteBinFile_TCL.so 
 
-load libFullMonteKernels_TCL.so
-load libFullMonteTIMOS_TCL.so
+load ./libFullMonteKernels_TCL.so
+load ./libFullMonteTIMOS_TCL.so 
 
 #default file prefix
-set pfx "/Users/jcassidy/src/FullMonteSW/data/mouse"
+set pfx "/home/houman/FullMonte/data/mouse"
 
 set optfn "$pfx.opt"
 set meshfn "$pfx.mesh"

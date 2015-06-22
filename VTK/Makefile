@@ -1,7 +1,9 @@
 include ../Makefile.in
 
-CXX_OPTS:=$(CXX_OPTS) -fPIC -I/usr/local/include/vtk
+CXX_OPTS:=$(CXX_OPTS) -fPIC -I$(VTK_INCLUDE)
 CXX_LIB_OPTS=$(CXX_OPTS) -shared
+
+libs: libFullMonteVTK.so
 
 %.o: %.cpp
 	$(CXX) $(CXX_OPTS) -c -o $@ $<

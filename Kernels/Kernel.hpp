@@ -123,7 +123,7 @@ public:
 protected:
 
 	std::vector<SourceDescription*>	src_;
-	std::vector<std::shared_ptr<const LoggerResults>> results_;
+	std::vector<std::shared_ptr<const LoggerResults> > results_;
 
 private:
 
@@ -249,7 +249,7 @@ protected:
 
 	void prepare_();
 
-	std::unique_ptr<const SourceEmitter<RNG>> emitter_;
+	std::unique_ptr<const SourceEmitter<RNG> > emitter_;
 
 	template<class T,class U>friend class TetraMCKernelThread;
 };
@@ -309,7 +309,7 @@ private:
 	typedef std::tuple<
 			LoggerEventMT,
 			LoggerConservationMT,
-			LoggerSurface<QueuedAccumulatorMT<double>>
+			LoggerSurface<QueuedAccumulatorMT<double> >
 			>
 			LoggerType;
 
@@ -369,7 +369,7 @@ private:
 	typedef std::tuple<
 			LoggerEventMT,
 			LoggerConservationMT,
-			LoggerVolume<QueuedAccumulatorMT<double>>
+			LoggerVolume<QueuedAccumulatorMT<double> > 
 			>
 			LoggerType;
 

@@ -2,7 +2,7 @@ default: libs
 
 include Makefile.in
 
-SUBDIRS=DVH Geometry GUI Kernels Storage VTK SFMT Test vis VTK
+SUBDIRS= Geometry SFMT GUI Kernels Storage VTK 
 
 all:
 	for d in $(SUBDIRS); do make -C $$d all; done;
@@ -41,7 +41,7 @@ veryclean: clean
 ##### TCL bindings for volume simulation applications
 
 VolumeKernel_wrap.cxx: VolumeKernel.i
-	swig -tcl -c++ $<
+	$(SWIG) -tcl -c++ $<
 
 VolumeKernel_wrap.o: VolumeKernel_wrap.cxx
 	$(CXX) $(CXX_OPTS) -I$(SOURCE_ROOT) -DUSE_TCL_STUBS -c $<
@@ -53,7 +53,7 @@ libFullMonteVolume_TCL.so: VolumeKernel_wrap.o VolumeKernel.o
 ##### TCL bindings for BLI applications
 
 BLIKernel_wrap.cxx: BLIKernel.i
-	swig -tcl -c++ $<
+	$(SWIG) -tcl -c++ $<
 	
 BLIKernel_wrap.o: BLIKernel_wrap.cxx
 	$(CXX) $(CXX_OPTS) -DUSE_TCL_STUBS -c $<
@@ -69,7 +69,7 @@ libFullMonteBLI_TCL.so: BLIKernel_wrap.o | libFullMonteBLI.so
 ##### TCL bindings for tracer
 
 Tracer_wrap.cxx: Tracer.i
-	swig -tcl -c++ $<
+	$(SWIG) -tcl -c++ $<
 	
 Tracer_wrap.o: Tracer_wrap.cxx
 	$(CXX) $(CXX_OPTS) -DUSE_TCL_STUBS -c $<

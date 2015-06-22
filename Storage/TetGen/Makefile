@@ -3,7 +3,7 @@ include ../../Makefile.in
 libs: libFullMonteTetGen.so libFullMonteTetGen_TCL.so
 
 FullMonteTetGen_wrap.cxx: FullMonteTetGen.i
-	swig -tcl -c++ -o $@ $^
+	$(SWIG) -tcl -c++ -o $@ $^
 	
 FullMonteTetGen_wrap.o: FullMonteTetGen_wrap.cxx
 	$(CXX) $(CXX_OPTS) -DUSE_TCL_STUBS -c $<

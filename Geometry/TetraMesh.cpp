@@ -71,8 +71,10 @@ vector<unsigned> TetraMesh::facesBoundingRegion(unsigned i) const
 {
 	vector<unsigned> idx;
 
-	for(const auto& f : F_t | boost::adaptors::indexed(0U))
-		if (f.value()[0] != f.value()[1] && (f.value()[0]==i || f.value()[1]==i))
+	//tricky boost update// hooman
+	const auto& __F_t = F_t | boost::adaptors::indexed(0U);
+	for( auto f = begin(__F_t); f != end(__F_t); ++f)
+		if ((*f)[0] != (*f)[1] && ((*f)[0]==i || (*f)[1]==i))
 			idx.push_back(f.index());
 	return idx;
 }
@@ -92,16 +94,20 @@ void TetraMesh::make_tetra_perm()
 	for(auto& v : tetra_perm)
 		v.clear();
 
-	// create permutation vector
-	for(const auto r : T_m | boost::adaptors::indexed(0U))
-		tetra_perm[r.value()].push_back(r.index());
+	// create permutation vector //UPDATED FOR BOOST 1.55
+	const auto __T_m = T_m | boost::adaptors::indexed(0U);
+	for (auto r=begin(__T_m); r != end(__T_m); ++r)
+		tetra_perm[*r].push_back(r.index());
 
 	// print region summary
 	size_t sum=0;
-	for(const auto& v : tetra_perm | boost::adaptors::indexed(0U))
+
+	//tricky boost update//hooman
+	const auto& __tetra_perm =  tetra_perm | boost::adaptors::indexed(0U);
+	for( auto v = begin(__tetra_perm); v!= end(__tetra_perm); ++v )
 	{
-		sum += v.value().size();
-		cout << "  Region " << v.index() << ": " << v.value().size() << " elements" << endl;
+		sum += v->size();
+		cout << "  Region " << v.index() << ": " << v->size() << " elements" << endl;
 	}
 	cout << "Total " << sum << " elements" << endl;
 }
@@ -189,19 +195,22 @@ void TetraMesh::tetrasToFaces()
 
 	T_f = vector<TetraByFaceID>(T_p.size(),TetraByFaceID{0,0,0,0});
 
-	for(auto T : T_p | boost::adaptors::indexed(0U))
+	auto __T_p = T_p | boost::adaptors::indexed(0U);
+	for(auto T = begin(__T_p); T != end(__T_p); ++T)
 	{
-		TetraByPointID IDps_sort = T.value();
+		TetraByPointID IDps_sort = *T;
 		boost::sort(IDps_sort);
 
         tetraMap.insert(make_pair(IDps_sort,T.index()));
 
-        for(const auto& perm : tetra_face_opposite_point_indices | boost::adaptors::indexed(0U))
+	//tricky boost update//hooman
+	const auto& __tfopi = tetra_face_opposite_point_indices | boost::adaptors::indexed(0U);
+        for( auto perm  = begin(__tfopi); perm != end(__tfopi); ++perm)
         {
         	FaceByPointID Ft(
-        			IDps_sort[perm.value().faceidx[0]],
-        			IDps_sort[perm.value().faceidx[1]],
-        			IDps_sort[perm.value().faceidx[2]]);
+        			IDps_sort[perm->faceidx[0]],
+        			IDps_sort[perm->faceidx[1]],
+        			IDps_sort[perm->faceidx[2]]);
 
         	auto p = faceMap.insert(make_pair(Ft,F.size()));
 
@@ -209,7 +218,7 @@ void TetraMesh::tetrasToFaces()
         	{
         		F.push_back(Face(P[Ft[0]], P[Ft[1]], P[Ft[2]]));
 
-        		if (F.back().pointHeight(P[IDps_sort[perm.value().oppidx]]) < 0)
+        		if (F.back().pointHeight(P[IDps_sort[perm->oppidx]]) < 0)
         			F.back().flip();
         		F_t.push_back(array<unsigned,2>{(unsigned)T.index(),0});
         		F_p.push_back(Ft);
@@ -222,9 +231,14 @@ void TetraMesh::tetrasToFaces()
         	}
         }
 	}
+//boost change hooman
+unsigned Nf_surf = 0;
+	for(unsigned int i = 0; i < F_t.size(); i ++)
+		if(!F_t[i][1])
+			Nf_surf ++;
+	
 
-	unsigned Nf_surf = boost::size(F_t
-			| boost::adaptors::filtered([](array<unsigned,2> i){ return i[1]==0; }));
+	//unsigned Nf_surf = boost::size(F_t |		 boost::adaptors::filtered([](array<unsigned,2> i){ return i[1]==0; }));
 
 	cout << "New mesh construction: " << P.size() << " points, " << T_p.size() << " tetras, " << faceMap.size() <<
 			" faces (" << Nf_surf << " surface)" << endl;
@@ -264,17 +278,18 @@ vector<Tetra> TetraMesh::makeKernelTetras() const
 	assert(F.size() == F_p.size());
 	assert(F_t.size() == F_p.size());
 
-	for(auto tet : T | boost::adaptors::indexed(0U))
+	auto __T = T | boost::adaptors::indexed(0U);
+	for(auto tet = begin(__T) ; tet != end(__T) ; ++tet)
 	{
-		tet.value().IDfs  = T_f[tet.index()];
-		tet.value().matID = T_m[tet.index()];
+		tet->IDfs  = T_f[tet.index()];
+		tet->matID = T_m[tet.index()];
 
 		UnitVector<3,double> n[4];
 		double C[4];
 
 		for(unsigned i=0; i<4; ++i)
 		{
-			int IDf = tet.value().IDfs[i];
+			int IDf = tet->IDfs[i];
 
 			if (IDf < 0)
 			{
@@ -295,17 +310,17 @@ vector<Tetra> TetraMesh::makeKernelTetras() const
 			assert(IDts_adj[0] >= 0 && IDts_adj[1] >= 0);
 
 			if (IDts_adj[0] == tet.index())
-				tet.value().adjTetras[i] = IDts_adj[1];
+				tet->adjTetras[i] = IDts_adj[1];
 			else if (IDts_adj[1] == tet.index())
-				tet.value().adjTetras[i] = IDts_adj[0];
+				tet->adjTetras[i] = IDts_adj[0];
 			else
 				assert(tet.index()==0);
 		}
 
-		tet.value().nx=_mm_setr_ps(n[0][0],n[1][0],n[2][0],n[3][0]);
-		tet.value().ny=_mm_setr_ps(n[0][1],n[1][1],n[2][1],n[3][1]);
-		tet.value().nz=_mm_setr_ps(n[0][2],n[1][2],n[2][2],n[3][2]);
-		tet.value().C =_mm_setr_ps(C[0],C[1],C[2],C[3]);
+		tet->nx=_mm_setr_ps(n[0][0],n[1][0],n[2][0],n[3][0]);
+		tet->ny=_mm_setr_ps(n[0][1],n[1][1],n[2][1],n[3][1]);
+		tet->nz=_mm_setr_ps(n[0][2],n[1][2],n[2][2],n[3][2]);
+		tet->C =_mm_setr_ps(C[0],C[1],C[2],C[3]);
 	}
 
 	return T;

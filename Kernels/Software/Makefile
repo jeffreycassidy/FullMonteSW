@@ -1,7 +1,5 @@
 include ../../Makefile.in
 
-libs:
-
 all: libs
 
 libs: libFullMonteCore.so

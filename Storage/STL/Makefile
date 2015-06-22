@@ -1,7 +1,9 @@
 include ../../Makefile.in
 
+libs: libFullMonteSTL_TCL.so 
+
 FullMonteSTL_wrap.cxx: STL.i
-	swig -tcl -c++ -o $@ $< 
+	$(SWIG) -tcl -c++ -o $@ $< 
 	
 FullMonteSTL_wrap.o: FullMonteSTL_wrap.cxx
 	$(CXX) $(CXX_OPTS) -DUSE_TCL_STUBS -c $<

@@ -19,6 +19,8 @@
 
 #include <unordered_map>
 
+//#define ANTLR3_ENC_8BIT 8
+
 template<class ANTLR3LP>class ANTLRParser {
 	pANTLR3_INPUT_STREAM 				input_=nullptr;
 	pANTLR3_COMMON_TOKEN_STREAM 		tokens_=nullptr;

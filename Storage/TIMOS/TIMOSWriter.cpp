@@ -105,7 +105,7 @@ using namespace std;
 //			throw std::exception();
 //
 //		os << ' ' << s->getPower() << endl;
-//	}
+//	}ANTLR_LIB
 //
 //	if(os.fail())
 //		throw write_exception("TIMOSWriter::write(std::vector<Material>&) writing failed");
@@ -147,7 +147,14 @@ void TIMOSWriter::writeVolFluence(const std::string fn,const TetraMesh& mesh,con
 
 	assert(phi_v[0] == 0.0);
 
-	size_t nnz = boost::size(phi_v | boost::adaptors::filtered([](double x) { return x != 0.0; }));
+
+//boost update hooman
+	size_t nnz = 0;
+	for(unsigned int i = 0; i < phi_v.size(); i ++)
+		if(phi_v[i] != 0.0)
+			nnz ++;
+
+	//size_t nnz = boost::size(phi_v | boost::adaptors::filtered([](double x) { return x != 0.0; }));
 
 	os << "1 " << nnz << " 1" << endl;
 
@@ -175,15 +182,24 @@ void TIMOSWriter::writeSurfFluence(const std::string fn,const TetraMesh& mesh,co
 	os << "# first line: 1 <#faces> 1" << endl;
 	os << "# remaining lines (#faces repetitions): <IDp0> <IDp1> <IDp2> <area> <emittance>" << endl;
 
-	size_t nnz = boost::size(phi_s | boost::adaptors::filtered([](double x) { return x != 0.0; }));
+
+//boost update hooman
+	size_t nnz = 0;
+	for(unsigned int i = 0; i < phi_s.size(); i ++)
+		if(phi_s[i] != 0.0)
+			nnz ++;
+
+	//size_t nnz = boost::size(phi_s | boost::adaptors::filtered([](double x) { return x != 0.0; }));
 
 	os << "1 " << nnz << " 1" << endl;
 
 	os.fill(' ');
 
-	for(const auto& phi : phi_s | boost::adaptors::indexed(0U))
-		if (phi.value() > 0.0)
+//boost update change hooman
+const auto& __phi_s = phi_s | boost::adaptors::indexed(0U);
+	for( auto phi =  begin(__phi_s) ; phi != end(__phi_s); ++phi)
+		if (*phi > 0.0)
 			os << setw(7) << delim{""," ",""} << mesh.getFacePointIDs(phi.index()) <<
 					fixed << setprecision(4) << setw(8) << mesh.getFaceArea((int)phi.index()) << ' ' <<
-					scientific << setprecision(5) << setw(8) << phi.value() << endl;
+					scientific << setprecision(5) << setw(8) << *phi << endl;
 }

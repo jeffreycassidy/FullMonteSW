@@ -1,0 +1,5 @@
+LD_LIBRARY_PATH is handy for development and testing, but shouldn't be modified by an installation process for normal use by normal users; see ``Why LD_LIBRARY_PATH is Bad'' at http://www.visi.com/~barr/ldpath.html for an explanation of why. But it's still useful for development or testing, and for working around problems that can't be worked around otherwise. If you don't want to set the LD_LIBRARY_PATH environment variable, on Linux you can even invoke the program loader directly and pass it arguments. For example, the following will use the given PATH instead of the content of the environment variable LD_LIBRARY_PATH, and run the given executable:
+
+  /lib/ld-linux.so.2 --library-path PATH EXECUTABLE
+
+Just executing ld-linux.so without arguments will give you more help on using this, but again, don't use this for normal use - these are all intended for debugging.

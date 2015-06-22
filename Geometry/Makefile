@@ -1,5 +1,5 @@
 include ../Makefile.in
-
+#find the place for this -march=native (-msse4.1) 
 CXX_LIB_OPTS=$(CXX_OPTS) -shared
 
 all: libs
@@ -12,11 +12,11 @@ Test_TetraMeshBase: Test_TetraMeshBase.o TetraMeshBase.o TetraMesh.o Face.o Tetr
 %.o: %.cpp *.hpp
 	$(CXX) $(CXX_OPTS) -c $*.cpp -o $@
 
-libFullMonteGeometry.so: TetraMeshBase.o newgeom.o TetraMesh.o TetraMeshBase.o Face.o SourceDescription.o Material.o
-	$(CXX) $(CXX_LIB_OPTS) -o $@ $^
+libFullMonteGeometry.so: TetraMeshBase.o newgeom.o TetraMesh.o TetraMeshBase.o Face.o SourceDescription.o Material.o 
+	$(CXX) $(CXX_LIB_OPTS) -o  $@ $^
 	
 FullMonteGeometry_wrap.cxx: Geometry.i Geometry_types.i *.hpp
-	swig -tcl -c++ -o $@ $<
+	$(SWIG) -tcl -c++ -o $@ $<
 	
 FullMonteGeometry_wrap.o: FullMonteGeometry_wrap.cxx
 	$(CXX) $(CXX_OPTS) -DUSE_TCL_STUBS -c $<

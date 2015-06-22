@@ -83,7 +83,7 @@ VTK_TYPEMAP(vtkPointWidget)
 
 #include "FullMonteVTK.hpp"
 #include <sstream>
-#include <vtk/vtkTclUtil.h>
+#include <vtkTclUtil.h>
 
 %}
 
@@ -371,7 +371,7 @@ public:
 			scale_->SetOrientationToVertical();
 			scale_->SetTitle("Volume fluence (J/cm2)");
 			scale_->DrawColorBarOn();
-			scale_->DrawTickLabelsOn();
+			//scale_->DrawTickLabelsOn();
 		}
 		return scale_;
 	}

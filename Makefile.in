@@ -1,13 +1,17 @@
 ifndef BOOST_INCLUDE
+	#BOOST_INCLUDE=/usr/include/boost	
 	BOOST_INCLUDE=/usr/local/include
 endif
 
-ifndef BOOST_LIB
-	BOOST_LIB=/usr/local/lib/boost
+ifndef BOOST_LIB 
+	#BOOST_LIB=/usr/local/lib/boost #for jeff
+	BOOST_LIB=/usr/lib/x86_64-linux-gnu
 endif
 
 ifndef VTK_INCLUDE
-	VTK_INCLUDE=/usr/local/include/vtk
+	#VTK_INCLUDE=/usr/local/include/vtk #for jeff
+	VTK_INCLUDE =/usr/local/include/vtk-6.1
+	
 endif
 
 ifndef VTK_LIB
@@ -19,40 +23,60 @@ ifndef CXX
 endif
 
 ifndef SWIG
-	SWIG=swig
+	SWIG=swig3.0
+	#SWIG=swig #for jeff
 endif
 
+
 ifndef SOURCE_ROOT
-	SOURCE_ROOT=/Users/jcassidy/src/FullMonteSW
+	SOURCE_ROOT=/home/houman
 endif
 
 ifndef LIB_ROOT
-	LIB_ROOT=/Users/jcassidy/src/FullMonteSW/FullMonte
+	LIB_ROOT=$(SOURCE_ROOT)/FullMonte
 endif
 
-ifndef ANTLR_DIR
-	ANTLR_DIR=/usr/local/antlr3c-3.4
+ifndef ANTLR_DIR #do we need this?
+	ANTLR_DIR=/home/houman/antlr3c-3.4
+	#ANTLR_DIR=/usr/local/antlr3c-3.4 #for jeff
 endif
 
 ifndef ANTLR_INCLUDE
-	ANTLR_INCLUDE=$(ANTLR_DIR)/include
+	ANTLR_INCLUDE=/usr/local/include
+	#ANTLR_INCLUDE=$(ANTLR_DIR)/include  #for jeff
 endif
 
 ifndef ANTLR_LIB
-	ANTLR_LIB=$(ANTLR_DIR)/lib
+	ANTLR_LIB=/usr/local/lib/
+	#ANTLR_LIB=$(ANTLR_DIR)/lib #for jeff
 endif
 
 ifndef ANTLR
-ANTLR=java -jar /usr/local/antlrv3/antlr-3.5.2-complete-no-st3.jar
+	ANTLR=java -jar /home/houman/antlr3/antlr-3.5.2-complete-no-st3.jar
+
+	#/usr/local/antlrv3/antlr-3.5.2-complete-no-st3.jar #jeff
 endif
+
+
+
 
 ifndef TCL_LIB
-TCL_LIB=/usr/local/lib
+	TCL_LIB= /usr/lib/x86_64-linux-gnu/libtclstub8.5.a
+#/usr/lib/libtclstub8.5.a #for jeff
+#TCL_LIB=/usr/local/lib #in jeffs old code
+
 endif
 
 
-CXX_OPTS=-Wall -std=c++11 -O3 -g -Wno-missing-braces -mavx -msse4 -fPIC -fabi-version=6 -I$(SOURCE_ROOT) -L$(LIB_ROOT)
-CXX_LIB_OPTS=-Wall -fabi-version=6 -mavx -msse4 -fPIC -shared -L$(LIB_ROOT)
+#hoomans addition
+ifndef TCL_INCLUDE 
+	TCL_INCLUDE=/usr/include/tcl8.5
+endif
+
+#hoomans addition : -I$(TCL_INCLUDE) -march=native alternatively 
+CXX_OPTS=-Wall -std=c++11 -O3 -g -Wno-missing-braces  -msse4 -mavx -fPIC -fabi-version=6 -I$(SOURCE_ROOT) -I$(TCL_INCLUDE) -L$(LIB_ROOT)  
+
+CXX_LIB_OPTS=-Wall -fabi-version=6 -msse4 -mavx -fPIC -shared -L$(LIB_ROOT)
 
 # Check for Mac OS (no POSIX timer among other things)
 OS:=$(shell uname)

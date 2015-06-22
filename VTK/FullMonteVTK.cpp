@@ -5,6 +5,7 @@
  *      Author: jcassidy
  */
 
+
 #include "FullMonteVTK.hpp"
 
 #include <boost/range/adaptor/indexed.hpp>
@@ -24,6 +25,7 @@
 #include <FullMonte/Geometry/BoundingBox.hpp>
 
 #include <limits>
+
 
 using namespace std;
 
@@ -206,11 +208,13 @@ vtkLegendBoxActor* VTKMeshRep::getLegendActor(const std::array<float,2> ll,
 
 	// copy the legend entries
 	lba->SetNumberOfEntries(legend_.size());
-	for(const auto& le : legend_ | boost::adaptors::indexed(0U))
+	
+	const auto& __legend_ = legend_ | boost::adaptors::indexed(0U);
+	for(auto le = begin(__legend_); le != end(__legend_); ++le)
 	{
 		array<double,3> tcol;
-		boost::copy(le.value().colour,tcol.data());
-		lba->SetEntry(le.index(),sym,le.value().label.c_str(),tcol.data());
+		boost::copy(le->colour,tcol.data());
+		lba->SetEntry(le.index(),sym,le->label.c_str(),tcol.data());
 	}
 
 
@@ -231,14 +235,15 @@ vtkLookupTable* VTKMeshRep::getRegionMapLUT() const
 	lut->IndexedLookupOn();
 	lut->SetRange(0,legend_.size()-1);
 
-	for(const auto& le : legend_ | boost::adaptors::indexed(0U))
+	const auto& __legend_ = legend_ | boost::adaptors::indexed(0U);
+	for(auto le = begin(__legend_); le != end(__legend_); ++le)
 	{
 		std::array<double,4> rgba;
-		boost::copy(le.value().colour, rgba.begin());
+		boost::copy(le->colour, rgba.begin());
 		rgba[3]=1.0;
 
 		lut->SetTableValue(le.index(), rgba.data());
-		lut->SetAnnotation(le.index(), le.value().label);
+		lut->SetAnnotation(le.index(), le->label);
 	}
 
 	return lut;
@@ -533,9 +538,9 @@ void VTKVolumeSurfaceRep::Update(const std::vector<double>& phi_v)
 
 	cout << "  added " << nnz << " nonzero elements ranging [" << phi_min << ',' << phi_max << ']' << endl;
 
-	if (!isnan(range_.first))
+	if (! std::isnan(range_.first))
 		phi_min=range_.first;
-	if (!isnan(range_.second))
+	if (! std::isnan( range_.second))
 		phi_max=range_.second;
 
 
