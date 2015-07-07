@@ -3,7 +3,7 @@
 	std::array<float,3> a=$1;
 	for(unsigned i=0;i<3;++i)
 		ss << a[i] << ' ';
-	Tcl_AppendResult(interp,ss.str().c_str());
+	Tcl_AppendResult(interp,ss.str().c_str(),nullptr);
 }
 
 %typemap(out) Point<3,double> {
@@ -11,7 +11,7 @@
 	Point<3,double> a=$1;
 	for(unsigned i=0;i<3;++i)
 		ss << a[i] << ' ';
-	Tcl_AppendResult(interp,ss.str().c_str());
+	Tcl_AppendResult(interp,ss.str().c_str(),nullptr);
 }
 
 %typemap(in) std::array<float,3> const& (std::array<float,3> p){

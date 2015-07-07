@@ -10,13 +10,13 @@ load libFullMonteTIMOS_TCL.so
 #default file prefix
 set pfx "/Users/jcassidy/src/FullMonteSW/data/mouse"
 
-set optfn "$pfx.opt"
-set meshfn "$pfx.mesh"
-set legendfn "$pfx.legend"
 
 #override with 1st cmdline arg
 if { $argc >= 1 } { set pfx [lindex $argv 0] }
 
+set optfn "$pfx.opt"
+set meshfn "$pfx.mesh"
+set legendfn "$pfx.legend"
 set ofn "fluence.out"
 
 # create and set up the reader
@@ -89,7 +89,7 @@ k setRandSeed           1
 
 
 # Tetra mesh MC kernel properties
-#k setMesh               $mesh
+k setMesh               $mesh
 
 # set up VTK render window and interactor
 
@@ -120,7 +120,7 @@ vtkActor meshactor
     meshactor SetMapper dsm
     [meshactor GetProperty] SetColor 1.0 1.0 1.0
 
-#ren AddActor meshactor
+ren AddActor meshactor
 
 
 
@@ -300,13 +300,13 @@ pointwidget AddObserver EndInteractionEvent {
 }
 
 
-#VTKBallSourceRep bsr V "1.0 1.0 1.0" 10.0
+VTKBallSourceRep bsr V "1.0 1.0 1.0" 10.0
 
-#set bsractor [bsr getActor]
-#    [$bsractor GetProperty] SetOpacity 0.5
+set bsractor [bsr getActor]
+    [$bsractor GetProperty] SetOpacity 0.5
 
-#ren AddActor $bsractor
+ren AddActor $bsractor
 
 
-#renwin Render
+renwin Render
 puts "Depth peeling: [ren GetLastRenderingUsedDepthPeeling]"

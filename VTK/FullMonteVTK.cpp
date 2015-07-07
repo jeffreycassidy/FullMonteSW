@@ -66,7 +66,7 @@ void VTKMeshRep::updateTetras()
 	assert(mesh_);
 	assert(P_);
 
-	size_t Nt=mesh_->getNt();
+	size_t Nt=mesh_->getNt()+1;
 
 	// Create tetra ID array
 	vtkIdTypeArray *ids = vtkIdTypeArray::New();
