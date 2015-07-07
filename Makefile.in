@@ -9,45 +9,19 @@ endif
 
 
 ifndef BOOST_INCLUDE
-	#BOOST_INCLUDE=/usr/include/boost	
 	BOOST_INCLUDE=/usr/local/include/boost
-	#BOOST_INCLUDE=/home/houmanhaji/boost
-	#temp
-
-	#BOOST_INCLUDE=/home/houmanhaji/packagedup/openSource/boost
-	#temp
 endif
 
 ifndef BOOST_LIB 
 	BOOST_LIB=/usr/local/lib/boost
-	#for jeff
-	#BOOST_LIB=/usr/lib/x86_64-linux-gnu
-
-	#BOOST_LIB=/home/houmanhaji/boostlibs
-	#temp
-
-
-	#BOOST_LIB=/home/houmanhaji/packagedup/libraries/boost
-	#temp
 endif
 
 ifndef VTK_INCLUDE
 	VTK_INCLUDE=/usr/local/include/vtk
-	#for jeff
-	#VTK_INCLUDE=/usr/local/include/vtk-6.1
-
-	#VTK_INCLUDE=/home/houmanhaji/packagedup/openSource/vtk
-	#temp
-	
-
 endif
 
 ifndef VTK_LIB
 	VTK_LIB=/usr/local/lib
-
-
-	#VTK_LIB=/home/houmanhaji/packagedup/libraries/vtk
-	#temp
 endif
 
 ifndef CXX
@@ -55,80 +29,39 @@ ifndef CXX
 endif
 
 ifndef SWIG
-	#SWIG=swig3.0
-	#SWIG=swig 
-	#for jeff
 	SWIG=/home/houmanhaji/swig/bin/swig
-	#tmp
 endif
 
 
 ifndef ANTLR_DIR #do we need this?
-	#ANTLR_DIR=/home/houman/antlr3c-3.4
 	ANTLR_DIR=/usr/local/antlr3c-3.4
-	#for jeff
-	#ANTLR_DIR=/home/houmanhaji/antlr
-	#temp
 endif
 
 ifndef ANTLR_INCLUDE
-	#ANTLR_INCLUDE=/usr/local/include
 	ANTLR_INCLUDE=$(ANTLR_DIR)/include
-	#for jeff
-	#ANTLR_INCLUDE=/home/houmanhaji/packagedup/openSource/antlr
-	#temp
 endif
 
 ifndef ANTLR_LIB
-	#ANTLR_LIB=/usr/local/lib/
 	ANTLR_LIB=$(ANTLR_DIR)/lib
-	#for jeff
-	ANTLR_LIB=$(ANTLR_DIR)/lib
-	#temp
-
-	#ANTLR_LIB=/home/houmanhaji/packagedup/libraries/antlr
-	#temp
 endif
 
 ifndef ANTLR
-	#ANTLR=java -jar /home/houman/antlr3/antlr-3.5.2-complete-no-st3.jar
-
-	#ANTLR=/usr/local/antlrv3/antlr-3.5.2-complete-no-st3.jar 
-	#jeff
-
-	ANTLR=java -jar /home/houmanhaji/Downloads/antlr-3.5.2-complete-no-st3.jar
-	#temp
-
+	#ANTLR=java -jar /home/houmanhaji/Downloads/antlr-3.5.2-complete-no-st3.jar
+    ANTLR=java -jar /usr/local/antlrv3/antlr-3.5.2-complete-no-st3.jar
 endif
-
-
-
 
 ifndef TCL_LIB
-	# TCL_LIB= /usr/lib/x86_64-lin$(CXX_OPTS) ux-gnu/libtclstub8.5.a
-	TCL_LIB= /usr/lib/libtclstub8.5.a 
-#for jeff
-#TCL_LIB=/usr/local/lib #in jeffs old code
-
-
-	#TCL_LIB=/home/houmanhaji/packagedup/libraries/libtclstub8.5.a
-	#temp
-
+    TCL_LIB=/usr/lib/libtclstub8.5.a
 endif
 
 
-#hoomans addition
 ifndef TCL_INCLUDE 
 	TCL_INCLUDE=/usr/include/tcl8.5
-
-TCL_INCLUDE=/home/houmanhaji/packagedup/openSource/tcl8.5
-	#temp
 endif
 
-#hoomans addition : -I$(TCL_INCLUDE)
-CXX_OPTS=-Wall -std=c++11 -O3 -g -Wno-missing-braces  -msse4 -mavx -fPIC -fabi-version=6 -I$(SOURCE_ROOT) -L$(LIB_ROOT)  -I$(ANTLR_INCLUDE) -I$(BOOST_INCLUDE)
+CXX_OPTS=-Wall -std=c++11 -O3 -g -Wno-missing-braces  -msse4 -mavx -fPIC -fabi-version=6 -I$(SOURCE_ROOT) -L$(LIB_ROOT)  -I$(ANTLR_INCLUDE) -I$(BOOST_INCLUDE) -Wa,-q
 
-CXX_LIB_OPTS=-Wall -fabi-version=6 -msse4 -mavx -fPIC -shared -L$(LIB_ROOT)
+CXX_LIB_OPTS=-Wall -fabi-version=6 -msse4 -mavx -fPIC -shared -L$(LIB_ROOT) -Wa,-q
 
 # Check for Mac OS (no POSIX timer among other things)
 OS:=$(shell uname)
@@ -138,8 +71,6 @@ endif
 
 %.o: %.cpp *.hpp
 	$(CXX) $(CXX_OPTS) -c $<
-
-
 
 defaultclean:
 	rm -rf *.so *.a *_wrap.cxx *.o
