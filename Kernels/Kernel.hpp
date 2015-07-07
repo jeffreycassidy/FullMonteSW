@@ -187,7 +187,7 @@ protected:
 	void prepare_materials_()
 	{
 		mat_.resize(mats_.size());
-		boost::copy(mats_ | boost::adaptors::transformed([](SimpleMaterial ms){ return Material(ms.mu_a,ms.mu_s,ms.g,ms.n,0,0); }), mat_.begin());
+		boost::copy(mats_ | boost::adaptors::transformed(std::function<Material(SimpleMaterial)>([](SimpleMaterial ms){ return Material(ms.mu_a,ms.mu_s,ms.g,ms.n,0,0); })), mat_.begin());
 	}
 
 	virtual void finish_(){ cerr << "Invalid invocation of MonteCarloKernelBase::finish_()" << endl; }
@@ -240,7 +240,7 @@ public:
 
 protected:
 
-	virtual bool done() const { return boost::algorithm::all_of(workers_, [](const SimMCThreadBase* w){ return w->done(); }); }
+	virtual bool done() const { return boost::algorithm::all_of(workers_, std::function<bool(SimMCThreadBase*)>([](const SimMCThreadBase* w){ return w->done(); })); }
 
 	void prepare_sources_();
 	TetraMesh M_;
@@ -309,7 +309,7 @@ private:
 	typedef std::tuple<
 			LoggerEventMT,
 			LoggerConservationMT,
-			LoggerSurface<QueuedAccumulatorMT<double> >
+			LoggerSurface<QueuedAccumulatorMT<double> > 
 			>
 			LoggerType;
 

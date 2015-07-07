@@ -11,10 +11,10 @@ clean:
 	for d in $(SUBDIRS); do make -C $$d clean; done;
 	
 libFullMonteKernels.so: Kernel.o OStreamObserver.o
-	$(CXX) $(CXX_LIB_OPTS) -lboost_system -lFullMonteGeometry -lFullMonteCore -L$(SOURCE_ROOT)/FullMonte -lSFMT -o $@ $^
+	$(CXX) $(CXX_LIB_OPTS) -L$(BOOST_LIB) -lboost_system -lFullMonteGeometry -lFullMonteCore -L$(SOURCE_ROOT)/FullMonte -lSFMT -o $@ $^
 	
 libFullMonteKernels_TCL.so: Kernel_wrap.o | libFullMonteKernels.so
-	$(CXX) $(CXX_LIB_OPTS) -lFullMonteKernels -lboost_system -lFullMonteGeometry -o $@ $^ $(TCL_LIB)
+	$(CXX) $(CXX_LIB_OPTS) -L$(BOOST_LIB) -lFullMonteKernels -lboost_system -lFullMonteGeometry -o $@ $^ $(TCL_LIB)
 
 	
 Kernel_wrap.cxx: Kernel.hpp

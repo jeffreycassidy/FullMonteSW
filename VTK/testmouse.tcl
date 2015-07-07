@@ -1,19 +1,20 @@
 package require vtk
 
-load ./libFullMonteVTK.so 
-load ./libFullMonteTIMOS_TCL.so
-load ./libFullMonteBinFile_TCL.so 
+load libFullMonteVTK.so 
+load libFullMonteTIMOS_TCL.so
+load libFullMonteBinFile_TCL.so 
 
-load ./libFullMonteKernels_TCL.so
-load ./libFullMonteTIMOS_TCL.so 
+load libFullMonteKernels_TCL.so
+load libFullMonteTIMOS_TCL.so 
 
 #default file prefix
-set pfx "/home/houman/FullMonte/data/mouse"
+set pfx "/home/houmanhaji/FullMonte/data/mouse"
 
 set optfn "$pfx.opt"
 set meshfn "$pfx.mesh"
 set legendfn "$pfx.legend"
 
+puts "hooman1"
 
 #override with 1st cmdline arg
 if { $argc >= 1 } { set pfx [lindex $argv 0] }
@@ -29,7 +30,7 @@ R setOpticalFileName $optfn
 R setLegendFileName $legendfn
 
 
-
+puts "hooman2"
 # Load materials
 
 proc loadoptical { optfn } {
@@ -41,21 +42,24 @@ proc loadoptical { optfn } {
 
 loadoptical $optfn
 
-
+puts "hooman3"
 # Load mesh
 
-#set mesh [R mesh]
+set mesh [R mesh]
 
-set meshfn "../Storage/BinFile/mouse"
-BinFileReader BR $meshfn
-set mesh [BR mesh]
+#set meshfn "/home/houmanhaji/FullMonte/data/DATA/mouse.bin"
+#BinFileReader BR $meshfn
+#puts "hooman3.1 "
+#set mesh [BR mesh]
+#puts "hooman3.2"
 VTKMeshRep V $mesh
+puts "hooman3.3"
 
 set ug [V getMeshWithRegions]
 puts "Extracted cell mesh, total [$ug GetNumberOfCells] cells and [$ug GetNumberOfPoints] points"
 
 
-
+puts "hooman4"
 # Load legend
 set legend [R legend]
 puts "Loaded [llength $legend] regions"
@@ -69,11 +73,13 @@ for { set i 0 } { $i < [llength $legend] } { incr i } {
 set legendactor [V getLegendActor "0.5 0.1" "0.9 0.9"]
 
 
-
+puts "hooman5"
 ## Create sim kernel
 
 TetraSurfaceKernel k
 
+
+puts "hooman5.0"
 # Kernel properties
 # k setSource bsr ## do this later
 # k startAsync
@@ -81,6 +87,8 @@ k setEnergy             50
 k setMaterials          $opt
 k setUnitsToMM
 
+
+puts "hooman5.1"
 # Monte Carlo kernel properties
 k setRoulettePrWin      0.1
 k setRouletteWMin       1e-5
@@ -90,10 +98,12 @@ k setPacketCount        1000000
 k setThreadCount        8
 k setRandSeed           1
 
+
+puts "thisman"
 # Tetra mesh MC kernel properties
-k setMesh               $mesh
+#k setMesh               $mesh
 
-
+puts "hooman6"
 # set up VTK render window and interactor
 
 vtkRenderer ren
@@ -113,7 +123,7 @@ vtkRenderWindowInteractor iren
 
 
 
-
+puts "hooman7"
 # actor: mesh dataset
 
 vtkDataSetMapper dsm
@@ -128,22 +138,25 @@ vtkActor meshactor
 
 
 
-
+puts "hooman8"
 # actor: surface dataset
 
 for { set i 0 } { $i < [llength $legend] } { incr i } {
     if { $i != 1 } {
+puts "hooman8.0"
         set surfpd($i) [V getSurfaceOfRegion $i]
-        
+     
         vtkPolyDataMapper pdm$i
+
             pdm$i SetInputData $surfpd($i)
             pdm$i ScalarVisibilityOff
-        
-        vtkActor surfactor$i
-            surfactor$i SetMapper pdm$i
-    
-            eval "[surfactor$i GetProperty] SetColor [LegendEntry_colour_get [lindex $legend $i]]"
 
+            vtkActor surfactor$i
+            surfactor$i SetMapper pdm$i
+
+  puts "thisguy"
+            eval "[surfactor$i GetProperty] SetColor [LegendEntry_colour_get [lindex $legend $i]]"
+puts "hooman8.2"
 
 # treat exterior surface specially (lower opacity, white colour)
         if { $i == 0 } {
@@ -155,6 +168,7 @@ for { set i 0 } { $i < [llength $legend] } { incr i } {
     }
 }
 
+puts "hooman9"
 # actor: surface fluence dataset
 
 VTKSurfaceFluenceRep fluencerep V
@@ -171,32 +185,40 @@ set scalebar [fluencerep getScaleBar]
 
 ren AddViewProp $scalebar
 
-
+puts "hooman9.0"
 
 labelframe .input -text "Input problem definition"
-
+puts "hooman9.11"
 label .input.mesh -text "Mesh filename: $meshfn"
 pack .input.mesh
-
+puts "hooman9.12"
 label .input.legend -text "Legend file: $legendfn"
 pack .input.legend
-
+puts "hooman9.13"
 frame .input.opt
 label .input.opt.label -text "Optical properties: "
+puts "hoomanthisguy"
 entry .input.opt.fn -textvariable optfn
 pack .input.opt.label -side left
+puts "hooman9.15"
 pack .input.opt.fn
 pack .input.opt
-
+puts "hooman9.16"
 pack .input
 
+puts "hooman9.1"
 
 labelframe .source -text "Source placement"
+
 proc scalecallback { newval } { global bsractor; bsr setRadius $newval; bsr Update; renwin Render; }
+
 scale .source.radius -label "Radius" -from 0.0 -to 10.0 -resolution 0.1 -orient horizontal -command scalecallback
+
 pack .source.radius
 
 label .source.pos -text "Position: (+000.00 +000.00 +000.0)"
+
+puts "hooman9.19"
 pack .source.pos
 
 
@@ -204,13 +226,19 @@ pack .source
 
 set Npkt 1000000
 
+
+puts "hooman9.16"
 labelframe .options -text "Options"
 label .options.packetlabel -text "Packets: "
 pack .options.packetlabel
+
+puts "hooman9.17"
 entry .options.packets -textvariable Npkt
 pack .options.packets
 pack .options
 
+
+puts "hooman9.2"
 
 labelframe .output -text "Output file"
 
@@ -234,6 +262,8 @@ pack .output.comment
 ttk::progressbar .output.progress -maximum 100 -length 400 -variable progress
 pack .output.progress
 
+
+puts "hooman10"
 proc progresstimerevent {} {
     global phi_s progress
     after 50 {
@@ -248,6 +278,7 @@ proc progresstimerevent {} {
     }
 }
 
+puts "hooman10.0"
 button .output.save -text "Calculate & Save" -command {
     global mesh opt ofn progress
     set progress 0
@@ -261,6 +292,7 @@ pack .output.save
 
 pack .output
 
+puts "hooman10.1"
 # add fluence toggle button
 set showfluence 0
 proc fluencecallback {} {

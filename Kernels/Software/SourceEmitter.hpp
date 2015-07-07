@@ -261,7 +261,8 @@ template<class RNG>SourceEmitter<RNG>* SourceEmitterFactory(const TetraMesh& mes
 		return SourceEmitterFactory<RNG>(mesh,*sdv.front());
 	else
 	{
-		auto r = sdv | boost::adaptors::transformed([&mesh](const SourceDescription* sd){ return SourceEmitterFactory<RNG>(mesh,*sd); });
+	//hooman old gcc wraper
+		auto r = sdv | boost::adaptors::transformed(std::function<SourceEmitter<RNG>*(SourceDescription*)>([&mesh](const SourceDescription* sd){ return SourceEmitterFactory<RNG>(mesh,*sd); }));
 		return new SourceMultiEmitter<RNG>(mesh,begin(r),end(r));
 	}
 }

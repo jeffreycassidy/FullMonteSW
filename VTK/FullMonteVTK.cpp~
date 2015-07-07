@@ -122,7 +122,7 @@ vtkUnstructuredGrid* VTKMeshRep::getSubsetMesh(const std::vector<unsigned>& idx)
 	ids->SetNumberOfTuples(5*idx.size());
 
 	unsigned j=0;
-	for(TetraByPointID IDps : idx | boost::adaptors::transformed([this](unsigned i){ return this->mesh_->getTetraPointIDs(i); }))
+	for(TetraByPointID IDps : idx | boost::adaptors::transformed(std::function<const TetraByPointID&(unsigned)>([this](unsigned i){ return this->mesh_->getTetraPointIDs(i); })))
 	{
 		ids->SetTuple1(j++,4);
 		for(unsigned k=0;k<4;++k)
@@ -152,7 +152,7 @@ vtkPolyData* VTKMeshRep::getSubsetFaces(const std::vector<unsigned>& idx) const
 	ids->SetNumberOfTuples(4*idx.size());
 
 	unsigned j=0;
-	for(FaceByPointID IDps : idx | boost::adaptors::transformed([this](unsigned i){ return this->mesh_->getFacePointIDs(i); }))
+	for(FaceByPointID IDps : idx | boost::adaptors::transformed(std::function<const FaceByPointID&(unsigned)>([this](unsigned i){ return this->mesh_->getFacePointIDs(i); })))
 	{
 		ids->SetTuple1(j++,3);
 		for(unsigned k=0;k<3;++k)
@@ -209,12 +209,13 @@ vtkLegendBoxActor* VTKMeshRep::getLegendActor(const std::array<float,2> ll,
 	// copy the legend entries
 	lba->SetNumberOfEntries(legend_.size());
 	
-	const auto& __legend_ = legend_ | boost::adaptors::indexed(0U);
-	for(auto le = begin(__legend_); le != end(__legend_); ++le)
+
+	for(const auto& le : legend_ | boost::adaptors::indexed(0U))
 	{
 		array<double,3> tcol;
-		boost::copy(le->colour,tcol.data());
-		lba->SetEntry(le.index(),sym,le->label.c_str(),tcol.data());
+		boost::copy(le.value().colour,tcol.data());
+> 		lba->SetEntry(le.index(),sym,le.value().label.c_str(),tcol.data());
+
 	}
 
 
@@ -235,15 +236,15 @@ vtkLookupTable* VTKMeshRep::getRegionMapLUT() const
 	lut->IndexedLookupOn();
 	lut->SetRange(0,legend_.size()-1);
 
-	const auto& __legend_ = legend_ | boost::adaptors::indexed(0U);
-	for(auto le = begin(__legend_); le != end(__legend_); ++le)
+	
+	for(const auto& le : legend_ | boost::adaptors::indexed(0U))
 	{
 		std::array<double,4> rgba;
-		boost::copy(le->colour, rgba.begin());
+		boost::copy(le.value().colour, rgba.begin());
 		rgba[3]=1.0;
 
 		lut->SetTableValue(le.index(), rgba.data());
-		lut->SetAnnotation(le.index(), le->label);
+		lut->SetAnnotation(le.index(), le.value().label);
 	}
 
 	return lut;
@@ -538,9 +539,9 @@ void VTKVolumeSurfaceRep::Update(const std::vector<double>& phi_v)
 
 	cout << "  added " << nnz << " nonzero elements ranging [" << phi_min << ',' << phi_max << ']' << endl;
 
-	if (! isnan(range_.first))
+	if (! std::isnan(range_.first))
 		phi_min=range_.first;
-	if (! isnan( range_.second))
+	if (! std::isnan( range_.second))
 		phi_max=range_.second;
 
 

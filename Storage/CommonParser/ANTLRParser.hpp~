@@ -19,10 +19,10 @@
 
 #include <unordered_map>
 
-#define ANTLR3_ENC_8BIT 8
+//#define ANTLR3_ENC_8BIT 8
 
 template<class ANTLR3LP>class ANTLRParser {
-	pANTLR3_INPUT_STREAM 				input_=nullptr;
+	pANTLR3_INPUT_STREAM 			input_=nullptr;
 	pANTLR3_COMMON_TOKEN_STREAM 		tokens_=nullptr;
 
 	typename ANTLR3LP::Lexer::ptr_t 	lex_=nullptr;
@@ -34,6 +34,8 @@ public:
 	ANTLRParser(std::string fn)
 	{
 		input_ 	= antlr3FileStreamNew((pANTLR3_UINT8)fn.c_str(),ANTLR3_ENC_8BIT);
+		//std::cout << "here in ANTLRParser.hpp. input_= "<< input_ <<" (pANTLR3_UINT8)fn.c_str()= " <<(pANTLR3_UINT8)fn.c_str()<< std::endl;
+		//printf("input_ = %d  (pANTLR3_UINT8)fn.c_str()=  %d \n",input_ ,(pANTLR3_UINT8)fn.c_str());
 		assert(input_);
 
 		lex_ 	= ANTLR3LP::Lexer::CreateLexer(input_);

@@ -12,7 +12,7 @@ Test_TetraMeshBase: Test_TetraMeshBase.o TetraMeshBase.o TetraMesh.o Face.o Tetr
 %.o: %.cpp *.hpp
 	$(CXX) $(CXX_OPTS) -c $*.cpp -o $@
 
-libFullMonteGeometry.so: TetraMeshBase.o newgeom.o TetraMesh.o TetraMeshBase.o Face.o SourceDescription.o Material.o 
+libFullMonteGeometry.so: TetraMeshBase.o newgeom.o Face.o SourceDescription.o Material.o TetraMesh.o
 	$(CXX) $(CXX_LIB_OPTS) -o  $@ $^
 	
 FullMonteGeometry_wrap.cxx: Geometry.i Geometry_types.i *.hpp
@@ -22,5 +22,5 @@ FullMonteGeometry_wrap.o: FullMonteGeometry_wrap.cxx
 	$(CXX) $(CXX_OPTS) -DUSE_TCL_STUBS -c $<
 
 libFullMonteGeometry_TCL.so: FullMonteGeometry_wrap.o | libFullMonteGeometry.so
-	$(CXX) $(CXX_LIB_OPTS) -lFullMonteGeometry -ltclstub8.5 -o $@ $<
-	
+	$(CXX) $(CXX_LIB_OPTS) -o $@ $< -lFullMonteGeometry -ltclstub8.5 
+

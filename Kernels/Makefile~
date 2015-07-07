@@ -15,7 +15,7 @@ libFullMonteKernels.so: Kernel.o OStreamObserver.o
 	
 libFullMonteKernels_TCL.so: Kernel_wrap.o | libFullMonteKernels.so
 	$(CXX) $(CXX_LIB_OPTS) -lFullMonteKernels -lboost_system -lFullMonteGeometry -o $@ $^ $(TCL_LIB)
-#/usr/lib/libtclstub8.5.a
+
 	
 Kernel_wrap.cxx: Kernel.hpp
 	$(SWIG) -tcl -c++  -DSWIG_OPENBRACE=%{ -DSWIG_CLOSEBRACE=%} -o $@ $^

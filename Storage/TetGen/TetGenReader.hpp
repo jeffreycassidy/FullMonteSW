@@ -19,8 +19,8 @@ public:
 	// doesn't do materials or sources
 
 private:
-	std::vector<std::array<double,3>> 										load_node_file(std::string fn) const;
-	std::pair<std::vector<std::array<unsigned,4>>,std::vector<unsigned>> 	load_ele_file(std::string fn) const;
+	std::vector<std::array<double,3> > 										load_node_file(std::string fn) const;
+	std::pair<std::vector<std::array<unsigned,4> >,std::vector<unsigned> > 	load_ele_file(std::string fn) const;
 
 };
 

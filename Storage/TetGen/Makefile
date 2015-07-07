@@ -12,4 +12,4 @@ libFullMonteTetGen.so: TetGenReader.o TetGenWriter.o
 	$(CXX) $(CXX_LIB_OPTS) -o $@ $^ -lFullMonteGeometry 
 
 libFullMonteTetGen_TCL.so: FullMonteTetGen_wrap.o | libFullMonteTetGen.so
-	$(CXX) $(CXX_LIB_OPTS) -ltclstub8.5 -L . -o $@ $< -lFullMonteTetGen -lFullMonteGeometry
+	$(CXX) $(CXX_LIB_OPTS) -o $@ $< -ltclstub8.5 -L . -lFullMonteTetGen -lFullMonteGeometry 
