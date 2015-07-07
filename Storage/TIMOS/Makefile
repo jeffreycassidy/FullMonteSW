@@ -3,7 +3,7 @@ default: test
 include ../CommonParser/Makefile.in
 
 #hoomans addition -msse4 -mavx -march=native, changing cxx-opts
-CXX_OPTS=-Wall -msse4 -mavx  -fPIC -O3 -g -std=c++11 -c -I$(SOURCE_ROOT) -I$(ANTLR_INCLUDE)
+CXX_OPTS=-Wall -msse4 -Wa,-q -mavx  -fPIC -O3 -g -std=c++11 -c -I$(SOURCE_ROOT) -I$(ANTLR_INCLUDE)
 
 CXX_LIB_OPTS=-Wall -msse4 -mavx  -fPIC -shared -O3 -mavx -Wa,-q 
 CXX=g++

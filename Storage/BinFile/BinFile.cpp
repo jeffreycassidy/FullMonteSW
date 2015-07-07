@@ -39,7 +39,7 @@ TetraMesh BinFileReader::mesh() const
 	vector<TetraByPointID>	T_p;
 	vector<unsigned char>	T_m;
 
-	//ia & P & T_p & T_m;
+	ia & P & T_p & T_m;
 
 	vector<Point<3,double>> Pd(P.size());
 	vector<unsigned>		T_mu(T_p.size());
@@ -77,7 +77,7 @@ void BinFileWriter::write(const TetraMesh& M) const
 	}
 	boost::copy(M.getMaterials(), T_mc.begin());
 
-	//oa & Pf & M.getTetrasByPointID() & T_mc;
+	oa & Pf & M.getTetrasByPointID() & T_mc;
 };
 
 void BinFileWriter::write(const std::vector<SourceDescription*>&) const{ cerr << "BinFileWriter::write(vector<SourceDescription>) not supported"; throw std::out_of_range("BinFileReader::materials() not supported"); }
