@@ -2,12 +2,6 @@ default: test
 
 include ../CommonParser/Makefile.in
 
-#hoomans addition -msse4 -mavx -march=native, changing cxx-opts
-CXX_OPTS=-Wall -msse4 -Wa,-q -mavx  -fPIC -O3 -g -std=c++11 -c -I$(SOURCE_ROOT) -I$(ANTLR_INCLUDE)
-
-CXX_LIB_OPTS=-Wall -msse4 -mavx  -fPIC -shared -O3 -mavx -Wa,-q 
-CXX=g++
-
 libs: libFullMonteTIMOS.so libFullMonteTIMOS_TCL.so
 
 Test.o: Test.cpp TIMOSLexer.h TIMOSParser.h
@@ -26,7 +20,7 @@ FullMonteTIMOS_wrap.o: FullMonteTIMOS_wrap.cxx
 	$(CXX) $(CXX_OPTS) -I$(TCL_INCLUDE) -I$(ANTLR_INCLUDE) -DUSE_TCL_STUBS -c $^
 	
 libFullMonteTIMOS_TCL.so: FullMonteTIMOS_wrap.o | libFullMonteTIMOS.so
-	$(CXX) $(CXX_LIB_OPTS) -o $@ $^ -L$(ANTLR_LIB) -L$(TCL_LIB) -ltclstub8.5 -L../../Geometry -L.   -lFullMonteTIMOS -lFullMonteGeometry -lantlr3c 
+	$(CXX) $(CXX_LIB_OPTS) -o $@ $^ -L$(ANTLR_LIB) -ltclstub8.5 -L../../Geometry -L.   -lFullMonteTIMOS -lFullMonteGeometry -lantlr3c 
 
 test: Test.o libFullMonteTIMOS.so
 	$(CXX) $(CXX_LINK_OPTS) -L$(ANTLR_LIB) -L../../Geometry -L. -lantlr3c -lFullMonteTIMOS -lFullMonteGeometry -o $@ Test.o
