@@ -198,45 +198,45 @@ void TetraMesh::tetrasToFaces()
 		TetraByPointID IDps_sort = T.value();
 		boost::sort(IDps_sort);
 
-        tetraMap.insert(make_pair(IDps_sort,T.index()));
+		tetraMap.insert(make_pair(IDps_sort,T.index()));
 
 
+		if (T.index() > 0)
+			for(const auto& perm : tetra_face_opposite_point_indices | boost::adaptors::indexed(0U))
+			{
+				FaceByPointID Ft(
+						IDps_sort[perm.value().faceidx[0]],
+						IDps_sort[perm.value().faceidx[1]],
+						IDps_sort[perm.value().faceidx[2]]);
 
-	for(const auto& perm : tetra_face_opposite_point_indices | boost::adaptors::indexed(0U))
-        {
-        	FaceByPointID Ft(
-      				IDps_sort[perm.value().faceidx[0]],
-        			IDps_sort[perm.value().faceidx[1]],
-         			IDps_sort[perm.value().faceidx[2]]);
 
+				auto p = faceMap.insert(make_pair(Ft,F.size()));
 
-        	auto p = faceMap.insert(make_pair(Ft,F.size()));
+				if(p.second)			// new tuple inserted; ensure face is such that opposite point is above face
+				{
+					F.push_back(Face(P[Ft[0]], P[Ft[1]], P[Ft[2]]));
 
-        	if(p.second)			// new tuple inserted; ensure face is such that opposite point is above face
-        	{
-        		F.push_back(Face(P[Ft[0]], P[Ft[1]], P[Ft[2]]));
-
-        		if (F.back().pointHeight(P[IDps_sort[perm.value().oppidx]]) < 0)
-        			F.back().flip();
-        		F_t.push_back(array<unsigned,2>{(unsigned)T.index(),0});
-        		F_p.push_back(Ft);
-        		T_f[T.index()][perm.index()] = p.first->second;			// link the tetra to the face
-        	}
-        	else				// already exists -> up-face already assigned -> this is down-face
-        	{
-        		F_t[p.first->second][1] = T.index();
-        		T_f[T.index()][perm.index()] = -p.first->second;			// link the tetra to the face
-        	}
-        }
+					if (F.back().pointHeight(P[IDps_sort[perm.value().oppidx]]) < 0)
+						F.back().flip();
+					F_t.push_back(array<unsigned,2>{(unsigned)T.index(),0});
+					F_p.push_back(Ft);
+					T_f[T.index()][perm.index()] = p.first->second;			// link the tetra to the face
+				}
+				else				// already exists -> up-face already assigned -> this is down-face
+				{
+					F_t[p.first->second][1] = T.index();
+					T_f[T.index()][perm.index()] = -p.first->second;			// link the tetra to the face
+				}
+			}
 	}
-//boost change hooman
-unsigned Nf_surf = 0;
+
+	unsigned Nf_surf = 0;
 	for(unsigned int i = 0; i < F_t.size(); i ++)
 		if(!F_t[i][1])
 			Nf_surf ++;
-	
 
-	 Nf_surf = boost::size(F_t |		 boost::adaptors::filtered([](array<unsigned,2> i){ return i[1]==0; }));
+
+	Nf_surf = boost::size(F_t |		 boost::adaptors::filtered([](array<unsigned,2> i){ return i[1]==0; }));
 
 	cout << "New mesh construction: " << P.size() << " points, " << T_p.size() << " tetras, " << faceMap.size() <<
 			" faces (" << Nf_surf << " surface)" << endl;

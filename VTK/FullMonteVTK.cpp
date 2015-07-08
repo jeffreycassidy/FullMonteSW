@@ -67,6 +67,7 @@ void VTKMeshRep::updateTetras()
 	assert(P_);
 
 	size_t Nt=mesh_->getNt()+1;
+	size_t Np=mesh_->getNp()+1;
 
 	// Create tetra ID array
 	vtkIdTypeArray *ids = vtkIdTypeArray::New();
@@ -76,14 +77,24 @@ void VTKMeshRep::updateTetras()
 	unsigned j=0;
 	for(TetraByPointID IDps : mesh_->getTetrasByPointID())
 	{
-		ids->SetTuple1(j++,4);
-		for(unsigned k=0;k<4;++k)
-			ids->SetTuple1(j++,IDps[k]);
+		if (j != 0)
+		{
+			ids->SetTuple1(j++,4);
+			for(unsigned k=0;k<4;++k)
+			{
+				ids->SetTuple1(j++,IDps[k]);
+				assert(IDps[k] < Np);
+			}
+		}
+		else
+			j += 5;
 	}
+	assert(j == 5*Nt);
 
 	// Form cell array
 	if (!tetras_)
 		tetras_ = vtkCellArray::New();
+
 	tetras_->SetCells(Nt, ids);
 }
 
@@ -121,13 +132,20 @@ vtkUnstructuredGrid* VTKMeshRep::getSubsetMesh(const std::vector<unsigned>& idx)
 	ids->SetNumberOfComponents(1);
 	ids->SetNumberOfTuples(5*idx.size());
 
+	size_t Np = mesh_->getNp();
+
 	unsigned j=0;
-	for(TetraByPointID IDps : idx | boost::adaptors::transformed(std::function<const TetraByPointID&(unsigned)>([this](unsigned i){ return this->mesh_->getTetraPointIDs(i); })))
+	for(TetraByPointID IDps : idx | boost::adaptors::transformed(std::function<TetraByPointID(unsigned)>([this](unsigned i){ return this->mesh_->getTetraPointIDs(i); })))
 	{
 		ids->SetTuple1(j++,4);
 		for(unsigned k=0;k<4;++k)
+		{
 			ids->SetTuple1(j++,IDps[k]);
+			assert(IDps[k]<=Np);
+		}
 	}
+
+	assert(j==idx.size()*5);
 
 	// Form cell array
 	vtkCellArray *cells = vtkCellArray::New();
@@ -151,13 +169,19 @@ vtkPolyData* VTKMeshRep::getSubsetFaces(const std::vector<unsigned>& idx) const
 	ids->SetNumberOfComponents(1);
 	ids->SetNumberOfTuples(4*idx.size());
 
+	size_t Np = mesh_->getNp()+1;
+
 	unsigned j=0;
-	for(FaceByPointID IDps : idx | boost::adaptors::transformed(std::function<const FaceByPointID&(unsigned)>([this](unsigned i){ return this->mesh_->getFacePointIDs(i); })))
+	for(FaceByPointID IDps : idx | boost::adaptors::transformed(std::function<FaceByPointID(unsigned)>([this](unsigned i){ return this->mesh_->getFacePointIDs(i); })))
 	{
 		ids->SetTuple1(j++,3);
 		for(unsigned k=0;k<3;++k)
+		{
 			ids->SetTuple1(j++,IDps[k]);
+			assert(IDps[k]<Np);
+		}
 	}
+	assert(j == 4*idx.size());
 
 	// Form cell array
 	vtkCellArray *cells = vtkCellArray::New();
