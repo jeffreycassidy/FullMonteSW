@@ -296,8 +296,13 @@ public:
 
 		cout << "Fetched an energy vector with total value " << d.getTotal() << endl;
 
-		for(unsigned i=0; i<E.size(); ++i)
+		E[0] = 0;
+		for(unsigned i=1; i<E.size(); ++i)
+		{
+			assert(M_.getFaceArea(i) > 0);
 			E[i] /= M_.getFaceArea(i);
+		}
+
 		return E;
 	}
 
