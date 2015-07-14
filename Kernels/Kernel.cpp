@@ -115,7 +115,14 @@ void TetraSurfaceKernel::start_()
 
 	for(unsigned i=0;i<Nth_;++i)
 	{
-		workers_[i] = new TetraMCKernelThread<LoggerWorker,RNG_SFMT_AVX>(*this,get_worker(*logger_),seeds_generator(),Npkt_/Nth_);
+		int st = posix_memalign((void**)&workers_[i],32,sizeof(TetraMCKernelThread<LoggerWorker,RNG_SFMT_AVX>));
+
+		assert(st==0);
+		assert(workers_[i]);
+		assert(((unsigned long long)workers_[i] & 0x1F) == 0);
+
+		new (workers_[i]) TetraMCKernelThread<LoggerWorker,RNG_SFMT_AVX>(*this,get_worker(*logger_),seeds_generator(),Npkt_/Nth_);
+
 		seeds_generator.discard(100);
 	}
 
