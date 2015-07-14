@@ -298,6 +298,8 @@ public:
 			scale_->Delete();
 	}
 
+	vtkPolyData* getData() const { return pd_; }
+
 	void Update(const std::vector<double>& E,bool data_is_per_area);
 
 	vtkScalarBarActor* getScaleBar()

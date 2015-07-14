@@ -71,6 +71,18 @@ endif
 
 %.o: %.cpp *.hpp
 	$(CXX) $(CXX_OPTS) -c $<
+	
+%_wrap.cxx: %.i
+	$(SWIG) -c++ -tcl $<
+	
+%_wrap.cxx: %.hpp
+	$(SWIG) -c++ -tcl -DSWIG_OPENBRACE=%{ -DSWIG_CLOSEBRACE=%} $<
+	
+%_wrap.o: %_wrap.cxx
+	$(CXX) $(CXX_OPTS) -c -DUSE_TCL_STUBS $<
+	
+lib%_TCL.so: %_wrap.o lib%.so
+	$(CXX) $(CXX_LIB_OPTS) -l$* -o $@ $<
 
 defaultclean:
 	rm -rf *.so *.a *_wrap.cxx *.o

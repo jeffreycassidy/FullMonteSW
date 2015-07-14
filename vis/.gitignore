@@ -1,6 +1,0 @@
-Makefile
-*.txt
-RenderDiff
-SurfaceRender
-cmake_install.cmake
-CMakeFiles

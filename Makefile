@@ -17,6 +17,7 @@ libs:
 	ln -sf OutputTypes/libFullMonteData.so
 	ln -sf Kernels/libFullMonteKernels_TCL.so
 	ln -sf Geometry/libFullMonteGeometry.so
+	ln -sf Geometry/libFullMonteGeometry_TCL.so
 	ln -sf Storage/TIMOS/libFullMonteTIMOS.so
 	ln -sf Storage/TIMOS/libFullMonteTIMOS_TCL.so
 	ln -sf VTK/libFullMonteVTK.so

@@ -47,7 +47,7 @@ class BallSourceDescription : public cloner<SourceDescription,BallSourceDescript
 	double r_=0.0;
 public:
 
-	BallSourceDescription(const Point<3,double>& p0,double r,double w_=1.0) : cloner(w_),p0_(p0),r_(r){}
+	BallSourceDescription(const Point<3,double>& p0,double r,double w_ ) : cloner(w_),p0_(p0),r_(r){}
 
 	Point<3,double> getCentre() const { return p0_; }
 	void setCentre(const Point<3,double> p0){ p0_=p0; }

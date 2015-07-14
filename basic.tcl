@@ -1,8 +1,11 @@
+package require vtk
+
+load libFullMonteVTK.so
 load libFullMonteTIMOS_TCL.so
 load libFullMonteBinFile_TCL.so 
+load libFullMonteGeometry_TCL.so
 
 load libFullMonteKernels_TCL.so
-load libFullMonteTIMOS_TCL.so 
 
 #default file prefix
 set pfx "/Users/jcassidy/src/FullMonteSW/data/mouse"
@@ -28,13 +31,11 @@ R setLegendFileName $legendfn
 set opt [R materials_simple]
 set mesh [R mesh]
 
-#set meshfn "/home/houmanhaji/FullMonte/data/DATA/mouse.bin"
-#BinFileReader BR $meshfn
-#set mesh [BR mesh]
+VTKMeshRep V $mesh
 
-BallSourceDescription bsr
-bsr setCentre 1 1 1
-bsr setRadius 1
+BallSourceDescription bsr "10 40 11" 1.0 1.0
+bsr setCentre "10 40 11"
+bsr setRadius 2
 
 # Load legend
 set legend [R legend]
@@ -46,6 +47,7 @@ TetraSurfaceKernel k
 
 
 # Kernel properties
+k setMesh               $mesh
 k setSource bsr
 k setEnergy             50
 k setMaterials          $opt
@@ -61,34 +63,44 @@ k setPacketCount        1000000
 k setThreadCount        8
 
 
-proc progresstimerevent {} {
-    global phi_s progress
-    after 50 {
-        set progress [k getProgressFraction]
-        puts "Progress update: $progress"
-        if { ![k done] } { progresstimerevent } else {
-            k awaitFinish
-            set phi_s [k getSurfaceFluenceVector]
+proc progresstimer {} {
+    global progress
+    while { ![k done] } {
+        after 50 {
+            set progress [k getProgressFraction]
+            puts "Progress update: $progress%"
         }
     }
 }
 
-for { set i 0 } { $i < 10 } { incr i } {
+set N 10
+VTKSurfaceFluenceRep fluencerep V
+vtkPolyDataWriter W
+
+
+for { set i 0 } { $i < $N } { incr i } {
+
+    puts "Trial $i of $N"
+    
+    # set the random seed
 	k setRandSeed           $i
-	k setOutputFile "experiment.$i.out"
+
+    # could equally well play with other stuff
+    bsr setRadius [expr $i * 0.1 + 2.0]
+    bsr setCentre "[expr $i * 1.0 + 10.0] 42 10"
+
 	k startAsync
+
+    progresstimer
+
 	k awaitFinish
+
+    # get results
+    fluencerep Update [k getSurfaceFluenceVector] 1
+
+    # write the file out
+    W SetHeader "Experiment run $i with blah blah blah"
+    W SetInputData [fluencerep getData]
+    W SetFileName "experiment.$i.vtk"
+    W Update
 }
-
-
-# Tetra mesh MC kernel properties
-k setMesh               $mesh
-
-
-    k setSource [bsr getDescription]
-    k setPacketCount 1000000
-    k startAsync
-    progresstimerevent
-
-VTKBallSourceRep bsr V "1.0 1.0 1.0" 10.0
-

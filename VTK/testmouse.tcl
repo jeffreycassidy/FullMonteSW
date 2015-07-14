@@ -1,6 +1,6 @@
 package require vtk
 
-load libFullMonteVTK.so 
+load libFullMonteVTK.so
 load libFullMonteTIMOS_TCL.so
 load libFullMonteBinFile_TCL.so 
 
