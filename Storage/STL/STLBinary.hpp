@@ -25,7 +25,7 @@ BOOST_STATIC_ASSERT(sizeof(std::array<float,3>)==3*sizeof(float));
 BOOST_STATIC_ASSERT(sizeof(float)==4);
 #endif
 
-std::pair<std::vector<std::array<float,3>>,std::vector<std::array<unsigned,3>>> loadSTLBinary(std::string fn);
+std::pair<std::vector<std::array<float,3> >,std::vector<std::array<unsigned,3> > >  loadSTLBinary(std::string fn);
 
 }
 }

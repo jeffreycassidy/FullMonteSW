@@ -33,8 +33,9 @@ int main(int argc,char **argv)
 	cout << "Total " << mat.size() << " materials" << endl;
 	cout << "Total " << src.size() << " source" << endl;
 
-	for(const auto& r : reg | boost::adaptors::indexed(0U))
-		cout << setw(2) << r.index() << ": " << r.value().label << "    (" << r.value().colour[0] << ',' << r.value().colour[1] << ',' << r.value().colour[2] << ')' << endl;
+	const auto& __reg = reg | boost::adaptors::indexed(0U);
+	for(auto r = begin(__reg); r != end(__reg); ++r)
+		cout << setw(2) << r.index() << ": " << r->label << "    (" << r->colour[0] << ',' << r->colour[1] << ',' << r->colour[2] << ')' << endl;
 
 //	for(const TIMOS::Material& m : opt.mat)
 //		cout << "  " <<

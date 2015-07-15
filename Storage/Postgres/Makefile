@@ -1,1 +1,3 @@
 include ../../Makefile.in
+
+libs:

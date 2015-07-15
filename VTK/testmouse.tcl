@@ -2,22 +2,21 @@ package require vtk
 
 load libFullMonteVTK.so
 load libFullMonteTIMOS_TCL.so
-load libFullMonteBinFile_TCL.so
+load libFullMonteBinFile_TCL.so 
 
 load libFullMonteKernels_TCL.so
-load libFullMonteTIMOS_TCL.so
+load libFullMonteTIMOS_TCL.so 
 
 #default file prefix
 set pfx "/Users/jcassidy/src/FullMonteSW/data/mouse"
-
-set optfn "$pfx.opt"
-set meshfn "$pfx.mesh"
-set legendfn "$pfx.legend"
 
 
 #override with 1st cmdline arg
 if { $argc >= 1 } { set pfx [lindex $argv 0] }
 
+set optfn "$pfx.opt"
+set meshfn "$pfx.mesh"
+set legendfn "$pfx.legend"
 set ofn "fluence.out"
 
 # create and set up the reader
@@ -27,7 +26,6 @@ TIMOSReader R
 R setMeshFileName $meshfn
 R setOpticalFileName $optfn
 R setLegendFileName $legendfn
-
 
 
 # Load materials
@@ -41,19 +39,17 @@ proc loadoptical { optfn } {
 
 loadoptical $optfn
 
-
 # Load mesh
 
-#set mesh [R mesh]
+set mesh [R mesh]
 
-set meshfn "../Storage/BinFile/mouse"
-BinFileReader BR $meshfn
-set mesh [BR mesh]
+set meshfn "/home/houmanhaji/FullMonte/data/DATA/mouse.bin"
+#BinFileReader BR $meshfn
+#set mesh [BR mesh]
 VTKMeshRep V $mesh
 
 set ug [V getMeshWithRegions]
 puts "Extracted cell mesh, total [$ug GetNumberOfCells] cells and [$ug GetNumberOfPoints] points"
-
 
 
 # Load legend
@@ -69,10 +65,10 @@ for { set i 0 } { $i < [llength $legend] } { incr i } {
 set legendactor [V getLegendActor "0.5 0.1" "0.9 0.9"]
 
 
-
 ## Create sim kernel
 
 TetraSurfaceKernel k
+
 
 # Kernel properties
 # k setSource bsr ## do this later
@@ -80,6 +76,7 @@ TetraSurfaceKernel k
 k setEnergy             50
 k setMaterials          $opt
 k setUnitsToMM
+
 
 # Monte Carlo kernel properties
 k setRoulettePrWin      0.1
@@ -90,9 +87,9 @@ k setPacketCount        1000000
 k setThreadCount        8
 k setRandSeed           1
 
+
 # Tetra mesh MC kernel properties
 k setMesh               $mesh
-
 
 # set up VTK render window and interactor
 
@@ -113,7 +110,6 @@ vtkRenderWindowInteractor iren
 
 
 
-
 # actor: mesh dataset
 
 vtkDataSetMapper dsm
@@ -124,8 +120,7 @@ vtkActor meshactor
     meshactor SetMapper dsm
     [meshactor GetProperty] SetColor 1.0 1.0 1.0
 
-#ren AddActor meshactor
-
+ren AddActor meshactor
 
 
 
@@ -134,16 +129,16 @@ vtkActor meshactor
 for { set i 0 } { $i < [llength $legend] } { incr i } {
     if { $i != 1 } {
         set surfpd($i) [V getSurfaceOfRegion $i]
-        
+     
         vtkPolyDataMapper pdm$i
+
             pdm$i SetInputData $surfpd($i)
             pdm$i ScalarVisibilityOff
-        
-        vtkActor surfactor$i
-            surfactor$i SetMapper pdm$i
-    
-            eval "[surfactor$i GetProperty] SetColor [LegendEntry_colour_get [lindex $legend $i]]"
 
+            vtkActor surfactor$i
+            surfactor$i SetMapper pdm$i
+
+            eval "[surfactor$i GetProperty] SetColor [LegendEntry_colour_get [lindex $legend $i]]"
 
 # treat exterior surface specially (lower opacity, white colour)
         if { $i == 0 } {
@@ -172,31 +167,30 @@ set scalebar [fluencerep getScaleBar]
 ren AddViewProp $scalebar
 
 
-
 labelframe .input -text "Input problem definition"
-
 label .input.mesh -text "Mesh filename: $meshfn"
 pack .input.mesh
-
 label .input.legend -text "Legend file: $legendfn"
 pack .input.legend
-
 frame .input.opt
 label .input.opt.label -text "Optical properties: "
 entry .input.opt.fn -textvariable optfn
 pack .input.opt.label -side left
 pack .input.opt.fn
 pack .input.opt
-
 pack .input
 
 
 labelframe .source -text "Source placement"
+
 proc scalecallback { newval } { global bsractor; bsr setRadius $newval; bsr Update; renwin Render; }
+
 scale .source.radius -label "Radius" -from 0.0 -to 10.0 -resolution 0.1 -orient horizontal -command scalecallback
+
 pack .source.radius
 
 label .source.pos -text "Position: (+000.00 +000.00 +000.0)"
+
 pack .source.pos
 
 
@@ -204,12 +198,15 @@ pack .source
 
 set Npkt 1000000
 
+
 labelframe .options -text "Options"
 label .options.packetlabel -text "Packets: "
 pack .options.packetlabel
+
 entry .options.packets -textvariable Npkt
 pack .options.packets
 pack .options
+
 
 
 labelframe .output -text "Output file"
@@ -233,6 +230,7 @@ pack .output.comment
 
 ttk::progressbar .output.progress -maximum 100 -length 400 -variable progress
 pack .output.progress
+
 
 proc progresstimerevent {} {
     global phi_s progress

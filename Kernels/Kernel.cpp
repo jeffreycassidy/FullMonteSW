@@ -30,7 +30,7 @@ void Kernel::setSources(const vector<SourceDescription*>& S)
 {
 	clearSources();
 	src_.resize(S.size());
-	boost::copy(S | boost::adaptors::transformed([](SourceDescription* S){ return S->clone(); }),
+	boost::copy(S | boost::adaptors::transformed(std::function<SourceDescription*(SourceDescription*)>([](SourceDescription* S){ return S->clone(); })),
 			src_.begin());
 }
 
@@ -46,7 +46,7 @@ void MonteCarloKernelBase::setMaterials(const vector<SimpleMaterial>& mats)
 	mats_=mats;
 	mat_.resize(mats.size());
 	boost::copy(
-		mats | boost::adaptors::transformed([](SimpleMaterial sm){ return Material(sm.mu_a,sm.mu_s,sm.g,sm.n); }),
+		mats | boost::adaptors::transformed(std::function<Material(SimpleMaterial)>([](SimpleMaterial sm){ return Material(sm.mu_a,sm.mu_s,sm.g,sm.n); })),
 		mat_.begin());
 }
 
@@ -115,12 +115,19 @@ void TetraSurfaceKernel::start_()
 
 	for(unsigned i=0;i<Nth_;++i)
 	{
-		workers_[i] = new TetraMCKernelThread<LoggerWorker,RNG_SFMT_AVX>(*this,get_worker(*logger_),seeds_generator(),Npkt_/Nth_);
+		int st = posix_memalign((void**)&workers_[i],32,sizeof(TetraMCKernelThread<LoggerWorker,RNG_SFMT_AVX>));
+
+		assert(st==0);
+		assert(workers_[i]);
+		assert(((unsigned long long)workers_[i] & 0x1F) == 0);
+
+		new (workers_[i]) TetraMCKernelThread<LoggerWorker,RNG_SFMT_AVX>(*this,get_worker(*logger_),seeds_generator(),Npkt_/Nth_);
+
 		seeds_generator.discard(100);
 	}
 
 	cout << "Starting " << Nth_ << " threads" << endl;
-	boost::for_each(workers_, [](SimMCThreadBase* w){ assert(w); w->startAsync(); });
+	boost::for_each(workers_, std::function<void(SimMCThreadBase*)>([](SimMCThreadBase* w){ assert(w); w->startAsync(); }));
 }
 
 void TetraSurfaceKernel::finish_()
@@ -171,7 +178,7 @@ void TetraVolumeKernel::start_()
 	}
 
 	cout << "Starting " << Nth_ << " threads" << endl;
-	boost::for_each(workers_, [](SimMCThreadBase* w){ assert(w); w->startAsync(); });
+	boost::for_each(workers_, std::function<void(SimMCThreadBase*)>([](SimMCThreadBase* w){ assert(w); w->startAsync(); }));
 }
 
 

@@ -19,8 +19,8 @@ namespace Text {
 // void std::pair<std::vector<std::array<float,3>>,std::vector<std::array<unsigned,3>>> readSTLText
 
 void writeSTLText(std::string fn,
-		const std::vector<std::array<float,3>>& P,
-		const std::vector<std::array<unsigned,3>>& T,
+		const std::vector<std::array<float,3> >& P,
+		const std::vector<std::array<unsigned,3> >& T,
 		std::string name="");
 
 }

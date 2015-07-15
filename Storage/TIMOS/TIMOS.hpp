@@ -1,10 +1,18 @@
 #ifndef TIMOS_HPP_INCLUDED_
 #define TIMOS_HPP_INCLUDED_
 
+
+#include <FullMonte/Geometry/SimpleMaterial.hpp>
+#include <FullMonte/Storage/CommonParser/ANTLRParser.hpp>
+
+
 #include "../Reader.hpp"
 #include "../Writer.hpp"
 
 #ifndef SWIG
+
+
+
 
 #include "TIMOSLexer.h"
 #include "TIMOSParser.h"
@@ -15,8 +23,7 @@
 #include <vector>
 #include <iostream>
 
-#include <FullMonte/Geometry/SimpleMaterial.hpp>
-#include <FullMonte/Storage/CommonParser/ANTLRParser.hpp>
+
 
 #endif
 

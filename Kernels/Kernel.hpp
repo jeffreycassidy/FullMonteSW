@@ -123,7 +123,7 @@ public:
 protected:
 
 	std::vector<SourceDescription*>	src_;
-	std::vector<std::shared_ptr<const LoggerResults>> results_;
+	std::vector<std::shared_ptr<const LoggerResults> > results_;
 
 private:
 
@@ -187,7 +187,7 @@ protected:
 	void prepare_materials_()
 	{
 		mat_.resize(mats_.size());
-		boost::copy(mats_ | boost::adaptors::transformed([](SimpleMaterial ms){ return Material(ms.mu_a,ms.mu_s,ms.g,ms.n,0,0); }), mat_.begin());
+		boost::copy(mats_ | boost::adaptors::transformed(std::function<Material(SimpleMaterial)>([](SimpleMaterial ms){ return Material(ms.mu_a,ms.mu_s,ms.g,ms.n,0,0); })), mat_.begin());
 	}
 
 	virtual void finish_(){ cerr << "Invalid invocation of MonteCarloKernelBase::finish_()" << endl; }
@@ -240,7 +240,7 @@ public:
 
 protected:
 
-	virtual bool done() const { return boost::algorithm::all_of(workers_, [](const SimMCThreadBase* w){ return w->done(); }); }
+	virtual bool done() const { return boost::algorithm::all_of(workers_, std::function<bool(SimMCThreadBase*)>([](const SimMCThreadBase* w){ return w->done(); })); }
 
 	void prepare_sources_();
 	TetraMesh M_;
@@ -249,7 +249,7 @@ protected:
 
 	void prepare_();
 
-	std::unique_ptr<const SourceEmitter<RNG>> emitter_;
+	std::unique_ptr<const SourceEmitter<RNG> > emitter_;
 
 	template<class T,class U>friend class TetraMCKernelThread;
 };
@@ -296,8 +296,13 @@ public:
 
 		cout << "Fetched an energy vector with total value " << d.getTotal() << endl;
 
-		for(unsigned i=0; i<E.size(); ++i)
+		E[0] = 0;
+		for(unsigned i=1; i<E.size(); ++i)
+		{
+			assert(M_.getFaceArea(i) > 0);
 			E[i] /= M_.getFaceArea(i);
+		}
+
 		return E;
 	}
 
@@ -309,7 +314,7 @@ private:
 	typedef std::tuple<
 			LoggerEventMT,
 			LoggerConservationMT,
-			LoggerSurface<QueuedAccumulatorMT<double>>
+			LoggerSurface<QueuedAccumulatorMT<double> > 
 			>
 			LoggerType;
 
@@ -369,7 +374,7 @@ private:
 	typedef std::tuple<
 			LoggerEventMT,
 			LoggerConservationMT,
-			LoggerVolume<QueuedAccumulatorMT<double>>
+			LoggerVolume<QueuedAccumulatorMT<double> > 
 			>
 			LoggerType;
 

@@ -1,3 +1,5 @@
+all: default
+libs: default
 default: libSFMT.a
 
 SFMT.o: SFMT.c SFMT*.h

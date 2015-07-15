@@ -91,7 +91,7 @@ VTK_TYPEMAP(vtkScalarsToColors)
 
 #include "FullMonteVTK.hpp"
 #include <sstream>
-#include <vtk/vtkTclUtil.h>
+#include <vtkTclUtil.h>
 
 %}
 
@@ -308,6 +308,8 @@ public:
 			scale_->Delete();
 	}
 
+	vtkPolyData* getData() const { return pd_; }
+
 	void Update(const std::vector<double>& E,bool data_is_per_area);
 
 	vtkScalarBarActor* getScaleBar()
@@ -386,7 +388,7 @@ public:
 			scale_->SetOrientationToVertical();
 			scale_->SetTitle("Volume fluence (J/cm2)");
 			scale_->DrawColorBarOn();
-			scale_->DrawTickLabelsOn();
+			//scale_->DrawTickLabelsOn();
 		}
 		return scale_;
 	}

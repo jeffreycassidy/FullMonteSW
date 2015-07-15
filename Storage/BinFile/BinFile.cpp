@@ -13,6 +13,7 @@
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/array.hpp>
 #include <boost/serialization/serialization.hpp>
+#include <boost/serialization/utility.hpp>
 
 #include <vector>
 #include <array>
@@ -22,8 +23,12 @@
 #include <boost/algorithm/cxx11/any_of.hpp>
 
 using namespace std;
+namespace boost {
+namespace serialization {
 
 template<class Archive>void serialize(Archive& ar,TetraByPointID& T_p,const unsigned){ ar & T_p[0] & T_p[1] & T_p[2] & T_p[3]; }
+
+}} // namespace boost
 
 TetraMesh BinFileReader::mesh() const
 {
@@ -40,7 +45,7 @@ TetraMesh BinFileReader::mesh() const
 	vector<unsigned>		T_mu(T_p.size());
 
 	// Conversions are OK because they are both widening
-	boost::copy(P | boost::adaptors::transformed([](array<float,3> a){ return Point<3,double>{ a[0],a[1],a[2] }; }),
+	boost::copy(P | boost::adaptors::transformed(std::function<Point<3,double>(array<float,3>)>([](array<float,3> a){ return Point<3,double>{ a[0],a[1],a[2] }; })),
 			Pd.begin());
 	boost::copy(T_m, T_mu.begin());
 
@@ -61,11 +66,11 @@ void BinFileWriter::write(const TetraMesh& M) const
 	vector<unsigned char> 	T_mc(M.getNt()+1);
 
 	// narrowing double->float conversion
-	boost::copy(M.getPoints() | boost::adaptors::transformed([](Point<3,double> P){ return array<float,3>{ (float)P[0],(float)P[1],(float)P[2]}; }),
+	boost::copy(M.getPoints() | boost::adaptors::transformed(std::function<array<float,3>(Point<3,double>)>([](Point<3,double> P){ return array<float,3>{ (float)P[0],(float)P[1],(float)P[2]}; })),
 			Pf.begin());
 
 	// narrowing unsigned -> unsigned char (byte) conversion with check
-	if (boost::algorithm::any_of(M.getMaterials(), [](unsigned i){ return i > 255; }))
+	if (boost::algorithm::any_of(M.getMaterials(), std::function<int(unsigned)>([](unsigned i){ return i > 255; })))
 	{
 		cerr << "ERROR: Material index > 255 in BinFileWriter (invalid; uses unsigned char type)" << endl;
 		throw std::out_of_range("ERROR: Material index > 255 in BinFileWriter (invalid; uses unsigned char type)");
