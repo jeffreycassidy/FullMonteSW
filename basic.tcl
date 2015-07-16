@@ -69,6 +69,7 @@ proc progresstimer {} {
         after 50 {
             set progress [k getProgressFraction]
             puts "Progress update: $progress%"
+            flush
         }
     }
 }
@@ -88,6 +89,7 @@ for { set i 0 } { $i < $N } { incr i } {
     # could equally well play with other stuff
     bsr setRadius [expr $i * 0.1 + 2.0]
     bsr setCentre "[expr $i * 1.0 + 10.0] 42 10"
+    k setSource bsr
 
 	k startAsync
 

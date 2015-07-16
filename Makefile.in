@@ -82,7 +82,7 @@ endif
 	$(CXX) $(CXX_OPTS) -c -DUSE_TCL_STUBS $<
 	
 lib%_TCL.so: %_wrap.o lib%.so
-	$(CXX) $(CXX_LIB_OPTS) -l$* -o $@ $<
+	$(CXX) $(CXX_LIB_OPTS) -l$* -ltclstub8.5 -o $@ $<
 
 defaultclean:
 	rm -rf *.so *.a *_wrap.cxx *.o
