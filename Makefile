@@ -10,7 +10,7 @@ all:
 ubuntu12:
 	ssh jcassidy@10.211.55.7 "cd src/FullMonte; make SOURCE_ROOT=/home/jcassidy/src ANTLR_DIR=/usr/local/antlr3 libs" 
 
-libs:
+liblinks:
 	ln -sf SFMT/libSFMT.a
 	ln -sf Kernels/libFullMonteKernels.so
 	ln -sf Kernels/Software/libFullMonteCore.so
@@ -27,6 +27,11 @@ libs:
 	ln -sf Storage/STL/libFullMonteSTL_TCL.so
 	ln -sf Storage/TetGen/libFullMonteTetGen.so
 	ln -sf Storage/TetGen/libFullMonteTetGen_TCL.so
+	ln -sf Storage/Matlab/libFullMonteMatlabWriter_TCL.so
+	ln -sf Storage/Matlab/libFullMonteMatlabWriter.so
+
+libs: liblinks
+
 	for d in $(SUBDIRS); do make -C $$d libs; done;
 
 #### Cleanup targets
