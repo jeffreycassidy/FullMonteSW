@@ -18,7 +18,7 @@ W setFaceSubset $extsurf
 W writeFaces "faces.txt"
 
 W setFacesToAll
-DoubleVector phi [expr [M getNf]+1] 0
+DoubleVector phi [expr [$M getNf]+1] 0
 phi set 0 5
 phi set 1 5
 phi set 2 2
@@ -38,12 +38,11 @@ W removeThreshold
 W setComment "Threshold removed, all faces"
 W writeSurfaceFluence "test.dense.all.out" phi
 
-
-
 W setComment "Now with face subset, no threshold"
 W setFaceSubset $extsurf
 W writeSurfaceFluence "test.dense.sub.out" phi
 
 W threshold 2
+W setComment "And finally face subset, threshold 2 (expect element 9)"
 W writeSurfaceFluence "test.th2.sub.out" phi
 

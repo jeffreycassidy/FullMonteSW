@@ -55,16 +55,17 @@ public:
 	void writeFaces(const std::string fn) const;
 	void writeSurfaceFluence(const std::string fn,const std::vector<double>& fluence) const;
 
-	// threshold control
+	// threshold control (no threshold -> dense representation)
 	double threshold() const { return phiMin_; }
 	double threshold(double phiMin){ std::swap(phiMin,phiMin_); return phiMin; }
 	void removeThreshold(){ phiMin_=-1.0; }
 
 	bool denseOutput() const { return phiMin_==-1.0; }
 
-//	// write out indices when writing fluence?
-//	bool writeIndices() const { return writeIndices_; }
-//	bool writeIndices(bool wi){ std::swap(wi,writeIndices_); return wi; }
+
+	// write out original indices when working with subset faces
+	bool outputOriginalIndices() const { return outputOriginalIndices_; }
+	bool outputOriginalIndices(bool wi){ std::swap(wi,outputOriginalIndices_); return wi; }
 
 
 private:
@@ -80,6 +81,8 @@ private:
 	std::string comm_;
 
 	double phiMin_=0.0;		// fluence threshold (>= comparison); negative means none/dense output
+
+	bool outputOriginalIndices_=true;
 
 	const TetraMesh *M_=nullptr;
 };

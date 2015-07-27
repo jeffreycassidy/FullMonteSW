@@ -12,8 +12,6 @@
 #include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/adaptor/indexed.hpp>
 
-#include <boost/range/any_range.hpp>
-
 #include <FullMonte/Geometry/TetraMesh.hpp>
 #include <tuple>
 
@@ -63,7 +61,8 @@ void MatlabWriter::writeFaces(const std::string fn) const
 
 	writeComments_(os);
 
-	os << "% format below is <Np> <Nd=3> { <x> <y> <z> }Np <Nf> <Ns=3> { <p0> <p1> <p2> }Nf" << endl;
+	os << "% format below is <Np> <Nd=3> { <IDp_original>? <x> <y> <z> }Np <Nf> <Ns=3> { <IDf_original>? <p0> <p1> <p2> }Nf" << endl;
+	os << "% Np_original/Nf_original refer to the original indices of the point/face (given only if remapping enabled & output requested)" << endl;
 
 	// write points
 	os << (pointP_.empty() ? M_->getNp() : pointP_.size()) << " 3"  << endl;
@@ -71,10 +70,10 @@ void MatlabWriter::writeFaces(const std::string fn) const
 	os << fixed << setprecision(6);
 
 	if (pointP_.empty())
-		for(unsigned i=1;i<=M_->getNp();++i)					// Drop dummy point 0; Matlab starts index at 1 so will line up
+		for(const auto& p : M_->points() | drop(1))
 		{
-			for(unsigned j=0;j<3;++j)
-				os << setw(10) << M_->getPoint(i)[j] << ' ';
+			for(unsigned j=0;j<3;++j)						// Drop dummy point 0; Matlab starts index at 1 so will line up
+				os << setw(10) << p[j] << ' ';
 			os << endl;
 		}
 	else
@@ -82,6 +81,8 @@ void MatlabWriter::writeFaces(const std::string fn) const
 		{
 			assert(pointP_[i] != 0);							// Check for correct remapping
 			assert(pointP_[i] != -1U);
+			if (outputOriginalIndices_)
+				os << setw(6) << pointP_[i] << ' ';
 			for(unsigned j=0;j<3;++j)
 				os << setw(10) << M_->getPoint(pointP_[i])[j] << ' ';
 			os << endl;
@@ -104,6 +105,8 @@ void MatlabWriter::writeFaces(const std::string fn) const
 		os << faceP_.size() << " 3" << endl;
 		for(unsigned i=0;i<faceP_.size();++i)
 		{
+			if (outputOriginalIndices_)
+				os << setw(6) << faceP_[i] << ' ';
 			std::array<unsigned,3> y = remap(M_->getFacePointIDs(faceP_[i]),pointQ_);
 			for(unsigned j=0;j<3;++j)
 				os << setw(5) << y[j]+1 << ' ';
@@ -128,25 +131,58 @@ void MatlabWriter::writeComments_(std::ostream& os) const
 	}
 }
 
+
+namespace detail {
+
+/** Helper class for formatted output of (index,fluence) or just fluence to ostream.
+ *
+ */
+
 class FluenceWriter {
 public:
 	FluenceWriter(ostream& os) : os_(os){}
 
-	void operator()(const std::pair<unsigned,double> p) const { return operator()(p.first,p.second); }
+	// convenience methods for dealing with (index,value) pairs -> print both index and value
+	void operator()(const boost::range::index_value<const double&,std::ptrdiff_t> p){ operator()(p.index(),p.value()); };
+	void operator()(const boost::range::index_value<double,std::ptrdiff_t> p){ operator()(p.index(),p.value()); };
+	void operator()(const std::pair<unsigned,double> p) const { operator()(p.first,p.second); }
+
+	// just a double argument: write only the fluence
 	void operator()(double phi) const { os_ << setw(phiW_) << setprecision(phiP_) << phi << endl; }
+
+	// a pair: write index and fluence
 	void operator()(unsigned i,double phi) const { os_ << setw(idxW_) << i << ' ' << setprecision(phiP_) << setw(phiW_) << phi << endl; }
 
 	ostream& os_;
 	unsigned idxW_=6,phiW_=8,phiP_=6;
 };
 
+};
+
 
 
 /**
- * This writes out the elements whose fluence equals or exceeds a threshold value.
- * It applies the face subset currently active in the writer.
+ * Writes either all faces or a subset (depending on what subset is active in the writer) to a text file suitable for Matlab import.
+ * File comments occur on lines starting with '%'
+ * File format is:
  *
- * TODO: Check that sizes are correct
+ *
+ * % Comments....
+ * <Nf> <Nfsub> <Nnz>
+ * { <idx>? <phi> } Nnz
+ *
+ *
+ * ===== Description =====
+ *
+ * Nf: number of faces in mesh
+ * Nfsub: number of faces in subset
+ * 		 Nfsub == Nf => no subset, idx refers to mesh face
+ * 		 Nfsub <  Nf => subset, idx refers to index within subset
+ * Nnz: number of nonzero elements included
+ * 		Nnz == Nfsub => dense representation, idx is omitted
+ * 		Nnz <  Nfsub => sparse representation, idx defined as above
+ *
+ *	===== Arguments =====
  *
  * fn			The filename
  * phi			The fluence vector
@@ -159,25 +195,35 @@ void MatlabWriter::writeSurfaceFluence(const std::string fn,const std::vector<do
 	bool sparse = !denseOutput();
 	bool remapped = !faceP_.empty();
 
-	boost::any_range<
-		boost::range::index_value<double,std::ptrdiff_t>,
-		boost::forward_traversal_tag,
-		const boost::range::index_value<double,std::ptrdiff_t>&,
-		std::ptrdiff_t> R;
+	unsigned Nf=0,Nfsub=0,Nnz=0;
 
-	boost::iterator_range<std::vector<double>::const_iterator> phi_1based(phi.size()>0 ? phi.cbegin()+1 : phi.cend(),phi.cend());
+	// determine number of output values
+	Nf = M_->getNf();
 
-	if (sparse && remapped)
-		R = faceP_ | boost::adaptors::transformed([&phi](unsigned i){ return boost::range::index_value<double,std::ptrdiff_t>(i,phi[i]); });
-//	else if (sparse)			// sparse, not remapped
-//		R = phi_1based | boost::adaptors::indexed(1U) | boost::adaptors::filtered([this]{ ; });
-//	else if
-//		R =
-//	else
-//		R =
+	// +1 because of dummy element at index 0
+	assert(Nf+1 == phi.size() && "Number of fluence elements does not match number of faces");
+
+	if (remapped)
+	{
+		Nfsub = faceP_.size();
+		if (sparse)
+			for(unsigned i=0;i<faceP_.size();++i)
+				Nnz += phi[faceP_[i]] > phiMin_;
+		else
+			Nnz = Nfsub;
+	}
+	else
+	{
+		Nfsub = Nf;
+		if (sparse)
+			for(unsigned i=1;i<=Nf; ++i)
+				Nnz += phi[i];
+		else
+			Nnz=Nf;
+	}
 
 	if (sparse)
-		os << "% Sparse surface fluence with face indices starting at 1" << endl;
+		os << "% Sparse surface fluence with face indices starting at 1, threshold is phi > " << phiMin_ << endl;
 	else
 		os << "% Dense surface fluence starting at face index 1" << endl;
 
@@ -188,39 +234,36 @@ void MatlabWriter::writeSurfaceFluence(const std::string fn,const std::vector<do
 
 	writeComments_(os);
 
-	os << "% format below is <Nf> <Nsub> <Nnz> <dense|sparse> <indexed>? (sparse implies indexed) followed by Nf copies of: " << endl;
-	os << "%    { <IDf> <phi> } if indexed" << endl;
-	os << "%    { <phi> } if dense" << endl;
+	os << "% format below is <Nf> <Nsub> <Nnz> followed by either: " << endl;
+	os << "%    { <IDf> <phi> } if Nnz < Nsub (sparse representation)" << endl;
+	os << "%    { <phi> } else (dense)" << endl;
 
-	os << (sparse ? "sparse indexed" : "dense") << endl;
-
-	os << ' ' << phi.size()-1 << endl;				// Total number of faces (not counting dummy face)
+	os << Nf << ' ' << Nfsub << ' ' << Nnz << endl;
 
 	os << fixed;
 
-	FluenceWriter w(os);
+	detail::FluenceWriter w(os);
 
-//	if (remapped)
-//	{
-//		auto phiI = faceP_
-//				| boost::adaptors::transformed([&phi](unsigned i){ return std::make_pair(i,phi[i]); });
-//
-//		if (denseOutput())					// dense output: fluence for all elements
-//			boost::for_each(phiI, w);
-//		else 								// sparse output: index + fluence for values exceeding threshold
-//			boost::for_each(phiI | boost::adaptors::filtered([this](const std::pair<unsigned,double> p){ return p.second > phiMin_; }),
-//					w);
-//	}
-//	else
-//	{
-//		auto phiI = boost::counting_range(1U,(unsigned)(M_->getNf()+1))
-//		| boost::adaptors::transformed([&phi](unsigned i){ return std::make_pair(i,phi[i]); });
-//
-//		if (denseOutput())
-//			boost::for_each(phiI ,w);		// dense output: fluence for all elements of subset
-//		else								// sparse output: index + fluence for all elements of subset exceeding threshold
-//			boost::for_each(phiI | boost::adaptors::filtered([this](const std::pair<unsigned,double> p){ return p.second > phiMin_; }),
-//					w);
-//
-//	}
+	if (remapped)
+	{
+		auto phiR = faceP_ | boost::adaptors::transformed([&phi](unsigned j){ return phi[j]; });
+		if (!sparse)							// Fluence for faces phi[faceP_[j]] for j in [1,Nfsub]
+			boost::for_each(phiR, w);
+		else									// Fluence (j,phi[faceP_[j]]) for j in [1,Nfsub]
+			boost::for_each(phiR | boost::adaptors::indexed(1U)
+					| boost::adaptors::filtered([this](const boost::range::index_value<double,std::ptrdiff_t> p){ return p.value()>phiMin_; }),
+				w);
+	}
+	else
+	{
+		if (!sparse)							// Fluence for faces phi[i] for i in [1..Nf]
+			boost::for_each(phi | drop(1), w);
+		else									// sparse output: index + fluence for all elements of subset exceeding threshold
+			boost::for_each(phi
+				| drop(1)
+				| boost::adaptors::indexed(1U)
+				| boost::adaptors::filtered([this](const boost::range::index_value<const double&,std::ptrdiff_t> p){ return p.value() > phiMin_; }),
+					w);
+
+	}
 }
