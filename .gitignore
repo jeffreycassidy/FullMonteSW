@@ -65,3 +65,4 @@ GenDVH
 *.out
 *.log
 humandata
+*.bin

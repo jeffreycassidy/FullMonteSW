@@ -10,9 +10,14 @@
 #include <boost/range/counting_range.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/range/adaptor/filtered.hpp>
+#include <boost/range/adaptor/indexed.hpp>
+
+#include <boost/range/any_range.hpp>
 
 #include <FullMonte/Geometry/TetraMesh.hpp>
 #include <tuple>
+
+#include "take_drop.hpp"
 
 using namespace std;
 
@@ -151,9 +156,25 @@ void MatlabWriter::writeSurfaceFluence(const std::string fn,const std::vector<do
 {
 	ofstream os(fn.c_str());
 
-	bool sparse = phiMin_>=0;
+	bool sparse = !denseOutput();
 	bool remapped = !faceP_.empty();
-	//bool indexed = sparse;
+
+	boost::any_range<
+		boost::range::index_value<double,std::ptrdiff_t>,
+		boost::forward_traversal_tag,
+		const boost::range::index_value<double,std::ptrdiff_t>&,
+		std::ptrdiff_t> R;
+
+	boost::iterator_range<std::vector<double>::const_iterator> phi_1based(phi.size()>0 ? phi.cbegin()+1 : phi.cend(),phi.cend());
+
+	if (sparse && remapped)
+		R = faceP_ | boost::adaptors::transformed([&phi](unsigned i){ return boost::range::index_value<double,std::ptrdiff_t>(i,phi[i]); });
+//	else if (sparse)			// sparse, not remapped
+//		R = phi_1based | boost::adaptors::indexed(1U) | boost::adaptors::filtered([this]{ ; });
+//	else if
+//		R =
+//	else
+//		R =
 
 	if (sparse)
 		os << "% Sparse surface fluence with face indices starting at 1" << endl;
@@ -167,7 +188,7 @@ void MatlabWriter::writeSurfaceFluence(const std::string fn,const std::vector<do
 
 	writeComments_(os);
 
-	os << "% format below is <Nnz> <Nf> <dense|sparse> <indexed>? (sparse implies indexed) followed by Nf copies of: " << endl;
+	os << "% format below is <Nf> <Nsub> <Nnz> <dense|sparse> <indexed>? (sparse implies indexed) followed by Nf copies of: " << endl;
 	os << "%    { <IDf> <phi> } if indexed" << endl;
 	os << "%    { <phi> } if dense" << endl;
 
@@ -179,26 +200,27 @@ void MatlabWriter::writeSurfaceFluence(const std::string fn,const std::vector<do
 
 	FluenceWriter w(os);
 
-	if (remapped)
-	{
-		auto phiI = faceP_
-				| boost::adaptors::transformed([&phi](unsigned i){ return std::make_pair(i,phi[i]); });
-
-		if (sparse)
-			boost::for_each(phiI | boost::adaptors::filtered([this](const std::pair<unsigned,double> p){ return p.second >= phiMin_; }),
-				w);
-		else
-			boost::for_each(phiI, w);
-	}
-	else
-	{
-		auto phiI = boost::counting_range(1U,(unsigned)(M_->getNf()+1))
-				| boost::adaptors::transformed([&phi](unsigned i){ return std::make_pair(i,phi[i]); });
-
-		if (sparse)
-			boost::for_each(phiI | boost::adaptors::filtered([this](const std::pair<unsigned,double> p){ return p.second >= phiMin_; }),
-					w);
-		else
-			boost::for_each(phiI ,w);
-	}
+//	if (remapped)
+//	{
+//		auto phiI = faceP_
+//				| boost::adaptors::transformed([&phi](unsigned i){ return std::make_pair(i,phi[i]); });
+//
+//		if (denseOutput())					// dense output: fluence for all elements
+//			boost::for_each(phiI, w);
+//		else 								// sparse output: index + fluence for values exceeding threshold
+//			boost::for_each(phiI | boost::adaptors::filtered([this](const std::pair<unsigned,double> p){ return p.second > phiMin_; }),
+//					w);
+//	}
+//	else
+//	{
+//		auto phiI = boost::counting_range(1U,(unsigned)(M_->getNf()+1))
+//		| boost::adaptors::transformed([&phi](unsigned i){ return std::make_pair(i,phi[i]); });
+//
+//		if (denseOutput())
+//			boost::for_each(phiI ,w);		// dense output: fluence for all elements of subset
+//		else								// sparse output: index + fluence for all elements of subset exceeding threshold
+//			boost::for_each(phiI | boost::adaptors::filtered([this](const std::pair<unsigned,double> p){ return p.second > phiMin_; }),
+//					w);
+//
+//	}
 }

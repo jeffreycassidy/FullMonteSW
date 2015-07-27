@@ -60,6 +60,8 @@ public:
 	double threshold(double phiMin){ std::swap(phiMin,phiMin_); return phiMin; }
 	void removeThreshold(){ phiMin_=-1.0; }
 
+	bool denseOutput() const { return phiMin_==-1.0; }
+
 //	// write out indices when writing fluence?
 //	bool writeIndices() const { return writeIndices_; }
 //	bool writeIndices(bool wi){ std::swap(wi,writeIndices_); return wi; }

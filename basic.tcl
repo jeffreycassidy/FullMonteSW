@@ -74,6 +74,15 @@ proc progresstimer {} {
     }
 }
 
+proc showmaterial { mat } { 
+    puts "Properties: mu_a=[SimpleMaterial_mu_a_get $mat]"
+    puts "  mu_s=[$mat mu_s_get] g=[$mat g_get] n=[$mat n_get]"
+}
+
+puts "opt(2) = [lindex $opt 2]"
+
+showmaterial [lindex $opt 2]
+
 set N 10
 VTKSurfaceFluenceRep fluencerep V
 vtkPolyDataWriter W
