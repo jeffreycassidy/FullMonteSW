@@ -43,7 +43,7 @@ loadoptical $optfn
 
 set mesh [R mesh]
 
-set meshfn "/home/houmanhaji/FullMonte/data/DATA/mouse.bin"
+set meshfn "/usr/local/FullMonte/data/mouse.bin"
 #BinFileReader BR $meshfn
 #set mesh [BR mesh]
 VTKMeshRep V $mesh

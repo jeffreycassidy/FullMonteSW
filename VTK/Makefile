@@ -1,21 +1,14 @@
 include ../Makefile.in
 
-CXX_OPTS:=$(CXX_OPTS) -fPIC -I$(VTK_INCLUDE)
-CXX_LIB_OPTS=$(CXX_OPTS) -shared
+CXX_OPTS:=$(CXX_OPTS) -I$(VTK_INCLUDE) -I$(TCL_INCLUDE)
 
 libs: libFullMonteVTK.so
 
 %.o: %.cpp
 	$(CXX) $(CXX_OPTS) -c -o $@ $<
 
-FullMonteVTK_wrap.cxx: FullMonteVTK.hpp
-	$(SWIG) -c++ -tcl -o $@ $^
-	
-FullMonteVTK_wrap.o: FullMonteVTK_wrap.cxx
-	$(CXX) $(CXX_OPTS) -DUSE_TCL_STUBS -c -o $@ $<
-	
 libFullMonteVTK.so: FullMonteVTK.o FullMonteVTK_wrap.o TetraMeshTCL.o
-	$(CXX) $(CXX_LIB_OPTS) -L../Geometry -L.		\
+	$(CXX) $(CXX_LIB_OPTS) -L../Geometry -L$(VTK_LIB) -L.		\
 		-o $@ $^							\
 		-ltclstub8.5							\
 		-lvtkRenderingAnnotation-6.1					\
