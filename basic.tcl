@@ -5,10 +5,11 @@ load libFullMonteTIMOS_TCL.so
 load libFullMonteBinFile_TCL.so 
 load libFullMonteGeometry_TCL.so
 
-load libFullMonteKernels_TCL.so
+load libFullMonteKernel_TCL.so
+load libFullMonteMatlabWriter_TCL.so
 
 #default file prefix
-set pfx "/Users/jcassidy/src/FullMonteSW/data/mouse"
+set pfx "/usr/local/FullMonte/data/mouse"
 
 
 #override with 1st cmdline arg
@@ -31,7 +32,7 @@ R setLegendFileName $legendfn
 set opt [R materials_simple]
 set mesh [R mesh]
 
-VTKMeshRep V $mesh
+#VTKMeshRep V $mesh
 
 BallSourceDescription bsr "10 40 11" 1.0 1.0
 bsr setCentre "10 40 11"
@@ -73,10 +74,16 @@ proc progresstimer {} {
     }
 }
 
-set N 10
+set N 9
 VTKSurfaceFluenceRep fluencerep V
-vtkPolyDataWriter W
+vtkPolyDataWriter VTKW
 
+MatlabWriter W
+W setMesh $mesh
+set surf [$mesh getRegionBoundaryTris 0]
+W threshold 0
+W setFaceSubset $surf
+W writeFaces "faces.txt"
 
 for { set i 0 } { $i < $N } { incr i } {
 
@@ -88,6 +95,7 @@ for { set i 0 } { $i < $N } { incr i } {
     # could equally well play with other stuff
     bsr setRadius [expr $i * 0.1 + 2.0]
     bsr setCentre "[expr $i * 1.0 + 10.0] 42 10"
+	k setSource bsr
 
 	k startAsync
 
@@ -96,11 +104,13 @@ for { set i 0 } { $i < $N } { incr i } {
 	k awaitFinish
 
     # get results
-    fluencerep Update [k getSurfaceFluenceVector] 1
+   fluencerep Update [k getSurfaceFluenceVector] 1
 
     # write the file out
-    W SetHeader "Experiment run $i with blah blah blah"
-    W SetInputData [fluencerep getData]
-    W SetFileName "experiment.$i.vtk"
-    W Update
+    W setComment "Experiment run $i with blah blah blah"
+	W writeSurfaceFluence "fluence.expt$i.txt" [k getSurfaceFluenceVector]
+
+	VTKW SetFileName "fluence.expt$i.vtk"
+	VTKW SetInput [fluencerep getPolyData]
+	VTKW Update
 }
