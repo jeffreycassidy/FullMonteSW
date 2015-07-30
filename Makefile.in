@@ -76,7 +76,7 @@ lib%_TCL.so: %_wrap.o lib%.so
 	$(CXX) $(CXX_LIB_OPTS) -L. -l$* -o $@ $<
 
 libFullMonte%_TCL.so: %_wrap.o libFullMonte%.so
-	$(CXX) $(CXX_LIB_OPTS) -L. -l$* -o $@ $<
+	$(CXX) $(CXX_LIB_OPTS) -L. -o $@ $< -ltclstub8.5 -lFullMonte$*
 
 defaultclean:
 	rm -rf *.so *.a *_wrap.cxx *.o

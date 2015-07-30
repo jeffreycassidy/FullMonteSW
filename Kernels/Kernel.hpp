@@ -14,7 +14,7 @@
 #endif
 
 #ifdef SWIG
-%module FullMonteKernels_TCL
+%module FullMonteKernel_TCL
 
 %include "std_vector.i"
 %include "std_string.i"
