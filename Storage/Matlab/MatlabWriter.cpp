@@ -27,9 +27,18 @@ MatlabWriter::MatlabWriter(){}
 
 void MatlabWriter::setFaceSubset(const std::vector<unsigned>& s)
 {
-	faceP_ = s;
-	tie(pointP_,pointQ_) = make_point_perm(s | boost::adaptors::transformed([this](unsigned i){ return M_->getFacePointIDs(i); }),
-			M_->getNp()+1);
+	// face permutation
+	facePerm_ = Permutation<unsigned>::buildFromForward(M_->getNf()+1,s);
+
+	// point permutation
+	std::vector<unsigned> q(M_->getNp()+1,0);
+
+	// mark points which have a reference
+	for(const auto IDps : s | boost::adaptors::transformed([this](unsigned i){ return M_->getFacePointIDs(i); }))
+		for(const unsigned IDp : IDps)
+			q.at(IDp) = 1;
+
+	pointPerm_ = Permutation<unsigned>::buildStableFromBoolRange(q);
 }
 
 /** Clears the face subset vectors so all faces are exported (generally not advised since it's much larger)
@@ -38,9 +47,8 @@ void MatlabWriter::setFaceSubset(const std::vector<unsigned>& s)
 
 void MatlabWriter::setFacesToAll()
 {
-	pointP_.clear();
-	pointQ_.clear();
-	faceP_.clear();
+	pointPerm_.clear();
+	facePerm_.clear();
 }
 
 void MatlabWriter::setComment(const std::string comm)
@@ -54,7 +62,7 @@ void MatlabWriter::writeFaces(const std::string fn) const
 
 	os << "% Surface mesh; point and face indices start at 1" << endl;
 
-	if (pointQ_.empty())
+	if (pointPerm_.empty())
 		os << "% Constructed using the original point numbering (may contain a large number of unused points)" << endl;
 	else
 		os << "% Constructed from a subset of the original mesh, with points renumbered" << endl;
@@ -65,11 +73,11 @@ void MatlabWriter::writeFaces(const std::string fn) const
 	os << "% Np_original/Nf_original refer to the original indices of the point/face (given only if remapping enabled & output requested)" << endl;
 
 	// write points
-	os << (pointP_.empty() ? M_->getNp() : pointP_.size()) << " 3"  << endl;
+	os << (pointPerm_.empty() ? M_->getNp() : pointPerm_.forward().size()) << " 3"  << endl;
 
 	os << fixed << setprecision(6);
 
-	if (pointP_.empty())
+	if (pointPerm_.empty())
 		for(const auto& p : M_->points() | drop(1))
 		{
 			for(unsigned j=0;j<3;++j)						// Drop dummy point 0; Matlab starts index at 1 so will line up
@@ -77,20 +85,19 @@ void MatlabWriter::writeFaces(const std::string fn) const
 			os << endl;
 		}
 	else
-		for(unsigned i=0;i<pointP_.size();++i)
+		for(const auto i : pointPerm_.forward() | boost::adaptors::indexed(0U))
 		{
-			assert(pointP_[i] != 0);							// Check for correct remapping
-			assert(pointP_[i] != -1U);
+			assert(i.value() != -1U);
 			if (outputOriginalIndices_)
-				os << setw(6) << pointP_[i] << ' ';
+				os << setw(6) << i.value() << ' ';
 			for(unsigned j=0;j<3;++j)
-				os << setw(10) << M_->getPoint(pointP_[i])[j] << ' ';
+				os << setw(10) << M_->getPoint(i.value())[j] << ' ';
 			os << endl;
 		}
 
 
 
-	if (faceP_.empty())
+	if (facePerm_.empty())
 	{
 		os << M_->getNf() << " 3" << endl;
 		for(unsigned i=1;i<=M_->getNf();++i)					// Again drop dummy face 0 to align with Matlab numbering
@@ -102,12 +109,12 @@ void MatlabWriter::writeFaces(const std::string fn) const
 	}
 	else
 	{
-		os << faceP_.size() << " 3" << endl;
-		for(unsigned i=0;i<faceP_.size();++i)
+		os << facePerm_.forward().size() << " 3" << endl;
+		for(const auto i : facePerm_.forward())
 		{
 			if (outputOriginalIndices_)
-				os << setw(6) << faceP_[i] << ' ';
-			std::array<unsigned,3> y = remap(M_->getFacePointIDs(faceP_[i]),pointQ_);
+				os << setw(6) << i << ' ';
+			std::array<unsigned,3> y = remap(M_->getFacePointIDs(i),pointPerm_.inverse());
 			for(unsigned j=0;j<3;++j)
 				os << setw(5) << y[j]+1 << ' ';
 			os << endl;
@@ -193,7 +200,7 @@ void MatlabWriter::writeSurfaceFluence(const std::string fn,const std::vector<do
 	ofstream os(fn.c_str());
 
 	bool sparse = !denseOutput();
-	bool remapped = !faceP_.empty();
+	bool remapped = !facePerm_.empty();
 
 	unsigned Nf=0,Nfsub=0,Nnz=0;
 
@@ -205,10 +212,10 @@ void MatlabWriter::writeSurfaceFluence(const std::string fn,const std::vector<do
 
 	if (remapped)
 	{
-		Nfsub = faceP_.size();
+		Nfsub = facePerm_.forward().size();
 		if (sparse)
-			for(unsigned i=0;i<faceP_.size();++i)
-				Nnz += phi[faceP_[i]] > phiMin_;
+			for(unsigned i=0;i<facePerm_.forward().size();++i)
+				Nnz += phi[facePerm_.forward()[i]] > phiMin_;
 		else
 			Nnz = Nfsub;
 	}
@@ -246,7 +253,7 @@ void MatlabWriter::writeSurfaceFluence(const std::string fn,const std::vector<do
 
 	if (remapped)
 	{
-		auto phiR = faceP_ | boost::adaptors::transformed([&phi](unsigned j){ return phi[j]; });
+		auto phiR = facePerm_.forward() | boost::adaptors::transformed([&phi](unsigned j){ return phi[j]; });
 		if (!sparse)							// Fluence for faces phi[faceP_[j]] for j in [1,Nfsub]
 			boost::for_each(phiR, w);
 		else									// Fluence (j,phi[faceP_[j]]) for j in [1,Nfsub]

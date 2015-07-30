@@ -21,6 +21,8 @@
 #include <vector>
 #include <fstream>
 
+#include "Permutation.hpp"
+
 #ifndef SWIG
 #define SWIG_OPENBRACE
 #define SWIG_CLOSEBRACE
@@ -73,14 +75,11 @@ private:
 	void writeComments_(std::ostream& os) const;
 
 	// point permutation & inverse permutation
-	std::vector<unsigned> pointP_,pointQ_;
-
-	// face permutation
-	std::vector<unsigned> faceP_;
+	Permutation<unsigned> pointPerm_,facePerm_;
 
 	std::string comm_;
 
-	double phiMin_=0.0;		// fluence threshold (>= comparison); negative means none/dense output
+	double phiMin_=-1.0;		// fluence threshold (>= comparison); negative means none/dense output
 
 	bool outputOriginalIndices_=true;
 

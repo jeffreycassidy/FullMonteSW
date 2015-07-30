@@ -29,7 +29,7 @@ ifndef CXX
 endif
 
 ifndef SWIG
-	SWIG=/home/houmanhaji/swig/bin/swig
+	SWIG=swig
 endif
 
 

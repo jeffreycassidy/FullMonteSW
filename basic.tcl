@@ -87,6 +87,8 @@ set N 10
 VTKSurfaceFluenceRep fluencerep V
 vtkPolyDataWriter W
 
+MatlabWriter MW
+
 
 for { set i 0 } { $i < $N } { incr i } {
 
@@ -114,4 +116,7 @@ for { set i 0 } { $i < $N } { incr i } {
     W SetInputData [fluencerep getData]
     W SetFileName "experiment.$i.vtk"
     W Update
+
+    MW setComment "Experiment $i"
+    MW 
 }

@@ -208,38 +208,6 @@ class TetraMesh : public TetraMeshBase {
 };
 
 
-/** Makes a stable point subset from a range of arrays of point references
- *
- * Range must dereference to an array of point IDs
- *
- * Returns an array p s.t. s[i] is x[p[i]] is the subset of points referenced
- *
- * Also computes an inverse array s.t. q[j] = i s.t. s[q[j]] = x[j] if it exists else q[j] = -1
- */
-
-template<class Range>std::tuple<std::vector<unsigned>,std::vector<unsigned>> make_point_perm(const Range& R,std::size_t Np)
-{
-	std::vector<unsigned> q(Np,-1);
-	std::vector<unsigned> p;
-
-	// mark points which have a reference
-	for(const auto IDps : R)
-		for(const unsigned IDp : IDps)
-			q[IDp] = 1;
-
-	// create map and inverse-map
-	for(std::size_t j=0; j<Np; ++j)
-	{
-		if (q[j] != -1U)
-		{
-			q[j] = p.size();			// set up inverse map
-			p.push_back(j);				// add referenced points to the permutation vector
-		}
-	}
-
-	return std::make_tuple(p,q);
-}
-
 
 
 /** Remaps an array of point refs according to a provided map vector.
