@@ -4,8 +4,9 @@ load libFullMonteVTK.so
 load libFullMonteTIMOS_TCL.so
 load libFullMonteBinFile_TCL.so 
 load libFullMonteGeometry_TCL.so
+load libFullMonteMatlab_TCL.so
 
-load libFullMonteKernels_TCL.so
+load libFullMonteKernel_TCL.so
 
 #default file prefix
 set pfx "/Users/jcassidy/src/FullMonteSW/data/mouse"
@@ -76,7 +77,7 @@ proc progresstimer {} {
 
 proc showmaterial { mat } { 
     puts "Properties: mu_a=[SimpleMaterial_mu_a_get $mat]"
-    puts "  mu_s=[$mat mu_s_get] g=[$mat g_get] n=[$mat n_get]"
+    puts "  mu_s=[SimpleMaterial_mu_s_get $mat] g=[SimpleMaterial_g_get $mat] n=[SimpleMaterial_n_get $mat]"
 }
 
 puts "opt(2) = [lindex $opt 2]"
@@ -84,8 +85,8 @@ puts "opt(2) = [lindex $opt 2]"
 showmaterial [lindex $opt 2]
 
 set N 10
-VTKSurfaceFluenceRep fluencerep V
-vtkPolyDataWriter W
+#VTKSurfaceFluenceRep fluencerep V
+#vtkPolyDataWriter W
 
 MatlabWriter MW
 

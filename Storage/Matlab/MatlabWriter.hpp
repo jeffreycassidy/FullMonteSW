@@ -9,7 +9,7 @@
 #define STORAGE_MATLAB_MATLABWRITER_HPP_
 
 #ifdef SWIG
-%module FullMonteMatlabWriter_TCL
+%module FullMonteMatlabText_TCL
 
 %include "std_string.i"
 %include "std_vector.i"

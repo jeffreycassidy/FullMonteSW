@@ -65,7 +65,7 @@ class TetraMesh : public TetraMeshBase {
 	vector<TetraByFaceID>	    T_f;        		// tetra -> 4 face IDs
     vector<FaceByPointID>       F_p;        		// face ID -> 3 point IDs
 	vector<Face>			    F;          		// faces (with normals and constants)
-	vector<std::array<unsigned,2>>      F_t;  	// for each face f, vecFaceID_Tetra[f] gives the tetras adjacent to the face
+	vector<std::array<unsigned,2>>      F_t;  		// for each face f, vecFaceID_Tetra[f] gives the tetras adjacent to the face
     vector<Tetra>               tetras;     		// new SSE-friendly data structure
 
     vector<vector<unsigned>>	tetra_perm;

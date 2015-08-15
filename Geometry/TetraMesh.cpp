@@ -230,13 +230,7 @@ void TetraMesh::tetrasToFaces()
 			}
 	}
 
-	unsigned Nf_surf = 0;
-	for(unsigned int i = 0; i < F_t.size(); i ++)
-		if(!F_t[i][1])
-			Nf_surf ++;
-
-
-	Nf_surf = boost::size(F_t |		 boost::adaptors::filtered([](array<unsigned,2> i){ return i[1]==0; }));
+	std::size_t Nf_surf = boost::size(F_t |		 boost::adaptors::filtered([](array<unsigned,2> i){ return i[1]==0; }));
 
 	cout << "New mesh construction: " << P.size() << " points, " << T_p.size() << " tetras, " << faceMap.size() <<
 			" faces (" << Nf_surf << " surface)" << endl;

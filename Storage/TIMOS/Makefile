@@ -25,5 +25,5 @@ libFullMonteTIMOS_TCL.so: FullMonteTIMOS_wrap.o | libFullMonteTIMOS.so
 test: Test.o libFullMonteTIMOS.so
 	$(CXX) $(CXX_LINK_OPTS) -L$(ANTLR_LIB) -L../../Geometry -L. -lantlr3c -lFullMonteTIMOS -lFullMonteGeometry -o $@ Test.o
 
-clean: parser-clean
+clean: parser-clean defaultclean
 	rm -f test *.so *.a *.o *_wrap.cxx *.dSYM

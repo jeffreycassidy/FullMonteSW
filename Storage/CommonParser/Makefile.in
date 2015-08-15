@@ -5,7 +5,6 @@ include ../../Makefile.in
 
 
 %_tokens.h: %.tokens
-
 	cat $^ | $(SOURCE_ROOT)/FullMonte/Storage/CommonParser/mktok.pl > $@
 
 %Parser.c %Lexer.c %Parser.h %Lexer.h %.tokens: %.g

@@ -1,12 +1,10 @@
 ifndef SOURCE_ROOT
-	SOURCE_ROOT=/home/houmanhaji
+	SOURCE_ROOT=/home/jcassidy
 endif
-
 
 ifndef LIB_ROOT
 	LIB_ROOT=$(SOURCE_ROOT)/FullMonte
 endif
-
 
 ifndef BOOST_INCLUDE
 	BOOST_INCLUDE=/usr/local/include/boost
@@ -21,7 +19,7 @@ ifndef VTK_INCLUDE
 endif
 
 ifndef VTK_LIB
-	VTK_LIB=/usr/local/lib
+	VTK_LIB=/usr/local/vtk/lib
 endif
 
 ifndef CXX
@@ -29,11 +27,11 @@ ifndef CXX
 endif
 
 ifndef SWIG
-	SWIG=swig
+	SWIG=swig3.0
 endif
 
 
-ifndef ANTLR_DIR #do we need this?
+ifndef ANTLR_DIR
 	ANTLR_DIR=/usr/local/antlr3c-3.4
 endif
 
@@ -46,12 +44,11 @@ ifndef ANTLR_LIB
 endif
 
 ifndef ANTLR
-	#ANTLR=java -jar /home/houmanhaji/Downloads/antlr-3.5.2-complete-no-st3.jar
-    ANTLR=java -jar /usr/local/antlrv3/antlr-3.5.2-complete-no-st3.jar
+    ANTLR=java -jar /usr/local/antlr-3.5.2-complete.jar
 endif
 
 ifndef TCL_LIB
-    TCL_LIB=/usr/lib/libtclstub8.5.a
+    TCL_LIB=/usr/lib/x86_64-linux-gnu/libtclstub8.5.a
 endif
 
 
@@ -63,12 +60,6 @@ CXX_OPTS=-Wall -std=c++11 -O3 -g -Wno-missing-braces  -msse4 -mavx -fPIC -fabi-v
 
 CXX_LIB_OPTS=-Wall -fabi-version=6 -msse4 -mavx -fPIC -shared -L$(LIB_ROOT) -Wa,-q
 
-# Check for Mac OS (no POSIX timer among other things)
-OS:=$(shell uname)
-ifeq ($(OS),Darwin)
-	CXX_OPTS += -DPLATFORM_DARWIN -Wa,-q
-endif
-
 %.o: %.cpp *.hpp
 	$(CXX) $(CXX_OPTS) -c $<
 	
@@ -76,18 +67,21 @@ endif
 	$(SWIG) -c++ -tcl $<
 	
 %_wrap.cxx: %.hpp
-	$(SWIG) -c++ -tcl -DSWIG_OPENBRACE=%{ -DSWIG_CLOSEBRACE=%} $<
+	$(SWIG) -c++ -tcl $<
 	
 %_wrap.o: %_wrap.cxx
-	$(CXX) $(CXX_OPTS) -c -DUSE_TCL_STUBS $<
+	$(CXX) $(CXX_OPTS) -I$(TCL_INCLUDE) -c -DUSE_TCL_STUBS $<
 	
+lib%_TCL.so: %_wrap.o lib%.so
+	$(CXX) $(CXX_LIB_OPTS) -L. -o $@ $< -ltclstub8.5 -l$*
+
 libFullMonte%_TCL.so: %_wrap.o libFullMonte%.so
-	$(CXX) $(CXX_LIB_OPTS) -lFullMonte$* -ltclstub8.5 -o $@ $<
+	$(CXX) $(CXX_LIB_OPTS) -L. -o $@ $< -ltclstub8.5 -lFullMonte$*
 
 defaultclean:
-	rm -rf *.so *.a *_wrap.cxx *.o
+	rm -rf *.so *.a *_wrap.cxx *.o *.dSYM
 	
 # allow each folder to override the make clean command
 clean:
-	rm -rf *.so *.a *_wrap.cxx *.o a.out
+	rm -rf *.so *.a *_wrap.cxx *.o a.out *.dSYM
 	

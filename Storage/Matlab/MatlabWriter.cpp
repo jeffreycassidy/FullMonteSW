@@ -5,7 +5,7 @@
  *      Author: jcassidy
  */
 
-#include "MatlabWriter.hpp"
+#include "MatlabText.hpp"
 
 #include <boost/range/counting_range.hpp>
 #include <boost/range/adaptor/transformed.hpp>

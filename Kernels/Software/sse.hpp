@@ -1,10 +1,6 @@
 #ifndef SSE_INCLUDED
 #define SSE_INCLUDED
 
-//hoomans addition
-//#include <x86intrin.h>
-
-
 #include <mmintrin.h>
 
 #include <pmmintrin.h>

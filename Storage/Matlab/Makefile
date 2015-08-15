@@ -1,10 +1,9 @@
 include ../../Makefile.in
 
-libs: libFullMonteMatlabWriter.so libFullMonteMatlabWriter_TCL.so
+libs: libFullMonteMatlabText.so libFullMonteMatlabText_TCL.so
 
-libFullMonteMatlabWriter.so: MatlabWriter.o
+libFullMonteMatlabText.so: MatlabWriter.o
 	$(CXX) $(CXX_LIB_OPTS) $^ -o $@
-
 
 ## Unit tests
 
