@@ -185,7 +185,8 @@ template<size_t D,class T>class Point : public array<T,D>
 template<size_t D,class T>std::ostream& operator<<(std::ostream& os,const array<T,D>& P)
 {
 	os << '(' << P[0];
-	for(int i=0; i<D; ++i){ os << ',' << P[i]; }
+	for(int i=1; i<D; ++i){ os << ',' << P[i]; }
+	os << ')';
 	return os;
 }
 

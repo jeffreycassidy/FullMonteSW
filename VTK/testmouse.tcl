@@ -4,7 +4,7 @@ load libFullMonteVTK.so
 load libFullMonteTIMOS_TCL.so
 load libFullMonteBinFile_TCL.so 
 
-load libFullMonteKernels_TCL.so
+load libFullMonteKernel_TCL.so
 load libFullMonteTIMOS_TCL.so 
 
 #default file prefix

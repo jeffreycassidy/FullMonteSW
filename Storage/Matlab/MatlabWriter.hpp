@@ -27,7 +27,9 @@
 #define SWIG_OPENBRACE
 #define SWIG_CLOSEBRACE
 #else
-%{ #include "MatlabWriter.hpp" %}
+%{
+    #include "MatlabWriter.hpp"
+%}
 #endif
 
 SWIG_OPENBRACE

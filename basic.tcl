@@ -4,7 +4,7 @@ load libFullMonteVTK.so
 load libFullMonteTIMOS_TCL.so
 load libFullMonteBinFile_TCL.so 
 load libFullMonteGeometry_TCL.so
-load libFullMonteMatlab_TCL.so
+load libFullMonteMatlabText_TCL.so
 
 load libFullMonteKernel_TCL.so
 
@@ -85,10 +85,13 @@ puts "opt(2) = [lindex $opt 2]"
 showmaterial [lindex $opt 2]
 
 set N 10
-#VTKSurfaceFluenceRep fluencerep V
-#vtkPolyDataWriter W
+VTKSurfaceFluenceRep fluencerep V
+vtkPolyDataWriter W
 
 MatlabWriter MW
+MW setMesh $mesh
+MW setFaceSubset [$mesh getRegionBoundaryTris 0]
+#MW setFacesToAll
 
 
 for { set i 0 } { $i < $N } { incr i } {
@@ -119,5 +122,5 @@ for { set i 0 } { $i < $N } { incr i } {
     W Update
 
     MW setComment "Experiment $i"
-    MW 
+    MW writeSurfaceFluence "fluence.$i.txt" [k getSurfaceFluenceVector]
 }

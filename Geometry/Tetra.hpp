@@ -21,10 +21,15 @@ struct Tetra {
     unsigned adjTetras[4];  // 4 x 4B = 16 B
     unsigned matID;         // 4 B
 
+    bool pointWithin(std::array<double,3> p) const
+    {
+    	__m128 pv = _mm_set_ps(0.0,p[2],p[1],p[0]);
+    	return pointWithin(pv);
+    }
+
     bool pointWithin(__m128) const;
 
     StepResult getIntersection(__m128,__m128,__m128 s) const;
-    
 } __attribute__ ((aligned(64)));
 
 inline StepResult Tetra::getIntersection(__m128 p,__m128 d,__m128 s) const

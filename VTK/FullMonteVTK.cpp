@@ -41,6 +41,12 @@ VTKMeshRep::VTKMeshRep(const TetraMesh* M)
 	}
 }
 
+
+
+/** Copy the TetraMesh points, including point 0 (dummy) - set that as lower corner of the bounding box
+ *
+ */
+
 void VTKMeshRep::updatePoints()
 {
 	assert(mesh_);
@@ -62,6 +68,12 @@ void VTKMeshRep::updatePoints()
 	P_->SetPoint(0,bb.corners().first.data());
 }
 
+
+
+/** Copy the TetraMesh tetras, including the 0 (dummy) element
+ *
+ */
+
 void VTKMeshRep::updateTetras()
 {
 	assert(mesh_);
@@ -80,6 +92,7 @@ void VTKMeshRep::updateTetras()
 	{
 		if (j != 0)
 		{
+			// copy regular elements 1..Nt to tetras 1..Nt
 			ids->SetTuple1(j++,4);
 			for(unsigned k=0;k<4;++k)
 			{
@@ -88,7 +101,13 @@ void VTKMeshRep::updateTetras()
 			}
 		}
 		else
+		{
+			// copy dummy element (0,0,0,0) to tetra 0
+			ids->SetTuple1(0,4);
+			for(unsigned k=1;k<5;++k)
+				ids->SetTuple1(k,0);
 			j += 5;
+		}
 	}
 	assert(j == 5*Nt);
 
@@ -110,6 +129,10 @@ vtkUnstructuredGrid* VTKMeshRep::getMeshWithRegions() const
 	return ug;
 }
 
+/** Copy region codes, including for dummy (0) element - assign that to 0.
+ *
+ */
+
 void VTKMeshRep::updateRegions()
 {
 	assert(mesh_);
@@ -117,10 +140,11 @@ void VTKMeshRep::updateRegions()
 		regions_ = vtkUnsignedShortArray::New();
 
 	regions_->SetNumberOfComponents(1);
-	regions_->SetNumberOfTuples(mesh_->getNt());
+	regions_->SetNumberOfTuples(mesh_->getNt()+1);
 
-	for(unsigned i=1; i<=mesh_->getNt(); ++i)
-		regions_->SetTuple1(i-1,mesh_->getMaterial(i));
+	for(unsigned i=1; i <= mesh_->getNt(); ++i)
+		regions_->SetTuple1(i,mesh_->getMaterial(i));
+	regions_->SetTuple1(0,0);
 }
 
 // Returns a vtkUnstructuredGrid with a subset of the mesh in it (indices specified by idx)

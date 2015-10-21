@@ -52,6 +52,36 @@ constexpr std::array<std::array<unsigned char,2>,6> tetra_edge_indices {
 	std::array<unsigned char,2>{ 2, 3}
 };
 
+template<typename T,std::size_t N>std::array<T,N>& operator+=(std::array<T,N>& lhs,const std::array<T,N> rhs)
+{
+	for(unsigned i=0;i<N;++i)
+		lhs[i] += rhs[i];
+	return lhs;
+}
+
+template<typename T,std::size_t N>std::array<T,N>& operator/=(std::array<T,N>& lhs,const T rhs)
+{
+	for(unsigned i=0;i<N;++i)
+		lhs[i] /= rhs;
+	return lhs;
+}
+
+template<typename T,std::size_t N,class Range>std::array<T,N> centroid(Range r)
+{
+	auto it = begin(r);
+	unsigned Np=1;
+	std::array<T,N> c = *(it++);
+
+	while (it != end(r))
+	{
+		c += *(it++);
+		++Np;
+	}
+
+	c /= T(Np);
+	return c;
+}
+
 using namespace std;
 
 #endif // SWIG
@@ -134,9 +164,6 @@ class TetraMesh : public TetraMeshBase {
 
 	// query size of mesh
 	unsigned getNf() const { return F.size()-1; }
-//
-//    unsigned getNf_boundary() const { return F_boundary_ID.size(); }
-//    unsigned getNp_boundary() const { return P_boundary_ID.size(); }
 
 	// Accessors for various point/face constructs
     Face                    getFace(int id)                 const { Face f = F[abs(id)]; if(id<0){ f.flip(); } return f; }
@@ -203,6 +230,15 @@ class TetraMesh : public TetraMeshBase {
     // functions for saving tetramesh representations
     pair<unsigned,boost::shared_array<const uint8_t> > tetrasAsBinary() const;
     pair<unsigned,boost::shared_array<const uint8_t> > pointsAsBinary() const;
+
+    std::array<double,3> tetraCentroid(unsigned IDt) const
+    {
+    	TetraByPointID IDps = getTetraPointIDs(IDt);
+    	std::array<std::array<double,3>,4> tetP;
+    	for(unsigned i=0;i<4;++i)
+    		tetP[i] = P[IDps[i]];
+    	return centroid<double,3>(tetP);
+    }
 
     friend class TetraGraph;
 };

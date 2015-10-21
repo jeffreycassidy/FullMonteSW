@@ -4,19 +4,20 @@ load libFullMonteVTK.so
 load libFullMonteTIMOS_TCL.so
 load libFullMonteBinFile_TCL.so
 
-load libFullMonteKernels_TCL.so
+load libFullMonteKernel_TCL.so
 load libFullMonteTIMOS_TCL.so
 
 #default file prefix
 set pfx "/Users/jcassidy/src/FullMonteSW/data/mouse"
+
+#override with 1st cmdline arg
+if { $argc >= 1 } { set pfx [lindex $argv 0] }
 
 set optfn "$pfx.opt"
 set meshfn "$pfx.mesh"
 set legendfn "$pfx.legend"
 
 
-#override with 1st cmdline arg
-if { $argc >= 1 } { set pfx [lindex $argv 0] }
 
 set ofn "fluence.out"
 
@@ -119,6 +120,12 @@ vtkRenderWindowInteractor iren
 vtkDataSetMapper dsm
     dsm SetInputData $ug
     dsm SetLookupTable [V getRegionMapLUT]
+
+vtkUnstructuredGridWriter W
+    W SetInputData $ug
+    W SetFileName "regions.vtk"
+    W Update
+W Delete
 
 #vtkActor meshactor
 #    meshactor SetMapper dsm

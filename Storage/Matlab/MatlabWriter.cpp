@@ -27,6 +27,8 @@ MatlabWriter::MatlabWriter(){}
 
 void MatlabWriter::setFaceSubset(const std::vector<unsigned>& s)
 {
+	assert(M_ || !"MatlabWriter needs a mesh set before creating a subset");
+
 	// face permutation
 	facePerm_ = Permutation<unsigned>::buildFromForward(M_->getNf()+1,s);
 
@@ -205,6 +207,7 @@ void MatlabWriter::writeSurfaceFluence(const std::string fn,const std::vector<do
 	unsigned Nf=0,Nfsub=0,Nnz=0;
 
 	// determine number of output values
+	assert(M_ || !"MatlabWriter needs a mesh set before writing");
 	Nf = M_->getNf();
 
 	// +1 because of dummy element at index 0
