@@ -7,9 +7,10 @@ load libFullMonteGeometry_TCL.so
 load libFullMonteMatlabText_TCL.so
 
 load libFullMonteKernel_TCL.so
+load libFullMonteMatlabWriter_TCL.so
 
 #default file prefix
-set pfx "/Users/jcassidy/src/FullMonteSW/data/mouse"
+set pfx "/usr/local/FullMonte/data/mouse"
 
 
 #override with 1st cmdline arg
@@ -32,7 +33,7 @@ R setLegendFileName $legendfn
 set opt [R materials_simple]
 set mesh [R mesh]
 
-VTKMeshRep V $mesh
+#VTKMeshRep V $mesh
 
 BallSourceDescription bsr "10 40 11" 1.0 1.0
 bsr setCentre "10 40 11"
@@ -86,13 +87,15 @@ showmaterial [lindex $opt 2]
 
 set N 10
 VTKSurfaceFluenceRep fluencerep V
-vtkPolyDataWriter W
+vtkPolyDataWriter VTKW
 
-MatlabWriter MW
-MW setMesh $mesh
-MW setFaceSubset [$mesh getRegionBoundaryTris 0]
-#MW setFacesToAll
 
+MatlabWriter W
+W setMesh $mesh
+set surf [$mesh getRegionBoundaryTris 0]
+W threshold 0
+W setFaceSubset $surf
+W writeFaces "faces.txt"
 
 for { set i 0 } { $i < $N } { incr i } {
 
@@ -113,14 +116,14 @@ for { set i 0 } { $i < $N } { incr i } {
 	k awaitFinish
 
     # get results
-    fluencerep Update [k getSurfaceFluenceVector] 1
+   fluencerep Update [k getSurfaceFluenceVector] 1
 
     # write the file out
-    W SetHeader "Experiment run $i with blah blah blah"
-    W SetInputData [fluencerep getData]
-    W SetFileName "experiment.$i.vtk"
-    W Update
+    W setComment "Experiment $i"
+    W writeSurfaceFluence "fluence.$i.txt" [k getSurfaceFluenceVector]
 
-    MW setComment "Experiment $i"
-    MW writeSurfaceFluence "fluence.$i.txt" [k getSurfaceFluenceVector]
+    VTKW SetHeader "Experiment run $i with blah blah blah"
+	VTKW SetFileName "fluence.expt$i.vtk"
+	VTKW SetInput [fluencerep getPolyData]
+	VTKW Update
 }
