@@ -20,6 +20,10 @@ struct TraceStep
 	};
 
 
+/** Holds the trace of one packet, as a series of (pos,w) steps.
+ *
+ */
+
 class PacketTrace
 {
 

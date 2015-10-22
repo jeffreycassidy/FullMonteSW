@@ -590,6 +590,47 @@ bool TetraMesh::isWithinByPoints(int tID,const Point<3,double>& p) const
 //}
 
 
+
+/** Finds the next face along the given ray
+ *
+ * An optional parameter IDf_exclude allows exclusion of one face (eg. if the ray starts at such face)
+ *
+ * TODO: Should include a tolerance on the >= 0 calc, in case the point is ever-so-slightly on the wrong side of the face,
+ * 			eg. when trying to find the bounding face
+ */
+
+std::tuple<PointIntersectionResult,int> TetraMesh::findNextFaceAlongRay(Point<3,double> p,UnitVector<3,double> dir,int IDf_exclude) const
+{
+	unsigned IDf=0;
+	double dMin = std::numeric_limits<double>::infinity();
+	PointIntersectionResult best;
+
+	for(unsigned i=0;i<F.size();++i)
+	{
+		if (i == IDf_exclude)
+			continue;
+
+		FaceByPointID IDps = F_p[i];
+		Point<3,double> T[3]{
+			P[IDps[0]],
+			P[IDps[1]],
+			P[IDps[2]]
+		};
+
+		PointIntersectionResult res = RayTriangleIntersection(p,dir,T);
+
+		if (res.intersects && res.t < dMin)
+		{
+			best = res;
+			dMin = res.t;
+			IDf = i;
+		}
+	}
+
+	return make_tuple(best,IDf);
+}
+
+
 bool sameOrientation(FaceByPointID f0,FaceByPointID f1)
 {
     return f0.orderCount() == f1.orderCount();

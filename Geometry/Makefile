@@ -15,3 +15,6 @@ libFullMonteGeometry.so: TetraMeshBase.o newgeom.o Face.o SourceDescription.o Ma
 
 Test_Perm: Test_Perm.cpp TetraMesh.hpp
 	$(CXX) $(CXX_OPTS) -o $@ $<
+	
+RayWalk: RayWalk.cpp
+	$(CXX) $(CXX_OPTS) -o $@ $< -lFullMonteGeometry -lFullMonteTIMOS

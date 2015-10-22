@@ -359,8 +359,16 @@ template<size_t D,class T>class Ray
 
 //UnitVector<3,double> uvectFrom(__m128 v);
 
-// returns true if P+td falls within triangle defined by points T for some t
-bool PointInTriangle(Point<3,double> p,UnitVector<3,double> d,Point<3,double> T[3],Point<3,double>& Q,double& t);
+
+struct PointIntersectionResult
+{
+	bool intersects=false;
+	Point<3,double> q{NAN,NAN,NAN};
+	double t=NAN;
+};
+
+// returns true if P+td falls within triangle defined by points T for some non-negative t
+PointIntersectionResult RayTriangleIntersection(Point<3,double> p,UnitVector<3,double> d,Point<3,double> T[3]);
 
 // IO manipulator for printing points (parentheses or not, commas or not, etc)
 class GeomManip {

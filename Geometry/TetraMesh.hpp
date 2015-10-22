@@ -196,11 +196,8 @@ class TetraMesh : public TetraMeshBase {
     // checks if a point is within a given tetra by expressing as a linear combination of the corner points
     bool isWithinByPoints(int,const Point<3,double>&) const;
 
-    // check if a ray intersects a face of a tetra
-    //StepResult getIntersection(unsigned,const Ray<3,double>&,double=std::numeric_limits<double>::infinity(),int=0) const;
-
     // find the surface element hit by an incoming ray
-    //pair<pair<unsigned,int>,Point<3,double> > getSurfaceElement(const Ray<3,double>&) const;
+    pair<pair<unsigned,int>,Point<3,double> > getSurfaceElement(const Ray<3,double>&) const;
 
     vector<unsigned> getMaterialMap() const { return T_m; }
 
@@ -230,6 +227,9 @@ class TetraMesh : public TetraMeshBase {
     // functions for saving tetramesh representations
     pair<unsigned,boost::shared_array<const uint8_t> > tetrasAsBinary() const;
     pair<unsigned,boost::shared_array<const uint8_t> > pointsAsBinary() const;
+
+    // returns the intersection result and face ID entered (res, IDf) for the next face crossed by ray (p,dir)
+    std::tuple<PointIntersectionResult,int> findNextFaceAlongRay(Point<3,double> p,UnitVector<3,double> dir,int IDf_exclude=0) const;
 
     std::array<double,3> tetraCentroid(unsigned IDt) const
     {
