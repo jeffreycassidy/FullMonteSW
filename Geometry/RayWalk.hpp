@@ -20,23 +20,23 @@
 
 struct WalkFaceInfo
 {
-	Point<3,double> p={NAN,NAN,NAN};
-	int IDf=0;
+	Point<3,double> p={NAN,NAN,NAN};	// the point of intersection
+	int IDf=0;							// face at which intersection happens (0 = no-face)
 };
 
 struct WalkSegment {
-	WalkFaceInfo f0, f1;									// starting/ending face & point info
+	WalkFaceInfo f0, f1;		// starting/ending face & point info
 
-	double lSeg=std::numeric_limits<double>::infinity();	// length of the segment
-	double dToOrigin=0;										// distance from segment start to origin
+	double lSeg=0;				// length of the segment
+	double dToOrigin=0;			// distance from segment start to origin
 
-	unsigned IDt=0;
-	unsigned matID=0;
+	unsigned IDt=0;				// current tetra (=0 if exterior to mesh)
+	unsigned matID=0;			// current material (=0 if exterior to mesh)
 };
 
 
 
-/** Iterator to "walk" along a ray, providing information about each segment.
+/** Iterator to "walk" along a ray, providing information about each segment (start/end face & point, tet/mat ID, length).
  *
  *
  * begin 	is always at the start point, whether or not contained by a tetra (IDt=matID=0 if outside, else enclosing tetra)
@@ -68,11 +68,13 @@ public:
 
 	const WalkSegment& dereference() const { return currSeg_; }
 
+	/** Equality only works for */
+
 	bool equal(const RayWalkIterator& rhs) const
 	{
 		if (M_ == nullptr)				// if this == end, check if rhs == end too
 			return rhs.M_==nullptr;
-		else							// if this != end, check if in same nonzero tetra
+		else							// if this != end, check if in same nonzero tetra (zero tetra is non-unique)
 			return currSeg_.IDt != 0 && currSeg_.IDt == rhs.currSeg_.IDt;
 	}
 
@@ -91,7 +93,7 @@ public:
 			if (currSeg_.f1.IDf == 0)		// no face found: return end iterator
 				*this = RayWalkIterator();
 		}
-		else				// in a tetra, just four faces to check for next intersection
+		else				// in a tetra, just four faces to check for next intersection (always will have, since we're in tetra)
 			stepInTetra();
 	}
 
@@ -102,8 +104,8 @@ public:
 		rwi.M_=&M;
 		rwi.dir_=dir;
 
-		rwi.currSeg_.f0.p 	= rwi.currSeg_.f1.p = p0;			// origin point
-		rwi.currSeg_.f0.IDf = 0;			// not-a-face
+		rwi.currSeg_.f0.p 	= rwi.currSeg_.f1.p = p0;		// origin point
+		rwi.currSeg_.f0.IDf = 0;							// not-a-face
 
 		rwi.currSeg_.dToOrigin = 0;			// starts at ray origin
 
@@ -119,23 +121,19 @@ public:
 				return RayWalkIterator();
 		}
 		else						// in a tetra, so search tetra's faces
-		{
 			rwi.stepInTetra();
-		}
 
-		std::array<double,3> v01{ rwi.currSeg_.f1.p[0]-p0[0], rwi.currSeg_.f1.p[1]-p0[1],rwi.currSeg_.f1.p[2]-p0[2]} ;
 
+		//std::array<double,3> v01{ rwi.currSeg_.f1.p[0]-p0[0], rwi.currSeg_.f1.p[1]-p0[1],rwi.currSeg_.f1.p[2]-p0[2]} ;
 
 		return rwi;
 	}
 
-	/** Completes the current step within a tetra
-	 * Sets f1 & nextTet_
+	/** Completes the current step within a tetra, starting at intersection defined by currSeg_.f1 in tetra currSeg_.IDt
+	 * Updates currSeg_.f1, .lSeg, and nextTet_
 	 */
-
 	void stepInTetra()
 	{
-		cout << "Stepping within tetra " << currSeg_.IDt << endl;
 		__m128 p = _mm_setr_ps(currSeg_.f1.p[0],currSeg_.f1.p[1],currSeg_.f1.p[2],0);
 		__m128 d = _mm_setr_ps(dir_[0],dir_[1],dir_[2],0);
 		__m128 s = _mm_set1_ps(std::numeric_limits<float>::infinity());
@@ -154,15 +152,16 @@ public:
 		nextTet_ = sr.IDte; // the tetra hit by the ray
 	}
 
-	/** Completes the current step outside of a tetra, either ending in a tetra or no intersection (f1.IDf=0)
-	 * Sets f1 & nextTet_
+	/** Completes the current step outside of a tetra, either ending in a tetra or no intersection (f1.ID==0)
+	 * Sets currSeg_.f1, .lSeg, nextTet_
 	 */
 
 	void stepExterior()
 	{
-		cout << "Starting exterior step: ";
 		int IDf;
 		PointIntersectionResult res;
+
+		// find the next face along the ray, excluding the current face from consideration (may see hit due to tolerance errors)
 		std::tie(res,IDf) = M_->findNextFaceAlongRay(currSeg_.f1.p, UnitVector<3,double>{dir_[0],dir_[1],dir_[2]},currSeg_.f1.IDf);
 
 		currSeg_.f1.p = res.q;
@@ -170,18 +169,18 @@ public:
 
 		unsigned IDt;
 
-		// check if + orientation of this face points into the current tetra. if so, take other tetra and return - face.
+		// check if + orientation of this face points into the current tetra. if so, take other tetra and return -face.
 		if ((IDt=M_->getTetraFromFace(IDf)) == currSeg_.IDt)
 		{
 			IDf=-IDf;
 			IDt = M_->getTetraFromFace(IDf);
 		}
 
-		cout << "Arrived in tetra " << IDt << " via face " << IDf << " at point " << res.q << endl;
-
 		currSeg_.f1.IDf = IDf;
 		nextTet_ = IDt;
 		currSeg_.IDt = 0;
+
+		currSeg_.lSeg=res.t;
 	}
 
 	// void decrement()
@@ -196,37 +195,5 @@ private:
 	unsigned				nextTet_=0;
 };
 
-/** Digimouse test case
- * (2.4, 18.8, 0.8) -> (29,1, 13.2, 18.5)
- */
 
-using namespace std;
 
-int main(int argc,char **argv)
-{
-	// Load up the digimouse
-	TIMOSReader R;
-	R.setMeshFileName("/Users/jcassidy/src/FullMonteSW/data/mouse.mesh");
-
-	TetraMesh M = R.mesh();
-
-	// Digimouse test case (passes through paw, air, tissue, skull, brain)
-	array<double,3> p0{2.4,18.8,0.8}, p1{29.1,13.2,18.5};
-	array<double,3> d{0.8214, -0.17220, 0.54428 };		// normalized p1-p0
-
-	RayWalkIterator begin = RayWalkIterator::init(M,p0,d);
-	RayWalkIterator end;
-
-	boost::iterator_range<RayWalkIterator> walk(begin,end);
-
-	for(const auto seg : walk | boost::adaptors::indexed(0U))
-	{
-		cout << "  seg[" << setw(4) << seg.index() << "] in tetra " << seg.value().IDt << " material " << seg.value().matID <<
-				" length " << seg.value().lSeg << " distance to origin " << seg.value().dToOrigin << endl;
-		cout << "             Starts at face " << seg.value().f0.IDf << " point " << seg.value().f0.p << " runs to face " <<
-				seg.value().f1.IDf << " point " << seg.value(). f1.p << endl;
-	}
-
-	return 0;
-
-}

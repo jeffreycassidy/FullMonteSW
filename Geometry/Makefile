@@ -18,3 +18,6 @@ Test_Perm: Test_Perm.cpp TetraMesh.hpp
 	
 RayWalk: RayWalk.cpp
 	$(CXX) $(CXX_OPTS) -o $@ $< -lFullMonteGeometry -lFullMonteTIMOS
+	
+ever_circle: ever_circle.cpp
+	$(CXX) $(CXX_OPTS) -o $@ $<
