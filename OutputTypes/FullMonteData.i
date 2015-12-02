@@ -1,4 +1,4 @@
-%module FullMonteData_TCL
+%module FullMonteDataTCL
 
 %{
 #include <vector>
@@ -7,9 +7,11 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include "PacketTrace.hpp"
+#include "PacketPositionTrace.hpp"
 %}
 
 %include "std_string.i"
 %include "SparseVector.hpp"
-%include "PacketTrace.hpp"
+%include "PacketPositionTrace.hpp"
+
+%template(SparseVectorUF) SparseVector<unsigned,float>;

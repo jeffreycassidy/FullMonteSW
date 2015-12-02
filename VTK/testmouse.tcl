@@ -4,6 +4,8 @@ load libFullMonteVTK.so
 load libFullMonteTIMOS_TCL.so
 load libFullMonteBinFile_TCL.so 
 
+load libFullMonteGeometry_TCL.so
+
 load libFullMonteKernel_TCL.so
 load libFullMonteTIMOS_TCL.so 
 

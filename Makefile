@@ -26,6 +26,10 @@ liblinks:
 	ln -sf Storage/TetGen/libFullMonteTetGen_TCL.so
 	ln -sf Storage/Matlab/libFullMonteMatlabText_TCL.so
 	ln -sf Storage/Matlab/libFullMonteMatlabText.so
+	ln -sf OutputTypes/libFullMonteData.dylib
+	ln -sf OutputTypes/libFullMonteDataTCL.dylib
+	ln -sf Storage/HexFile/libFullMonteHexFileTCL.dylib
+	ln -sf Storage/HexFile/libFullMonteHexFile.dylib
 
 libs: liblinks
 

@@ -8,15 +8,10 @@
 #ifndef OUTPUTTYPES_SPARSEVECTOR_HPP_
 #define OUTPUTTYPES_SPARSEVECTOR_HPP_
 
-#ifndef SWIG_OPENBRACE
-#define SWIG_OPENBRACE
-#define SWIG_CLOSEBRACE
-#endif
-
-SWIG_OPENBRACE
-
 #include <boost/container/flat_map.hpp>
 #include <boost/range/algorithm.hpp>
+#include <boost/range/adaptor/filtered.hpp>
+#include <boost/range/adaptor/indexed.hpp>
 #include <vector>
 #include <iostream>
 
@@ -24,20 +19,24 @@ SWIG_OPENBRACE
 
 #include "SparseVector.hpp"
 
-SWIG_CLOSEBRACE
-
-
+/**
+ * @tparam	Index		The index type.
+ * @tparam	Value		The value type. Must be equality-comparable, copyable/assignable, and default-constructible.
+ */
 
 template<typename Index,typename Value> class SparseVector
 {
 public:
-	SparseVector() {}
+	SparseVector(){}
 
-	// return a dense representation
-	std::vector<Value> dense(std::size_t N) const
+	/// Construct from an Iterator range, with optional hint giving number of non-zero values
+	template<class Iterator>SparseVector(Iterator begin,Iterator end,std::size_t N,std::size_t nnz=0);
+
+	/// Return a dense representation, with optional return conversion to ReturnValue (defaults to Value)
+	template<typename ReturnValue=Value>std::vector<ReturnValue> denseVector() const
 	{
-		std::vector<Value> v(N,0);
-		for(const auto p : contents_)
+		std::vector<ReturnValue> v(m_N,0);
+		for(const auto p : m_contents)
 		{
 			assert(p.first < v.size());
 			v[p.first] = p.second;
@@ -45,70 +44,147 @@ public:
 		return v;
 	}
 
-	std::size_t nnz() const { return Nnz_; }
+
+	/** Adapted iterator that returns boost::index_value<ReturnValue,Index> with index and value for nonzero values.
+	 */
+
+	template<typename ReturnValue=Value>class const_sparse_iterator : public boost::iterator_adaptor<
+			const_sparse_iterator<ReturnValue>,
+			typename boost::container::flat_map<Index,Value>::const_iterator,
+			boost::range::index_value<const ReturnValue,Index>,
+			boost::forward_traversal_tag,
+			boost::range::index_value<const ReturnValue,Index>,
+			std::ptrdiff_t>
+	{
+	public:
+		const_sparse_iterator(const const_sparse_iterator&) = default;
+		const_sparse_iterator(const typename boost::container::flat_map<Index,Value>::const_iterator& it) : const_sparse_iterator::iterator_adaptor_(it){}
+
+		boost::range::index_value<const ReturnValue,Index> dereference() const
+		{
+			Index i = this->base_reference()->first;
+			ReturnValue v = this->base_reference()->second;
+
+			return boost::range::index_value<const ReturnValue,Index>(i,v);
+		}
+
+	private:
+		friend class boost::iterator_core_access;
+	};
 
 
-	static SparseVector<Index,Value> loadTextFile(const std::string& fn,std::size_t Nmax=0);
+
+	/** Adapted iterator that returns boost::index_value<ReturnValue,Index> for all elements.
+	 */
+
+	template<typename ReturnValue=Value>class const_dense_iterator : public boost::iterator_adaptor<
+			const_dense_iterator<ReturnValue>,
+			typename boost::container::flat_map<Index,Value>::const_iterator,
+			boost::range::index_value<const ReturnValue,Index>,
+			boost::forward_traversal_tag,
+			boost::range::index_value<const ReturnValue,Index>,
+			std::ptrdiff_t>
+	{
+	public:
+		typedef typename boost::iterator_adaptor<
+				const_dense_iterator<ReturnValue>,
+				typename boost::container::flat_map<Index,Value>::const_iterator,
+				boost::range::index_value<const ReturnValue,Index>,
+				boost::forward_traversal_tag,
+				boost::range::index_value<const ReturnValue,Index>,
+				std::ptrdiff_t> Super;
+
+		typedef typename boost::container::flat_map<Index,Value>::const_iterator Base;
+
+		using Super::base_reference;
+
+		const_dense_iterator(const const_dense_iterator&) = default;
+		const_dense_iterator(const Base& it,const Base& itEnd,Index idx=0) :
+			const_dense_iterator::iterator_adaptor_(it),
+			m_itEnd(itEnd),
+			m_Idx(idx){}
+
+		bool equal(const const_dense_iterator& it) const
+		{
+			return it.m_Idx == m_Idx;
+		}
+
+		void increment()
+		{
+			++m_Idx;
+
+			if (base_reference() == m_itEnd)
+				return;
+			else if (base_reference()->first < m_Idx)
+				base_reference()++;
+
+			if (base_reference() != m_itEnd && base_reference()->first == m_Idx)
+				m_val = base_reference()->second;
+			else
+				m_val = Value();
+		}
+
+		boost::range::index_value<const ReturnValue,Index> dereference() const
+		{
+			return boost::range::index_value<const ReturnValue,Index>(m_Idx,m_val);
+		}
+
+	private:
+		const Base	m_itEnd;
+		Index 		m_Idx=0;
+		ReturnValue	m_val=0;
+		friend class boost::iterator_core_access;
+	};
+
+
+	/** Provides a range of boost::index_value<Value,Index> holding the nonzeros.
+	 */
+
+	template<typename ReturnValue=Value>boost::iterator_range<const_sparse_iterator<ReturnValue> > nonzeros() const
+		{
+		return boost::iterator_range<const_sparse_iterator<Value> >(
+				const_sparse_iterator<Value>(m_contents.begin()),
+				const_sparse_iterator<Value>(m_contents.end()));
+		}
+
+	/** Provides a range of boost::index_value<Value,Index> holding the nonzeros.
+	 */
+
+	template<typename ReturnValue=Value>boost::iterator_range<const_dense_iterator<ReturnValue> > dense() const
+		{
+		return boost::iterator_range<const_dense_iterator<Value> >(
+				const_dense_iterator<Value>(m_contents.begin(),m_contents.end(),0),
+				const_dense_iterator<Value>(m_contents.end(),m_contents.end(),m_N));
+		}
+
+	/// Number of nonzero elements
+	std::size_t nnz() const { return m_contents.size(); }
+
+	/// Sparse vector dimension (N) regardless of number of zeros
+	std::size_t dim() const { return m_N; }
+
+	/// Accessor function returning default-constructed value for missing elements
+	const Value& operator[](Index i) const;
 
 private:
-	SparseVector(std::size_t Nmax,boost::container::flat_map<Index,Value>&& m) : contents_(std::move(m)),Nmax_(Nmax),Nnz_(countNnz()){}
+//	SparseVector(std::size_t Nmax,boost::container::flat_map<Index,Value>&& m) : m_contents(std::move(m)),m_N(Nmax){}
 
-	std::size_t countNnz() const
-	{
-		return boost::count_if(contents_, [](std::pair<Index,Value> i){ return i.second != 0; });
-	}
-
-	boost::container::flat_map<Index,Value> contents_;
-	Index Nmax_=0;
-	Index Nnz_=0;
-
+	boost::container::flat_map<Index,Value> 	m_contents;
+	Index 										m_N=0;
 };
 
-
-#include <string>
-
-template<typename Index,typename Value>SparseVector<Index,Value> SparseVector<Index,Value>::loadTextFile(const std::string& fn,std::size_t Nmax)
+template<typename Index,typename Value>template<class Iterator>SparseVector<Index,Value>::SparseVector(Iterator begin,const Iterator end,const std::size_t N,const std::size_t Nnz)
+		: m_N(N)
 {
-	std::ifstream is(fn.c_str());
-
-	std::vector<std::pair<Index,Value>> v;
-
-	std::string s;
-
-	if (!is.good())
-		throw std::logic_error("Failed to open file");
-
-	// strip leading comments
-	for( std::getline(is,s); !is.eof() && (s[0] == '%' || s[0] == '#'); std::getline(is,s))
-		std::cout << "INFO: comment line '" << s << "'" << std::endl;
-
-	std::size_t maxIdx=Nmax;
-
-	while(!is.eof())
-	{
-		Index idx;
-		Value x;
-
-		std::stringstream ss(s);
-		ss >> idx >> x;
-
-		v.push_back(std::make_pair(idx,x));
-
-		maxIdx=std::max(maxIdx,(std::size_t)idx);
-
-		std::getline(is,s);
-	}
-
-	boost::container::flat_map<Index,Value> m(v.begin(),v.end());
-
-	return SparseVector<Index,Value>(maxIdx,std::move(m));
+	m_contents = boost::container::flat_map<Index,Value>(begin,end);
 }
 
-#ifdef SWIG
+template<typename Index,typename Value>const Value& SparseVector<Index,Value>::operator[](Index i) const
+{
+	const auto it = m_contents.find(i);
+	return it == m_contents.end() ? Value() : it->second;
+}
 
-%template(SparseVectorUD) SparseVector<unsigned,double>;
-
-#endif
 
 
 #endif /* OUTPUTTYPES_SPARSEVECTOR_HPP_ */

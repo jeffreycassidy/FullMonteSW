@@ -9,3 +9,7 @@ libFullMonteMatlabText.so: MatlabWriter.o
 
 Test_Permutation: Test_Permutation.cpp Permutation.hpp
 	g++ -fPIC -O3 -g -std=c++11 -I/usr/local/include/boost -L/usr/local/lib -lboost_unit_test_framework -o $@ $<
+
+	
+Test_BinaryLevel5: BinaryLevel5.cpp
+	$(CXX) $(CXX_OPTS) -o $@ $< -lz -lboost_iostreams

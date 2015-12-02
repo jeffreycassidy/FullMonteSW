@@ -4,7 +4,6 @@
 
 #include <FullMonte/Geometry/TetraMesh.hpp>
 #include <FullMonte/Geometry/newgeom.hpp>
-//used to be <FullMonte/Geometry/TetraMesh (and other two) .hpp>
 
 #include <FullMonte/Geometry/Material.hpp>
 

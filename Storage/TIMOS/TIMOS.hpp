@@ -6,8 +6,7 @@
 #include <FullMonte/Storage/CommonParser/ANTLRParser.hpp>
 
 
-#include "../Reader.hpp"
-#include "../Writer.hpp"
+#include <FullMonte/Storage/Reader.hpp>
 
 #ifndef SWIG
 
@@ -54,7 +53,7 @@ public:
 
 
 
-
+/*
 class TIMOSWriter : public Writer {
 
 	std:: string sourceFn_, optFn_, meshFn_;
@@ -78,7 +77,7 @@ public:
 	virtual void writeVolFluence(std::string fn,const TetraMesh& mesh,const std::vector<double>& phi_s,std::string) const;
 };
 
-
+*/
 
 #ifndef SWIG
 

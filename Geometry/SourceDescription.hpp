@@ -63,6 +63,7 @@ class PointSourceDescription  {
 
 public:
 	PointSourceDescription(const Point<3,double>& p_) : origin(make_pair(p_,0)){}
+	virtual ~PointSourceDescription(){}
 
 	void setOrigin(const Point<3,double> p){ origin.first=p; }
 	void setOrigin(const std::array<double,3> p){ origin.first=Point<3,double>(p); }
@@ -74,6 +75,7 @@ public:
 class IsotropicSourceDescription {
 public:
 	IsotropicSourceDescription(){}
+	virtual ~IsotropicSourceDescription(){}
 };
 
 #ifdef SWIG
@@ -84,12 +86,17 @@ class IsotropicPointSourceDescription : public IsotropicSourceDescription, publi
 	static constexpr double nan = std::numeric_limits<double>::quiet_NaN();
 public:
 #ifndef SWIG
-	IsotropicPointSourceDescription(const Point<3,double>& p_=Point<3,double>{nan,nan,nan},double w_=1.0) :
+	IsotropicPointSourceDescription(const Point<3,double>& p_,double w_=1.0) :
 		PointSourceDescription(p_), cloner(w_){};
 #else
 	IsotropicPointSourceDescription(const Point<3,double>& p_,double w_=1.0) :
 		PointSourceDescription(p_), cloner(w_){};
 #endif
+
+	virtual ~IsotropicPointSourceDescription(){}
+
+
+	IsotropicPointSourceDescription() : PointSourceDescription(Point<3,double> {0,0,0}),cloner(1.0){}
 
 	virtual ostream& print(ostream&)  const;
 };

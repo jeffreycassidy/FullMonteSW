@@ -124,66 +124,30 @@ struct LegendEntry {
 #include <FullMonte/Geometry/SourceDescription.hpp>
 
 #endif // SWIG
-
-
-class VTKMeshRep {
-#ifndef SWIG
-	// points definition shared by all representations of the dataset
-	vtkPoints* P_=nullptr;
-
-	vtkCellArray *tetras_=nullptr;
-
-	vtkUnsignedShortArray *regions_=nullptr;
-
-	const TetraMesh *mesh_=nullptr;
-
-	std::vector<LegendEntry> legend_;
-
-	void updatePoints();
-	void updateRegions();
-	void updateTetras();
-
-	vtkActor* getSourceActor(const BallSourceDescription*) const;
-
-#endif
-
-public:
-	VTKMeshRep(const TetraMesh* M);
-
-	~VTKMeshRep(){
-		if (P_) P_->Delete();
-		if(tetras_) tetras_->Delete();
-		if(regions_) regions_->Delete();
-	}
-
-	const TetraMesh& getMesh() const { assert(mesh_); return *mesh_; }
-	vtkPoints* getPoints() const { assert(P_); return P_; }
-
-	vtkUnstructuredGrid*	getMeshWithRegions() const;
-
-	vtkPolyData*			getSubsetFaces(const std::vector<unsigned>& idx) const;
-	vtkUnstructuredGrid*	getSubsetMesh(const std::vector<unsigned>& idx) const;
-
-	vtkPolyData*			getSurfaceOfRegion(unsigned) const;
-
+//
+//	vtkUnstructuredGrid*	getMeshWithRegions() const;
+//
+//	vtkPolyData*			getSubsetFaces(const std::vector<unsigned>& idx) const;
+//	vtkUnstructuredGrid*	getSubsetMesh(const std::vector<unsigned>& idx) const;
+//
+//	vtkPolyData*			getSurfaceOfRegion(unsigned) const;
+//
 	// deal with legend
 
-	void addLegendEntry(const LegendEntry& le){ legend_.push_back(le); }
-
-#ifndef SWIG
-	vtkLegendBoxActor*		getLegendActor(
-			const std::array<float,2> ll=std::array<float,2>{0.75,0.05},
-			const std::array<float,2> ur=std::array<float,2>{0.95,0.50}) const;
-#else
-	vtkLegendBoxActor*		getLegendActor(
-			const std::array<float,2> ll,
-			const std::array<float,2> ur) const;
-#endif
-	void setLegend(const std::vector<LegendEntry>& legend){ legend_=legend; }
+//	void addLegendEntry(const LegendEntry& le){ legend_.push_back(le); }
+//
+//#ifndef SWIG
+//	vtkLegendBoxActor*		getLegendActor(
+//			const std::array<float,2> ll=std::array<float,2>{0.75,0.05},
+//			const std::array<float,2> ur=std::array<float,2>{0.95,0.50}) const;
+//#else
+//	vtkLegendBoxActor*		getLegendActor(
+//			const std::array<float,2> ll,
+//			const std::array<float,2> ur) const;
+//#endif
+//	void setLegend(const std::vector<LegendEntry>& legend){ legend_=legend; }
 
 	vtkActor* getSourceActor(const SourceDescription*) const;
-
-	vtkLookupTable* getRegionMapLUT() const;
 };
 
 class VTKBallSourceRep {
@@ -408,16 +372,11 @@ public:
 		return lut_;
 	}
 
-	std::pair<double,double> getRange() const { return phiRange_; }
-	std::pair<double,double> getDisplayRange() const { return lutRange_; }
-
 	vtkActor* getActor(){
 		if (!actor_)
 			Update(std::vector<double>());
 		return actor_;
 	}
-
-	vtkUnstructuredGrid* getData() const { return ug_; }
 };
 
 

@@ -197,7 +197,7 @@ class TetraMesh : public TetraMeshBase {
     bool isWithinByPoints(int,const Point<3,double>&) const;
 
     // find the surface element hit by an incoming ray
-    pair<pair<unsigned,int>,Point<3,double> > getSurfaceElement(const Ray<3,double>&) const;
+//    pair<pair<unsigned,int>,Point<3,double> > getSurfaceElement(const Ray<3,double>&) const;
 
     vector<unsigned> getMaterialMap() const { return T_m; }
 
