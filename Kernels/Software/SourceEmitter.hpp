@@ -2,6 +2,8 @@
 #include <FullMonte/Geometry/SourceDescription.hpp>
 #include "Packet.hpp"
 
+#include <boost/random/discrete_distribution.hpp>
+
 using std::pair;
 
 // SourceEmitter has the actual guts to emit photons; SourceDescription just tells you what it is

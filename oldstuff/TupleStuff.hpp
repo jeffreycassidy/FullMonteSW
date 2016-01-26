@@ -61,14 +61,14 @@ struct bad_tuple_element;
 /** Variant of get_by_type which returns a reference or throws an exception if not found
  * @throws bad_tuple_element Requested type could not be found
  */
-
-template<typename T,unsigned I=0,typename... TupleTypes>T& get_by_type_ref(std::tuple<TupleTypes...>& t)
-{
-	if (T* p=get_by_type<T,0,TupleTypes...>(t))
-		return *p;
-	else
-		throw bad_tuple_element();
-}
+//
+//template<typename T,unsigned I=0,typename... TupleTypes>T& get_by_type_ref(std::tuple<TupleTypes...>& t)
+//{
+//	if (T* p=get_by_type<T,0,TupleTypes...>(t))
+//		return *p;
+//	else
+//		throw bad_tuple_element();
+//}
 
 struct bad_tuple_element {
 	const char* what() const { return "Incorrect tuple element"; };
@@ -135,12 +135,12 @@ template<unsigned I,typename TupleType>struct LoggerResult<I,TupleType> {
 };
 
 
-template<class L>std::tuple<typename L::ResultType> get_one_result_tuple(const L& l,typename L::single_result_tag::type =true_type())
+template<class L>std::tuple<typename L::ResultType> get_one_result_tuple(const L& l,typename L::single_result_tag::type)
 {
 	return make_tuple(l.getResults());
 }
 
-template<class L>typename L::ResultType get_one_result_tuple(const L& l,typename L::tuple_result_tag::type =true_type())
+template<class L>typename L::ResultType get_one_result_tuple(const L& l,typename L::tuple_result_tag::type)
 {
 	return l.getResults();
 }
@@ -162,12 +162,12 @@ template<unsigned I=0,class OS,typename... Ts>typename std::enable_if<(I <sizeof
 template<unsigned I=0,class OS,typename... Ts>typename std::enable_if<(I==sizeof...(Ts)),OS&>::type operator<<(OS& os,const std::tuple<Ts...>& t);
 
 
-template<unsigned I=0,class OS,typename... Ts>typename std::enable_if<(I <sizeof...(Ts)),OS&>::type operator<<(OS& os,const std::tuple<Ts...>& t)
+template<unsigned I,class OS,typename... Ts>typename std::enable_if<(I <sizeof...(Ts)),OS&>::type operator<<(OS& os,const std::tuple<Ts...>& t)
 {
 	return operator<<<I+1>(os << get<I>(t) << ' ',t);
 }
 
-template<unsigned I=0,class OS,typename... Ts>typename std::enable_if<(I==sizeof...(Ts)),OS&>::type operator<<(OS& os,const std::tuple<Ts...>& t)
+template<unsigned I,class OS,typename... Ts>typename std::enable_if<(I==sizeof...(Ts)),OS&>::type operator<<(OS& os,const std::tuple<Ts...>& t)
 {
 	return os;
 }

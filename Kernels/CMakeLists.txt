@@ -1,5 +1,5 @@
 ADD_LIBRARY(FullMonteKernels SHARED Kernel.cpp Software/Logger/LoggerSurface.cpp Software/Logger/LoggerVolume.cpp Software/Logger/LoggerConservation.cpp Software/Logger/LoggerEvent.cpp Software/sse.cpp Software/RandomAVX.cpp Software/OStreamObserver.cpp Software/FullMonte.cpp)
-TARGET_LINK_LIBRARIES(FullMonteKernels FullMonteGeometry FullMonteData boost_chrono boost_timer boost_system SFMT)
+TARGET_LINK_LIBRARIES(FullMonteKernels FullMonteGeometry FullMonteData ${Boost_LIBRARIES} SFMT)
 
 IF(WRAP_TCL)
     INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})

@@ -18,7 +18,7 @@ ADD_CUSTOM_TARGET(Tests)
 
 ## Test cases
 
-ADD_SUBDIRECTORY(Tests)
+#ADD_SUBDIRECTORY(Tests)
 
 # Load and re-save knee mesh
 ADD_CUSTOM_TARGET(TestKneeMeshTCL

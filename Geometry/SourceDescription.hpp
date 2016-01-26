@@ -1,8 +1,7 @@
 #pragma once
 #include "newgeom.hpp"
 
-#include <boost/iterator/transform_iterator.hpp>
-#include <boost/random/discrete_distribution.hpp>
+#include <vector>
 
 
 template<typename Base,typename Derived>struct cloner : public Base {
@@ -108,7 +107,10 @@ public:
 
 class PencilBeamSourceDescription : public cloner<SourceDescription,PencilBeamSourceDescription>, public PointSourceDescription {
 	UnitVector<3,double> r;
-	int IDt,IDf;
+	int IDt;
+public:
+
+	int IDf;			// <=== should be private
 public:
 	PencilBeamSourceDescription(Ray<3,double> r_,double w=1.0) : cloner(w), PointSourceDescription(r_.getOrigin()),r(r_.getDirection()){ }
 

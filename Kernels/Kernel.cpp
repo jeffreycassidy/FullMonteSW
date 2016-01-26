@@ -51,6 +51,8 @@ void MonteCarloKernelBase::setMaterials(const vector<SimpleMaterial>& mats)
 }
 
 
+
+
 template<class RNG>void TetraMCKernel<RNG>::prepare_()
 {
 	if (src_.size()==0)
@@ -86,18 +88,6 @@ template<class RNG>void TetraMCKernel<RNG>::prepare_()
 	for(auto h : hist)
 		cout << ++i << ": " << h << endl;
 }
-
-//void TetraVolumeKernel::start()
-//{
-//	// Set up logger
-//    logger = make_tuple(
-//    		LoggerEventMT(),
-//    		LoggerConservationMT(),
-//    		LoggerVolume<QueuedAccumulatorMT<double>>(K_.mesh,1<<10)
-//    		);
-//
-//    // Run it
-//}
 
 void TetraSurfaceKernel::start_()
 {

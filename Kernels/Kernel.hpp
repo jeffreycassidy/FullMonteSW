@@ -125,7 +125,7 @@ public:
 	void setRoulettePrWin(float prwin){ prwin_=prwin; }
 	void setRouletteWMin(float wmin){ wmin_=wmin; }
 	void setMaxSteps(unsigned Nstep_max){ Nstep_max_=Nstep_max; }
-	void setMaxHits(unsigned Nhit_max){ Nhit_max_=Nhit_max_; }
+	void setMaxHits(unsigned Nhit_max){ Nhit_max_=Nhit_max; }
 
 	void setThreadCount(unsigned Nth){ Nth_=Nth; }
 	void setRandSeed(unsigned rs){ rngSeed_=rs; }
@@ -273,7 +273,7 @@ private:
 
 	typedef TetraMCKernelThread<LoggerWorker,RNG_SFMT_AVX> TetraMCThread;
 
-	void finish_();
+	void finish_() override;
 
 };
 
@@ -333,7 +333,7 @@ private:
 
 	typedef TetraMCKernelThread<LoggerWorker,RNG_SFMT_AVX> TetraMCThread;
 
-	void finish_();
+	void finish_() override;
 
 };
 
