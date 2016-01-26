@@ -2,7 +2,7 @@ default: libs
 
 include Makefile.in
 
-SUBDIRS=Geometry OutputTypes SFMT GUI Kernels Storage VTK
+SUBDIRS=OutputTypes SFMT GUI Kernels Storage VTK
 
 all:
 	for d in $(SUBDIRS); do make -C $$d all; done;

@@ -1,4 +1,4 @@
-%module FullMonteGeometry_TCL
+%module FullMonteGeometryTCL
 
 %include "std_string.i"
 %include "std_vector.i"
@@ -14,7 +14,7 @@
 
 %}
 
-%include "Geometry_types.i"
+%include "FullMonteGeometry_types.i"
 
 %include "SourceDescription.hpp"
 %include "TetraMeshBase.hpp"

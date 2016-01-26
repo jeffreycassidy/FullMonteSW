@@ -18,7 +18,4 @@
 #include <string>
 #include <vector>
 
-
-
-
 #endif /* TIMOSWRITER_HPP_ */

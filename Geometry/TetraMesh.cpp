@@ -605,7 +605,7 @@ std::tuple<PointIntersectionResult,int> TetraMesh::findNextFaceAlongRay(Point<3,
 	double dMin = std::numeric_limits<double>::infinity();
 	PointIntersectionResult best;
 
-	for(unsigned i=0;i<F.size();++i)
+	for(int i=0;i<F.size();++i)
 	{
 		if (i == IDf_exclude)
 			continue;

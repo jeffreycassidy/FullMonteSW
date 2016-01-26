@@ -18,6 +18,8 @@
 #include "TIMOS.hpp"
 #include "TIMOSReader.hpp"
 
+#include <FullMonte/Geometry/SourceDescription.hpp>
+
 using namespace std;
 
 const std::unordered_map<int,string> TIMOS::ParserDef::toks{
@@ -48,6 +50,8 @@ TetraMesh TIMOSReader::mesh() const
 	TetraMesh M(P,T,T_m);
 	return M;
 }
+
+
 
 std::vector<Material> TIMOSReader::materials() const
 {
@@ -222,3 +226,43 @@ ostream& operator<<(ostream& os,const Source& s)
 }
 
 }
+
+
+
+//bool TetraMeshBase::readFileMatlabTP(string fn)
+//{
+//	ifstream is(fn.c_str(),ios_base::in);
+//
+//    if(!is.good()){
+//        cerr << "Failed to open " << fn << " for reading; abort" << endl;
+//        return false;
+//    }
+//	int Nt,Np;
+//
+//    // read sizes
+//    is >> Np;
+//	is >> Nt;
+//
+//	// read point coordinates -- uses 1-based addressing
+//	P.resize(Np+1);
+//	P[0]=Point<3,double>();
+//	for (vector<Point<3,double> >::iterator it = P.begin()+1; it != P.end(); ++it)
+//		is >> *it;
+//
+//	T_p.resize(Nt+1);
+//    T_m.resize(Nt+1);
+//	unsigned t[4]={0,0,0,0},i=1,max_m=0;
+//	T_p[0]=TetraByPointID(t);
+//    T_m[0]=0;
+//    TetraByPointID IDps;
+//	for (vector<TetraByPointID>::iterator it=T_p.begin()+1; it != T_p.end(); ++it,++i)
+//	{
+//		is >> IDps;
+//		is >> T_m[i];
+//        *it=IDps.getSort();
+//		max_m = max(max_m,T_m[i]);
+//	}
+//
+//	return true;
+//}
+//

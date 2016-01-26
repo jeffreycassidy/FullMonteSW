@@ -53,19 +53,15 @@ public:
 
 
 
-/*
-class TIMOSWriter : public Writer {
+
+class TIMOSWriter {
 
 	std:: string sourceFn_, optFn_, meshFn_;
-
-//	void doWriteSources() const;
-//	void doWriteOptical() const;
-//	void doWriteMesh() const;
 
 	static void writeUserComments(std::ostream&,std::string);
 
 public:
-	TIMOSWriter(std::string pfx) : Writer(),sourceFn_(pfx+".source"),optFn_(pfx+".opt"),meshFn_(pfx+".mesh"){}
+	TIMOSWriter(std::string pfx) : sourceFn_(pfx+".source"),optFn_(pfx+".opt"),meshFn_(pfx+".mesh"){}
 
 	virtual ~TIMOSWriter(){}
 
@@ -77,7 +73,6 @@ public:
 	virtual void writeVolFluence(std::string fn,const TetraMesh& mesh,const std::vector<double>& phi_s,std::string) const;
 };
 
-*/
 
 #ifndef SWIG
 

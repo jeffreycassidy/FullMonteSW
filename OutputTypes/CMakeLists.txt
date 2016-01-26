@@ -1,0 +1,14 @@
+ADD_LIBRARY(FullMonteData SHARED fluencemap.cpp)
+TARGET_LINK_LIBRARIES(FullMonteData FullMonteGeometry)
+
+IF (WRAP_TCL)
+    SET_SOURCE_FILES_PROPERTIES(FullMonteData.i PROPERTIES CPLUSPLUS ON)
+
+    INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+
+    SWIG_ADD_MODULE(FullMonteDataTCL tcl FullMonteData.i)
+    SWIG_LINK_LIBRARIES(FullMonteDataTCL FullMonteData ${TCL_STUB_LIBRARY})
+ENDIF()
+
+ADD_EXECUTABLE(Test_OutputTypes Test_OutputTypes.cpp)
+TARGET_LINK_LIBRARIES(Test_OutputTypes boost_unit_test_framework)

@@ -1,12 +1,11 @@
-%module FullMonteTIMOS_TCL
+%module FullMonteTIMOSTCL
 
 %include "std_string.i"
 %apply std::string { const std::string* }
 
-%include "../../Geometry/Geometry_types.i"
+%include "../../Geometry/FullMonteGeometry_types.i"
 
 %{
-	
 #include "TIMOS.hpp"
 #include <FullMonte/Geometry/SourceDescription.hpp>
 #include <FullMonte/Geometry/TetraMesh.hpp>

@@ -163,7 +163,8 @@ public:
 	FaceByPointID getIDps() const { return f; }
 };
 
-class SourceMultiDescription : virtual public SourceDescription {
+class SourceMultiDescription : public cloner<SourceDescription,SourceMultiDescription>
+{
 	vector<SourceDescription*> sources;
 	double w_total;
 

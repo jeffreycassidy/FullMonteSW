@@ -8,29 +8,6 @@
 #ifndef KERNELS_KERNEL_HPP_
 #define KERNELS_KERNEL_HPP_
 
-#ifndef SWIG
-#define SWIG_OPENBRACE
-#define SWIG_CLOSEBRACE
-#endif
-
-#ifdef SWIG
-%module FullMonteKernel_TCL
-
-%include "std_vector.i"
-%include "std_string.i"
-
-%template(DoubleVector) std::vector<double>;
-
-%{
-#include "Kernel.hpp"
-#include "KernelObserver.hpp"
-#include "Software/OStreamObserver.hpp"
-%}
-
-
-#else
-
-
 #include <FullMonte/Kernels/Software/Logger/AccumulationArray.hpp>
 #include <FullMonte/Kernels/Software/Logger/Logger.hpp>
 #include <FullMonte/Kernels/Software/Logger/LoggerConservation.hpp>
@@ -54,19 +31,6 @@
 #include <FullMonte/Geometry/SimpleMaterial.hpp>
 
 #include <memory>
-
-#endif
-
-#ifdef SWIG
-
-%template(materialvector) std::vector<SimpleMaterial>;
-%template(sourcedescriptionvector) std::vector<SourceDescription*>;
-
-%include "KernelObserver.hpp"
-%include "Software/OStreamObserver.hpp"
-%include "../Geometry/Geometry_types.i"
-
-#endif
 
 class SourceDescription;
 
@@ -109,7 +73,6 @@ public:
 	// length of simulation unit, measured in cm
 	void setUnitsToCM(){ L_=1.0;  }
 	void setUnitsToMM(){ L_=0.1; }
-	void setUnitsToMetre(){ L_=100.0; }
 
 	const LoggerResults* getResult(std::string,std::string="") const;
 
@@ -222,6 +185,7 @@ public:
 template<class RNG>class TetraMCKernel : public MonteCarloKernelBase {
 public:
 	void setMesh(const TetraMesh& M){ M_=M; }
+	void setMesh(const TetraMeshBase& MB){ M_ = TetraMesh(MB); }
 
 	virtual void awaitFinish()
 	{
@@ -254,6 +218,10 @@ protected:
 	template<class T,class U>friend class TetraMCKernelThread;
 };
 
+#ifdef SWIG
+%template(TetraMCKernelAVX) TetraMCKernel<RNG_SFMT_AVX>;
+#endif
+
 template<class RNG>void TetraMCKernel<RNG>::prepare_sources_()
 {
 	emitter_ = SourceEmitterFactory<RNG_SFMT_AVX>(M_,src_);
@@ -261,27 +229,6 @@ template<class RNG>void TetraMCKernel<RNG>::prepare_sources_()
 }
 
 
-//class TetraVolumeKernel : public TetraMCKernel<RNG_SFMT_AVX> {
-//public:
-//
-//	TetraVolumeKernel(){}
-//
-//private:
-//
-//	//ThreadManager<LoggerType,RNG_SFMT_AVX> man_;
-//
-//	typedef std::tuple<
-//		LoggerEventMT,
-//		LoggerConservationMT,
-//		LoggerVolume<QueuedAccumulatorMT<double>>
-//		>
-//		LoggerType;
-//
-//}
-
-#ifdef SWIG
-%template(TetraMCKernelAVX) TetraMCKernel<RNG_SFMT_AVX>;
-#endif
 
 class TetraSurfaceKernel : public TetraMCKernel<RNG_SFMT_AVX> {
 public:
