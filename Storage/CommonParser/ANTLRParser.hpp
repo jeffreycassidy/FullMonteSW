@@ -1,9 +1,5 @@
-/*
- * NIRFAST.cpp
- *
- *  Created on: Mar 3, 2015
- *      Author: jcassidy
- */
+#ifndef ANTLRPARSER_INCLUDED
+#define ANTLRPARSER_INCLUDED
 
 #include <antlr3.h>
 #include <antlr3defs.h>
@@ -19,10 +15,8 @@
 
 #include <unordered_map>
 
-//#define ANTLR3_ENC_8BIT 8
-
 template<class ANTLR3LP>class ANTLRParser {
-	pANTLR3_INPUT_STREAM 			input_=nullptr;
+	pANTLR3_INPUT_STREAM 				input_=nullptr;
 	pANTLR3_COMMON_TOKEN_STREAM 		tokens_=nullptr;
 
 	typename ANTLR3LP::Lexer::ptr_t 	lex_=nullptr;
@@ -88,3 +82,5 @@ public:
 	typedef startrule_return_t(*startrule_t)(Parser::ptr_t); \
 	static  startrule_t startrule(Parser::ptr_t p){ return p->rulename; } \
 };
+
+#endif

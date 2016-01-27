@@ -1,4 +1,3 @@
-#include "SourceDescription.hpp"
 #include "newgeom.hpp"
 #include <limits>
 #include <sstream>

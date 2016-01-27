@@ -33,36 +33,36 @@ vector<unsigned> TetraMesh::tetras_close_to(const Point<3,double> p0,const float
 			Tlist.push_back(i);
 	return Tlist;
 }
-
-TetraMesh::TetraMesh(const double* p,unsigned Np_,const unsigned* t,unsigned Nt_)
-{
-    P.clear();
-    P.resize(Np_+1);
-    T_m.clear();
-    T_m.resize(Nt_+1);
-    T_p.clear();
-    T_p.resize(Nt_+1);
-
-    unsigned zeros[4]={0,0,0,0};
-
-    P[0] = Point<3,double>();
-    T_m[0] = 0;
-    T_p[0] = TetraByPointID(zeros);
-
-    for(unsigned i=1;i<=Np_;++i,p+=3)
-        P[i] = Point<3,double>(p);
-
-    for(unsigned i=1;i<=Nt_;++i,t+=5)
-    {
-        T_p[i]=TetraByPointID(t);        // direct copy from unsigned*
-        T_m[i]=t[4];
-    }
-
-	tetrasToFaces();
-
-	make_tetra_perm();
-}
-
+//
+//TetraMesh::TetraMesh(const double* p,unsigned Np_,const unsigned* t,unsigned Nt_)
+//{
+//    P.clear();
+//    P.resize(Np_+1);
+//    T_m.clear();
+//    T_m.resize(Nt_+1);
+//    T_p.clear();
+//    T_p.resize(Nt_+1);
+//
+//    unsigned zeros[4]={0,0,0,0};
+//
+//    P[0] = Point<3,double>();
+//    T_m[0] = 0;
+//    T_p[0] = TetraByPointID(zeros);
+//
+//    for(unsigned i=1;i<=Np_;++i,p+=3)
+//        P[i] = Point<3,double>(p);
+//
+//    for(unsigned i=1;i<=Nt_;++i,t+=5)
+//    {
+//        T_p[i]=TetraByPointID(t);        // direct copy from unsigned*
+//        T_m[i]=t[4];
+//    }
+//
+//	tetrasToFaces();
+//
+//	make_tetra_perm();
+//}
+//
 TetraMesh::~TetraMesh()
 {
 }
@@ -110,41 +110,41 @@ for(const auto& v : tetra_perm | boost::adaptors::indexed(0U))
 	cout << "Total " << sum << " elements" << endl;
 }
 
-void TetraMesh::fromBinary(const string& pts,const string& tetras,const string& faces)
-{
-    P.clear();
-    P.resize(pts.size()/24+1);
-    T_m.clear();
-    T_m.resize(tetras.size()/20+1);
-    T_p.clear();
-    T_p.resize(tetras.size()/20+1);
-
-    unsigned zeros[4]={0,0,0,0};
-    P[0] = Point<3,double>();
-    T_m[0] = 0;
-    T_p[0] = TetraByPointID(zeros);
-
-    unsigned i=1;
-
-    // copy points over
-    for(const double* p=(const double*)pts.data(); p < (const double*)pts.data()+pts.size()/8; p += 3,++i)
-    {
-        P[i][0] = p[0];
-        P[i][1] = p[1];
-        P[i][2] = p[2];
-    }
-
-    i=1;
-    for(const uint32_t* p=(const uint32_t*)tetras.data(); p < (const uint32_t*)tetras.data()+tetras.size()/4; p += 5,++i)
-    {
-        T_p[i][0] = p[0];
-        T_p[i][1] = p[1];
-        T_p[i][2] = p[2];
-        T_p[i][3] = p[3];
-        T_m[i] = p[4];
-    }
-	tetrasToFaces();
-}
+//void TetraMesh::fromBinary(const string& pts,const string& tetras,const string& faces)
+//{
+//    P.clear();
+//    P.resize(pts.size()/24+1);
+//    T_m.clear();
+//    T_m.resize(tetras.size()/20+1);
+//    T_p.clear();
+//    T_p.resize(tetras.size()/20+1);
+//
+//    unsigned zeros[4]={0,0,0,0};
+//    P[0] = Point<3,double>();
+//    T_m[0] = 0;
+//    T_p[0] = TetraByPointID(zeros);
+//
+//    unsigned i=1;
+//
+//    // copy points over
+//    for(const double* p=(const double*)pts.data(); p < (const double*)pts.data()+pts.size()/8; p += 3,++i)
+//    {
+//        P[i][0] = p[0];
+//        P[i][1] = p[1];
+//        P[i][2] = p[2];
+//    }
+//
+//    i=1;
+//    for(const uint32_t* p=(const uint32_t*)tetras.data(); p < (const uint32_t*)tetras.data()+tetras.size()/4; p += 5,++i)
+//    {
+//        T_p[i][0] = p[0];
+//        T_p[i][1] = p[1];
+//        T_p[i][2] = p[2];
+//        T_p[i][3] = p[3];
+//        T_m[i] = p[4];
+//    }
+//	tetrasToFaces();
+//}
 
 
 

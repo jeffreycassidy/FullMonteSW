@@ -151,13 +151,21 @@ class TetraMesh : public TetraMeshBase {
 
     TetraMesh(unsigned Np_,unsigned Nt_,unsigned Nf_) : TetraMeshBase(Np_,Nt_),T_f(Nf_+1),F_p(Nf_+1),F(Nf_+1),
         F_t(Nf_+1),tetras(Nt_+1){}
-	//TetraMesh(string,TetraFileType);
 	TetraMesh(const vector<Point<3,double> >& P_,const vector<TetraByPointID>& T_p_,const vector<unsigned>& T_m_)
 		: TetraMeshBase(P_,T_p_,T_m_) { tetrasToFaces(); }
-    TetraMesh(const double*,unsigned Np,const unsigned*,unsigned Nt);
-    ~TetraMesh();
 
-    void fromBinary(const string& pts,const string& tetras,const string& faces=string());
+	TetraMesh(const vector<std::array<float,3>>& P_,const vector<TetraByPointID>& T_p_,const vector<unsigned>& T_m_)
+	{
+		std::vector<Point<3,double>> Pd(P_.size());
+		std::vector<TetraByPointID> T_p(T_p_.size());
+
+		for(unsigned i=0;i<Pd.size();++i)
+			Pd[i] = Point<3,double>{ P_[i][0], P_[i][1], P_[i][2] };
+
+		*this = TetraMesh(TetraMeshBase(Pd,T_p_,T_m_));
+	}
+
+    ~TetraMesh();
 
     vector<unsigned> facesBoundingRegion(unsigned i) const;
     const vector<unsigned>& tetrasInRegion(unsigned i) const;

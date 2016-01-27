@@ -7,27 +7,17 @@
 
 %{
 #include "TIMOS.hpp"
-#include <FullMonte/Geometry/SourceDescription.hpp>
+#include <FullMonte/Geometry/Sources/Base.hpp>
 #include <FullMonte/Geometry/TetraMesh.hpp>
 #include <FullMonte/Geometry/Material.hpp>
+#include <FullMonte/Storage/TIMOS/TIMOS.hpp>
+#include <FullMonte/Storage/TIMOS/TIMOSReader.hpp>
+#include <FullMonte/Storage/TIMOS/TIMOSWriter.hpp>
+#include <FullMonte/Storage/TIMOS/TIMOSAntlrParser.hpp>
 
 %}
 
-%include "std_vector.i"
-namespace std{
-	%template(vectorlegend) vector<LegendEntry>;
-	%template(sourcevector) vector<SourceDescription*>;
-	%template(materialvector) vector<SimpleMaterial>;
-};
-
-struct LegendEntry {
-	std::string label;
-	std::array<float,3> colour;
-};
-
-struct SimpleMaterial {
-	double mu_a,mu_s,g,n;
-};
-
-
 %include "TIMOS.hpp"
+%include "TIMOSReader.hpp"
+%include "TIMOSAntlrParser.hpp"
+%include "TIMOSWriter.hpp"

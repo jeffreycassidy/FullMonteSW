@@ -18,27 +18,27 @@
 #include "TIMOS.hpp"
 #include "TIMOSReader.hpp"
 
-#include <FullMonte/Geometry/SourceDescription.hpp>
+#include <FullMonte/Geometry/Sources/Point.hpp>
+#include <FullMonte/Geometry/Sources/SurfaceTri.hpp>
+#include <FullMonte/Geometry/Sources/PencilBeam.hpp>
+#include <FullMonte/Geometry/Sources/Volume.hpp>
 
 using namespace std;
 
-const std::unordered_map<int,string> TIMOS::ParserDef::toks{
-#include "TIMOS_tokens.h"
-};
 
 
-TetraMesh TIMOSReader::mesh() const
+TetraMesh TIMOSReader::mesh()
 {
 	assert (!meshFn_.empty() || !"No filename specified for TIMOSReader::mesh");
-	TIMOS::Mesh tm = TIMOS::parse_mesh(meshFn_);
+	TIMOS::Mesh tm = parse_mesh(meshFn_);
 
 	std::vector<TetraByPointID> T(tm.T.size()+1);
 	std::vector<unsigned> T_m(tm.T.size()+1);
-	std::vector<Point<3,double>> P(tm.P.size()+1);
+	std::vector<array<float,3>> P(tm.P.size()+1);
 
-	P[0] = Point<3,double>{.0,.0,.0};
+	P[0] = std::array<float,3>{.0f,.0f,.0f};
 	for(unsigned i=0; i<tm.P.size(); ++i)
-		P[i+1] = Point<3,double>{tm.P[i][0], tm.P[i][1], tm.P[i][2]};
+		P[i+1] = std::array<float,3>{tm.P[i][0], tm.P[i][1], tm.P[i][2]};
 
 	T[0] = TetraByPointID(0,0,0,0);
 	for(unsigned i=0; i<tm.T.size(); ++i)
@@ -53,10 +53,10 @@ TetraMesh TIMOSReader::mesh() const
 
 
 
-std::vector<Material> TIMOSReader::materials() const
+std::vector<Material> TIMOSReader::materials()
 {
 	assert (!optFn_.empty() || !"No filename specified for TIMOSReader::materials");
-	TIMOS::Optical opt = TIMOS::parse_optical(optFn_);
+	TIMOS::Optical opt = parse_optical(optFn_);
 	std::vector<Material> mat(opt.mat.size()+1);
 
 	assert(opt.by_region);
@@ -69,10 +69,10 @@ std::vector<Material> TIMOSReader::materials() const
 	return mat;
 }
 
-std::vector<SimpleMaterial> TIMOSReader::materials_simple() const
+std::vector<SimpleMaterial> TIMOSReader::materials_simple()
 {
 	assert (!optFn_.empty() || !"No filename specified for TIMOSReader::materials");
-	TIMOS::Optical opt = TIMOS::parse_optical(optFn_);
+	TIMOS::Optical opt = parse_optical(optFn_);
 	std::vector<SimpleMaterial> mat(opt.mat.size()+1);
 
 	assert(opt.by_region);
@@ -94,51 +94,23 @@ std::vector<SimpleMaterial> TIMOSReader::materials_simple() const
 	return mat;
 }
 
-std::vector<SourceDescription*> TIMOSReader::sources() const
+
+
+std::vector<Source::Base*> TIMOSReader::sources()
 {
 	assert (!sourceFn_.empty() || !"No filename specified for TIMOSReader::sources");
-	std::vector<TIMOS::Source> ts = TIMOS::parse_sources(sourceFn_);
-	std::vector<SourceDescription*> src(ts.size(),nullptr);
+	std::vector<TIMOS::SourceDef> ts = parse_sources(sourceFn_);
 
-	for(unsigned i=0;i<ts.size();++i)
-	{
-		switch(ts[i].type)
-		{
-		case TIMOS::Source::Types::Volume:
-			src[i] = new VolumeSourceDescription(ts[i].details.vol.tetID,ts[i].w);
-			break;
+	std::vector<Source::Base*> src(ts.size(),nullptr);
 
-		case TIMOS::Source::Types::PencilBeam:
-			src[i] = new PencilBeamSourceDescription(
-					Point<3,double>(ts[i].details.pencilbeam.pos.data()),
-					UnitVector<3,double>(ts[i].details.pencilbeam.dir.data()),
-					ts[i].w,
-					ts[i].details.pencilbeam.tetID);
-			break;
-
-		case TIMOS::Source::Types::Face:
-			src[i] = new FaceSourceDescription(
-					FaceByPointID(ts[i].details.face.IDps),
-					ts[i].w);
-			break;
-
-		case TIMOS::Source::Types::Point:
-			src[i] = new IsotropicPointSourceDescription(
-					Point<3,double>(ts[i].details.point.pos.data()),
-					ts[i].w);
-			break;
-
-		default:
-			cerr << "Unsupported source type #" << ts[i].type << endl;
-		}
-	}
+	boost::transform(ts,src.begin(),TIMOSReader::convertToSource);
 
 	return src;
 }
 
-std::vector<LegendEntry> TIMOSReader::legend() const
+std::vector<LegendEntry> TIMOSReader::legend()
 {
-	std::vector<LegendEntry> l = TIMOS::parse_legend(legendFn_);
+	std::vector<LegendEntry> l = parse_legend(legendFn_);
 
 	std::vector<LegendEntry> L(l.size());
 
@@ -150,57 +122,12 @@ std::vector<LegendEntry> TIMOSReader::legend() const
 	return L;
 }
 
-namespace TIMOS {
-
-std::vector<Source>	parse_sources(std::string fn)
-{
-	ANTLRParser<ParserDef> P(fn);
-	ANTLR3CPP::base_tree bt = P.parse();
-
-	TIMOS::sourcefile_ast_visitor SV;
-
-	SV.walk(bt);
-	return SV.sources();
-}
-
-Mesh parse_mesh(std::string fn)
-{
-	ANTLRParser<ParserDef> M(fn);
-	ANTLR3CPP::base_tree mbt = M.parse<TIMOS::ParserDef::Mesh>();
-
-	TIMOS::meshfile_ast_visitor MV;
-
-	MV.walk(mbt);
-	return MV.mesh();
-}
-
-Optical parse_optical(std::string fn)
-{
-	ANTLRParser<ParserDef> O(fn);
-	TIMOS::optfile_ast_visitor OV;
-
-	OV.walk(O.parse<ParserDef::Mat>());
-	return OV.opt();
-}
-
-std::vector<LegendEntry> parse_legend(std::string fn)
-{
-	struct stat info;
-	if ( stat(fn.c_str(),&info) != 0 )
-		return std::vector<LegendEntry>();
-
-	ANTLRParser<ParserDef> R(fn);
-	TIMOS::legendfile_ast_visitor RV;
-
-	RV.walk(R.parse<ParserDef::Legend>());
-	return RV.legend();
-}
 
 
-ostream& operator<<(ostream& os,const Source& s)
+ostream& operator<<(ostream& os,const TIMOS::SourceDef& s)
 {
 	switch(s.type){
-	case Source::Types::PencilBeam:
+	case TIMOS::SourceDef::Types::PencilBeam:
 		os << "Pencil beam at (" <<
 		s.details.pencilbeam.pos[0] << ',' << s.details.pencilbeam.pos[1] << ',' << s.details.pencilbeam.pos[2] << ")" <<
 		" directed at (" <<
@@ -208,23 +135,21 @@ ostream& operator<<(ostream& os,const Source& s)
 		" tetra ID=" << s.details.pencilbeam.tetID;
 		break;
 
-	case Source::Types::Face:
+	case TIMOS::SourceDef::Types::Face:
 		os << "Face source at face [" << s.details.face.IDps[0] << ',' << s.details.face.IDps[1] << ',' << s.details.face.IDps[2] << ']';
 		break;
 
-	case Source::Types::Volume:
+	case TIMOS::SourceDef::Types::Volume:
 		os << "Volume source (" << s.type << ") in tetra " << s.details.vol.tetID;
 		break;
 
-	case Source::Types::Point:
+	case TIMOS::SourceDef::Types::Point:
 		os << "Point source at (" << s.details.point.pos[0] << ',' << s.details.point.pos[1] << ',' << s.details.point.pos[2] << ')';
 
 	default:
 		os << "(unknown type - " << s.type << ')';
 	}
 	return os << " weight=" << s.w;
-}
-
 }
 
 
