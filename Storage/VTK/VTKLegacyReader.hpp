@@ -11,7 +11,7 @@
 #include <FullMonte/Geometry/TetraMesh.hpp>
 #include <string>
 
-#include <vtkUnstructuredGrid.h>
+class vtkUnstructuredGrid;
 
 class VTKLegacyReader {
 

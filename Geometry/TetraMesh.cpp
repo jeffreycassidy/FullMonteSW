@@ -648,39 +648,39 @@ double TetraMesh::getFaceArea(const FaceByPointID& f) const
 
     return cross(AB,AC).norm_l2()/2;
 }
-
-pair<unsigned,boost::shared_array<const uint8_t> > TetraMesh::pointsAsBinary() const
-{
-    // create large object for points
-    unsigned Nb = 3*sizeof(double)*getNp();
-    double *p=new double[3*getNp()],*q=p;
-
-    for(point_const_iterator it=pointBegin(); it != pointEnd(); ++it)
-    {
-        *(q++) = (*it)[0];
-        *(q++) = (*it)[1];
-        *(q++) = (*it)[2];
-    }
-    return make_pair(Nb,boost::shared_array<const uint8_t>((const uint8_t*)p));
-}
-
-pair<unsigned,boost::shared_array<const uint8_t> > TetraMesh::tetrasAsBinary() const
-{
-    unsigned Nb,Nt = getNt();
-    unsigned *t = new unsigned[5*Nt],*u = t;
-    Nb=5*sizeof(unsigned)*Nt;
-    vector<unsigned>::const_iterator Mit=T_m.begin()+1;
-
-    for(tetra_const_iterator it=tetraIDBegin(); it != tetraIDEnd(); ++it)
-    {
-        *(u++) = (*it)[0];
-        *(u++) = (*it)[1];
-        *(u++) = (*it)[2];
-        *(u++) = (*it)[3];
-        *(u++) = *(Mit++);
-    }
-    return make_pair(Nb,boost::shared_array<const uint8_t>((const uint8_t*)t));
-}
+//
+//pair<unsigned,boost::shared_array<const uint8_t> > TetraMesh::pointsAsBinary() const
+//{
+//    // create large object for points
+//    unsigned Nb = 3*sizeof(double)*getNp();
+//    double *p=new double[3*getNp()],*q=p;
+//
+//    for(point_const_iterator it=pointBegin(); it != pointEnd(); ++it)
+//    {
+//        *(q++) = (*it)[0];
+//        *(q++) = (*it)[1];
+//        *(q++) = (*it)[2];
+//    }
+//    return make_pair(Nb,boost::shared_array<const uint8_t>((const uint8_t*)p));
+//}
+//
+//pair<unsigned,boost::shared_array<const uint8_t> > TetraMesh::tetrasAsBinary() const
+//{
+//    unsigned Nb,Nt = getNt();
+//    unsigned *t = new unsigned[5*Nt],*u = t;
+//    Nb=5*sizeof(unsigned)*Nt;
+//    vector<unsigned>::const_iterator Mit=T_m.begin()+1;
+//
+//    for(tetra_const_iterator it=tetraIDBegin(); it != tetraIDEnd(); ++it)
+//    {
+//        *(u++) = (*it)[0];
+//        *(u++) = (*it)[1];
+//        *(u++) = (*it)[2];
+//        *(u++) = (*it)[3];
+//        *(u++) = *(Mit++);
+//    }
+//    return make_pair(Nb,boost::shared_array<const uint8_t>((const uint8_t*)t));
+//}
 
 // TODO: Add more integrity checks
 bool TetraMesh::checkIntegrity(bool printResults) const

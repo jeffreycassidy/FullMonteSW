@@ -233,8 +233,8 @@ class TetraMesh : public TetraMeshBase {
     TriSurf extractRegionSurface(const vector<unsigned>& tetIDs) const;
 
     // functions for saving tetramesh representations
-    pair<unsigned,boost::shared_array<const uint8_t> > tetrasAsBinary() const;
-    pair<unsigned,boost::shared_array<const uint8_t> > pointsAsBinary() const;
+//    pair<unsigned,boost::shared_array<const uint8_t> > tetrasAsBinary() const;
+//    pair<unsigned,boost::shared_array<const uint8_t> > pointsAsBinary() const;
 
     // returns the intersection result and face ID entered (res, IDf) for the next face crossed by ray (p,dir)
     std::tuple<PointIntersectionResult,int> findNextFaceAlongRay(Point<3,double> p,UnitVector<3,double> dir,int IDf_exclude=0) const;

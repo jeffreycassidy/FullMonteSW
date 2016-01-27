@@ -8,6 +8,9 @@
 
 #include "TIMOSAntlrParser.hpp"
 
+#include "TIMOSLexer.h"
+#include "TIMOSParser.h"
+
 #include <FullMonte/Storage/CommonParser/ANTLRParser.hpp>
 
 //#include <unordered_map>
@@ -15,6 +18,19 @@
 //const std::unordered_map<int,string> TIMOSAntlrParser::Parser::toks {
 //	#include "TIMOS_tokens.h"
 //};
+
+class TIMOSAntlrParser::ANTLR3LP
+{
+public:
+	MAKE_LEXER_DEF(TIMOS)
+	MAKE_PARSER_DEF(TIMOS,sourcefile)
+
+	ADD_START_RULE(TIMOS,Mat,matfile)
+	ADD_START_RULE(TIMOS,Mesh,meshfile)
+	ADD_START_RULE(TIMOS,Source,sourcefile)
+	ADD_START_RULE(TIMOS,Legend,legendfile)
+};
+
 
 class TIMOSAntlrParser::sourcefile_ast_visitor : public ANTLR3CPP::ast_visitor {
 	std::vector<TIMOS::SourceDef> src;
@@ -220,7 +236,7 @@ public:
 
 std::vector<TIMOS::SourceDef>	TIMOSAntlrParser::parse_sources(std::string fn) const
 {
-	ANTLRParser<TIMOSAntlrParser> P(fn);
+	ANTLRParser<ANTLR3LP> P(fn);
 	ANTLR3CPP::base_tree bt = P.parse();
 
 	TIMOSAntlrParser::sourcefile_ast_visitor SV;
@@ -231,8 +247,8 @@ std::vector<TIMOS::SourceDef>	TIMOSAntlrParser::parse_sources(std::string fn) co
 
 TIMOS::Mesh TIMOSAntlrParser::parse_mesh(std::string fn) const
 {
-	ANTLRParser<TIMOSAntlrParser> M(fn);
-	ANTLR3CPP::base_tree mbt = M.parse<Mesh>();
+	ANTLRParser<ANTLR3LP> M(fn);
+	ANTLR3CPP::base_tree mbt = M.parse<ANTLR3LP::Mesh>();
 
 	TIMOSAntlrParser::meshfile_ast_visitor MV;
 
@@ -242,10 +258,10 @@ TIMOS::Mesh TIMOSAntlrParser::parse_mesh(std::string fn) const
 
 TIMOS::Optical TIMOSAntlrParser::parse_optical(std::string fn) const
 {
-	ANTLRParser<TIMOSAntlrParser> O(fn);
+	ANTLRParser<ANTLR3LP> O(fn);
 	TIMOSAntlrParser::optfile_ast_visitor OV;
 
-	OV.walk(O.parse<Mat>());
+	OV.walk(O.parse<ANTLR3LP::Mat>());
 	return OV.opt();
 }
 
@@ -255,10 +271,10 @@ std::vector<LegendEntry> TIMOSAntlrParser::parse_legend(std::string fn) const
 	if ( stat(fn.c_str(),&info) != 0 )
 		return std::vector<LegendEntry>();
 
-	ANTLRParser<TIMOSAntlrParser> R(fn);
+	ANTLRParser<ANTLR3LP> R(fn);
 	TIMOSAntlrParser::legendfile_ast_visitor RV;
 
-	RV.walk(R.parse<Legend>());
+	RV.walk(R.parse<ANTLR3LP::Legend>());
 	return RV.legend();
 }
 

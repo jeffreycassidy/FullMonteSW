@@ -5,3 +5,14 @@ IF (WRAP_TCL)
     SWIG_ADD_MODULE(FullMonteGeometryTCL tcl FullMonteGeometry.i)
     SWIG_LINK_LIBRARIES(FullMonteGeometryTCL ${TCL_STUB_LIBRARY} FullMonteGeometry)
 ENDIF()
+
+
+
+#### TESTS
+
+FIND_PACKAGE(VTK REQUIRED)
+
+INCLUDE_DIRECTORIES(${VTK_INCLUDE_DIRS})
+LINK_DIRECTORIES(${VTK_LIBRARY_DIRS})
+ADD_EXECUTABLE(Test_RayWalk Test_RayWalk.cpp RayWalk.cpp)
+TARGET_LINK_LIBRARIES(Test_RayWalk boost_unit_test_framework FullMonteGeometry FullMonteTIMOS vtkIOLegacy FullMonteVTKFile)
