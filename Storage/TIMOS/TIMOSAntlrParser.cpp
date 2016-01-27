@@ -218,7 +218,7 @@ public:
 
 
 
-std::vector<TIMOS::SourceDef>	TIMOSAntlrParser::parse_sources(std::string fn)
+std::vector<TIMOS::SourceDef>	TIMOSAntlrParser::parse_sources(std::string fn) const
 {
 	ANTLRParser<TIMOSAntlrParser> P(fn);
 	ANTLR3CPP::base_tree bt = P.parse();
@@ -229,7 +229,7 @@ std::vector<TIMOS::SourceDef>	TIMOSAntlrParser::parse_sources(std::string fn)
 	return SV.sources();
 }
 
-TIMOS::Mesh TIMOSAntlrParser::parse_mesh(std::string fn)
+TIMOS::Mesh TIMOSAntlrParser::parse_mesh(std::string fn) const
 {
 	ANTLRParser<TIMOSAntlrParser> M(fn);
 	ANTLR3CPP::base_tree mbt = M.parse<Mesh>();
@@ -240,7 +240,7 @@ TIMOS::Mesh TIMOSAntlrParser::parse_mesh(std::string fn)
 	return MV.mesh();
 }
 
-TIMOS::Optical TIMOSAntlrParser::parse_optical(std::string fn)
+TIMOS::Optical TIMOSAntlrParser::parse_optical(std::string fn) const
 {
 	ANTLRParser<TIMOSAntlrParser> O(fn);
 	TIMOSAntlrParser::optfile_ast_visitor OV;
@@ -249,7 +249,7 @@ TIMOS::Optical TIMOSAntlrParser::parse_optical(std::string fn)
 	return OV.opt();
 }
 
-std::vector<LegendEntry> TIMOSAntlrParser::parse_legend(std::string fn)
+std::vector<LegendEntry> TIMOSAntlrParser::parse_legend(std::string fn) const
 {
 	struct stat info;
 	if ( stat(fn.c_str(),&info) != 0 )

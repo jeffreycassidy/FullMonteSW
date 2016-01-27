@@ -5,8 +5,8 @@
  *      Author: jcassidy
  */
 
-#ifndef GEOMETRY_SOURCES_POINT_HPP_
-#define GEOMETRY_SOURCES_POINT_HPP_
+#ifndef GEOMETRY_SOURCES_POINTSOURCE_HPP_
+#define GEOMETRY_SOURCES_POINTSOURCE_HPP_
 
 #include "Base.hpp"
 #include <array>
@@ -14,10 +14,10 @@
 namespace Source
 {
 
-class Point : public Source::detail::cloner<Base,Point>
+class PointSource : public Source::detail::cloner<Source::Base,Source::PointSource>
 {
 public:
-	Point(float w,std::array<float,3> p,unsigned regionHint=-1U) :
+	PointSource(float w=1.0,std::array<float,3> p={0.0,0.0,0.0},unsigned regionHint=-1U) :
 		cloner(w),
 		m_pos(p),
 		m_regionHint(regionHint){}
@@ -36,4 +36,4 @@ private:
 };
 
 
-#endif /* GEOMETRY_SOURCES_POINT_HPP_ */
+#endif /* GEOMETRY_SOURCES_POINTSOURCE_HPP_ */

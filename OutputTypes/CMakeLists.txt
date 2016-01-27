@@ -10,5 +10,5 @@ IF (WRAP_TCL)
     SWIG_LINK_LIBRARIES(FullMonteDataTCL FullMonteData ${TCL_STUB_LIBRARY})
 ENDIF()
 
-ADD_EXECUTABLE(Test_OutputTypes Test_OutputTypes.cpp)
-TARGET_LINK_LIBRARIES(Test_OutputTypes boost_unit_test_framework)
+#ADD_EXECUTABLE(Test_OutputTypes Test_OutputTypes.cpp)
+#TARGET_LINK_LIBRARIES(Test_OutputTypes boost_unit_test_framework)

@@ -24,7 +24,6 @@ public:
 	TIMOS(){}
 	TIMOS(std::string pfx) : sourceFn_(pfx+".source"),optFn_(pfx+".opt"),meshFn_(pfx+".mesh"),legendFn_(pfx+".legend")
 	{
-		std::cout << "Hello! Prefix is " << pfx << std::endl;
 	}
 
 	virtual ~TIMOS(){}
@@ -87,12 +86,9 @@ protected:
 	friend std::ostream& operator<<(std::ostream& os,const TIMOS::SourceDef& s);
 };
 
-
-
-
-
-
-
-
+inline void ping(float w,std::array<float,3> a,std::array<float,3> b)
+{
+	std::cout << " Hello! w=" << w << " Array is " << a[0] << ' ' << a[1] << ' ' << a[2] << " -- " << b[0] << ' ' << b[1] << ' ' << b[2] << std::endl;
+}
 
 #endif /* TIMOS_HPP_ */

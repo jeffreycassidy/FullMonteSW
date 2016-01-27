@@ -3,6 +3,8 @@
 %include "std_string.i"
 %apply std::string { const std::string* }
 
+%include "std_vector.i"
+%include "../../Geometry/FullMonteGeometry.i"
 %include "../../Geometry/FullMonteGeometry_types.i"
 
 %{
@@ -21,3 +23,4 @@
 %include "TIMOSReader.hpp"
 %include "TIMOSAntlrParser.hpp"
 %include "TIMOSWriter.hpp"
+

@@ -9,19 +9,19 @@
 #define GEOMETRY_SOURCES_PENCILBEAM_HPP_
 
 #include "Base.hpp"
-#include "Point.hpp"
 #include "Directed.hpp"
+#include "PointSource.hpp"
 
 namespace Source
 {
 
-class PencilBeam : public Source::detail::cloner<Source::Point,PencilBeam>, public Source::detail::Directed
+class PencilBeam : public Source::detail::cloner<Source::PointSource,Source::PencilBeam>, public detail::Directed
 {
 public:
-	PencilBeam(float w,std::array<float,3> pos,std::array<float,3> dir,unsigned surfaceHint=-1U) :
-		cloner(w,pos),
+	PencilBeam(float w,std::array<float,3> pos,std::array<float,3> dir,unsigned elementHint=-1U) :
+		cloner(w,pos,elementHint),
 		Directed(dir),
-		m_boundarySurfaceHint(surfaceHint){ }
+		m_boundarySurfaceHint(-1U){ }
 
 	unsigned				boundaryHint()						const	{ return m_boundarySurfaceHint; 	}
 	void					boundaryHint(unsigned b)					{ m_boundarySurfaceHint=b;			}

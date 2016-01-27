@@ -3,8 +3,8 @@ IF (WRAP_VTK)
 FIND_PACKAGE(VTK REQUIRED)
 INCLUDE_DIRECTORIES(${VTK_INCLUDE_DIRS})
 
-ADD_EXECUTABLE(Test_PacketTrace Test_PacketTrace.cpp PacketPositionTraceVTK.cpp ../Storage/HexFile/HexFileReader.cpp)
-TARGET_LINK_LIBRARIES(Test_PacketTrace vtkFiltersCore vtkIOLegacy)
+#ADD_EXECUTABLE(Test_PacketTrace Test_PacketTrace.cpp PacketPositionTraceVTK.cpp ../Storage/HexFile/HexFileReader.cpp)
+#TARGET_LINK_LIBRARIES(Test_PacketTrace vtkFiltersCore vtkIOLegacy)
 
 ADD_LIBRARY(FullMonteVTK SHARED TetraMeshVTK.cpp TetraMeshRegionsVTK.cpp SparseVectorVTK PointSourceRep)
 TARGET_LINK_LIBRARIES(FullMonteVTK vtkFiltersCore vtkIOLegacy vtkCommonDataModel vtkFiltersSources vtkInteractionWidgets)

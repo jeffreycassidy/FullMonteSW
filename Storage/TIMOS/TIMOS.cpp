@@ -5,7 +5,7 @@
  *      Author: jcassidy
  */
 
-#include <FullMonte/Geometry/Sources/Point.hpp>
+#include <FullMonte/Geometry/Sources/PointSource.hpp>
 #include <FullMonte/Geometry/Sources/Volume.hpp>
 #include <FullMonte/Geometry/Sources/SurfaceTri.hpp>
 #include <FullMonte/Geometry/Sources/PencilBeam.hpp>
@@ -36,7 +36,7 @@ Source::Base*	TIMOS::convertToSource(const TIMOS::SourceDef tSrc)
 		break;
 
 	case TIMOS::SourceDef::Types::Point:
-		src = new Source::Point(
+		src = new Source::PointSource(
 				tSrc.w,
 				tSrc.details.point.pos);
 		break;
@@ -70,13 +70,14 @@ TIMOS::SourceDef TIMOS::convertFromSource(const Source::Base* src)
 		tSrc.type=TIMOS::SourceDef::Types::Volume;
 		tSrc.details.vol.tetID = vol->elementID();
 	}
-	else if (const Source::Point *pt = dynamic_cast<const Source::Point*>(src))
+	else if (const Source::PointSource *pt = dynamic_cast<const Source::PointSource*>(src))
 	{
 		tSrc.type=TIMOS::SourceDef::Types::Point;
 		tSrc.details.point.pos = pt->position();
 	}
 	else
 		throw std::logic_error("TIMOSReader::convertFromSource - invalid source type");
+	return tSrc;
 }
 
 

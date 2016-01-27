@@ -8,13 +8,13 @@
 #ifndef GEOMETRY_SOURCES_BALL_HPP_
 #define GEOMETRY_SOURCES_BALL_HPP_
 
-#include "Point.hpp"
 #include <array>
+#include "PointSource.hpp"
 
 namespace Source
 {
 
-class Ball : public Source::detail::cloner<Source::Point,Ball>
+class Ball : public Source::detail::cloner<Source::PointSource,Ball>
 {
 public:
 	Ball(float w,std::array<float,3> pos,float r) :

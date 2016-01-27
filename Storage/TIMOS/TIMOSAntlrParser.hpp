@@ -20,22 +20,12 @@ public:
 
 	virtual ~TIMOSAntlrParser(){}
 
-	virtual TetraMesh						mesh() 				const;
-	virtual std::vector<Material>			materials() 		const;
-	virtual std::vector<Source::Base*>		sources() 			const;
-
-	virtual std::vector<SimpleMaterial>		materials_simple() const;
-
-	virtual std::vector<LegendEntry> 		legend() const;
-
-	virtual void clear() {};
-
 private:
 
-	virtual Optical 					parse_optical(std::string fn)	override;
-	virtual std::vector<SourceDef>		parse_sources(std::string fn)	override;
-	virtual Mesh						parse_mesh(std::string fn)		override;
-	virtual std::vector<LegendEntry> 	parse_legend(std::string fn)	override;
+	virtual Optical 					parse_optical(std::string fn)	const override;
+	virtual std::vector<SourceDef>		parse_sources(std::string fn)	const override;
+	virtual Mesh						parse_mesh(std::string fn)		const override;
+	virtual std::vector<LegendEntry> 	parse_legend(std::string fn)	const override;
 
 	//static const std::unordered_map<int,std::string> toks;
 

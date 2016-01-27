@@ -10,18 +10,20 @@
 
 #include "Base.hpp"
 #include <vector>
+#include <boost/range.hpp>
 
 namespace Source {
 
 class Composite : public Source::detail::cloner<Base,Composite>
 {
 public:
-	// Create from a pair of iterators that dereference to a Source*
-	SourceMultiDescription(){}
-	template<class ConstIterator> SourceMultiDescription(ConstIterator begin,ConstIterator end) :
-			sources(begin,end),
-			w_total(0.0)
-			{ for(; begin != end; ++begin) w_total += (*begin)->getPower(); }
+	explicit Composite(float w=1.0) : cloner(w){}
+	Composite(float w,std::vector<Base*>&& srcs) : cloner(w),m_elements(srcs){}
+
+	boost::iterator_range<std::vector<Source::Base*>::iterator> elements()
+		{
+		return boost::iterator_range<std::vector<Source::Base*>::iterator>( m_elements.begin(), m_elements.end() );
+		}
 
 private:
 	std::vector<Base*>		m_elements;

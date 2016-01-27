@@ -18,16 +18,17 @@
 #include "TIMOS.hpp"
 #include "TIMOSReader.hpp"
 
-#include <FullMonte/Geometry/Sources/Point.hpp>
+#include <FullMonte/Geometry/Sources/PointSource.hpp>
 #include <FullMonte/Geometry/Sources/SurfaceTri.hpp>
 #include <FullMonte/Geometry/Sources/PencilBeam.hpp>
 #include <FullMonte/Geometry/Sources/Volume.hpp>
+#include <FullMonte/Geometry/Sources/Composite.hpp>
 
 using namespace std;
 
 
 
-TetraMesh TIMOSReader::mesh()
+TetraMesh TIMOSReader::mesh() const
 {
 	assert (!meshFn_.empty() || !"No filename specified for TIMOSReader::mesh");
 	TIMOS::Mesh tm = parse_mesh(meshFn_);
@@ -53,7 +54,7 @@ TetraMesh TIMOSReader::mesh()
 
 
 
-std::vector<Material> TIMOSReader::materials()
+std::vector<Material> TIMOSReader::materials() const
 {
 	assert (!optFn_.empty() || !"No filename specified for TIMOSReader::materials");
 	TIMOS::Optical opt = parse_optical(optFn_);
@@ -69,7 +70,7 @@ std::vector<Material> TIMOSReader::materials()
 	return mat;
 }
 
-std::vector<SimpleMaterial> TIMOSReader::materials_simple()
+std::vector<SimpleMaterial> TIMOSReader::materials_simple() const
 {
 	assert (!optFn_.empty() || !"No filename specified for TIMOSReader::materials");
 	TIMOS::Optical opt = parse_optical(optFn_);
@@ -96,7 +97,7 @@ std::vector<SimpleMaterial> TIMOSReader::materials_simple()
 
 
 
-std::vector<Source::Base*> TIMOSReader::sources()
+Source::Base* TIMOSReader::sources() const
 {
 	assert (!sourceFn_.empty() || !"No filename specified for TIMOSReader::sources");
 	std::vector<TIMOS::SourceDef> ts = parse_sources(sourceFn_);
@@ -105,10 +106,13 @@ std::vector<Source::Base*> TIMOSReader::sources()
 
 	boost::transform(ts,src.begin(),TIMOSReader::convertToSource);
 
-	return src;
+	if (ts.size() > 1)
+		return new Source::Composite(1.0,std::move(src));
+	else
+		return src[0];
 }
 
-std::vector<LegendEntry> TIMOSReader::legend()
+std::vector<LegendEntry> TIMOSReader::legend() const
 {
 	std::vector<LegendEntry> l = parse_legend(legendFn_);
 
@@ -121,37 +125,6 @@ std::vector<LegendEntry> TIMOSReader::legend()
 	}
 	return L;
 }
-
-
-
-ostream& operator<<(ostream& os,const TIMOS::SourceDef& s)
-{
-	switch(s.type){
-	case TIMOS::SourceDef::Types::PencilBeam:
-		os << "Pencil beam at (" <<
-		s.details.pencilbeam.pos[0] << ',' << s.details.pencilbeam.pos[1] << ',' << s.details.pencilbeam.pos[2] << ")" <<
-		" directed at (" <<
-		s.details.pencilbeam.dir[0] << ',' << s.details.pencilbeam.dir[1] << ',' << s.details.pencilbeam.dir[2] << ")" <<
-		" tetra ID=" << s.details.pencilbeam.tetID;
-		break;
-
-	case TIMOS::SourceDef::Types::Face:
-		os << "Face source at face [" << s.details.face.IDps[0] << ',' << s.details.face.IDps[1] << ',' << s.details.face.IDps[2] << ']';
-		break;
-
-	case TIMOS::SourceDef::Types::Volume:
-		os << "Volume source (" << s.type << ") in tetra " << s.details.vol.tetID;
-		break;
-
-	case TIMOS::SourceDef::Types::Point:
-		os << "Point source at (" << s.details.point.pos[0] << ',' << s.details.point.pos[1] << ',' << s.details.point.pos[2] << ')';
-
-	default:
-		os << "(unknown type - " << s.type << ')';
-	}
-	return os << " weight=" << s.w;
-}
-
 
 
 //bool TetraMeshBase::readFileMatlabTP(string fn)
