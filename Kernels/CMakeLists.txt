@@ -8,3 +8,6 @@ IF(WRAP_TCL)
     SWIG_ADD_MODULE(FullMonteKernelsTCL tcl FullMonteKernels.i)
     SWIG_LINK_LIBRARIES(FullMonteKernelsTCL FullMonteKernels ${TCL_STUB_LIBRARY})	
 ENDIF()
+
+
+ADD_SUBDIRECTORY(Software)

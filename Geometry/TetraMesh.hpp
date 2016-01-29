@@ -204,9 +204,6 @@ class TetraMesh : public TetraMeshBase {
     // checks if a point is within a given tetra by expressing as a linear combination of the corner points
     bool isWithinByPoints(int,const Point<3,double>&) const;
 
-    // find the surface element hit by an incoming ray
-//    pair<pair<unsigned,int>,Point<3,double> > getSurfaceElement(const Ray<3,double>&) const;
-
     vector<unsigned> getMaterialMap() const { return T_m; }
 
 	// checks if faces are oriented correctly
@@ -247,8 +244,6 @@ class TetraMesh : public TetraMeshBase {
     		tetP[i] = P[IDps[i]];
     	return centroid<double,3>(tetP);
     }
-
-    friend class TetraGraph;
 };
 
 

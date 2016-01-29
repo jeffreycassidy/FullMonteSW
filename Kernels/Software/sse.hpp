@@ -12,12 +12,12 @@
 
 // A whole lot of SSE helper routines for small math functions
 
-inline __m128 dot(__m128 a,__m128 b);
+//inline __m128 dot(__m128 a,__m128 b);
 inline __m128 dot4bcast(__m128 a,__m128 b);
 inline __m128 dot3bcast(__m128 a,__m128 b);
-inline __m128 cross(__m128 u,__m128 v);
-inline __m128 norm(__m128 v);
-inline __m128 normalize(__m128 v);
+//inline __m128 cross(__m128 u,__m128 v);
+//inline __m128 norm(__m128 v);
+//inline __m128 normalize(__m128 v);
 inline __m128 reflect(__m128 d,__m128 n,__m128 sincos);
 unsigned getMinIndex3(__m128 v,float* =NULL);
 unsigned getMinIndex4(__m128 v,float* =NULL);
@@ -25,48 +25,48 @@ inline std::pair<unsigned,__m128> getMinIndex4p(__m128 v);
 unsigned getMinAbsIndex3(__m128 v,float* =NULL);
 unsigned getMinAbsIndex4(__m128 v,float* =NULL);
 inline float selectFrom(__m128 v,unsigned i);
-inline __m128 getBasis(unsigned i);
+//inline __m128 getBasis(unsigned i);
 inline __m128 getNormalTo(__m128 d);
 inline __m128 normalProjectionUnit(__m128 v,__m128 n);
-
-inline float getFloat(__m128 v)
-{
-    float f;
-    _mm_store_ss(&f,v);
-    return f;
-}
-
-std::ostream& operator<<(std::ostream& os,__m128 x);
-std::ostream& operator<<(std::ostream& os,__m128i x);
-std::ostream& operator<<(std::ostream& os,__m128d x);
+//
+//inline float getFloat(__m128 v)
+//{
+//    float f;
+//    _mm_store_ss(&f,v);
+//    return f;
+//}
+//
+//std::ostream& operator<<(std::ostream& os,__m128 x);
+//std::ostream& operator<<(std::ostream& os,__m128i x);
+//std::ostream& operator<<(std::ostream& os,__m128d x);
 
 // returns the projection of v normal to n
 // v - v (v dot n)
 //
 // no normalization; assumes n is unit
-inline __m128 normalProjectionUnit(__m128 v,__m128 n)
-{
-    __m128 costheta = dot(v,n);
-    return _mm_sub_ps(v,_mm_mul_ps(n,costheta));
-}
+//inline __m128 normalProjectionUnit(__m128 v,__m128 n)
+//{
+//    __m128 costheta = dot(v,n);
+//    return _mm_sub_ps(v,_mm_mul_ps(n,costheta));
+//}
 
 // computes dot product of a and b, broadcasting to all elements
-inline __m128 dot(__m128 a,__m128 b)
-{
-    __m128 ab = _mm_mul_ps(a,b);
-    __m128 ab_sum = _mm_add_ps(ab,_mm_shuffle_ps(ab,ab,_MM_SHUFFLE(2,3,0,1)));
-    return _mm_add_ps(ab_sum,_mm_shuffle_ps(ab_sum,ab_sum,_MM_SHUFFLE(0,0,2,2)));
-}
-
-inline __m128 dot4bcast(__m128 a,__m128 b)
-{
-    return _mm_dp_ps(a,b,0xff);
-}
-
-inline __m128 dot3bcast(__m128 a,__m128 b)
-{
-    return _mm_dp_ps(a,b,0x7f);
-}
+//inline __m128 dot(__m128 a,__m128 b)
+//{
+//    __m128 ab = _mm_mul_ps(a,b);
+//    __m128 ab_sum = _mm_add_ps(ab,_mm_shuffle_ps(ab,ab,_MM_SHUFFLE(2,3,0,1)));
+//    return _mm_add_ps(ab_sum,_mm_shuffle_ps(ab_sum,ab_sum,_MM_SHUFFLE(0,0,2,2)));
+//}
+//
+//inline __m128 dot4bcast(__m128 a,__m128 b)
+//{
+//    return _mm_dp_ps(a,b,0xff);
+//}
+//
+//inline __m128 dot3bcast(__m128 a,__m128 b)
+//{
+//    return _mm_dp_ps(a,b,0x7f);
+//}
 
 inline __m128 reflect(__m128 d,__m128 n,__m128 sincos)
 {
@@ -78,40 +78,40 @@ inline __m128 reflect(__m128 d,__m128 n,__m128 sincos)
 
 // u = (a,b,c)   v = (d,e,f)
 // cross product is (bf-ce, cd-af, ae-bd)
-inline __m128 cross(__m128 u,__m128 v)
-{
-    __m128 bca = _mm_shuffle_ps(u,u,_MM_SHUFFLE(3,0,2,1));
-    __m128 fde = _mm_shuffle_ps(v,v,_MM_SHUFFLE(3,1,0,2));
-
-    __m128 bf_cd_ae = _mm_mul_ps(bca,fde);
-
-    __m128 cab = _mm_shuffle_ps(u,u,_MM_SHUFFLE(3,1,0,2));
-    __m128 efd = _mm_shuffle_ps(v,v,_MM_SHUFFLE(3,0,2,1));
-
-    __m128 ec_af_bd = _mm_mul_ps(efd,cab);
-
-    return _mm_sub_ps(bf_cd_ae,ec_af_bd);
-}
+//inline __m128 cross(__m128 u,__m128 v)
+//{
+//    __m128 bca = _mm_shuffle_ps(u,u,_MM_SHUFFLE(3,0,2,1));
+//    __m128 fde = _mm_shuffle_ps(v,v,_MM_SHUFFLE(3,1,0,2));
+//
+//    __m128 bf_cd_ae = _mm_mul_ps(bca,fde);
+//
+//    __m128 cab = _mm_shuffle_ps(u,u,_MM_SHUFFLE(3,1,0,2));
+//    __m128 efd = _mm_shuffle_ps(v,v,_MM_SHUFFLE(3,0,2,1));
+//
+//    __m128 ec_af_bd = _mm_mul_ps(efd,cab);
+//
+//    return _mm_sub_ps(bf_cd_ae,ec_af_bd);
+//}
 
 // gets the length of the component orthogonal to the vector which would make it unit
 // NOTE: Make sure |v| <= 1.0, or NaN will result silently
 // sqrt(1 - |v|^2)
-inline __m128 orthognorm(__m128 v)
-{
-	__m128 one=_mm_set_ss(1.0);
-    return _mm_sqrt_ss(_mm_sub_ss(one,dot(v,v)));
-}
-
-inline __m128 norm(__m128 v)
-{
-    __m128 l = _mm_sqrt_ps(dot(v,v));
-    return l;
-}
-
-inline __m128 normalize(__m128 v)
-{
-    return _mm_div_ps(v,norm(v));
-}
+//inline __m128 orthognorm(__m128 v)
+//{
+//	__m128 one=_mm_set_ss(1.0);
+//    return _mm_sqrt_ss(_mm_sub_ss(one,dot(v,v)));
+//}
+//
+//inline __m128 norm(__m128 v)
+//{
+//    __m128 l = _mm_sqrt_ps(dot(v,v));
+//    return l;
+//}
+//
+//inline __m128 normalize(__m128 v)
+//{
+//    return _mm_div_ps(v,norm(v));
+//}
 
 inline unsigned getMaxIndex4(__m128 v,float *ptr)
 {
@@ -184,13 +184,13 @@ inline __m128 getBasis(unsigned i)
     f[i] = 1;
     return _mm_load_ps(f);
 }
-
-inline __m128 getNormalTo(__m128 d)
-{
-    unsigned i=getMinAbsIndex3(d);
-    __m128 b = getBasis(i);
-    return normalize(cross(d,b));
-}
+//
+//inline __m128 getNormalTo(__m128 d)
+//{
+//    unsigned i=getMinAbsIndex3(d);
+//    __m128 b = getBasis(i);
+//    return normalize(cross(d,b));
+//}
 
 
 inline __m128 FresnelSSE(__m128 n1n2,__m128 sincos)

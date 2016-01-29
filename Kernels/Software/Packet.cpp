@@ -1,19 +1,26 @@
 #include "Packet.hpp"
 
+#include <cmath>
+#include <iostream>
+
+#include "SSEMath.hpp"
+
+using namespace std;
+
 /** Checks if the packet is orthonormal to within a tolerance epsilon (eps)
  * @param	eps		Tolerance for checking
  * @returns	True if packet is OK.
  */
 
-bool Packet::checkOrthonormal(float eps) const
+bool PacketDirection::checkOrthonormal(float eps) const
 {
 	return (
-			fabs(dot3(a,b)) < eps &&
-			fabs(dot3(a,d)) < eps &&
-			fabs(dot3(d,b)) < eps &&
-			fabs(dot3(a,a)-1.0f) < eps &&
-			fabs(dot3(b,b)-1.0f) < eps &&
-			fabs(dot3(d,d)-1.0f) < eps);
+			std::abs(float(dot(a,b))) < eps &&
+			std::abs(float(dot(a,d))) < eps &&
+			std::abs(float(dot(d,b))) < eps &&
+			std::abs(float(dot(a,a)))-1.0f < eps &&
+			std::abs(float(dot(b,b)))-1.0f < eps &&
+			std::abs(float(dot(d,d)))-1.0f < eps);
 }
 
 
@@ -23,14 +30,14 @@ bool Packet::checkOrthonormal(float eps) const
  * @returns True if packet is OK.
  */
 
-bool Packet::checkOrthonormalVerbose(float eps) const
+bool PacketDirection::checkOrthonormalVerbose(float eps) const
 {
-	float dot_ab=dot3(a,b);
-	float dot_ad=dot3(a,d);
-	float dot_db=dot3(d,b);
-	float dot_dd=dot3(d,d);
-	float dot_aa=dot3(a,a);
-	float dot_bb=dot3(b,b);
+	float dot_ab=float(SSE::Vector3::dot(a,b));
+	float dot_ad=float(SSE::Vector3::dot(a,d));
+	float dot_db=float(SSE::Vector3::dot(d,b));
+	float dot_dd=float(SSE::Vector3::dot(d,d));
+	float dot_aa=float(SSE::Vector3::dot(a,a));
+	float dot_bb=float(SSE::Vector3::dot(b,b));
 
 	if (fabs(dot_ab) < eps &&
 			fabs(dot_ad) < eps &&
@@ -40,12 +47,12 @@ bool Packet::checkOrthonormalVerbose(float eps) const
 			fabs(dot_dd-1.0f) < eps)
 		return true;
 
-	cerr << "Orthonormal test failed:" << endl;
-	cerr << "  <d,d> = " << dot_dd << endl;
-	cerr << "  <d,a> = " << dot_ad << endl;
-	cerr << "  <d,b> = " << dot_db << endl;
-	cerr << "  <a,a> = " << dot_aa << endl;
-	cerr << "  <a,b> = " << dot_ab << endl;
-	cerr << "  <b,b> = " << dot_bb << endl;
+	std::cerr << "Orthonormal test failed:" << std::endl;
+	std::cerr << "  <d,d> = " << dot_dd << std::endl;
+	std::cerr << "  <d,a> = " << dot_ad << std::endl;
+	std::cerr << "  <d,b> = " << dot_db << std::endl;
+	std::cerr << "  <a,a> = " << dot_aa << std::endl;
+	std::cerr << "  <a,b> = " << dot_ab << std::endl;
+	std::cerr << "  <b,b> = " << dot_bb << std::endl;
 	return false;
 }

@@ -21,8 +21,8 @@ public:
 		cloner(w,pos),
 		m_radius(r){}
 
-	std::array<float,3>		centre() 						const 	{ return pos(); 	}
-	void					centre(std::array<float,3> p)			{ pos(p); 			}
+	std::array<float,3>		centre() 						const 	{ return position(); 	}
+	void					centre(std::array<float,3> p)			{ position(p); 			}
 
 	float 					radius()						const 	{ return m_radius; 	}
 	void 					radius(float r)							{ m_radius=r; 		}
