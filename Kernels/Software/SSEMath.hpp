@@ -180,10 +180,12 @@ template<std::size_t D>inline Scalar dot(Vector<D> lhs,Vector<D> rhs)
 	return Vector<D>::dot(lhs,rhs);
 }
 
+
+enum Checking { NoCheck, Assert, Except, Normalize };
+
 template<std::size_t D>class UnitVector : public Vector<D>
 {
 public:
-	enum Checking { NoCheck, Assert, Except, Normalize };
 
 	explicit UnitVector() : Vector<D>(SSEBase::undef()){}
 
