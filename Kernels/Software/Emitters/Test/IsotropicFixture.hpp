@@ -22,12 +22,15 @@ template<typename FT>struct Polar
 	FT lambda;	///< Azimuth
 };
 
-struct IsotropicFixture3
+/** Checks that a source has an isotropic emission pattern
+ * TODO: Need to check the accumulated statistics when it's done! */
+
+struct IsotropicFixture
 {
-	IsotropicFixture3()
+	IsotropicFixture()
 	{
 	}
-	~IsotropicFixture3()
+	~IsotropicFixture()
 	{
 	}
 
@@ -55,12 +58,9 @@ struct IsotropicFixture3
 		return pc;
 	}
 
-	template<typename FT>void add(std::array<FT,3> dir)
+	template<typename FT>void testDirection(std::array<FT,3> dir)
 	{
-		Polar<FT> pc = cartesianToPolar(dir);
-
-		for(unsigned i=0;i<3;++i)
-			BOOST_CHECK(!isnan(dir[i]));
+		//Polar<FT> pc = cartesianToPolar(dir);
 	}
 
 	template<typename FT>std::array<unsigned,2> bin2ForPolar(Polar<FT> pc)

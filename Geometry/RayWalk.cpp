@@ -40,7 +40,7 @@ void RayWalkIterator::increment()
 		stepInTetra();
 }
 
-RayWalkIterator RayWalkIterator::init(const TetraMesh& M,const std::array<double,3> p0,const std::array<double,3> dir)
+RayWalkIterator RayWalkIterator::init(const TetraMesh& M,const std::array<float,3> p0,const std::array<float,3> dir)
 {
 	RayWalkIterator rwi;
 
@@ -53,7 +53,7 @@ RayWalkIterator RayWalkIterator::init(const TetraMesh& M,const std::array<double
 	rwi.m_currSeg.dToOrigin = 0;			// starts at ray origin
 
 	// find the enclosing tetra
-	rwi.m_currSeg.IDt = M.findEnclosingTetra(Point<3,double>{ p0[0], p0[1], p0[2]});
+	rwi.m_currSeg.IDt = M.findEnclosingTetra(p0);
 	rwi.m_currSeg.matID = M.getMaterial(rwi.m_currSeg.IDt);
 
 	if (rwi.m_currSeg.IDt == 0)			// doesn't start in a tetra; search faces
@@ -67,7 +67,7 @@ RayWalkIterator RayWalkIterator::init(const TetraMesh& M,const std::array<double
 		rwi.stepInTetra();
 
 
-	//std::array<double,3> v01{ rwi.currSeg_.f1.p[0]-p0[0], rwi.currSeg_.f1.p[1]-p0[1],rwi.currSeg_.f1.p[2]-p0[2]} ;
+	//std::array<float,3> v01{ rwi.currSeg_.f1.p[0]-p0[0], rwi.currSeg_.f1.p[1]-p0[1],rwi.currSeg_.f1.p[2]-p0[2]} ;
 
 	return rwi;
 }
@@ -86,7 +86,7 @@ void RayWalkIterator::stepInTetra()
 	float t[4];
 	_mm_store_ps(t,sr.Pe);
 
-	m_currSeg.f1.p =  Point<3,double>{t[0],t[1],t[2]};
+	m_currSeg.f1.p =  array<float,3>{t[0],t[1],t[2]};
 	m_currSeg.f1.IDf= sr.IDfe;
 
 	_mm_store_ss(t,sr.distance);
@@ -109,9 +109,9 @@ void RayWalkIterator::stepExterior()
 	PointIntersectionResult res;
 
 	// find the next face along the ray, excluding the current face from consideration (may see hit due to tolerance errors)
-	std::tie(res,IDf) = m_mesh->findNextFaceAlongRay(m_currSeg.f1.p, UnitVector<3,double>{m_dir[0],m_dir[1],m_dir[2]},m_currSeg.f1.IDf);
+	std::tie(res,IDf) = m_mesh->findNextFaceAlongRay(m_currSeg.f1.p, m_dir, m_currSeg.f1.IDf);
 
-	m_currSeg.f1.p = res.q;
+	boost::copy(res.q,m_currSeg.f1.p.begin());
 	m_currSeg.lSeg = res.t;
 
 	unsigned IDt;

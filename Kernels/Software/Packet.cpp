@@ -2,10 +2,17 @@
 
 #include <cmath>
 #include <iostream>
+#include <tuple>
 
 #include "SSEMath.hpp"
 
 using namespace std;
+
+PacketDirection::PacketDirection(SSE::UnitVector3 d) :
+		d(d)
+{
+	tie(a,b) = SSE::normalsTo(d);
+}
 
 /** Checks if the packet is orthonormal to within a tolerance epsilon (eps)
  * @param	eps		Tolerance for checking

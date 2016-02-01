@@ -17,20 +17,20 @@ namespace Source
 class PointSource : public Source::detail::cloner<Source::Base,Source::PointSource>
 {
 public:
-	PointSource(float w=1.0,std::array<float,3> p={0.0,0.0,0.0},unsigned regionHint=-1U) :
+	PointSource(float w=1.0,std::array<float,3> p={0.0,0.0,0.0},unsigned elementHint=-1U) :
 		cloner(w),
 		m_pos(p),
-		m_regionHint(regionHint){}
+		m_elementHint(elementHint){}
 
 	std::array<float,3> position() 						const	{ return m_pos; }
 	void 				position(std::array<float,3> p)			{ m_pos=p; }
 
-	unsigned			regionHint()					const 	{ return m_regionHint; 	}
-	void				regionHint(unsigned r)					{ m_regionHint=r;		}
+	unsigned			elementHint()					const 	{ return m_elementHint; 	}
+	void				elementHint(unsigned r)					{ m_elementHint=r;		}
 
 private:
 	std::array<float,3>		m_pos;
-	unsigned				m_regionHint=-1U;
+	unsigned				m_elementHint=-1U;
 };
 
 };

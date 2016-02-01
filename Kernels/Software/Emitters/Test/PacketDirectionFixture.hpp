@@ -5,8 +5,8 @@
  *      Author: jcassidy
  */
 
-#ifndef KERNELS_SOFTWARE_EMITTERS_TEST_DIRECTIONFIXTURE_HPP_
-#define KERNELS_SOFTWARE_EMITTERS_TEST_DIRECTIONFIXTURE_HPP_
+#ifndef KERNELS_SOFTWARE_EMITTERS_TEST_PACKETDIRECTIONFIXTURE_HPP_
+#define KERNELS_SOFTWARE_EMITTERS_TEST_PACKETDIRECTIONFIXTURE_HPP_
 
 #include <FullMonte/Kernels/Software/Packet.hpp>
 
@@ -17,13 +17,14 @@
 
 /** Checks that the direction is correct (d,a,b all unit, and all mutually orthogonal) */
 
-struct DirectionFixture : public UnitVectorFixture, public AbsoluteOrthogonalFixture
+struct PacketDirectionFixture : public UnitVectorFixture, public AbsoluteOrthogonalFixture
 {
-	void testDirection(PacketDirection dir)
+	void testPacketDirection(PacketDirection dir)
 	{
 		std::array<float,3> d = dir.d.array();
 		std::array<float,3> a = dir.a.array();
 		std::array<float,3> b = dir.b.array();
+
 		BOOST_CHECK_SMALL(OrthogonalFixture::dot(d,a), m_nonOrthogonalEps);
 		BOOST_CHECK_SMALL(OrthogonalFixture::dot(d,b), m_nonOrthogonalEps);
 		BOOST_CHECK_SMALL(OrthogonalFixture::dot(a,b), m_nonOrthogonalEps);
@@ -39,4 +40,4 @@ struct DirectionFixture : public UnitVectorFixture, public AbsoluteOrthogonalFix
 
 
 
-#endif /* KERNELS_SOFTWARE_EMITTERS_TEST_DIRECTIONFIXTURE_HPP_ */
+#endif /* KERNELS_SOFTWARE_EMITTERS_TEST_PACKETDIRECTIONFIXTURE_HPP_ */

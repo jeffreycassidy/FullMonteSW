@@ -13,6 +13,8 @@
 #include <vtkPoints.h>
 #include <vtkPolyData.h>
 #include <vtkCellArray.h>
+#include <vtkPointData.h>
+#include <vtkCharArray.h>
 
 #include <vtkPolyDataWriter.h>
 
@@ -26,11 +28,17 @@ void VTKPointCloud::write(const std::string& fn)
 	vtkIdTypeArray *idps = vtkIdTypeArray::New();
 	idps->SetNumberOfTuples(2*m_vtkP->GetNumberOfPoints());
 
+	vtkCharArray *cc = vtkCharArray::New();
+	cc->SetNumberOfTuples(m_vtkP->GetNumberOfPoints());
+
 	for(unsigned i=0;i<m_vtkP->GetNumberOfPoints();i++)
 	{
 		idps->SetValue(i<<1,		1);
 		idps->SetValue((i<<1)+1,	i);
+
+		cc->SetValue(i,1);
 	}
+
 
 	vtkCellArray *ca = vtkCellArray::New();
 	ca->SetCells(m_vtkP->GetNumberOfPoints(),idps);
@@ -38,6 +46,7 @@ void VTKPointCloud::write(const std::string& fn)
 	vtkPolyData *pd = vtkPolyData::New();
 	pd->SetPoints(m_vtkP);
 	pd->SetVerts(ca);
+	pd->GetPointData()->SetScalars(cc);
 
 
 	vtkPolyDataWriter* W = vtkPolyDataWriter::New();

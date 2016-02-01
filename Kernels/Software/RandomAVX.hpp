@@ -119,6 +119,7 @@ class RNG_SFMT_AVX {
 
     inline pair<__m256,__m256> draw_m256f8_uvect2();
 
+
     //inline const uint64_t* draw_u64_2();
     //inline const uint32_t* draw_u32_4();
 };
@@ -281,9 +282,9 @@ inline pair<__m256,__m256> RNG_SFMT_AVX::draw_m256f8_uvect2()
 	return make_pair(_mm256_unpacklo_ps(x,y), _mm256_unpackhi_ps(x,y));
 }
 
+
+
 /** Returns a 3D unit vector packed into the lower 3 elements of a __m128 (upper is zero).
- *
- * TODO: It produces unit vectors but distribution has not been thoroughly checked
  *
  * Works by taking a uniform [-1,1) RV for cos(theta), setting sin(theta)=sqrt(1-cos2(theta)),
  * and then rotating that by
@@ -292,11 +293,11 @@ inline __m128 RNG_SFMT_AVX::draw_m128f3_uvect()
 {
 	if(uv3d_count == 32)
 	{
-		__m256 cosphi = draw_m256f8_pm1();
+		__m256 cosphi = draw_m256f8_pm1();						// cos(phi) U[-1,1)
 		__m256 sinphi = _mm256_sqrt_ps(
 				_mm256_sub_ps(
 						_mm256_set1_ps(1.0),
-						_mm256_mul_ps(cosphi,cosphi)));
+						_mm256_mul_ps(cosphi,cosphi)));			// sin(phi) = sqrt(1-cos2(phi))
 
 		__m256 sintheta,costheta;
 		__m256 twopi = _mm256_set1_ps(2.0*boost::math::constants::pi<float>());

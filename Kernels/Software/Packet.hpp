@@ -8,6 +8,7 @@ struct PacketDirection
 {
 	PacketDirection(){}
 	PacketDirection(const PacketDirection&) = default;
+	PacketDirection(SSE::UnitVector3 d);
 	PacketDirection(SSE::UnitVector3 di,SSE::UnitVector3 ai,SSE::UnitVector3 bi) : d(di),a(ai),b(bi){}
 
 	SSE::UnitVector3		d;
@@ -74,7 +75,7 @@ struct LaunchPacket
 //    }
 //
 //    /** Sets the direction for the packet, selecting auxiliary vectors (a,b) as necessary.
-//     * Current implementation uses \f{eqnarray}{ \uvect a = \frac{\uvect d \times \uvect k}{|\uvect d \times \uvect k|} \\
+//     * Current implementation uses \f{eqnarray}{ \uvect a = \frac{\uvect d \times \uvect k}{|\uvect d \times \uvect k|}
 //     *  \uvect b =\uvect{d}\times\uvect{a} \f}
 //     *
 //     * @param d_ New direction

@@ -166,6 +166,7 @@ template<size_t D,class T>class Point : public array<T,D>
 	Point(const std::initializer_list<double>& il_){ copy(il_.begin(),il_.end(),array<T,D>::begin()); }
 	Point(const Point& P_) : array<T,D>(P_){};
 	Point(const T* p_)     { copy(p_,p_+3,array<T,D>::begin()); }
+	Point(std::array<float,D> a){ boost::copy(a,array<T,D>::begin()); }
 
 	template<typename U>explicit Point(const std::array<U,D> a){ boost::copy(a,array<T,D>::begin()); }
 	template<typename U>explicit Point(const U* p){ boost::copy(p,array<T,D>::begin()); }
@@ -185,7 +186,7 @@ template<size_t D,class T>class Point : public array<T,D>
 template<size_t D,class T>std::ostream& operator<<(std::ostream& os,const array<T,D>& P)
 {
 	os << '(' << P[0];
-	for(int i=1; i<D; ++i){ os << ',' << P[i]; }
+	for(unsigned i=1; i<D; ++i){ os << ',' << P[i]; }
 	os << ')';
 	return os;
 }
@@ -266,6 +267,7 @@ template<size_t D,class T>class UnitVector : public Vector<D,T>
 	using Vector<D,T>::operator/;
 
 	UnitVector()                    { (*this)[0]=1;          for(unsigned i=1;i<D;++i){ (*this)[i]=0;      } };
+	UnitVector(std::array<float,D> a){ boost::copy(a,array<T,D>::begin()); }
     UnitVector(const T* v_,bool alreadyUnit=false){
         for (unsigned i=0;i<D;++i)
         	(*this)[i]=v_[i];

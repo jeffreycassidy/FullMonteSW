@@ -21,13 +21,10 @@ public:
 	PencilBeam(float w,std::array<float,3> pos,std::array<float,3> dir,unsigned elementHint=-1U) :
 		cloner(w,pos,elementHint),
 		Directed(dir),
-		m_boundarySurfaceHint(-1U){ }
-
-	unsigned				boundaryHint()						const	{ return m_boundarySurfaceHint; 	}
-	void					boundaryHint(unsigned b)					{ m_boundarySurfaceHint=b;			}
+		m_elementHint(-1U){ }
 
 private:
-	unsigned m_boundarySurfaceHint=-1U;
+	unsigned m_elementHint=-1U;
 };
 
 };

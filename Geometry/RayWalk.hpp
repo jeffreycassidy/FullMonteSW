@@ -16,15 +16,15 @@ class TetraMesh;
 
 struct WalkFaceInfo
 {
-	Point<3,double> p={NAN,NAN,NAN};	// the point of intersection
-	int IDf=0;							// face at which intersection happens (0 = no-face)
+	std::array<float,3> p{{NAN,NAN,NAN}};	// the point of intersection
+	int IDf=0;								// face at which intersection happens (0 = no-face)
 };
 
 struct WalkSegment {
 	WalkFaceInfo f0, f1;		// starting/ending face & point info
 
-	double lSeg=0;				// length of the segment
-	double dToOrigin=0;			// distance from segment start to origin
+	float lSeg=0;				// length of the segment
+	float dToOrigin=0;			// distance from segment start to origin
 
 	unsigned IDt=0;				// current tetra (=0 if exterior to mesh)
 	unsigned matID=0;			// current material (=0 if exterior to mesh)
@@ -60,7 +60,7 @@ public:
 	RayWalkIterator(){}
 	RayWalkIterator(const RayWalkIterator&) = default;
 
-	static RayWalkIterator init(const TetraMesh& M,const std::array<double,3> p0,const std::array<double,3> dir);
+	static RayWalkIterator init(const TetraMesh& M,const std::array<float,3> p0,const std::array<float,3> dir);
 
 	/// boost::iterator_facade requirements
 	const WalkSegment& dereference() const;
@@ -75,7 +75,7 @@ public:
 
 private:
 	const TetraMesh* 		m_mesh=nullptr;									// the mesh being walked
-	std::array<double,3> 	m_dir=std::array<double,3>{NAN,NAN,NAN};		// the direction of walk
+	std::array<float,3> 	m_dir=std::array<float,3>{NAN,NAN,NAN};		// the direction of walk
 
 	WalkSegment				m_currSeg;										// current segment (dereference value)
 	unsigned				nextTet_=0;

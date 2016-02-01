@@ -128,7 +128,7 @@ void TIMOSWriter::SourceVisitor::visit(Source::PencilBeam* pb)
 	std::array<float,3> pos = pb->position();
 	std::array<float,3> dir = pb->direction();
 
-	m_os << setw(2) << TIMOS::SourceDef::PencilBeam << ' ' << pb->regionHint() << ' ' <<
+	m_os << setw(2) << TIMOS::SourceDef::PencilBeam << ' ' << pb->elementHint() << ' ' <<
 		std::setw(9) << pos[0] << ' ' << std::setw(9) << pos[1] << ' ' << std::setw(9) << pos[2] << ' ' <<
 		std::setw(7) << dir[0] << ' ' << std::setw(7) << dir[1] << ' ' << std::setw(7) << dir[2] << ' ' <<
 		std::setw(10) << (unsigned long long)(pb->power()) << endl;

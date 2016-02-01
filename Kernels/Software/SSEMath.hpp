@@ -1,6 +1,5 @@
 #ifndef SSEMATH_INCLUDED
 #define SSEMATH_INCLUDED
-#include "Packet.hpp"
 
 #include <array>
 #include <limits>
@@ -9,6 +8,9 @@
 
 #include <cassert>
 #include <boost/static_assert.hpp>
+#include <boost/range/algorithm.hpp>
+
+#include <cmath>
 
 namespace SSE
 {
@@ -22,26 +24,30 @@ protected:
 public:
 	__m128 m_v;
 
-	SSEBase sqrt() const
-	{
-		return _mm_sqrt_ps(m_v);
-	}
-
 	SSEBase abs() const
 	{
 		__m128i sign = _mm_set1_epi32(0x7fffffff);
 		return _mm_and_ps(__m128(sign),m_v);
 	}
 
-	static SSEBase undef(){ return SSEBase(_mm_set1_ps(std::numeric_limits<float>::quiet_NaN())); 	}
-	static SSEBase zero() { return SSEBase(_mm_setzero_ps()); 										}
+	static SSEBase undef()	{ return SSEBase(_mm_set1_ps(std::numeric_limits<float>::quiet_NaN())); 	}
+	static SSEBase zero() 	{ return SSEBase(_mm_setzero_ps()); 										}
+	static SSEBase one()	{ return SSEBase(_mm_set_ss(1.0f)); }
+	static SSEBase ones()	{ return SSEBase(_mm_set1_ps(1.0f)); }
 };
 
 class Scalar : public SSEBase
 {
 public:
-	Scalar() : SSEBase(_mm_setzero_ps()){}
 	explicit Scalar(__m128 s) 	: SSEBase(s){}
+	Scalar() : SSEBase(_mm_setzero_ps()){}
+
+	/// Fill a Scalar using the bottom element (useful when extending the output of _ss functions)
+	static Scalar fill(__m128 s)
+	{
+		return Scalar(_mm_shuffle_ps(s,s,_MM_SHUFFLE(0,0,0,0)));
+	}
+
 	explicit Scalar(float s) 	: SSEBase(_mm_set1_ps(s)){}
 
 	explicit operator float() const
@@ -49,8 +55,10 @@ public:
 		return _mm_cvtss_f32(m_v);
 	}
 
-	static Scalar undef(){ return SSEBase::undef(); }
-	static Scalar zero() { return SSEBase::zero(); 	}
+	static Scalar sqrt(Scalar s)
+	{
+		return Scalar(_mm_sqrt_ps(s.m_v));
+	}
 
 protected:
 	Scalar(SSEBase s) : SSEBase(s){}
@@ -97,8 +105,6 @@ public:
 		return Vector(_mm_div_ps(m_v,rhs.m_v));
 	}
 
-
-
 	static Scalar dot(Vector lhs,Vector rhs)
 	{
 		// for i [0,4)
@@ -114,22 +120,21 @@ public:
 		return *reinterpret_cast<std::array<float,3>*>(f);
 	}
 
-	/** Return the i'th basis vector (v[i]=1.0, v[j != i]=0.0) */
-	template<unsigned i>static Vector basis()
+	/// Returns the index of the smallest element in terms of absolute value
+	unsigned indexOfSmallestElement() const
 	{
-		__m128 one = _mm_set_ss(1.0f);
+		const std::array<float,D> d = array();
+		std::array<float,D> du;
 
-		BOOST_STATIC_ASSERT(i < D);
-
-		return Vector(_mm_shuffle_ps(one,one,_MM_SHUFFLE(i!=3, i!=2, i!=1, i!=0)));
+		boost::transform(d, du.begin(), [](float i){ return std::abs(i); });
+		return boost::min_element(d)-d.begin();
 	}
 
-	static Vector basis(unsigned i)
+	/// Return i'th component
+	template<unsigned i>Scalar component()
 	{
-		float f[4]{0.0,0.0,0.0,0.0};
-		f[i]=1.0f;
-		assert(i < D);
-		return _mm_load_ps(f);
+		BOOST_STATIC_ASSERT(i < D);
+		return Scalar(_mm_shuffle_ps(m_v,m_v,_MM_SHUFFLE(i,i,i,i)));
 	}
 
 	static Vector undef(){ return SSEBase::undef(); }
@@ -187,18 +192,17 @@ template<std::size_t D>class UnitVector : public Vector<D>
 {
 public:
 
+	template<typename FT>UnitVector(std::array<FT,D> a,Checking c) :
+		Vector<D>(a)
+		{
+			check(c);
+		}
+
 	explicit UnitVector() : Vector<D>(SSEBase::undef()){}
 
 	UnitVector(Vector<D> v,Checking c) : Vector<D>(v)
 	{
-		switch(c)
-		{
-		case Assert:
-		case Except:
-		case NoCheck:
-		case Normalize:
-			break;
-		}
+		check(c);
 	}
 
 	using Vector<D>::operator+;
@@ -212,9 +216,9 @@ public:
 	{
 		Scalar norm2 = dot(v,v);
 
-		__m128 k = _mm_rcp_ss(_mm_sqrt_ss(norm2.m_v));
+		__m128 k = _mm_sqrt_ss(norm2.m_v);
 
-		return _mm_mul_ps(_mm_shuffle_ps(k,k,_MM_SHUFFLE(0,0,0,0)),v.m_v);
+		return _mm_div_ps(v.m_v,_mm_shuffle_ps(k,k,_MM_SHUFFLE(0,0,0,0)));
 	}
 
 	static UnitVector normalize_approx(Vector<D> v)
@@ -226,6 +230,49 @@ public:
 		return _mm_mul_ps(_mm_shuffle_ps(k,k,_MM_SHUFFLE(0,0,0,0)),v.m_v);
 	}
 
+	bool check(Checking c,float eps=1e-6)
+	{
+		float e;
+		switch(c)
+		{
+		case Assert:
+		case Except:
+			e = std::abs(float(Scalar::sqrt(dot(*this,*this)))-1.0f);
+			if (c==Except && e > eps)
+				throw std::logic_error("Non-unit vector in UnitVector::check()");
+			else if (c==Assert)
+				assert(e < eps);
+			return e<eps;
+
+		case NoCheck:
+			return true;
+
+		case Normalize:
+			*this = normalize(*this);
+			return true;
+		}
+		return true;
+	}
+
+
+	/** Return the i'th basis vector (v[i]=1.0, v[j != i]=0.0) */
+	template<unsigned i>static UnitVector basis()
+	{
+		__m128 one = _mm_set_ss(1.0f);
+
+		BOOST_STATIC_ASSERT(i < D);
+
+		return _mm_shuffle_ps(one,one,_MM_SHUFFLE(i!=3, i!=2, i!=1, i!=0));
+	}
+
+	static UnitVector basis(unsigned i)
+	{
+		float f[4]{0.0,0.0,0.0,0.0};
+		f[i]=1.0f;
+		assert(i < D);
+		return _mm_load_ps(f);
+	}
+
 protected:
 	UnitVector(__m128 v) : Vector<D>(v){}
 	UnitVector(Vector<D> v) : Vector<D>(v){}		// protect because this waives checking or normalization
@@ -233,6 +280,20 @@ protected:
 
 using UnitVector3 = UnitVector<3>;
 using UnitVector2 = UnitVector<2>;
+
+using Point3 = Vector<3>;
+using Point2 = Vector<2>;
+
+
+
+/** Returns a pair of vectors orthonormal to eachother and to v */
+
+std::pair<UnitVector3,UnitVector3> normalsTo(UnitVector3 v);
+
+template<std::size_t D>UnitVector<D> normalize(Vector<D> v)
+{
+	return UnitVector<D>::normalize(v);
+}
 
 };
 

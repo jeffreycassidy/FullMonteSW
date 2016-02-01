@@ -14,14 +14,6 @@
 #include <unordered_map>
 
 
-class SuperSimple
-{
-public:
-	SuperSimple()
-{
-}
-};
-
 class TIMOSReader : public TIMOS {
 public:
 	TIMOSReader() {}

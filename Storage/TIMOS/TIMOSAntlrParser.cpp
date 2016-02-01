@@ -45,9 +45,19 @@ protected:
 
 			unsigned w = ANTLR3CPP::convert_string<unsigned>(bt.getChild(0).getTokenText());
 
+			// expand the child node first
 			do_expand(bt.getChild(1));
 
+			// then finish up by setting weight
 			src.back().w = w;
+		}
+		else if (bt.getTokenType()==SOURCE_POINT)
+		{
+			assert(bt.getChildCount()==1);
+			assert(bt.getChild(0).getTokenType() == POINT);
+			src.emplace_back();
+			src.back().type = TIMOS::SourceDef::Types::Point;
+			src.back().details.point.pos = ANTLR3CPP::convert_tuple<std::array<float,3>>(bt.getChild(0));
 		}
 		else if (bt.getTokenType()==SOURCE_VOL)
 		{

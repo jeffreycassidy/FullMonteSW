@@ -11,6 +11,8 @@
 #include <array>
 #include <boost/test/floating_point_comparison.hpp>
 
+/** Test fixture to check that a vector is indeed unit (within epsilon) */
+
 struct UnitVectorFixture
 {
 	template<typename FT,std::size_t D>void testUnitVector(std::array<FT,D> uv)
