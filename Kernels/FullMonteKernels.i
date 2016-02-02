@@ -8,14 +8,16 @@
 %{
 #include "Kernel.hpp"
 #include "KernelObserver.hpp"
-#include "Software/OStreamObserver.hpp"
+#include "OStreamObserver.hpp"
+#include "MCKernelBase.hpp"
+#include "TetraKernelBase.hpp"
 %}
 
 %template(materialvector) std::vector<SimpleMaterial>;
-%template(sourcedescriptionvector) std::vector<SourceDescription*>;
-
 
 %include "Kernel.hpp"
 %include "KernelObserver.hpp"
-%include "Software/OStreamObserver.hpp"
+%include "OStreamObserver.hpp"
+%include "MCKernelBase.hpp"
+%include "TetraKernelBase.hpp"
 %include "../Geometry/FullMonteGeometry_types.i"

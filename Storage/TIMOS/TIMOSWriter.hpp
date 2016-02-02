@@ -12,8 +12,6 @@
 
 #include <FullMonte/Geometry/TetraMesh.hpp>
 #include <FullMonte/Geometry/newgeom.hpp>
-#include <FullMonte/Geometry/Material.hpp>
-
 #include <FullMonte/Geometry/Sources/Visitor.hpp>
 #include <FullMonte/Geometry/Sources/SurfaceTri.hpp>
 #include <FullMonte/Geometry/Sources/Volume.hpp>

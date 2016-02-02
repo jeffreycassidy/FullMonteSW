@@ -1,7 +1,7 @@
 #pragma once
-#include <FullMonte/Geometry/SourceDescription.hpp>
-#include <FullMonte/Geometry/Material.hpp>
+#include <FullMonte/Geometry/Sources/Base.hpp>
 #include <FullMonte/Geometry/TetraMesh.hpp>
+#include <FullMonte/Kernels/Software/Material.hpp>
 
 // simulator ID for database
 
@@ -15,8 +15,7 @@ class SimGeometry {
 public:
 	TetraMesh 					mesh;
 	vector<Material> 			mats;
-	vector<SourceDescription*>	sources;
-	unsigned IDc;					// TODO: Probably shouldn't be included here since it's particular to the database backend
+	Source::Base*				source;
 };
 
 /** Run configuration - things that will change quality but not expected value.

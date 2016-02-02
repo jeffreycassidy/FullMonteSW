@@ -9,7 +9,6 @@
 #include <boost/range/counting_range.hpp>
 #include <boost/range/adaptor/filtered.hpp>
 
-#include "Material.hpp"
 #include "TetraMesh.hpp"
 
 #include "../Kernels/Software/sse.hpp"
@@ -605,9 +604,9 @@ std::tuple<PointIntersectionResult,int> TetraMesh::findNextFaceAlongRay(Point<3,
 	double dMin = std::numeric_limits<double>::infinity();
 	PointIntersectionResult best;
 
-	for(int i=0;i<F.size();++i)
+	for(unsigned i=0;i<F.size();++i)
 	{
-		if (i == IDf_exclude)
+		if (i == abs(IDf_exclude))
 			continue;
 
 		FaceByPointID IDps = F_p[i];

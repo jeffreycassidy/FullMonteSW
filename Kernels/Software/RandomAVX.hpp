@@ -23,7 +23,7 @@ using namespace std;
 
 template<class T>inline T* posix_allocator(unsigned N_el)
 {
-	void *p;
+	void *p=nullptr;
 	posix_memalign(&p,alignof(T),sizeof(T)*N_el);
 	if (!p)
 	{

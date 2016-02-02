@@ -6,6 +6,9 @@
 #include <boost/range/algorithm.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 
+// TODO: Remove this dependency (make it SimpleMaterial)
+#include <FullMonte/Kernels/Software/Material.hpp>
+
 template<typename T>double get_energy(const T& v);
 template<>inline double get_energy(const double& v){ return v; }
 
@@ -85,6 +88,7 @@ template<class Accumulator>class LoggerVolume {
 
 public:
 	template<typename... Args>LoggerVolume(const TetraMesh& mesh_,Args... args) : acc(mesh_.getNt()+1,args...),mesh(mesh_){}
+	LoggerVolume(){}
 	LoggerVolume(LoggerVolume&& lv_) : acc(std::move(lv_.acc)),mesh(lv_.mesh){}
 	LoggerVolume(const LoggerVolume& lv_) = delete;
 

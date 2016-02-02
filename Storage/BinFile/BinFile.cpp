@@ -52,7 +52,6 @@ TetraMesh BinFileReader::mesh() const
 	return TetraMesh(Pd,T_p,T_mu);
 }
 
-vector<Material> BinFileReader::materials() const { cerr << "BinFileReader::materials() not supported"; throw std::logic_error("BinFileReader::materials() not supported"); }
 vector<SourceDescription*> BinFileReader::sources() const { cerr << "BinFileReader::sources() not supported"; throw std::out_of_range("BinFileReader::materials() not supported"); }
 vector<SimpleMaterial> BinFileReader::materials_simple() const { cerr << "BinFileReader::materials_simple() not supported"; throw std::out_of_range("BinFileReader::materials() not supported"); }
 vector<LegendEntry> BinFileReader::legend() const { cerr << "BinFileReader::legend() not supported"; throw std::out_of_range("BinFileReader::materials() not supported"); }
@@ -81,7 +80,6 @@ void BinFileWriter::write(const TetraMesh& M) const
 };
 
 void BinFileWriter::write(const std::vector<SourceDescription*>&) const{ cerr << "BinFileWriter::write(vector<SourceDescription>) not supported"; throw std::out_of_range("BinFileReader::materials() not supported"); }
-void BinFileWriter::write(const std::vector<Material>&) const{ cerr << "BinFileWriter::materials(vector<SourceDescription>) not supported"; throw std::out_of_range("BinFileReader::materials() not supported"); }
 
 void BinFileWriter::writeSurfFluence(std::string fn,const TetraMesh& mesh,const std::vector<double>& phi_s,std::string) const{ cerr << "BinFileWriter::materials(vector<SurfaceFluence>) not supported"; throw std::out_of_range("BinFileReader::materials() not supported"); }
 void BinFileWriter::writeVolFluence(std::string fn,const TetraMesh& mesh,const std::vector<double>& phi_s,std::string) const{ cerr << "BinFileWriter::materials(vector<VolFluence>) not supported"; throw std::out_of_range("BinFileReader::materials() not supported"); }

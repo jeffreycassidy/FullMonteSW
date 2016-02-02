@@ -5,10 +5,10 @@
 #include <FullMonte/Geometry/TetraMesh.hpp>
 #include <FullMonte/Geometry/newgeom.hpp>
 
-#include <FullMonte/Geometry/Material.hpp>
-
 #include <boost/shared_ptr.hpp>
 #include <boost/iterator/transform_iterator.hpp>
+
+#include <FullMonte/Geometry/SimpleMaterial.hpp>
 
 using namespace std;
 
@@ -47,7 +47,6 @@ template<class T>class AreaMult : public PointIDLookup<T> {
 
 template<>class AreaMult<TetraByPointID> : public PointIDLookup<TetraByPointID> {
     using PointIDLookup<TetraByPointID>::mesh;
-//    const vector<Material>& mat;
 
     public:
     typedef pair<unsigned,double> result_type;
@@ -55,10 +54,8 @@ template<>class AreaMult<TetraByPointID> : public PointIDLookup<TetraByPointID> 
 
 //    AreaMult(const AreaMult& am_) : PointIDLookup<TetraByPointID>(am_),mat(am_.mat){}
     AreaMult(const AreaMult& am_) : PointIDLookup<TetraByPointID>(am_){}
-//    AreaMult(const TetraMesh* mesh_,const vector<Material>& mat_) : PointIDLookup<TetraByPointID>(mesh_),mat(mat_){}
     AreaMult(const TetraMesh* mesh_) : PointIDLookup<TetraByPointID>(mesh_){}
     pair<unsigned,double> operator()(const pair<unsigned,double>& p) const
-//        { return make_pair(p.first,p.second*mesh.getTetraVolume(p.first)/mat[mesh.getMaterial(p.first)].getMuA()); }
         { return make_pair(p.first,p.second*mesh.getTetraVolume(p.first)); }
 
 };
@@ -151,7 +148,7 @@ class FluenceMapBase {
 };
 
 template<class T>class FluenceMap : public FluenceMapBase {
-    const vector<Material>* mat;
+    const vector<SimpleMaterial>* mat;
     public:
     static const int dtype;
 

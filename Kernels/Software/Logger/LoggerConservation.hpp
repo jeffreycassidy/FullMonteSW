@@ -50,10 +50,10 @@ class LoggerConservation : public ConservationCounts,public LoggerNull {
     inline void eventDie(double w){ w_die += w; };
     inline void eventRouletteWin(double w0,double w){ w_roulette += w-w0; };
 
-    inline void eventAbnormal(const Packet& pkt,unsigned,unsigned){ w_abnormal += pkt.w; }
+    inline void eventAbnormal(const Packet& pkt,unsigned,unsigned){ w_abnormal += pkt.weight(); }
 
-    inline void eventNoHit(const Packet& pkt,const Tetra&){ w_nohit += pkt.w; }
-    inline void eventTimeGate(const Packet& pkt){ w_time += pkt.w; }
+    inline void eventNoHit(const Packet& pkt,const Tetra&){ w_nohit += pkt.weight(); }
+    inline void eventTimeGate(const Packet& pkt){ w_time += pkt.weight(); }
 
     /// Initialize to zero
     LoggerConservation() =default;

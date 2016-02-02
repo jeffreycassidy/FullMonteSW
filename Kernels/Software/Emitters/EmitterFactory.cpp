@@ -34,7 +34,6 @@
 namespace Emitter
 {
 
-
 /** Set up an isotropic point source by locating the tetra enclosing it */
 
 template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::PointSource* ps)
@@ -125,7 +124,7 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Volume* vs)
 {
 	unsigned IDt=vs->elementID();
 
-	std::cout << "  Volume element " << vs->elementID() << std::endl;
+	std::cout << "  Emitter factory: Volume element " << vs->elementID() << std::endl;
 
 	Tetra<RNG> 		T(
 			SSE::Vector3(convertArrayTo<float>(m_mesh->getTetraPoint(IDt,0))),
@@ -134,14 +133,12 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Volume* vs)
 			SSE::Vector3(convertArrayTo<float>(m_mesh->getTetraPoint(IDt,3))));
 
 	Isotropic<RNG> 	I;
-	auto vss = new PositionDirectionEmitter<RNG,Tetra<RNG>,Isotropic<RNG>>(T,I);
+	auto vss = new PositionDirectionEmitter<RNG,Tetra<RNG>,Isotropic<RNG>>(T,I,vs->elementID());
 
 	m_emitters.push_back(make_pair(vs->power(),vss));
 }
 
 using namespace std;
-
-//template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::B)
 
 template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Line* l){}
 
@@ -178,7 +175,21 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Ball* bs)
 //	return new SourceMultiEmitter<RNG>(mesh,s.begin(),s.end());
 }
 
-template class TetraEmitterFactory<RNG_SFMT_AVX>;
+template<class RNG>Emitter::EmitterBase<RNG>* TetraEmitterFactory<RNG>::emitter() const
+{
+	if (m_emitters.size() == 0)
+		throw std::logic_error("TetraEmitterFactory<RNG>::source() - no sources!");
+	else if (m_emitters.size() == 1)
+		return m_emitters.front().second;
+	else
+	{
+		// TODO:
+		// TODO: Make it work with multiple levels of nesting
+#warning "Test code in TetraEmitterFactory<RNG>::source returns only first emitter from a composite source"
+		return m_emitters.front().second;
+
+	}
+}
 
 };
 

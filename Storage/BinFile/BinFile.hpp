@@ -10,7 +10,7 @@
 #include <iostream>
 
 #include <FullMonte/Geometry/TetraMesh.hpp>
-#include <FullMonte/Geometry/Material.hpp>
+#include <FullMonteSW/FullMonte/Kernels/Software/Material.hpp>
 #include <FullMonte/Geometry/SourceDescription.hpp>
 
 #include "../TIMOS/TIMOS.hpp"
@@ -31,7 +31,6 @@ public:
 	void setLegendFileName(std::string fn){ legendFn_=fn; }
 
 	virtual TetraMesh						mesh() const;
-	virtual std::vector<Material>			materials() const;
 	virtual std::vector<SourceDescription*>	sources() const;
 
 	virtual std::vector<SimpleMaterial>		materials_simple() const;
@@ -59,7 +58,6 @@ public:
 
 	virtual void write(const TetraMesh&) const;
 	virtual void write(const std::vector<SourceDescription*>&) const;
-	virtual void write(const std::vector<Material>&) const;
 
 	virtual void writeSurfFluence(std::string fn,const TetraMesh& mesh,const std::vector<double>& phi_s,std::string) const;
 	virtual void writeVolFluence(std::string fn,const TetraMesh& mesh,const std::vector<double>& phi_s,std::string) const;

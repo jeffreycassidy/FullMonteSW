@@ -30,6 +30,9 @@ public:
 		return _mm_and_ps(__m128(sign),m_v);
 	}
 
+
+	explicit operator __m128() const { return m_v; }
+
 	static SSEBase undef()	{ return SSEBase(_mm_set1_ps(std::numeric_limits<float>::quiet_NaN())); 	}
 	static SSEBase zero() 	{ return SSEBase(_mm_setzero_ps()); 										}
 	static SSEBase one()	{ return SSEBase(_mm_set_ss(1.0f)); }
@@ -136,6 +139,7 @@ public:
 		BOOST_STATIC_ASSERT(i < D);
 		return Scalar(_mm_shuffle_ps(m_v,m_v,_MM_SHUFFLE(i,i,i,i)));
 	}
+
 
 	static Vector undef(){ return SSEBase::undef(); }
 	static Vector zero() { return SSEBase::zero(); 	}

@@ -14,7 +14,7 @@
 
 //inline __m128 dot(__m128 a,__m128 b);
 inline __m128 dot4bcast(__m128 a,__m128 b);
-inline __m128 dot3bcast(__m128 a,__m128 b);
+//inline __m128 dot3bcast(__m128 a,__m128 b);
 //inline __m128 cross(__m128 u,__m128 v);
 //inline __m128 norm(__m128 v);
 //inline __m128 normalize(__m128 v);

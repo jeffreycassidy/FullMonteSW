@@ -52,24 +52,6 @@ TetraMesh TIMOSReader::mesh() const
 	return M;
 }
 
-
-
-std::vector<Material> TIMOSReader::materials() const
-{
-	assert (!optFn_.empty() || !"No filename specified for TIMOSReader::materials");
-	TIMOS::Optical opt = parse_optical(optFn_);
-	std::vector<Material> mat(opt.mat.size()+1);
-
-	assert(opt.by_region);
-	assert(!opt.matched);
-
-	mat[0] = Material(0,0,0,1.0);
-	for(unsigned i=0; i<opt.mat.size(); ++i)
-		mat[i+1] = Material(opt.mat[i].mu_a,opt.mat[i].mu_s,opt.mat[i].g,opt.mat[i].n);
-
-	return mat;
-}
-
 std::vector<SimpleMaterial> TIMOSReader::materials_simple() const
 {
 	assert (!optFn_.empty() || !"No filename specified for TIMOSReader::materials");

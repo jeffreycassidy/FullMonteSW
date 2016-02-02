@@ -7,195 +7,54 @@
 
 #include "Kernel.hpp"
 
-#include <boost/range.hpp>
+#include <FullMonte/Kernels/KernelObserver.hpp>
+
 #include <boost/range/algorithm.hpp>
-#include <boost/range/adaptor/indexed.hpp>
-#include <boost/range/adaptor/transformed.hpp>
-#include <FullMonte/Kernels/Software/mainloop.cpp>
-
-#include <boost/random/additive_combine.hpp>
-
 #include <memory>
 
 using namespace std;
 
-void Kernel::clearSources()
+void Kernel::runSync()
 {
-	for(SourceDescription* s : src_)
-		delete(s);
-	src_.clear();
+	startAsync();
+	awaitFinish();
 }
 
-void Kernel::setSources(const vector<SourceDescription*>& S)
+void Kernel::startAsync()
 {
-	clearSources();
-	src_.resize(S.size());
-	boost::copy(S | boost::adaptors::transformed(std::function<SourceDescription*(SourceDescription*)>([](SourceDescription* S){ return S->clone(); })),
-			src_.begin());
-}
+	for(const auto o : m_observers)
+		o->notify_prepare(*this);
 
-void Kernel::setSource(SourceDescription* s)
-{
-	src_.resize(1);
-	src_[0] = s->clone();
-}
+	prepare_();
 
+	for(const auto o: m_observers)
+		o->notify_start(*this);
 
-void MonteCarloKernelBase::setMaterials(const vector<SimpleMaterial>& mats)
-{
-	mats_=mats;
-	mat_.resize(mats.size());
-	boost::copy(
-		mats | boost::adaptors::transformed(std::function<Material(SimpleMaterial)>([](SimpleMaterial sm){ return Material(sm.mu_a,sm.mu_s,sm.g,sm.n); })),
-		mat_.begin());
+	start_();
 }
 
 
-
-
-template<class RNG>void TetraMCKernel<RNG>::prepare_()
+const LoggerResults* Kernel::getResult(const std::string typeStr,const std::string opts) const
 {
-	if (src_.size()==0)
+	auto it = boost::find_if(m_results, [&typeStr](LoggerResults* lr){ return lr && lr->getTypeString() == typeStr; });
+
+	if (it == end(m_results))
 	{
-		cerr << "ERROR: No sources specified" << endl;
-		throw std::logic_error("ERROR: No sources specified");
+		cerr << "Failed to find results of type '" << typeStr << '\'' << endl;
+		return nullptr;
 	}
-
-	// copy sources
-	cout << "Sources: " << endl;
-	for(const SourceDescription* s : src_)
-		cout << *s << endl;
-
-	emitter_.reset(SourceEmitterFactory<RNG_SFMT_AVX>(M_,src_));
-
-	// copy materials
-
-	cout << "Materials: " << endl;
-	for(const Material& m : mat_)
-		cout << m << endl;
-
-	vector<unsigned> hist;
-	for(unsigned i=0; i<=M_.getNt(); ++i)
-	{
-		unsigned mat = M_.getMaterial(i);
-		if (mat >= hist.size())
-			hist.resize(mat+1);
-		hist[mat]++;
-	}
-
-	cout << "Material | Tetra Count" << endl;
-	unsigned i=0;
-	for(auto h : hist)
-		cout << ++i << ": " << h << endl;
+	else
+		return *it;
 }
 
-void TetraSurfaceKernel::start_()
+void Kernel::clearResults()
 {
-	logger_.reset(new LoggerType(make_tuple(
-			LoggerEventMT(),
-			LoggerConservationMT(),
-			LoggerSurface<QueuedAccumulatorMT<double>>(M_,1<<10)
-	)));
-
-	workers_.resize(Nth_,nullptr);
-
-	boost::random::ecuyer1988 seeds_generator(rngSeed_);
-
-	seeds_generator.discard(10000);
-
-	for(unsigned i=0;i<Nth_;++i)
-	{
-		int st = posix_memalign((void**)&workers_[i],32,sizeof(TetraMCKernelThread<LoggerWorker,RNG_SFMT_AVX>));
-
-		assert(st==0);
-		assert(workers_[i]);
-		assert(((unsigned long long)workers_[i] & 0x1F) == 0);
-
-		new (workers_[i]) TetraMCKernelThread<LoggerWorker,RNG_SFMT_AVX>(*this,get_worker(*logger_),seeds_generator(),Npkt_/Nth_);
-
-		seeds_generator.discard(100);
-	}
-
-	cout << "Starting " << Nth_ << " threads" << endl;
-	boost::for_each(workers_, std::function<void(SimMCThreadBase*)>([](SimMCThreadBase* w){ assert(w); w->startAsync(); }));
+	m_results.clear();
 }
 
-void TetraSurfaceKernel::finish_()
+void Kernel::addResults(LoggerResults* r)
 {
-	auto res = std::make_tuple(
-			get<0>(*logger_).getResults(),
-			get<1>(*logger_).getResults(),
-			get<2>(*logger_).getResults());
-
-	results_.clear();
-
-	// clone because storage above is of automatic duration
-	tuple_for_each(res, [this] (const LoggerResults& r) { this->results_.push_back(std::shared_ptr<const LoggerResults>(r.clone())); });
-
-	cout << "Results are available" << endl;
-
-	for(auto p : results_)
-		p->summarize(cout);
-
-	cout << endl << endl << "Result types available: ";
-	for(auto p : results_)
-		cout << " " << p->getTypeString();
-	cout << endl;
-
-	cout << "Kernel is finished" << endl;
+	m_results.push_back(r);
+	for(auto o : m_observers)
+		o->notify_result(*this,r);
 }
-
-
-
-void TetraVolumeKernel::start_()
-{
-	logger_.reset(new LoggerType(make_tuple(
-			LoggerEventMT(),
-			LoggerConservationMT(),
-			LoggerVolume<QueuedAccumulatorMT<double>>(M_,1<<10)
-	)));
-
-	workers_.resize(Nth_,nullptr);
-
-	boost::random::ecuyer1988 seeds_generator(rngSeed_);
-
-	seeds_generator.discard(10000);
-
-	for(unsigned i=0;i<Nth_;++i)
-	{
-		workers_[i] = new TetraMCKernelThread<LoggerWorker,RNG_SFMT_AVX>(*this,get_worker(*logger_),seeds_generator(),Npkt_/Nth_);
-		seeds_generator.discard(100);
-	}
-
-	cout << "Starting " << Nth_ << " threads" << endl;
-	boost::for_each(workers_, std::function<void(SimMCThreadBase*)>([](SimMCThreadBase* w){ assert(w); w->startAsync(); }));
-}
-
-
-void TetraVolumeKernel::finish_()
-{
-	auto res = std::make_tuple(
-			get<0>(*logger_).getResults(),
-			get<1>(*logger_).getResults(),
-			get<2>(*logger_).getResults());
-
-	results_.clear();
-
-	// clone because storage above is of automatic duration
-	tuple_for_each(res, [this] (const LoggerResults& r) { this->results_.push_back(std::shared_ptr<const LoggerResults>(r.clone())); });
-
-	cout << "Results are available" << endl;
-
-	for(auto p : results_)
-		p->summarize(cout);
-
-	cout << endl << endl << "Result types available: ";
-	for(auto p : results_)
-		cout << " " << p->getTypeString();
-	cout << endl;
-
-	cout << "Kernel is finished" << endl;
-}
-
-
-

@@ -25,6 +25,8 @@ public:
 		return boost::iterator_range<std::vector<Source::Base*>::iterator>( m_elements.begin(), m_elements.end() );
 		}
 
+	unsigned count() const { return m_elements.size(); }
+
 private:
 	std::vector<Base*>		m_elements;
 };

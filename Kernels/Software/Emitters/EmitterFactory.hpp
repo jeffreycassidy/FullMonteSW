@@ -47,7 +47,7 @@ public:
 	virtual void visit(Source::Base* b)			override;
 	virtual void visit(Source::PencilBeam* b)	override;
 
-	Source::Base* source() const;
+	Emitter::EmitterBase<RNG>* emitter() const;
 
 	boost::iterator_range<std::vector<Source::Base*>::const_iterator> csources() const
 		{

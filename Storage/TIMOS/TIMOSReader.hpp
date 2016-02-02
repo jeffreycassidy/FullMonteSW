@@ -10,7 +10,6 @@
 
 #include "TIMOS.hpp"
 #include <FullMonte/Geometry/TetraMesh.hpp>
-#include <FullMonte/Geometry/Material.hpp>
 #include <unordered_map>
 
 
@@ -22,7 +21,6 @@ public:
 	virtual ~TIMOSReader(){}
 
 	virtual TetraMesh						mesh() const;
-	virtual std::vector<Material>			materials() const;
 	virtual Source::Base*					sources() const;
 
 	virtual std::vector<SimpleMaterial>		materials_simple() const;

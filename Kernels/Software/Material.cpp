@@ -1,4 +1,4 @@
-#include "Material.hpp"
+#include <FullMonte/Kernels/Software/Material.hpp>
 #include  <iostream>
 
 /** Prints simple output format mu_a=XXX mu_s=XXX g=XXX n=XXX */
