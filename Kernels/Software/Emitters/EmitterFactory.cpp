@@ -118,6 +118,8 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::SurfaceTri* st)
 //	auto sts = new PositionDirectionEmitter<RNG,Triangle<RNG>,Directed>(T,D);
 //
 //	m_emitters.push_back(make_pair(st->power(),sts));
+
+	throw std::logic_error("TetraEmitterFactory<RNG>::visit - unsupported (SurfaceTri)");
 }
 
 template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Volume* vs)
@@ -140,7 +142,10 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Volume* vs)
 
 using namespace std;
 
-template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Line* l){}
+template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Line* l)
+{
+	throw std::logic_error("TetraEmitterFactory<RNG>::visit - unsupported (SurfaceTri)");
+	}
 
 template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Composite* c)
 {
@@ -149,12 +154,20 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Composite* c)
 		el->acceptVisitor(this);
 }
 
-template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Surface* s){}
-template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Base* s){}
+template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Surface* s)
+{
+	throw std::logic_error("TetraEmitterFactory<RNG>::visit - unsupported (Surface)");
+}
+
+template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Base* s)
+{
+	throw std::logic_error("TetraEmitterFactory<RNG>::visit - unsupported (Unknown type - Source::Base variant called)");
+}
 
 
 template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Ball* bs)
 {
+	throw std::logic_error("TetraEmitterFactory<RNG>::visit - unsupported (Ball)");
 //	vector<unsigned> Ts = m_mesh->tetras_close_to(bs->centre(),bs->radius());
 //	vector<float> w(Ts.size(),0.0);
 //
@@ -183,11 +196,9 @@ template<class RNG>Emitter::EmitterBase<RNG>* TetraEmitterFactory<RNG>::emitter(
 		return m_emitters.front().second;
 	else
 	{
-		// TODO:
-		// TODO: Make it work with multiple levels of nesting
-#warning "Test code in TetraEmitterFactory<RNG>::source returns only first emitter from a composite source"
+		// TODO: Enable multiple layers of nesting with flattening
+		Composite<RNG>* c = new Composite();
 		return m_emitters.front().second;
-
 	}
 }
 

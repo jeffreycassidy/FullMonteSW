@@ -20,7 +20,7 @@ template<class RNG>class Composite : public EmitterBase<RNG>
 {
 public:
 
-	template<class ConstIterator>SourceMultiEmitter(const TetraMesh& mesh_,ConstIterator begin,ConstIterator end) :
+	template<class ConstIterator>SourceMultiEmitter(ConstIterator begin,ConstIterator end) :
 		SourceEmitter<RNG>(mesh_),
 		m_sourceDistribution(
 			boost::make_transform_iterator(begin,	std::mem_fn(&SourceEmitter<RNG>::power)),
