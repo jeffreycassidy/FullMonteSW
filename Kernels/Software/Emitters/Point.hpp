@@ -26,7 +26,7 @@ public:
 	}
 
 private:
-	SSE::Vector3	m_pos;
+	SSE::Vector3	m_pos;				///< The position
 };
 
 };

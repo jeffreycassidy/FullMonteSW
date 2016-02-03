@@ -14,21 +14,37 @@
 namespace Emitter
 {
 
-/** Emitter composed of a vector of sub-emitters */
+/** Emitter composed of a vector of sub-emitters (owned by pointer) */
 
 template<class RNG>class Composite : public EmitterBase<RNG>
 {
 public:
 
-	template<class ConstIterator>SourceMultiEmitter(ConstIterator begin,ConstIterator end) :
-		SourceEmitter<RNG>(mesh_),
-		m_sourceDistribution(
-			boost::make_transform_iterator(begin,	std::mem_fn(&SourceEmitter<RNG>::power)),
-			boost::make_transform_iterator(end,		std::mem_fn(&SourceEmitter<RNG>::power)))
+	virtual ~Composite()
 	{
-		for(; begin != end; ++begin)
-			//emitters.push_back(SourceEmitterFactory<RNG>(mesh_,**begin));
-			m_emitters.push_back(*begin);
+		// delete the emitters
+		for(const auto e : m_emitters)
+			delete e;
+	}
+
+
+	/** Provided a range that dereferences to pair<float,EmitterBase*>, constructs a Composite emitter.
+	 * The Composite owns the pointers provided to it, deleting them when it is deleted.
+	 */
+
+	template<class ConstRange>Composite(ConstRange R)
+	{
+		std::vector<float> power;
+
+		for(const std::pair<float,EmitterBase<RNG>*> p : R)
+		{
+			power.push_back(p.first);
+			m_emitters.push_back(p.second);
+		}
+
+		m_sourceDistribution = boost::random::discrete_distribution<unsigned>(power);
+
+		std::cout << "  New Emitter::Composite with " << m_emitters.size() << " elements" << std::endl;
 	}
 
 	LaunchPacket emit(RNG& rng) const
@@ -37,8 +53,8 @@ public:
 	}
 
 private:
-	vector<EmitterBase<RNG>*> 						m_emitters;
-	boost::random::discrete_distribution<unsigned> 	m_sourceDistribution;
+	std::vector<const EmitterBase<RNG>*> 			m_emitters;				///< Owning pointer to sub-emitters
+	boost::random::discrete_distribution<unsigned> 	m_sourceDistribution;	///< Distribution for power
 };
 
 };

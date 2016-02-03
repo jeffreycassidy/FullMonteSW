@@ -7,7 +7,7 @@ IF(WRAP_TCL)
 
     SET_SOURCE_FILES_PROPERTIES(FullMonteKernels.i PROPERTIES CPLUSPLUS ON)
     SWIG_ADD_MODULE(FullMonteKernelsTCL tcl FullMonteKernels.i)
-    SWIG_LINK_LIBRARIES(FullMonteKernelsTCL FullMonteKernels ${TCL_STUB_LIBRARY})	
+    SWIG_LINK_LIBRARIES(FullMonteKernelsTCL FullMonteKernelBase ${TCL_STUB_LIBRARY})	
 ENDIF()
 
 ADD_SUBDIRECTORY(Software)

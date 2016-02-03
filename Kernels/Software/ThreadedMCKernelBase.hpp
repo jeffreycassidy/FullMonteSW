@@ -23,9 +23,7 @@ public:
 
 	// Final overrides: distribute the requests to the underlying threads
 	virtual bool 				done() 					const 	final override;
-	virtual void				awaitFinish()					final override;
 	virtual unsigned long long 	simulatedPacketCount() 	const 	final override;
-	virtual void 				start_() 						final override;
 
 	// Final override: do parent prep and then create thread structures
 	virtual void 				prepare_()						final override;
@@ -40,9 +38,14 @@ public:
 	}
 
 private:
+	virtual void				awaitFinish()					final override;
+	virtual void 				start_() 						final override;
+
 	// implemented by derived classes
 	virtual Thread*				makeThread()=0;
 	virtual void				parentPrepare()=0;
+
+	static void runWorkers(ThreadedMCKernelBase* K,unsigned long long n);
 
 	virtual void prestart()				=0;
 	virtual void postfinish()			=0;

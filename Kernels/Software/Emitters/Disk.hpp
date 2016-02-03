@@ -36,7 +36,7 @@ public:
 
 private:
 	SSE::UnitVector3				m_normal;		///< Normal to plane
-	std::array<SSE::UnitVector3,2>	m_inPlane;		///< In-plane components
+	std::array<SSE::UnitVector3,2>	m_inPlane;		///< In-plane components used to construct vector
 
 };
 

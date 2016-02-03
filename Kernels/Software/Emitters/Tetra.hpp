@@ -27,8 +27,8 @@ public:
 	SSE::Vector3 position(RNG& rng) const;
 
 private:
-	std::array<SSE::Vector3,3>	m_matrix;
-	SSE::Vector3				m_origin;
+	std::array<SSE::Vector3,3>	m_matrix;				///< Matrix to shear unit tetra into direction
+	SSE::Vector3				m_origin;				///< Offset (point A of tetra)
 };
 
 
@@ -51,6 +51,8 @@ template<class RNG>Tetra<RNG>::Tetra(SSE::Vector3 A,SSE::Vector3 B,SSE::Vector3 
 template<class RNG>SSE::Vector3 Tetra<RNG>::position(RNG& rng) const
 {
     std::array<float,3> p;
+
+    // TODO: SSEify the items below? Fold into RNG to parallelize?
 
     std::array<float,3> rnd{ rng.draw_float_u01(), rng.draw_float_u01(), rng.draw_float_u01() };
     if (rnd[0]+rnd[1] > 1.0)
@@ -81,6 +83,7 @@ template<class RNG>SSE::Vector3 Tetra<RNG>::position(RNG& rng) const
 
     assert(p[0] >= 0.0 && p[1] >= 0.0 && p[2] >= 0.0 && p[0]+p[1]+p[2] <= 1.0);
 
+    // TODO: Better matrix multiply code?
     return m_origin + m_matrix[0]*SSE::Scalar(p[0]) + m_matrix[1]*SSE::Scalar(p[1]) + m_matrix[2]*SSE::Scalar(p[2]);
 }
 

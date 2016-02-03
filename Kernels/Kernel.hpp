@@ -15,6 +15,10 @@
 
 #include <boost/range/any_range.hpp>
 
+#include <thread>
+#include <mutex>
+#include <condition_variable>
+
 class KernelObserver;
 
 namespace Source { class Base; }
@@ -22,12 +26,16 @@ class LoggerResults;
 
 class Kernel {
 public:
+	enum Status { Idle, Preparing, Running, Finished };
+
 	virtual ~Kernel(){}
 
 	void runSync();
 	void startAsync();
 
-	virtual void 	awaitFinish()		=0;
+	void finishAsync();
+
+
 	virtual bool 	done() 				const=0;
 	virtual float 	progressFraction() 	const=0;
 
@@ -48,6 +56,15 @@ public:
 
 	const LoggerResults* getResult(std::string,std::string="") const;
 
+	template<class Result>const Result* getResult() const
+	{
+		Result* r=nullptr;
+		for(unsigned i=0; i<m_results.size() && !r; ++i)
+			r=dynamic_cast<const Result*>(lr);
+
+		return r;
+	}
+
 	boost::any_range<
 		LoggerResults*,
 		boost::forward_traversal_tag> results() const { return boost::any_range<LoggerResults*,boost::forward_traversal_tag>(m_results); }
@@ -60,12 +77,23 @@ protected:
 
 	void addResults(LoggerResults*);
 	void clearResults();
+	void awaitStatus(Status st);
 
 private:
+	void updateStatus(Status st);
+	virtual void 	awaitFinish()		=0;
+
 	std::vector<KernelObserver*> m_observers;
 
 	virtual void prepare_()=0;
 	virtual void start_()=0;
+	virtual void postfinish()=0;
+
+	Status						m_status=Idle;
+	std::mutex					m_statusMutex;
+	std::condition_variable 	m_statusCV;
+
+	std::thread 				m_parentThread;
 
 	// scale
 	float L_=1.0;

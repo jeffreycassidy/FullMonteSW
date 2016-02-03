@@ -41,19 +41,6 @@ public:
 				LoggerConservationMT(),
 				LoggerVolume<QueuedAccumulatorMT<double>>(*mesh,1<<10)){}
 
-	//virtual ThreadedMCKernelBase::Thread* makeThread() override;
-
-	virtual ThreadedMCKernelBase::Thread* makeThread() override
-	{
-		// create the thread-local state
-		typename TetraMCKernel<RNG_SFMT_AVX>::Thread<Worker>* t = new TetraMCKernel<RNG_SFMT_AVX>::Thread<Worker>(*this,get_worker(m_logger));
-
-		// seed its RNG
-		t->seed(TetraMCKernel<RNG_SFMT_AVX>::getUnsignedRNGSeed());
-
-		return t;
-	}
-
 	//vector<double> getVolumeFluenceVector() const
 	//{
 //		const LoggerResults* lr = getResult("logger.results.volume.energy");
@@ -87,6 +74,17 @@ public:
 //	}
 
 private:
+	virtual ThreadedMCKernelBase::Thread* makeThread() override
+	{
+		// create the thread-local state
+		typename TetraMCKernel<RNG_SFMT_AVX>::Thread<Worker>* t = new TetraMCKernel<RNG_SFMT_AVX>::Thread<Worker>(*this,get_worker(m_logger));
+
+		// seed its RNG
+		t->seed(TetraMCKernel<RNG_SFMT_AVX>::getUnsignedRNGSeed());
+
+		return t;
+	}
+
 	virtual void prestart() override {}
 	virtual void postfinish() override;
 

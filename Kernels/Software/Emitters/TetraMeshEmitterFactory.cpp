@@ -5,15 +5,17 @@
  *      Author: jcassidy
  */
 
+
+// Emitter classes
 #include "Base.hpp"
 #include "Point.hpp"
 #include "Directed.hpp"
 #include "Isotropic.hpp"
 #include "Triangle.hpp"
 #include "Tetra.hpp"
+#include "Composite.hpp"
 
-#include "EmitterFactory.hpp"
-
+// Source descriptions
 #include <FullMonte/Geometry/Sources/Composite.hpp>
 #include <FullMonte/Geometry/Sources/PointSource.hpp>
 #include <FullMonte/Geometry/Sources/Line.hpp>
@@ -26,6 +28,7 @@
 #include <FullMonte/Geometry/Convenience.hpp>
 
 #include <FullMonte/Geometry/TetraMesh.hpp>
+#include <FullMonte/Kernels/Software/Emitters/TetraMeshEmitterFactory.hpp>
 
 
 #include "../SSEMath.hpp"
@@ -144,8 +147,8 @@ using namespace std;
 
 template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Line* l)
 {
-	throw std::logic_error("TetraEmitterFactory<RNG>::visit - unsupported (SurfaceTri)");
-	}
+	throw std::logic_error("TetraEmitterFactory<RNG>::visit - unsupported (Line)");
+}
 
 template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Composite* c)
 {
@@ -190,16 +193,16 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Ball* bs)
 
 template<class RNG>Emitter::EmitterBase<RNG>* TetraEmitterFactory<RNG>::emitter() const
 {
+	EmitterBase<RNG>* e=nullptr;
+
 	if (m_emitters.size() == 0)
 		throw std::logic_error("TetraEmitterFactory<RNG>::source() - no sources!");
 	else if (m_emitters.size() == 1)
-		return m_emitters.front().second;
+		e = m_emitters.front().second;
 	else
-	{
-		// TODO: Enable multiple layers of nesting with flattening
-		Composite<RNG>* c = new Composite();
-		return m_emitters.front().second;
-	}
+		e = new Emitter::Composite<RNG>(m_emitters);
+
+	return e;
 }
 
 };

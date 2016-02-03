@@ -14,7 +14,7 @@
 
 #include <FullMonte/Kernels/Software/RandomAVX.hpp>
 
-#include "EmitterFactory.hpp"
+#include <FullMonte/Kernels/Software/Emitters/TetraMeshEmitterFactory.hpp>
 
 #include <iostream>
 #include <iomanip>
@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE(mouse)
 #include "Test/PointFixture.hpp"
 #include "Test/DirectedFixture.hpp"
 
-#include "EmitterFactory.hpp"
+#include <FullMonteSW/FullMonte/Kernels/Software/Emitters/TetraMeshEmitterFactory.hpp>
 
 typedef SourceFixture<PointFixture,DirectedFixture> Pencil;
 

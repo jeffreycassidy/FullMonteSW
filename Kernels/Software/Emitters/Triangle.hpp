@@ -39,6 +39,8 @@ template<class RNG>SSE::Vector3 Triangle<RNG>::position(RNG& rng) const
 {
     float s=rng.draw_float_u01(),t=rng.draw_float_u01();
 
+    // TODO: SSEify? Fold into RNG to parallelize?
+
     if (s+t > 1)
         s=1-s,t=1-t;
 

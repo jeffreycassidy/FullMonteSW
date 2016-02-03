@@ -13,7 +13,6 @@ void ThreadedMCKernelBase::awaitFinish()
 {
 	for(auto* t : m_workers)
 		t->awaitFinish();
-	postfinish();
 }
 
 bool ThreadedMCKernelBase::done() const
@@ -34,6 +33,7 @@ unsigned long long ThreadedMCKernelBase::simulatedPacketCount() const
 void ThreadedMCKernelBase::start_()
 {
 	unsigned long long N = Npkt_/Nth_;
+
 	for(auto t : m_workers)
 		t->start(N);
 }

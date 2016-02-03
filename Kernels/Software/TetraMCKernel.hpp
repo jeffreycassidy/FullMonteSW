@@ -10,12 +10,11 @@
 
 #include <FullMonte/Geometry/Sources/Print.hpp>
 
-#include <FullMonte/Kernels/Software/Emitters/EmitterFactory.cpp>
-
 #include <boost/range/adaptor/transformed.hpp>
 
 #include <FullMonte/Kernels/TetraKernelBase.hpp>
 #include <FullMonte/Kernels/Software/ThreadedMCKernelBase.hpp>
+#include <FullMonte/Kernels/Software/Emitters/TetraMeshEmitterFactory.cpp>
 
 #include "Material.hpp"
 

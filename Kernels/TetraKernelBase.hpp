@@ -13,11 +13,10 @@ class TetraMesh;
 class TetraKernelBase
 {
 public:
-	TetraKernelBase(const TetraMesh* mesh) :
+	TetraKernelBase(const TetraMesh* mesh=nullptr) :
 		m_mesh(mesh)
 	{}
 
-	//void				mesh(const TetraMeshBase* M)		{ m_mesh=M;			}
 	void				mesh(const TetraMesh* M)			{ m_mesh=M;			}
 	const TetraMesh*	mesh()						const	{ return m_mesh;	}
 

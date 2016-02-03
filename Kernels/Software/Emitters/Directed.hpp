@@ -8,6 +8,8 @@
 #ifndef KERNELS_SOFTWARE_DIRECTED_HPP_
 #define KERNELS_SOFTWARE_DIRECTED_HPP_
 
+#include "../Packet.hpp"
+
 namespace Emitter
 {
 
@@ -29,7 +31,7 @@ public:
 	}
 
 private:
-	PacketDirection		m_dir;
+	PacketDirection		m_dir;				///< The direction object
 };
 
 };
