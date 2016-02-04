@@ -24,11 +24,6 @@ public:
 	typedef ValueType Value;
 	typedef IndexType Index;
 
-private:
-	static bool value_nonzero(boost::range::index_value<const Value&,Index> iv)
-			{ return iv.value() != 0; }
-
-public:
 	DenseVector(){}
 
 	/// Move from a vector
@@ -53,7 +48,7 @@ public:
 			typename std::vector<Value>::const_iterator,
 			std::pair<Index,Value>,
 			boost::forward_traversal_tag,
-			std::pair<Index,Value>,
+			const std::pair<Index,Value>&,
 			std::ptrdiff_t>
 	{
 	public:
@@ -66,7 +61,7 @@ public:
 			Super(it),
 			m_idx(idx)
 		{
-			m_val = *base_reference();
+			m_val = std::make_pair(m_idx,*base_reference());
 		}
 
 		using const_dense_iterator::iterator_adaptor_::base_reference;
@@ -76,17 +71,17 @@ public:
 			++m_idx;
 			++base_reference();
 
-			m_val = *base_reference();
+			m_val = std::make_pair(m_idx,*base_reference());
 		}
 
-		std::pair<Index,Value> dereference() const
+		const std::pair<Index,Value>& dereference() const
 		{
-			return std::make_pair(m_idx,m_val);
+			return m_val;
 		}
 
 	private:
 		Index 										m_idx;
-		Value										m_val;
+		std::pair<Index,Value>						m_val;
 		friend class boost::iterator_core_access;
 	};
 
@@ -103,7 +98,7 @@ public:
 			typename std::vector<Value>::const_iterator,
 			std::pair<Index,Value>,
 			boost::forward_traversal_tag,
-			std::pair<Index,Value>,
+			const std::pair<Index,Value>&,
 			std::ptrdiff_t>
 	{
 	public:
@@ -116,6 +111,7 @@ public:
 		{
 			while(base_reference() != m_end && *base_reference() == 0)
 				increment();
+			m_val = std::make_pair(m_idx,*base_reference());
 		}
 
 		using const_sparse_iterator::iterator_adaptor_::base_reference;
@@ -131,15 +127,18 @@ public:
 				++m_idx;
 			}
 			while (base_reference() != m_end && *base_reference() == 0);
+
+			m_val = std::make_pair(m_idx,*base_reference());
 		}
 
-		std::pair<Index,Value> dereference() const
+		const std::pair<Index,Value>& dereference() const
 		{
-			return std::make_pair(m_idx,*base_reference());
+			return m_val;
 		}
 
 	private:
 		Index 										m_idx;
+		std::pair<Index,Value>						m_val;
 		typename std::vector<Value>::const_iterator m_end;
 		friend class boost::iterator_core_access;
 	};
