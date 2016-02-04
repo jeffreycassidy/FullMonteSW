@@ -12,3 +12,6 @@ ENDIF()
 
 #ADD_EXECUTABLE(Test_OutputTypes Test_OutputTypes.cpp)
 #TARGET_LINK_LIBRARIES(Test_OutputTypes boost_unit_test_framework)
+
+ADD_EXECUTABLE(Test_Containers Test_Containers.cpp)
+TARGET_LINK_LIBRARIES(Test_Containers ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
