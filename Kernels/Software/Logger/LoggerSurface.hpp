@@ -1,11 +1,11 @@
 #pragma once
 #include "Logger.hpp"
-#include <FullMonte/OutputTypes/fluencemap.hpp>
 #include "AccumulationArray.hpp"
 #include <FullMonte/Kernels/Software/Packet.hpp>
 
 #include <boost/range/algorithm.hpp>
 #include <boost/range/adaptor/transformed.hpp>
+#include <FullMonteSW/FullMonte/OutputTypes/SpatialMapBase.hpp>
 
 /** Holds quantities accumulated over a surface, using sequential IDs ranging [0,N).
  * @tparam T	Type to be accumulated; must support operator[](unsigned), operator+=(double) and operator+=(T)

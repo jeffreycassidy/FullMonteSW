@@ -1,13 +1,12 @@
 #pragma once
 #include "Logger.hpp"
 #include "AccumulationArray.hpp"
-#include <FullMonte/OutputTypes/fluencemap.hpp>
-
 #include <boost/range/algorithm.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 
 // TODO: Remove this dependency (make it SimpleMaterial)
 #include <FullMonte/Kernels/Software/Material.hpp>
+#include <FullMonteSW/FullMonte/OutputTypes/SpatialMapBase.hpp>
 
 template<typename T>double get_energy(const T& v);
 template<>inline double get_energy(const double& v){ return v; }

@@ -69,6 +69,10 @@ public:
     unsigned                getMaterial(unsigned IDt) const { return T_m[IDt]; }
     const std::vector<unsigned>& getMaterials() const { return T_m; }
 
+    // adjust units
+    float			cmPerLengthUnit() 			const 	{ return m_cmPerLengthUnit; }
+    void			cmPerLengthUnit(float l)			{ m_cmPerLengthUnit=l;		}
+
     array<Point<3,double>,4> tetraPoints(unsigned IDt) const
     {
     	array<Point<3,double>,4> p;
@@ -85,6 +89,8 @@ protected:
 private:
 	template<class Archive>void serialize(Archive& ar,const unsigned int version)
 		{	ar & BOOST_SERIALIZATION_NVP(P) & BOOST_SERIALIZATION_NVP(T_p) & BOOST_SERIALIZATION_NVP(T_m); }
+
+	float m_cmPerLengthUnit=1.0f;
 
     friend class boost::serialization::access;
 };

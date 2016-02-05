@@ -28,21 +28,24 @@ public:
 
 	/// Move from a vector
 	DenseVector(std::vector<Value>&& v) : m_v(v)
-		{ countNonZero(); }
+		{ updateStats(); }
 
 	/// Copy from a vector
 	DenseVector(const std::vector<Value>& v) : m_v(v)
-		{ countNonZero(); }
+		{ updateStats(); }
 
 	/// Construct empty of a given size
 	explicit DenseVector(unsigned dim) : m_v(dim,Value()){}
 
+
 	typedef boost::iterator_range<typename std::vector<Value>::const_iterator> 					const_value_iterator;
-	//typedef decltype(std::declval<std::vector<Value>>() | boost::adaptors::indexed(Index()) | boost::adaptors::transformed(byValue())) 	const_dense_range;
 
 	/// Returns the values in sequence
 	const_value_iterator values() const { return m_v; }
 
+
+
+	/// Class to provide an indexed iterator to the dense vector
 	class const_dense_iterator : public boost::iterator_adaptor<
 			const_dense_iterator,
 			typename std::vector<Value>::const_iterator,
@@ -93,6 +96,8 @@ public:
 				const_dense_iterator(m_v.end(),  0)); }
 
 
+
+	/// Class to iterate through sparsely
 	class const_sparse_iterator : public boost::iterator_adaptor<
 			const_sparse_iterator,
 			typename std::vector<Value>::const_iterator,
@@ -154,17 +159,27 @@ public:
 	std::size_t nnz() const { return m_nnz; 		}
 	std::size_t dim() const { return m_v.size(); 	}
 
+	Value		sum() const { return m_sum;			}
+
 	Value operator[](unsigned i) const { return m_v[i]; }
 
 private:
 
-	void countNonZero()
+	void updateStats()
 	{
-		m_nnz = boost::size(nonzeros());
+		m_nnz=0;
+		m_sum=0;
+		for(const auto v : m_v)
+		{
+			m_nnz += v != 0;
+			m_sum += v;
+		}
+
 	}
-	Index			m_startIndex=0;
-	std::size_t 	m_nnz=0;
+	Index				m_startIndex=0;
+	std::size_t 		m_nnz=0;
 	std::vector<Value> 	m_v;
+	Value 				m_sum;
 };
 
 

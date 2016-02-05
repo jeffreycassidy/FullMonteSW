@@ -25,6 +25,8 @@ public:
 	virtual unsigned											nnz() const=0;
 	virtual unsigned											dim() const=0;
 	virtual Value												operator[](unsigned i) const=0;
+
+	virtual Value												sum() const=0;
 };
 
 
@@ -59,6 +61,9 @@ public:
 	virtual Value															operator[](unsigned i) const final override
 		{ return m_container[i];			}
 
+	virtual Value															sum() const final override
+		{ return m_container.sum();			}
+
 protected:
 	Container m_container;
 };
@@ -92,58 +97,3 @@ template<typename Value,typename Index>SpatialMapBase<Value,Index>* SpatialMapBa
 	cout << "  Confirming dim=" << m->dim() << " nnz=" << m->nnz() << endl;
 	return m;
 }
-
-//class SurfaceFluenceMap
-//{
-//public:
-//	float total();
-//
-//	const SpatialMapBase<float,unsigned>* operator->() const { return m_map; }
-//
-//private:
-//	float							m_total=0.0f;
-//	SpatialMapBase<float,unsigned>*	m_map=nullptr;
-//};
-//
-//class SurfaceExitMap
-//{
-//public:
-//	float total();
-//
-//private:
-//
-//};
-//
-//class VolumeFluenceMap
-//{
-//	float total();
-//
-//};
-
-#include <memory>
-
-class VolumeAbsorptionWrapper
-{
-public:
-	VolumeAbsorptionWrapper(SpatialMapBase<float,unsigned>* p)
-		{
-			set(p);
-		}
-
-	~VolumeAbsorptionWrapper(){}
-
-	float total() const { return m_total; }
-
-	SpatialMapBase<float,unsigned>* operator->() const { return m_map.get(); }
-
-private:
-	void set(SpatialMapBase<float,unsigned>* p)
-	{
-		m_map.reset(p);
-		m_total=0;
-		for(const auto e : p->nonzeros())
-			m_total += e.second;
-	}
-	std::unique_ptr<SpatialMapBase<float,unsigned>> m_map=nullptr;
-	float m_total=0.0f;
-};

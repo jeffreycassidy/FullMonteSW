@@ -42,38 +42,8 @@ public:
 	SparseVector& operator=(const SparseVector& sv) = default;
 
 
-//	/** Adapted iterator that returns boost::index_value<Value,Index> for nonzero values
-//	 */
-//
-//	class const_sparse_iterator : public boost::iterator_adaptor<
-//			const_sparse_iterator,
-//			typename std::vector<std::pair<Index,Value>>::const_iterator,
-//			const std::pair<Index,Value>,
-//			boost::forward_traversal_tag,
-//			const std::pair<Index,Value>,
-//			std::ptrdiff_t>
-//	{
-//	public:
-//		typedef typename const_sparse_iterator::iterator_adaptor_ Super;
-//		using Super::base_reference;
-//		typedef typename Super::base_type base_type;
-//
-//		const_sparse_iterator(){}
-//		const_sparse_iterator(const const_sparse_iterator&) = default;
-//		const_sparse_iterator(const base_type& it) : Super(it){}
-//
-//		const std::pair<Index,Value> dereference() const
-//		{
-//			return *base_reference();
-//		}
-//
-//	private:
-//		friend class boost::iterator_core_access;
-//	};
 
-
-
-	/** Adapted iterator that returns boost::index_value<ReturnValue,Index> for all elements.
+	/** Adapted iterator that returns an indexed value for all elements including zeroes.
 	 */
 
 	class const_dense_iterator : public boost::iterator_adaptor<
@@ -133,10 +103,9 @@ public:
 	};
 
 
-	/** Provides a range of boost::index_value<Value,Index> holding the nonzeros.
+	/** Provides a range of std::pair<Index,Value> holding the nonzeros.
 	 */
 
-	//typedef boost::iterator_range<const_sparse_iterator> const_sparse_range;
 	typedef boost::iterator_range<typename std::vector<std::pair<Index,Value>>::const_iterator> const_sparse_range;
 
 	const_sparse_range nonzeros() const
@@ -147,7 +116,8 @@ public:
 	}
 
 
-	/** Provides a range of boost::index_value<Value,Index> holding the nonzeros.
+
+	/** Provides a range of std::pair<Index,Value> holding the nonzeros.
 	 */
 
 	typedef boost::iterator_range<const_dense_iterator> const_dense_range;
@@ -220,20 +190,30 @@ public:
 	/// Accessor function returning default-constructed value for missing elements (uses binary search)
 	Value operator[](Index i) const;
 
+	Value sum() const
+	{
+		return m_sum;
+	}
+
 private:
-	/// Move-construct from an ordered, unique vector
-	SparseVector(std::vector<std::pair<Index,Value>>&& v);
+	void construct()
+	{
+		// shrink if needed
+		if (m_contents.size() < m_contents.capacity())
+			std::vector<std::pair<Index,Value>>(m_contents).swap(m_contents);
+
+		// gather sum
+		m_sum=0;
+		for(const auto o : m_contents)
+			m_sum += o.second;
+	}
 
 	static bool compareFirst(const std::pair<Index,Value>& lhs,const std::pair<Index,Value>& rhs){ return lhs.first < rhs.first; }
 
-	template<typename I,typename V>static Index index(const boost::range::index_value<V,I>& iv){ return iv.index(); }
-	template<typename I,typename V>static Index index(const std::pair<I,V>& p){ return p.first; }
-
-	template<typename I,typename V>static Value value(const boost::range::index_value<V,I>& iv){ return iv.value(); }
-	template<typename I,typename V>static Value value(const std::pair<I,V>& p){ return p.second; }
 
 	std::vector<std::pair<Index,Value>> 	m_contents;
 	Index 									m_dim=0;
+	Value									m_sum=0;
 };
 
 template<typename Value,typename Index>Value SparseVector<Value,Index>::operator[](Index i) const
@@ -271,32 +251,32 @@ template<typename Value,typename Index>template<class IndexedRange>SparseVector<
 	}
 
 	m_contents.resize(o-m_contents.begin());
-	std::vector<std::pair<Index,Value>>(m_contents).swap(m_contents);
+
+	construct();
 }
 
 template<typename Value,typename Index>template<class IndexedRange>SparseVector<Value,Index>::SparseVector(ordered_indexed_range_t,std::size_t dim,IndexedRange ir,std::size_t nnzHint) :
 		m_dim(dim)
 {
 	m_contents.reserve(nnzHint);
+
 	for(const auto iv : ir)
 		if (value(iv) != 0)
 			m_contents.push_back(std::make_pair(index(iv),value(iv)));
 
-	std::vector<std::pair<Index,Value>>(m_contents).swap(m_contents);
+	construct();
 }
 
-template<typename Value,typename Index>template<class ValueRange>SparseVector<Value,Index>::SparseVector(value_range_t,ValueRange R,const std::size_t nnzHint)
+template<typename Value,typename Index>template<class ValueRange>SparseVector<Value,Index>::SparseVector(value_range_t,ValueRange R,const std::size_t nnzHint) :
+		m_dim(0)
 {
 	m_contents.reserve(nnzHint);
 
-	m_dim=0;
 	for(auto it=begin(R); it != end(R); ++it,++m_dim)
 		if (*it != 0)
 			m_contents.push_back(std::make_pair(m_dim,*it));
 
-	std::vector<std::pair<Index,Value>>(m_contents).swap(m_contents);
+	construct();
 }
-
-
 
 #endif /* OUTPUTTYPES_SPARSEVECTOR_HPP_ */
