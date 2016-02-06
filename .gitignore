@@ -5,7 +5,6 @@ meshquery
 octave-core
 rletrace
 runtimos
-test_*
 trace-*
 exportResult
 *.database
