@@ -11,7 +11,7 @@
 #include "TIMOS.hpp"
 #include <FullMonte/Geometry/Sources/Base.hpp>
 #include <FullMonte/Geometry/TetraMesh.hpp>
-#include <FullMonte/Geometry/Material.hpp>
+#include <FullMonte/Geometry/SimpleMaterial.hpp>
 #include <FullMonte/Storage/TIMOS/TIMOS.hpp>
 #include <FullMonte/Storage/TIMOS/TIMOSReader.hpp>
 #include <FullMonte/Storage/TIMOS/TIMOSWriter.hpp>

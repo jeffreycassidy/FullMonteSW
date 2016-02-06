@@ -1,11 +1,5 @@
 #include "LoggerMemTrace.hpp"
 
-LoggerMemTrace::~LoggerMemTrace()
-{
-    os_tetra.close();
-    os_exit.close();
-}
-
 // On launch, write out previous tetra record unless it's the same tetra
 void LoggerMemTrace::eventLaunch(const Ray3,unsigned IDt,double)
 {

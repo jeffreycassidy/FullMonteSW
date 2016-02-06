@@ -64,9 +64,6 @@ class LoggerMemTraceMT {
 
     public:
 
-	typedef void logger_member_tag;
-	typedef true_type single_result_tag;
-
 	LoggerMemTraceMT(string fnroot_) : Nth(0),fnroot(fnroot_){}
 	LoggerMemTraceMT(LoggerMemTraceMT&& lm_) : Nth(lm_.Nth),fnroot(std::move(lm_.fnroot)){}
 	LoggerMemTraceMT(const LoggerMemTraceMT&) = delete;
@@ -88,8 +85,4 @@ class LoggerMemTraceMT {
     }
 
     typedef WorkerThread ThreadWorker;
-    typedef LoggerResults ResultType;
-
-    typedef ResultType result_type;
-    result_type getResults() const { return LoggerResults(); }
 };

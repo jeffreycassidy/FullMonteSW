@@ -19,6 +19,8 @@
 #include <mutex>
 #include <condition_variable>
 
+#include <string>
+
 class KernelObserver;
 
 namespace Source { class Base; }
@@ -60,7 +62,7 @@ public:
 	{
 		Result* r=nullptr;
 		for(unsigned i=0; i<m_results.size() && !r; ++i)
-			r=dynamic_cast<const Result*>(lr);
+			r=dynamic_cast<const Result*>(m_results[i]);
 
 		return r;
 	}

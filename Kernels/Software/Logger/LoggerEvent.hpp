@@ -1,34 +1,20 @@
 #include "Logger.hpp"
 #include <mutex>
 
+#include <FullMonte/OutputTypes/MCEventCounts.hpp>
+
 /** LoggerEvent counts events as they happen.
  *
  */
 
-class EventCount;
-ostream& operator<<(ostream& os,const EventCount&);
 
-class EventCount : public clonable<LoggerResults,EventCount> {
-public:
-    unsigned long long Nlaunch,Nabsorb,Nscatter,Nbound,Ntir,Nfresnel,Nrefr,Ninterface,Nexit,Ndie,Nwin,Nabnormal,Ntime,Nnohit;
-    void clear(){ Nlaunch=Nabsorb=Nscatter=Nbound=Ntir=Nfresnel=Nrefr=Ninterface=Nexit=Ndie=Nwin=Nabnormal=Ntime=Nnohit=0; }
-
-    virtual string getTypeString() const { return "logger.results.events"; }
-
-    virtual void summarize(ostream& os) const { os << *this; }
-};
-
-
-
-class LoggerEvent : public LoggerNull, public EventCount {
-
+class LoggerEvent : public LoggerNull, public MCEventCounts
+{
     public:
 
-	typedef EventCount result_type;
-
-    LoggerEvent(){ clear(); }
+    LoggerEvent(){ }
     LoggerEvent(const LoggerEvent&) = delete;
-    LoggerEvent(LoggerEvent&& le_){ clear(); }
+    LoggerEvent(LoggerEvent&& le_){ *this=le_; le_.clear(); }
 
     inline void eventLaunch(const Ray3 r,unsigned IDt,double w){ ++Nlaunch; };   // launch new packet
 
@@ -48,14 +34,8 @@ class LoggerEvent : public LoggerNull, public EventCount {
 
     inline void eventAbnormal(const Packet&,unsigned,unsigned){ ++Nabnormal; }
 
-    const result_type& getResults() const { return *this; };
-    result_type getResults(){ return *this; }
-
     /// Add events contained in rhs.
     const LoggerEvent& operator+=(const LoggerEvent& rhs);
-
-    /// Print summary of all event counts, plus conservation checks
-    //friend ostream& operator<<(ostream&,const LoggerEvent&);
 
     friend class LoggerEventMT;
 };
@@ -74,8 +54,6 @@ class LoggerEvent : public LoggerNull, public EventCount {
 
 class LoggerEventMT : public LoggerEvent, private std::mutex {
 public:
-	using LoggerEvent::result_type;
-	using LoggerEvent::getResults;
 
 	/// Default construction: init mutex
 	LoggerEventMT(){}
@@ -114,9 +92,6 @@ public:
 
 		void eventCommit(){ commit(); }
 	};
-
-	typedef EventCount ResultType;
-	typedef true_type single_result_tag;
 
 
 	/// Returns a new worker thread

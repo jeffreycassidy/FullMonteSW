@@ -97,10 +97,6 @@ class LoggerTracerMT {
     	return LoggerTracer(ss.str());
     }
 
-    typedef true_type single_result_tag;
-    typedef LoggerResults result_type;
-    typedef LoggerResults ResultType;
-
     typedef ThreadWorker WorkerThread;
 
     result_type getResults() const { return LoggerResults(); }

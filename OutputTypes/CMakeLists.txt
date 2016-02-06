@@ -15,3 +15,6 @@
 
 ADD_EXECUTABLE(Test_Containers Test_Containers.cpp)
 TARGET_LINK_LIBRARIES(Test_Containers ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+
+ADD_EXECUTABLE(Test_OutputTypes Test_OutputTypes.cpp OutputDataSummarize.cpp MCConservationCounts.cpp OutputData.cpp MCEventCounts.cpp)
+TARGET_LINK_LIBRARIES(Test_OutputTypes ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})

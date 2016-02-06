@@ -40,25 +40,6 @@ DEFINE_EVENT(commit,Commit);				// not actually an event but a request to the lo
 
 }
 
-template<class Base,class Derived>class clonable : public Base {
-public:
-	virtual Base* clone() const override { return new Derived(static_cast<const Derived&>(*this)); }
-	template<typename... Args> clonable(Args... args) : Base(args...){}
-};
-
-class LoggerResults {
-public:
-	virtual string getTypeString() const { return "logger.results.unknown"; }
-
-	virtual LoggerResults* clone() const=0;
-
-	virtual void summarize(ostream& os) const {
-		os << "<no summary available for " << getTypeString() << '>' << endl;
-	}
-
-	virtual void write_text_file(const std::string& fn) const {};
-};
-
 // set default to nop for all events (dangerous, may miss events unexpectedly if give bad args)
 //template<class EventTag,typename... Args>void log_event(LoggerNull&,EventTag,Args...){}
 
@@ -142,10 +123,6 @@ class LoggerNull {
     typedef __m128 Point3;
     typedef __m128 UVect3;
     typedef pair<__m128,__m128> Ray3;
-
-    typedef std::tuple<> ResultType;
-
-    ResultType getResults() const { return make_tuple(); }
 
     /// LoggerNull defines the basic functions that a Logger can overload
 
