@@ -6,7 +6,6 @@
 
 #include <list>
 
-
 /** Single-threaded conservation tracker.
  *
  */
@@ -28,9 +27,7 @@ class LoggerConservation : public MCConservationCounts,public LoggerNull {
     LoggerConservation(){};
 
     /// Moves another conservation counter by copying its values and then resetting them
-    LoggerConservation(LoggerConservation&& lc_) : ConservationCounts(lc_){ lc_ = LoggerConservation(); }
-
-    /// Copy constructor is not used
+    LoggerConservation(LoggerConservation&& lc_) = delete;
     LoggerConservation(const LoggerConservation&) = delete;
 
     /// Return a copy of the current conservation counts

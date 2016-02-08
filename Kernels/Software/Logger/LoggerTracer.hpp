@@ -55,8 +55,6 @@ private:
 
     public:
 
-	typedef void logger_member_tag;
-
 	LoggerTracer(LoggerTracer&& lm_) : fn(lm_.fn),os(lm_.fn.c_str()){ lm_.os.close(); }		///< Move constructor does nothing
 	LoggerTracer(const LoggerTracer& lm_)=delete;								///< Copy constructor should not exist; file name must be unique
 	LoggerTracer(string fn_) : fn(fn_),os(fn_.c_str()){}
@@ -81,18 +79,14 @@ private:
     inline void eventCommit(){}
 };
 
-class LoggerTracerMT {
-	unsigned i;
-
-    public:
-
-	LoggerTracerMT() : i(0){}
+class LoggerTracerMT
+{
+public:
+	LoggerTracerMT(){}
 
     typedef LoggerTracer ThreadWorker;
 
     ThreadWorker get_worker() {
-    	stringstream ss;
-    	ss << "tracer." << i++ << ".bin";
     	cout << "Creating new tracer into file " << ss.str() << endl;
     	return LoggerTracer(ss.str());
     }

@@ -10,7 +10,6 @@
 #include <FullMonte/Kernels/Software/Logger/Logger.hpp>
 #include <FullMonte/optics.hpp>
 
-#include <FullMonte/Kernels/Software/FullMonte.hpp>
 #include <FullMonte/Geometry/Tetra.hpp>
 
 #include <FullMonte/oldstuff/TupleStuff.hpp>

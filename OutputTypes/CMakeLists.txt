@@ -1,4 +1,4 @@
-#ADD_LIBRARY(FullMonteData SHARED fluencemap.cpp)
+ADD_LIBRARY(FullMonteData SHARED OutputDataSummarize.cpp MCConservationCounts.cpp OutputData.cpp MCEventCounts.cpp)
 #TARGET_LINK_LIBRARIES(FullMonteData FullMonteGeometry)
 
 #IF (WRAP_TCL)

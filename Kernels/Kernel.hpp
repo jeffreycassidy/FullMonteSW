@@ -24,7 +24,8 @@
 class KernelObserver;
 
 namespace Source { class Base; }
-class LoggerResults;
+
+class OutputData;
 
 class Kernel {
 public:
@@ -56,9 +57,9 @@ public:
 	void setUnitsToCM(){ L_=1.0;  	}
 	void setUnitsToMM(){ L_=0.1; 	}
 
-	const LoggerResults* getResult(std::string,std::string="") const;
+	const OutputData* getResultByTypeString(std::string) const;
 
-	template<class Result>const Result* getResult() const
+	template<class Result>const Result* getResultByType() const
 	{
 		Result* r=nullptr;
 		for(unsigned i=0; i<m_results.size() && !r; ++i)
@@ -68,16 +69,16 @@ public:
 	}
 
 	boost::any_range<
-		LoggerResults*,
-		boost::forward_traversal_tag> results() const { return boost::any_range<LoggerResults*,boost::forward_traversal_tag>(m_results); }
+		OutputData*,
+		boost::forward_traversal_tag> results() const { return boost::any_range<OutputData*,boost::forward_traversal_tag>(m_results); }
 
 protected:
 	const Source::Base*					m_src=nullptr;
 	std::vector<SimpleMaterial>			m_materials;
 
-	std::vector<LoggerResults*> 			m_results;
+	std::vector<OutputData*> 			m_results;
 
-	void addResults(LoggerResults*);
+	void addResults(OutputData*);
 	void clearResults();
 	void awaitStatus(Status st);
 

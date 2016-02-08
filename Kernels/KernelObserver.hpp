@@ -1,11 +1,10 @@
 #pragma once
 #include <boost/timer/timer.hpp>
 
-#include <FullMonte/Kernels/Software/Logger/Logger.hpp>
-
 using namespace std;
 
 class Kernel;
+class OutputData;
 
 class KernelObserver {
 public:
@@ -15,5 +14,5 @@ public:
 	virtual void notify_prepare(const Kernel&){};
 	virtual void notify_start(const Kernel&){};
 	virtual void notify_finish(const Kernel&){};
-	virtual void notify_result(const Kernel&,const LoggerResults* lr){};
+	virtual void notify_result(const Kernel&,const OutputData* lr){};
 };

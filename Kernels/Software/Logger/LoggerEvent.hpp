@@ -14,7 +14,7 @@ class LoggerEvent : public LoggerNull, public MCEventCounts
 
     LoggerEvent(){ }
     LoggerEvent(const LoggerEvent&) = delete;
-    LoggerEvent(LoggerEvent&& le_){ *this=le_; le_.clear(); }
+    LoggerEvent(LoggerEvent&& le_) = delete;
 
     inline void eventLaunch(const Ray3 r,unsigned IDt,double w){ ++Nlaunch; };   // launch new packet
 
@@ -33,9 +33,6 @@ class LoggerEvent : public LoggerNull, public MCEventCounts
     inline void eventRouletteWin(double,double){ ++Nwin; };                     // won roulette
 
     inline void eventAbnormal(const Packet&,unsigned,unsigned){ ++Nabnormal; }
-
-    /// Add events contained in rhs.
-    const LoggerEvent& operator+=(const LoggerEvent& rhs);
 
     friend class LoggerEventMT;
 };
@@ -59,9 +56,7 @@ public:
 	LoggerEventMT(){}
 
 	/// Move construction: move existing LoggerEvent, create a new mutex (not move-constructible)
-	LoggerEventMT(LoggerEventMT&& le_) : LoggerEvent(std::move(le_)),std::mutex(){};
-
-	/// Not copy-constructible
+	LoggerEventMT(LoggerEventMT&& le_) = delete;
 	LoggerEventMT(const LoggerEventMT&) = delete;
 
 	/** Thread worker class for the LoggerEventMT.
@@ -71,12 +66,11 @@ public:
 	class ThreadWorker : public LoggerEvent {
 		LoggerEventMT& parent;
 	public:
-		typedef void logger_member_tag;
 		/// Create a new ThreadWorker with reference to the specified parent_
 		ThreadWorker(LoggerEventMT& parent_) : parent(parent_){}
 
 		/// Move constructor, copying the reference to the parent
-		ThreadWorker(ThreadWorker&& tw_) : LoggerEvent(std::move(tw_)),parent(tw_.parent){}
+		//ThreadWorker(ThreadWorker&& tw_) : LoggerEvent(std::move(tw_)),parent(tw_.parent){}
 
 		/// Commit results to parent before deleting
 		~ThreadWorker(){ commit(); }

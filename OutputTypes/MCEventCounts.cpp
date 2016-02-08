@@ -5,7 +5,7 @@
  *      Author: jcassidy
  */
 
-#include <FullMonteSW/OutputTypes/MCEventCounts.hpp>
+#include "MCEventCounts.hpp"
 
 template<>const std::string clonable<OutputData,MCEventCountsOutput>::s_typeString = "mc_events";
 
@@ -27,4 +27,3 @@ MCEventCounts& MCEventCounts::operator+=(const MCEventCounts& rhs)
     Nnohit      += rhs.Nnohit;
     return *this;
 }
-

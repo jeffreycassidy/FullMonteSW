@@ -15,35 +15,17 @@ typedef struct {
     unsigned Nexit;
 } ExitRecord;
 
-class LoggerMemTrace : public LoggerNull {
-    string fnTetra,fnExit;
-    ofstream os_tetra,os_exit;
-
+class LoggerMemTrace : public LoggerNull
+{
     unsigned IDt_current,IDt_next;
     int IDf_last_exit;
     unsigned Nabs,Nexit;
 
-    // helper functions
-    void logTetraHits(unsigned,unsigned);
-    void logExit(int,unsigned);
-
-    public:
-
-    typedef true_type single_result_tag;
-    typedef void results_type;
+public:
 
     LoggerMemTrace(string fnTetra_,string fnExit_) : fnTetra(fnTetra_),fnExit(fnExit_),os_tetra(fnTetra_),os_exit(fnExit_),
-        IDf_last_exit(0),Nabs(-1),Nexit(-1){
-            if (!os_tetra.good())
-                cerr << "Failed to open " << fnTetra_ << " for writing" << endl;
-            if (!os_exit.good())
-                cerr << "Failed to open " << fnExit_ << " for writing" << endl; }
-    LoggerMemTrace(const LoggerMemTrace& l_) : fnTetra(l_.fnTetra),fnExit(l_.fnExit),os_tetra(l_.fnTetra),os_exit(l_.fnExit),
-        IDf_last_exit(0),Nabs(-1),Nexit(-1){
-            if (!os_tetra.good())
-                cerr << "Failed to open " << l_.fnTetra << " for writing" << endl;
-            if (!os_exit.good())
-                cerr << "Failed to open " << l_.fnExit << " for writing" << endl; }
+    LoggerMemTrace(const LoggerMemTrace& l_) : fnTetra(l_.fnTetra),fnExit(l_.fnExit),os_tetra(l_.fnTetra),os_exit(l_.fnExit)
+
     ~LoggerMemTrace();
 
     void eventLaunch(const Ray3 r,unsigned IDt,double w);
@@ -58,11 +40,9 @@ class LoggerMemTrace : public LoggerNull {
     void eventExit(const Ray3,int,double);
 };
 
-class LoggerMemTraceMT {
-	unsigned Nth;
-	string fnroot;
-
-    public:
+class LoggerMemTraceMT
+{
+public:
 
 	LoggerMemTraceMT(string fnroot_) : Nth(0),fnroot(fnroot_){}
 	LoggerMemTraceMT(LoggerMemTraceMT&& lm_) : Nth(lm_.Nth),fnroot(std::move(lm_.fnroot)){}

@@ -151,9 +151,9 @@ class LoggerNull {
     typedef LoggerNull ThreadWorker;
 
     LoggerNull get_worker() { return LoggerNull(); }
-
-    const LoggerNull& operator+=(const LoggerNull&){ return *this; }
-    LoggerNull operator+(const LoggerNull&){ return LoggerNull(); }
+//
+//    const LoggerNull& operator+=(const LoggerNull&){ return *this; }
+//    LoggerNull operator+(const LoggerNull&){ return LoggerNull(); }
 };
 
 

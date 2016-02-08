@@ -1,75 +1,6 @@
 #pragma once
 #include "Logger.hpp"
-#include "AccumulationArray.hpp"
 #include <FullMonte/Kernels/Software/Packet.hpp>
-
-#include <boost/range/algorithm.hpp>
-#include <boost/range/adaptor/transformed.hpp>
-#include <FullMonteSW/FullMonte/OutputTypes/SpatialMapBase.hpp>
-
-/** Holds quantities accumulated over a surface, using sequential IDs ranging [0,N).
- * @tparam T	Type to be accumulated; must support operator[](unsigned), operator+=(double) and operator+=(T)
- */
-
-template<class T>class SurfaceArray;
-template<class T>ostream& operator<<(ostream&,const SurfaceArray<T>&);
-
-template<typename T>double get_emitted_energy(const T& v);
-template<>inline double get_emitted_energy(const double& v){ return v; }
-
-template<class T>class SurfaceArray : public clonable<LoggerResults,SurfaceArray<T>> {
-	const TetraMesh& mesh;
-	vector<T> s;
-
-public:
-	SurfaceArray(const SurfaceArray& s_) = default;
-    SurfaceArray(SurfaceArray&& ls_)        : mesh(ls_.mesh),s(std::move(ls_.s)){};
-    SurfaceArray(const TetraMesh& mesh_)    : mesh(mesh_),s(mesh_.getNt()+1){};
-    SurfaceArray(const TetraMesh& mesh_,vector<T>&& s_) : mesh(mesh_),s(std::move(s_)){};
-    SurfaceArray(const TetraMesh& mesh_,const vector<T>& s_) : mesh(mesh_),s(s_){};
-
-    /// Returns a VolumeFluenceMap for the absorption accumulated so far
-    /** The value of asFluence determines whether it returns total energy (false) or fluence as E/V/mu_a (true) */
-    void fluenceMap(SurfaceFluenceMap&,bool asFluence=true);
-
-    /// Returns a hit map TODO: Improve this comment and check how the function works
-    void hitMap(map<unsigned,unsigned long long>& m);
-
-    void resultMap(map<FaceByPointID,double>& m,bool per_area=true);
-
-    vector<double> emitted_energy() const
-	{
-    	vector<double> ov(s.size());
-    	boost::copy(s | boost::adaptors::transformed(get_emitted_energy<T>), ov.begin());
-    	return ov;
-	}
-
-    typename vector<T>::const_iterator begin() const { return s.begin(); }
-    typename vector<T>::const_iterator end()   const { return s.end(); }
-
-    virtual string getTypeString() const { return "logger.results.surface.energy"; }
-
-	virtual void summarize(ostream& os) const { os << *this; }
-
-	double getTotal() const {
-		double sum=0.0;
-		for(double E : s)
-			sum += E;
-		return sum;
-	}
-
-    // Provides a way of summarizing to an ostream
-    friend ostream& operator<<<>(ostream& os,const SurfaceArray<T>& sa);
-};
-
-template<class T>ostream& operator<<(ostream& os,const SurfaceArray<T>&ls)
-{
-	return os << "Surface array total energy is " << setprecision(4) << ls.getTotal() << " (" << ls.s.size() << " elements)" << endl;
-}
-//template<>ostream& operator<<(ostream& os,const SurfaceArray<double>& ls);
-
-template<class T>class LoggerSurface;
-template<class T>ostream& operator<<(ostream& os,const LoggerSurface<T>& ls);
 
 /** Handles logging of surface exit events.
  *
@@ -78,7 +9,6 @@ template<class T>ostream& operator<<(ostream& os,const LoggerSurface<T>& ls);
 
 template<class Accumulator>class LoggerSurface {
 	Accumulator acc;
-	const TetraMesh& mesh;
 public:
 
 	typedef vector<typename Accumulator::ElementType> results_type;
@@ -88,8 +18,8 @@ public:
 	 * @param args...	Arguments to be passed through to the constructor for the underlying Accumulator type
 	 */
 
-	template<typename... Args>LoggerSurface(const TetraMesh& mesh_,Args... args) : acc(mesh_.getNf()+1,args...),mesh(mesh_){}
-	LoggerSurface(LoggerSurface&& ls_) : acc(std::move(ls_.acc)),mesh(ls_.mesh){}
+	template<typename... Args>LoggerSurface(Args... args) : acc(args...){}
+	LoggerSurface(LoggerSurface&& ls_) : acc(std::move(ls_.acc)){}
 
 	/// Copy constructor deleted - no need for it
 	LoggerSurface(const LoggerSurface& ls_) = delete;
@@ -125,18 +55,5 @@ public:
 	/// Return a worker thread
 	WorkerThread get_worker() { return WorkerThread(acc); }
 
-	typedef SurfaceArray<typename Accumulator::ElementType> result_type;
-
-	typedef SurfaceArray<typename Accumulator::ElementType> ResultType;
-	typedef true_type single_result_tag;
-
-	result_type getResults() const { return result_type(mesh,acc.getResults()); }
-
 	template<typename T>friend ostream& operator<<(ostream& os,const LoggerSurface<T>& ls);
 };
-
-template<class T>ostream& operator<<(ostream& os,const LoggerSurface<T>& ls)
-{
-	return os << ls.getResults();
-}
-

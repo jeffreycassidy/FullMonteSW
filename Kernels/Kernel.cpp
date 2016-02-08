@@ -12,6 +12,9 @@
 #include <boost/range/algorithm.hpp>
 #include <memory>
 
+#include <FullMonte/OutputTypes/OutputData.hpp>
+#include <iostream>
+
 using namespace std;
 
 void Kernel::runSync()
@@ -80,11 +83,12 @@ void Kernel::awaitStatus(Status status)
 	m_statusCV.wait(lk, [this]{ return m_status==Running; });
 }
 
-const LoggerResults* Kernel::getResult(const std::string typeStr,const std::string opts) const
+const OutputData* Kernel::getResultByTypeString(const std::string typeStr) const
 {
-	auto it = boost::find_if(m_results, [&typeStr](LoggerResults* lr){ return lr && lr->getTypeString() == typeStr; });
+	const auto R = results();
+	const auto it = boost::find_if(R, [typeStr](OutputData* d){ return d->typeString() == typeStr; });
 
-	if (it == end(m_results))
+	if (it == end(R))
 	{
 		cerr << "Failed to find results of type '" << typeStr << '\'' << endl;
 		return nullptr;
@@ -98,7 +102,7 @@ void Kernel::clearResults()
 	m_results.clear();
 }
 
-void Kernel::addResults(LoggerResults* r)
+void Kernel::addResults(OutputData* r)
 {
 	m_results.push_back(r);
 	for(auto o : m_observers)

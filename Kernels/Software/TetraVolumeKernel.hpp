@@ -41,17 +41,6 @@ public:
 				LoggerConservationMT(),
 				LoggerVolume<QueuedAccumulatorMT<double>>(*mesh,1<<10)){}
 
-	//vector<double> getVolumeFluenceVector() const
-	//{
-//		const LoggerResults* lr = getResult("logger.results.volume.energy");
-//		const VolumeArray<double>& d = dynamic_cast<const VolumeArray<double>&>(*lr);
-//
-//		vector<double> E = d.absorbed_energy();
-//
-//		cout << "Fetched an energy vector with total value " << d.getTotal() << endl;
-//
-//		float k = 1.0/float(Npkt_);
-//
 //		for(unsigned i=0; i<E.size(); ++i)
 //		{
 //			assert (i <= m_mesh->getNt());
@@ -68,10 +57,6 @@ public:
 //					cout << "WARNING: Nonzero absorption in an element with zero absorption coefficient" << endl;
 //				else
 //					E[i] *= k / (V * mu_a);
-//			}
-//		}
-//		return E;
-//	}
 
 private:
 	virtual ThreadedMCKernelBase::Thread* makeThread() override

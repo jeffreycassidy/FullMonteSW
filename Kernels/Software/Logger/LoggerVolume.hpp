@@ -1,60 +1,8 @@
 #pragma once
 #include "Logger.hpp"
 #include "AccumulationArray.hpp"
-#include <boost/range/algorithm.hpp>
-#include <boost/range/adaptor/transformed.hpp>
 
-// TODO: Remove this dependency (make it SimpleMaterial)
-#include <FullMonte/Kernels/Software/Material.hpp>
-#include <FullMonteSW/FullMonte/OutputTypes/SpatialMapBase.hpp>
-
-template<typename T>double get_energy(const T& v);
-template<>inline double get_energy(const double& v){ return v; }
-
-template<class T>class VolumeArray : public clonable<LoggerResults,VolumeArray<T>> {
-	const TetraMesh& mesh;
-	vector<T> v;
-
-public:
-	VolumeArray(const VolumeArray& v_) = default;
-    VolumeArray(VolumeArray&& lv_)        : mesh(lv_.mesh),v(std::move(lv_.v)){};
-    VolumeArray(const TetraMesh& mesh_)    : mesh(mesh_),v(mesh.getNt()+1){};
-    VolumeArray(const TetraMesh& mesh_,vector<T>&& v_) : mesh(mesh_),v(std::move(v_)){}
-    VolumeArray(const TetraMesh& mesh_,const vector<T>& v_)  : mesh(mesh_),v(v_){}
-
-    /// Returns a VolumeFluenceMap for the absorption accumulated so far*/
-    /** The value of asFluence determines whether it returns total energy (false) or fluence as E/V/mu_a (true) */
-    void fluenceMap(VolumeFluenceMap&,const vector<Material>&,bool asFluence=true);
-
-    vector<double> absorbed_energy() const
-	{
-    	vector<double> ov(v.size());
-
-    	boost::copy(v | boost::adaptors::transformed(get_energy<T>), ov.begin());
-    	return ov;
-	}
-
-    /// Returns (if available from AccumulatorT) a hit map
-    void hitMap(map<unsigned,unsigned long long>& m);
-
-    typedef typename vector<T>::const_iterator const_iterator;
-
-    const_iterator begin() const { return v.begin(); }
-    const_iterator end()   const { return v.end(); }
-
-    virtual string getTypeString() const { return "logger.results.volume.energy"; }
-
-    double getTotal() const {
-    	double sum=0.0;
-    	for(double E : v)
-    		sum += E;
-    	return sum;
-    }
-
-	virtual void summarize(ostream& os) const {
-		os << "Volume array total energy is " << setprecision(4) << getTotal() << " (" << v.size() << " elements)" << endl;
-	}
-};
+#include <FullMonte/OutputTypes/SpatialMapBase.hpp>
 
 /*! Basic volume logger.
  *
@@ -73,22 +21,14 @@ public:
  *	Examples: vector<T>& (single-thread), QueuedAccumulatorMT (thread-safe)
  */
 
-template<class T>class LoggerVolume;
-template<class T>ostream& operator<<(ostream& os,const VolumeArray<T>& lv);
 
-template<class T>ostream& operator<<(ostream& os,const LoggerVolume<T>& lv)
+template<class Accumulator>class LoggerVolume
 {
-	return os << lv.getResults();
-}
-
-template<class Accumulator>class LoggerVolume {
 	Accumulator acc;
-	const TetraMesh& mesh;
 
 public:
-	template<typename... Args>LoggerVolume(const TetraMesh& mesh_,Args... args) : acc(mesh_.getNt()+1,args...),mesh(mesh_){}
 	LoggerVolume(){}
-	LoggerVolume(LoggerVolume&& lv_) : acc(std::move(lv_.acc)),mesh(lv_.mesh){}
+	LoggerVolume(LoggerVolume&& lv_) = delete;
 	LoggerVolume(const LoggerVolume& lv_) = delete;
 
 	class WorkerThread : public LoggerNull {
@@ -109,15 +49,11 @@ public:
 	    inline void eventCommit(){ wt.commit(); }
 	};
 
+	/// Access to the back-end accumulator
+	Accumulator& accumulator();
+
 	typedef WorkerThread ThreadWorker;
 
-	typedef VolumeArray<typename Accumulator::ElementType> ResultType;
-	typedef true_type single_result_tag;
-
 	WorkerThread get_worker() { return WorkerThread(acc);  };
-
-	typedef VolumeArray<typename Accumulator::ElementType> result_type ;
-
-	result_type getResults() const { return result_type(mesh,acc.getResults()); }
 };
 
