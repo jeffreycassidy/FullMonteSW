@@ -77,7 +77,7 @@ void SparseVectorVTK::update()
 		for(const auto iv : m_sv->dense())
 		{
 			assert(iv.index() < m_sv->dim());
-			m_vtkFloat->SetTuple1(iv.index(), iv.value());
+			m_vtkFloat->SetTuple1(iv.first, iv.second);
 		}
 	}
 	else

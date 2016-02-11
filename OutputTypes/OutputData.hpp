@@ -25,7 +25,7 @@ protected:
 	static const std::string s_typeString;
 };
 
-template<class Base,class Derived>class clonable : public Base
+template<class Base,class Derived,class Visitor>class clonable : public Base
 {
 public:
 	virtual Base* clone() const override { return new Derived(static_cast<const Derived&>(*this)); }
@@ -33,33 +33,12 @@ public:
 
 	virtual const std::string& typeString() const override { return s_typeString; }
 
+	virtual void acceptVisitor(Visitor* v){ v->doVisit((Derived*)this); }
+
 private:
 	static const std::string s_typeString;
 
 };
-
-//template<class Base,class Derived>class Visitable : virtual pu
-//{
-//public:
-//	typedef typename Base::Visitor Visitor;
-//
-//protected:
-//	Visitable(){}
-//
-//public:
-//	virtual void acceptVisitor(Visitor* v) override
-//	{
-//		v->visit((Derived*)this);
-//	}
-//};
-//
-//template<class VisitorType>class VisitableBase
-//{
-//public:
-//	typedef VisitorType Visitor;
-//
-//	virtual void acceptVisitor(Visitor* v)=0;
-//};
 
 #include <string>
 
@@ -67,6 +46,10 @@ class OutputData;
 
 class MCConservationCountsOutput;
 class MCEventCountsOutput;
+class VolumeAbsorbedEnergyMap;
+class SurfaceFluenceMap;
+class VolumeFluenceMap;
+class SurfaceExitEnergyMap;
 
 class OutputData : public clonable_base<OutputData>
 {
@@ -88,6 +71,10 @@ public:
 	virtual void doVisit(OutputData* d)=0;
 	virtual void doVisit(MCConservationCountsOutput* cc)=0;
 	virtual void doVisit(MCEventCountsOutput* cc)=0;
+	virtual void doVisit(VolumeAbsorbedEnergyMap* em)=0;
+	virtual void doVisit(SurfaceExitEnergyMap* sm)=0;
+	virtual void doVisit(SurfaceFluenceMap* sm)=0;
+	virtual void doVisit(VolumeFluenceMap* vm)=0;
 
 protected:
 	Visitor(){}

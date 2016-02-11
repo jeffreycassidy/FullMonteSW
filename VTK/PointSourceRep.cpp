@@ -10,13 +10,14 @@
 
 #include <boost/range/algorithm.hpp>
 
-#include <FullMonte/Geometry/SourceDescription.hpp>
 #include <FullMonte/VTK/PointSourceRep.h>
 #include <array>
 
 #include <vtkCellArray.h>
 #include <vtkPolyData.h>
 #include <vtkCellType.h>
+
+#include <FullMonte/Geometry/Sources/PointSource.hpp>
 
 using namespace std;
 
@@ -104,7 +105,7 @@ PointSourceRep::PointSourceRep() :
 	m_pw->AddObserver(vtkCommand::EndInteractionEvent,m_movecb);
 }
 
-void PointSourceRep::setPointSourceDescription(PointSourceDescription *psd)
+void PointSourceRep::setPointSourceDescription(Source::PointSource *psd)
 {
 	m_psd=psd;
 }
@@ -112,7 +113,7 @@ void PointSourceRep::setPointSourceDescription(PointSourceDescription *psd)
 void PointSourceRep::setPointSourceDescription(const char* pStr)
 {
 	SwigPointerInfo info = readSwigPointer(pStr);
-	setPointSourceDescription((PointSourceDescription*)info.p);
+	setPointSourceDescription((Source::PointSource*)info.p);
 }
 
 // callback function called when the user moves the point
@@ -152,10 +153,8 @@ void PointSourceRep::position(array<float,3> pf)
 
 void PointSourceRep::moveDescription(const std::array<float,3> p)
 {
-	array<double,3> pd { p[0], p[1], p[2] };
-
 	assert(m_psd);
-	m_psd->setOrigin(pd);
+	m_psd->position(p);
 }
 
 void PointSourceRep::moveWidget(const std::array<float,3> p)

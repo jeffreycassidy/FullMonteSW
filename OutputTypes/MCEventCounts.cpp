@@ -7,7 +7,7 @@
 
 #include "MCEventCounts.hpp"
 
-template<>const std::string clonable<OutputData,MCEventCountsOutput>::s_typeString = "mc_events";
+template<>const std::string clonable<OutputData,MCEventCountsOutput,OutputData::Visitor>::s_typeString = "mc_events";
 
 MCEventCounts& MCEventCounts::operator+=(const MCEventCounts& rhs)
 {

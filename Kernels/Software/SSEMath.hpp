@@ -234,7 +234,7 @@ public:
 		return _mm_mul_ps(_mm_shuffle_ps(k,k,_MM_SHUFFLE(0,0,0,0)),v.m_v);
 	}
 
-	bool check(Checking c,float eps=1e-6)
+	bool check(Checking c,float eps=1e-5)
 	{
 		float e;
 		switch(c)

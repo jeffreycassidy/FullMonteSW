@@ -12,7 +12,6 @@
 #include <functional>
 #include <unordered_map>
 
-#include "TriSurf.hpp"
 #include "Face.hpp"
 #include "Tetra.hpp"
 #include "TetraMeshBase.hpp"
@@ -220,14 +219,10 @@ class TetraMesh : public TetraMeshBase {
         	return r0!=r1 && (r1==region || r0==region);
         }
 
-    /// Creates a copy of the points and faces comprising the boundary of given material
-    TriSurf extractMaterialBoundary(unsigned matID) const;
     std::vector<unsigned> getRegionBoundaryTris(unsigned r) const;
 
     /// Extracts the face IDs and tetra IDs corresponding to a given surface
     vector<pair<unsigned,unsigned>> getRegionBoundaryTrisAndTetras(unsigned r0,unsigned r1=-1U) const;
-
-    TriSurf extractRegionSurface(const vector<unsigned>& tetIDs) const;
 
     // functions for saving tetramesh representations
 //    pair<unsigned,boost::shared_array<const uint8_t> > tetrasAsBinary() const;

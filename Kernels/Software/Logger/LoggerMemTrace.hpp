@@ -15,7 +15,7 @@ typedef struct {
     unsigned Nexit;
 } ExitRecord;
 
-class LoggerMemTrace : public LoggerNull
+class LoggerMemTrace : public LoggerBase
 {
     unsigned IDt_current,IDt_next;
     int IDf_last_exit;

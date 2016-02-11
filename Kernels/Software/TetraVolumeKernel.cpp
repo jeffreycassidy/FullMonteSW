@@ -8,29 +8,23 @@
 #include "TetraVolumeKernel.hpp"
 #include "TetraMCKernelThread.hpp"
 
+#include <FullMonte/OutputTypes/OutputDataSummarize.hpp>
+#include <boost/range/adaptor/indexed.hpp>
+
+#include <list>
+
+// TODO: This doesn't belong here
 template class Emitter::TetraEmitterFactory<RNG_SFMT_AVX>;
 
 void TetraVolumeKernel::postfinish()
 {
-	auto res = std::make_tuple(
-			get<0>(m_logger).getResults(),
-			get<1>(m_logger).getResults(),
-			get<2>(m_logger).getResults());
+	std::list<OutputData*> res = get<0>(m_logger).results();
+	res.splice(res.end(), get<1>(m_logger).results());
+	res.splice(res.end(), get<2>(m_logger).results());
 
-	// clone because storage above is of automatic duration
-	tuple_for_each(res, [this] (const LoggerResults& r)
-			{ addResults(r.clone()); });
+	dynamic_cast<VolumeAbsorbedEnergyMap&>(*res.back()).totalEmitted(packetCount());
 
-	cout << "Results are available" << endl;
-
-	for(auto p : results())
-		p->summarize(cout);
-
-	cout << endl << endl << "Result types available: ";
-	for(auto p : results())
-		cout << " " << p->getTypeString();
-	cout << endl;
-
-	cout << "Kernel is finished" << endl;
+	for(auto r : res)
+		addResults(r);
 }
 

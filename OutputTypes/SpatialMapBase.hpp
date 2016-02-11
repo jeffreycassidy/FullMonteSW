@@ -16,7 +16,11 @@ template<typename Value,typename Index=unsigned>class SpatialMapBase
 public:
 	virtual ~SpatialMapBase(){}
 
-	static SpatialMapBase* newFromVector(const std::vector<Value>& v);
+	static SpatialMapBase* newFromVector(const std::vector<Value>& v)
+		{ return newFromVector(std::vector<Value>(v)); }
+	static SpatialMapBase* newFromVector(std::vector<Value>&& v);
+
+	virtual SpatialMapBase* clone() const=0;
 
 	virtual boost::any_range<const std::pair<Index,Value>,boost::forward_traversal_tag> 	nonzeros() const=0;
 	virtual boost::any_range<const std::pair<Index,Value>,boost::forward_traversal_tag> 	dense() const=0;
@@ -39,9 +43,14 @@ template<class Container>class SpatialMapContainer : public SpatialMapBase<typen
 {
 public:
 	template<class... Args>SpatialMapContainer(Args... args) : m_container(args...){}
+	SpatialMapContainer(const Container& C) : m_container(C){}
+	SpatialMapContainer(Container&& C) : m_container(std::move(C)){}
+
 
 	typedef typename Container::Value Value;
 	typedef typename Container::Index Index;
+
+	virtual SpatialMapBase<Value,Index>* clone() const override { return new SpatialMapContainer(m_container); }
 
 	virtual boost::any_range<const std::pair<Index,Value>,boost::forward_traversal_tag> 	nonzeros() const final override
 		{ return m_container.nonzeros(); 	}
@@ -70,7 +79,7 @@ protected:
 
 
 
-template<typename Value,typename Index>SpatialMapBase<Value,Index>* SpatialMapBase<Value,Index>::newFromVector(const std::vector<Value>& v)
+template<typename Value,typename Index>SpatialMapBase<Value,Index>* SpatialMapBase<Value,Index>::newFromVector(std::vector<Value>&& v)
 {
 	unsigned nnz=0;
 	for(const auto val : v)
@@ -87,12 +96,16 @@ template<typename Value,typename Index>SpatialMapBase<Value,Index>* SpatialMapBa
 	{
 		cout << "Creating sparse vector" << endl;
 		m = new SpatialMapContainer<SparseVector<Value,Index>>(value_range_t(), v, nnz);
+		v.clear();
 	}
 	else
 	{
 		cout << "Creating dense vector" << endl;
-		m = new SpatialMapContainer<DenseVector<Value,Index>>(v);
+		m = new SpatialMapContainer<DenseVector<Value,Index>>(std::move(v));
 	}
+
+	if (v.size() != 0)
+		cout << "SURPRISE: elements still present in v after attempted move!" << endl;
 
 	cout << "  Confirming dim=" << m->dim() << " nnz=" << m->nnz() << endl;
 	return m;

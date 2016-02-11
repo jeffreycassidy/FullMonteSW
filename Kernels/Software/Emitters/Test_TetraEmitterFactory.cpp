@@ -28,7 +28,7 @@
 
 using namespace std;
 
-
+#include "TetraMeshEmitterFactory.cpp"
 
 
 /** Uses the TIM-OS test file "mouse" to test loading of multiple tetra sources */
@@ -66,8 +66,8 @@ BOOST_AUTO_TEST_CASE(mouse)
 
 		std::array<float,3> pos = lpkt.pos.array();
 		std::array<float,3> d = lpkt.dir.d.array();
-		std::array<float,3> a = lpkt.dir.a.array();
-		std::array<float,3> b = lpkt.dir.b.array();
+		//std::array<float,3> a = lpkt.dir.a.array();
+		//std::array<float,3> b = lpkt.dir.b.array();
 
 		cout << std::fixed << std::setprecision(4) <<
 				std::setw(9) << pos[0] << ',' << std::setw(9) << pos[1] << ',' << std::setw(9) << pos[2] << "  dir " <<
@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE(mouse)
 #include "Test/PointFixture.hpp"
 #include "Test/DirectedFixture.hpp"
 
-#include <FullMonteSW/FullMonte/Kernels/Software/Emitters/TetraMeshEmitterFactory.hpp>
+#include <FullMonte/Kernels/Software/Emitters/TetraMeshEmitterFactory.hpp>
 
 typedef SourceFixture<PointFixture,DirectedFixture> Pencil;
 
@@ -148,7 +148,7 @@ BOOST_FIXTURE_TEST_CASE(FourLayer, Pencil)
 
 	LaunchPacket lpkt = S[0]->emit(rng);
 
-	BOOST_CHECK_EQUAL(lpkt.element, 4537);
+	BOOST_CHECK_EQUAL(lpkt.element, 4537U);
 	testPacket(lpkt);
 }
 
@@ -185,6 +185,6 @@ BOOST_FIXTURE_TEST_CASE(Cube_5Med, IsoPS)
 
 	LaunchPacket lpkt = S[0]->emit(rng);
 
-	BOOST_CHECK_EQUAL(lpkt.element, 25515);
+	BOOST_CHECK_EQUAL(lpkt.element, 25515U);
 	testPacket(lpkt);
 }

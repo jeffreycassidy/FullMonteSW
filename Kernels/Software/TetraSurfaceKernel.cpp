@@ -6,15 +6,22 @@
  */
 
 #include <FullMonte/Kernels/Software/TetraSurfaceKernel.hpp>
+#include <FullMonte/Kernels/Software/Logger/LoggerTuple.hpp>
 #include "TetraMCKernelThread.hpp"
 
-ThreadedMCKernelBase::Thread* TetraSurfaceKernel::makeThread()
+void TetraSurfaceKernel::postfinish()
 {
-	// create the thread-local state
-	Thread<Worker>* t = new TetraMCKernel<RNG>::Thread<Worker>(*this,get_worker(m_logger));
+	std::list<OutputData*> res = get<0>(m_logger).results();
+	res.splice(res.end(), get<1>(m_logger).results());
+	res.splice(res.end(), get<2>(m_logger).results());
 
-	// seed its RNG
-	t->seed(getUnsignedRNGSeed());
+	dynamic_cast<SurfaceExitEnergyMap&>(*res.back()).totalEmitted(packetCount());
 
-	return t;
+	for(auto r : res)
+		addResults(r);
+}
+
+void TetraSurfaceKernel::prestart()
+{
+
 }

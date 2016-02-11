@@ -8,11 +8,8 @@
 #include <iomanip>
 #include <FullMonte/Kernels/Software/Emitters/Base.hpp>
 #include <FullMonte/Kernels/Software/Logger/Logger.hpp>
-#include <FullMonte/optics.hpp>
 
 #include <FullMonte/Geometry/Tetra.hpp>
-
-#include <FullMonte/oldstuff/TupleStuff.hpp>
 
 #include <FullMonte/Kernels/Software/TetraMCKernel.hpp>
 #include <FullMonte/Kernels/Software/Material.hpp>

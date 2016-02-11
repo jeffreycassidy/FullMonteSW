@@ -43,7 +43,6 @@ namespace Source { namespace detail { template<class Base,class Derived>class cl
 %{
 #include <vector>
 #include <FullMonte/Geometry/TetraMesh.hpp>
-#include <FullMonte/Geometry/TriSurf.hpp>
 #include <sstream>
 %}
 %include "TetraMeshBase.hpp"

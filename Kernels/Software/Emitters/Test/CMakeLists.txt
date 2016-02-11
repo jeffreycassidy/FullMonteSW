@@ -7,5 +7,5 @@ IF(WRAP_VTK)
     SET(EXTRA_LIBS vtkIOLegacy vtkCommonDataModel)
 ENDIF()
 
-ADD_EXECUTABLE(Test_Emitters Test_Emitters.cpp ${EXTRA_SOURCES} ../../RandomAVX.cpp)
+ADD_EXECUTABLE(Test_Emitters Test_Emitters.cpp ${EXTRA_SOURCES} ../../RandomAVX.cpp ../../PacketDirection.cpp ../../SSEMath.cpp)
 TARGET_LINK_LIBRARIES(Test_Emitters ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} ${EXTRA_LIBS} SFMT)

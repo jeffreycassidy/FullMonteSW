@@ -24,7 +24,7 @@ ENDIF()
 
 
 IF(${CMAKE_CXX_COMPILER_ID} MATCHES "GNU")
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fabi-version=6")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fabi-version=6 -Wno-psabi")
 ENDIF()
 
 ## Include and link dirs for FullMonte

@@ -31,9 +31,10 @@ struct MCEventCounts {
 
 #include "OutputData.hpp"
 
-class MCEventCountsOutput : public clonable<OutputData,MCEventCountsOutput>, public MCEventCounts
+class MCEventCountsOutput : public clonable<OutputData,MCEventCountsOutput,OutputData::Visitor>, public MCEventCounts
 {
 public:
+	MCEventCountsOutput(const MCEventCounts& C=MCEventCounts()) : MCEventCounts(C){}
 private:
 	void acceptVisitor(OutputData::Visitor* v) override { v->doVisit(this); }
 };

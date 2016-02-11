@@ -12,34 +12,36 @@
 #include "TetraMCKernel.hpp"
 #include "TetraMCKernelThread.hpp"
 
-#include <FullMonte/Kernels/Software/Logger/AccumulationArray.hpp>
 #include <FullMonte/Kernels/Software/Logger/Logger.hpp>
+#include <FullMonte/Kernels/Software/Logger/LoggerTuple.hpp>
 #include <FullMonte/Kernels/Software/Logger/LoggerEvent.hpp>
 #include <FullMonte/Kernels/Software/Logger/LoggerConservation.hpp>
 #include <FullMonte/Kernels/Software/Logger/LoggerVolume.hpp>
+
+#include <FullMonte/Kernels/Software/Logger/MultiThreadWithIndividualCopy.hpp>
 
 extern template class Emitter::TetraEmitterFactory<RNG_SFMT_AVX>;
 
 class TetraVolumeKernel : public TetraMCKernel<RNG_SFMT_AVX> {
 public:
 	typedef std::tuple<
-				LoggerEventMT,
-				LoggerConservationMT,
+				MultiThreadWithIndividualCopy<LoggerEvent>,
+				MultiThreadWithIndividualCopy<LoggerConservation>,
 				LoggerVolume<QueuedAccumulatorMT<double> >
 				>
 				Logger;
 
 	typedef std::tuple<
-			LoggerEventMT::ThreadWorker,
-			LoggerConservationMT::ThreadWorker,
+			MultiThreadWithIndividualCopy<LoggerEvent>::ThreadWorker,
+			MultiThreadWithIndividualCopy<LoggerConservation>::ThreadWorker,
 			LoggerVolume<QueuedAccumulatorMT<double>>::ThreadWorker> Worker;
 
 	TetraVolumeKernel(const TetraMesh* mesh) :
-		TetraMCKernel<RNG_SFMT_AVX>(mesh),
-		m_logger(
-				LoggerEventMT(),
-				LoggerConservationMT(),
-				LoggerVolume<QueuedAccumulatorMT<double>>(*mesh,1<<10)){}
+		TetraMCKernel<RNG_SFMT_AVX>(mesh)
+	{
+		get<2>(m_logger).resize(mesh->getNt()+1);
+		get<2>(m_logger).qSize(1<<14);
+	}
 
 //		for(unsigned i=0; i<E.size(); ++i)
 //		{

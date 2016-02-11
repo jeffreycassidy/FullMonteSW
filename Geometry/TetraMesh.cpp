@@ -703,42 +703,6 @@ bool TetraMesh::checkIntegrity(bool printResults) const
 }
 
 
-
-/* Returns a TriSurf containing the boundary surface of material matID.
- *
- */
-
-TriSurf TetraMesh::extractMaterialBoundary(unsigned matID) const
-{
-	// permutation vector; 0 means don't permute
-    vector<unsigned long> Pmap(P.size(),0);				// Pmap[i] = j means that P[i] has moved to P_out[j]
-    vector<unsigned long> Fmap(F.size(),0);				// zero value means not output
-
-    vector<Point<3,double>> P_out(1,P[0]);
-    vector<FaceByPointID> F_out(1,FaceByPointID(0,0,0));
-
-    for(unsigned IDf=0; IDf<F.size(); ++IDf)
-    {
-    	if(faceBoundsRegion(matID,IDf))
-    	{
-    		Fmap[IDf]=F_out.size();
-    		F_out.emplace_back(F_p[IDf]);
-    		for(unsigned& IDp : F_out.back())
-    		{
-    			if (!Pmap[IDp]) // point hasn't been mapped yet
-    			{
-    				Pmap[IDp]=P_out.size();
-    				P_out.emplace_back(P[IDp]);
-    			}
-    			IDp=Pmap[IDp];			// map the face entry
-    		}
-    	}
-    }
-
-    return TriSurf(P_out,F_out);
-}
-
-
 vector<unsigned> TetraMesh::getRegionBoundaryTris(unsigned r) const
 {
 	vector<unsigned> tri;
@@ -777,27 +741,6 @@ vector<pair<unsigned,unsigned>> TetraMesh::getRegionBoundaryTrisAndTetras(unsign
 	return v;
 }
 
-
-/* Returns a TriSurf containing the boundary surface of a set of tetrahedra
- *
- * The set must be given as a sorted vector of tetra IDs
- *
- */
-
-TriSurf TetraMesh::extractRegionSurface(const vector<unsigned>& tetIDs) const
-{
-    vector<FaceByPointID> F_out;
-
-    for(unsigned IDf=0; IDf<F.size(); ++IDf)
-    {
-    	// add iff one tetra incident to the face is in the set and the other is not
-    	if (binary_search(tetIDs.begin(),tetIDs.end(),F_t[IDf][0])
-    			^ binary_search(tetIDs.begin(),tetIDs.end(),F_t[IDf][1]))
-    		F_out.push_back(F_p[IDf]);
-    }
-
-    return TriSurf(P,F_out);
-}
 
 TetraMesh* buildMesh(const TetraMeshBase& M)
 {

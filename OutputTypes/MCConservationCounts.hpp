@@ -39,9 +39,11 @@ struct MCConservationCounts
 //typedef OutputDataWrapper<MCConservationCounts> MCConservationCountsOutput;
 
 
-class MCConservationCountsOutput : public clonable<OutputData,MCConservationCountsOutput>, public MCConservationCounts
+class MCConservationCountsOutput : public clonable<OutputData,MCConservationCountsOutput,OutputData::Visitor>, public MCConservationCounts
 {
 public:
+	MCConservationCountsOutput() : MCConservationCounts(){}
+	MCConservationCountsOutput(const MCConservationCounts& C) : MCConservationCounts(C){}
 
 private:
 	void acceptVisitor(OutputData::Visitor* v){ v->doVisit(this); }

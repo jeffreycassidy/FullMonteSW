@@ -8,6 +8,7 @@
 #ifndef OUTPUTTYPES_FLUENCEMAPBASE_HPP_
 #define OUTPUTTYPES_FLUENCEMAPBASE_HPP_
 
+#include "OutputData.hpp"
 #include "SpatialMapBase.hpp"
 
 #include <memory>
@@ -20,6 +21,12 @@ public:
 	EnergyMapBase(SpatialMapBase<float,unsigned>* m) :
 		m_map(m)
 	{}
+
+	EnergyMapBase(const EnergyMapBase& E) :
+		m_map(E->clone()),
+		m_totalEmitted(E.m_totalEmitted),
+		m_joulesPerEnergyUnit(E.m_joulesPerEnergyUnit)
+		{}
 
 	void joulesPerEnergyUnit(float j)					{ m_joulesPerEnergyUnit=j; 		}
 	float joulesPerEnergyUnit()					const	{ return m_joulesPerEnergyUnit;	}
@@ -51,7 +58,7 @@ private:
 	float 												m_cmPerLengthUnit=0.0f;
 };
 
-class SurfaceExitEnergyMap : public EnergyMapBase
+class SurfaceExitEnergyMap : public EnergyMapBase, public clonable<OutputData,SurfaceExitEnergyMap,OutputData::Visitor>
 {
 public:
 	SurfaceExitEnergyMap(SpatialMapBase<float,unsigned>* m) :
@@ -62,17 +69,16 @@ public:
 };
 
 
-class VolumeAbsorbedEnergyMap : public FluenceMapBase
+class VolumeAbsorbedEnergyMap : public FluenceMapBase, public clonable<OutputData,VolumeAbsorbedEnergyMap,OutputData::Visitor>
 {
 public:
 	VolumeAbsorbedEnergyMap(SpatialMapBase<float,unsigned>* m) :
 		FluenceMapBase(m)
 	{
 	}
-
 };
 
-class VolumeFluenceMap : public FluenceMapBase
+class VolumeFluenceMap : public FluenceMapBase, public clonable<OutputData,VolumeFluenceMap,OutputData::Visitor>
 {
 public:
 
@@ -81,5 +87,16 @@ public:
 	{}
 
 };
+
+class SurfaceFluenceMap : public FluenceMapBase, public clonable<OutputData,SurfaceFluenceMap,OutputData::Visitor>
+{
+public:
+
+	SurfaceFluenceMap(SpatialMapBase<float,unsigned>* m) :
+		FluenceMapBase(m)
+	{}
+
+};
+
 
 #endif /* OUTPUTTYPES_FLUENCEMAPBASE_HPP_ */

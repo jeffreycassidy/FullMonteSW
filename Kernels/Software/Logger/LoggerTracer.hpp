@@ -9,7 +9,7 @@ using namespace std;
 
 // Produces a trace of the photon's path: <etype, weight, px, py, pz, t>
 
-class LoggerTracer : public LoggerNull
+class LoggerTracer : public LoggerBase
 {
 	string fn;
 	ofstream os;

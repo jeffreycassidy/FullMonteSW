@@ -14,6 +14,7 @@ struct SimpleMaterial {
 	// albedo in terms of mu_s' (!= 1-absfrac)
 	float albedo() const { float msp=mu_s_prime(); return (msp > 0 || mu_a > 0) ? msp/(msp+mu_a) : 0; }
 
+	// reduced scattering coefficient
 	float mu_s_prime() const { return mu_s*(1.0-g); }
 
 	// fraction of energy absorbed at each interaction

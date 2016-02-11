@@ -205,6 +205,7 @@ template<class RNG>Emitter::EmitterBase<RNG>* TetraEmitterFactory<RNG>::emitter(
 	return e;
 }
 
+
 };
 
 

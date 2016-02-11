@@ -16,6 +16,9 @@
 #include <FullMonte/Geometry/Sources/Base.hpp>
 
 #include <FullMonte/Kernels/Software/TetraVolumeKernel.hpp>
+#include <FullMonte/Kernels/Software/TetraSurfaceKernel.hpp>
+
+#include <FullMonte/OutputTypes/OutputDataSummarize.hpp>
 
 #include <string>
 
@@ -63,7 +66,59 @@ BOOST_AUTO_TEST_CASE(mouse)
 	cout << "Finished - results: " << endl;
 
 	for(const auto& r : VK.results())
-		cout << "  " << r->getTypeString() << endl;
+		cout << "  " << r->typeString() << endl;
 
-	VK.getResult<
+	OutputDataSummarize summ(std::cout);
+
+	for(const auto r : VK.results())
+		summ(r);
+}
+
+
+BOOST_AUTO_TEST_CASE(mouseSurface)
+{
+	TIMOSAntlrParser R;
+
+	// check and make sure it's loaded
+	R.setMeshFileName(dir+"/mouse.mesh");
+	R.setSourceFileName(dir+"/mouse.source");
+	R.setOpticalFileName(dir+"/mouse.opt");
+
+	TetraMesh M = R.mesh();
+	vector<SimpleMaterial> mats = R.materials_simple();
+	Source::Base* src = R.sources();
+
+	BOOST_CHECK_EQUAL(M.getNt(), 306773U);
+	BOOST_CHECK_EQUAL(M.getNf(), 629708U);
+	BOOST_CHECK_EQUAL(M.getNp(), 58244U);
+
+	// print out the sources
+	TIMOSWriter W("foo");
+	W.write(src);
+
+	TetraSurfaceKernel SK(&M);
+	SK.rouletteWMin(1e-5);
+	SK.materials(mats);
+	SK.source(src);
+	SK.packetCount(1000000);
+
+	cout << "Async start" << endl;
+	SK.startAsync();
+
+	while(!SK.done())
+	{
+		cout << "Progress: " << setw(8) << fixed << setprecision(3) << 100.0f*SK.progressFraction() << endl;
+		usleep(1000000);
+	}
+
+	SK.finishAsync();
+	cout << "Finished - results: " << endl;
+
+	for(const auto& r : SK.results())
+		cout << "  " << r->typeString() << endl;
+
+	OutputDataSummarize summ(std::cout);
+
+	for(const auto r : SK.results())
+		summ(r);
 }

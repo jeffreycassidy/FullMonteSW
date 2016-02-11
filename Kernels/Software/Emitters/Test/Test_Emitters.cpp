@@ -12,6 +12,7 @@
 
 #include <array>
 
+#include "SourceFixture.hpp"
 #include "IsotropicFixture.hpp"
 #include "UnitVectorFixture.hpp"
 #include "OrthogonalFixture.hpp"

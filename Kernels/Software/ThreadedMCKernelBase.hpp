@@ -8,7 +8,7 @@
 #ifndef KERNELS_SOFTWARE_THREADEDMCKERNELBASE_HPP_
 #define KERNELS_SOFTWARE_THREADEDMCKERNELBASE_HPP_
 
-#include "MCKernelBase.hpp"
+#include "../MCKernelBase.hpp"
 #include <thread>
 
 #include <boost/random/additive_combine.hpp>

@@ -8,6 +8,7 @@
 #include "OutputDataSummarize.hpp"
 #include "MCConservationCounts.hpp"
 #include "MCEventCounts.hpp"
+#include "FluenceMapBase.hpp"
 
 #include <iostream>
 
@@ -16,7 +17,6 @@ using namespace std;
 OutputDataSummarize::OutputDataSummarize(std::ostream& os) :
 	m_os(os)
 {
-
 }
 
 
@@ -52,6 +52,17 @@ void OutputDataSummarize::doVisit(OutputData* d)
 	m_os << "OutputDataSummarize visitor not defined for OutputData of type '" << d->typeString() << "'" << endl;
 }
 
+void OutputDataSummarize::doVisit(VolumeAbsorbedEnergyMap* em)
+{
+	m_os << "Volume absorbed energy map of dimension " << (*em)->dim() << " with total " << (*em)->sum() << " (" << (*em)->nnz() << " nonzeros, " << em->totalEmitted() << " emitted)" << endl;
+}
+
+void OutputDataSummarize::doVisit(SurfaceExitEnergyMap* sm)
+{
+	m_os << "Surface exit energy map of dimension " << (*sm)->dim() << " with total " << (*sm)->sum() << " (" << (*sm)->nnz() << " nonzeros, " << sm->totalEmitted() << " emitted)" << endl;
+}
+
+
 void OutputDataSummarize::doVisit(MCEventCountsOutput* ec)
 {
     m_os << "Launched: " << ec->Nlaunch << endl;
@@ -79,14 +90,14 @@ void OutputDataSummarize::doVisit(MCEventCountsOutput* ec)
     m_os << "Balance ([launch] - [die + exit]): " << ec->Nlaunch-ec->Ndie-ec->Nexit-ec->Ntime-ec->Nabnormal-ec->Nnohit << endl;
 }
 
-// Surface exit
-//void OutputDataSummarize::doVisit()
-//{
-//
-//}
+void OutputDataSummarize::doVisit(SurfaceFluenceMap* sf)
+{
 
-// Volume absorption
-//void OutputDataSummarize::doVisit()
-//{
-//
-//}
+	m_os << "OutputDataSummarize visitor not defined for OutputData of type '" << sf->typeString() << "'" << endl;
+}
+
+void OutputDataSummarize::doVisit(VolumeFluenceMap* vf)
+{
+
+	m_os << "OutputDataSummarize visitor not defined for OutputData of type '" << vf->typeString() << "'" << endl;
+}

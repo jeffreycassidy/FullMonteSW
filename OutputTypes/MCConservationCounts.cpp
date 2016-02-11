@@ -1,6 +1,6 @@
 #include "MCConservationCounts.hpp"
 
-template<>const std::string clonable<OutputData,MCConservationCountsOutput>::s_typeString = "conservation_counts";
+template<>const std::string clonable<OutputData,MCConservationCountsOutput,OutputData::Visitor>::s_typeString = "conservation_counts";
 
 /// Add another ConservationCounts object to the current
 MCConservationCounts& MCConservationCounts::operator+=(const MCConservationCounts& cc)

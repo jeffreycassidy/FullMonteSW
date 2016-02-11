@@ -6,7 +6,7 @@
 
 #include <boost/math/constants/constants.hpp>
 
-#include <FullMonte/Kernels/Software/AVXMath/avx_mathfun.h>
+#include <FullMonte/Kernels/Software/avx_mathfun.h>
 #define SFMT_MEXP 19937
 #include <FullMonte/SFMT/SFMT.h>
 

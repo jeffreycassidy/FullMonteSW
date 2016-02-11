@@ -15,7 +15,8 @@
 class vtkObject;
 class vtkPointWidget;
 class vtkCallbackCommand;
-class PointSourceDescription;
+
+namespace Source { class PointSource; };
 
 class PointSourceRep : public vtkObject
 {
@@ -23,14 +24,14 @@ public:
 	vtkTypeRevisionMacro(PointSourceRep,vtkObject);
 	static PointSourceRep* New();
 
-	void setPointSourceDescription(PointSourceDescription*);
+	void setPointSourceDescription(Source::PointSource*);
 	void setPointSourceDescription(const char*);
 
 	// get/set position
 	void position(std::array<float,3> newPos);
 	std::array<float,3> position() const;
 
-	// update from PointSourceDescription*
+	// update from Point::Source*
 	void updateFromWidget();
 
 
@@ -55,7 +56,7 @@ private:
 	vtkPolyData*			m_point = nullptr;
 
 	std::array<float,3>		m_pos = std::array<float,3>{0,0,0};
-	PointSourceDescription*	m_psd = nullptr;
+	Source::PointSource*	m_psd = nullptr;
 };
 
 

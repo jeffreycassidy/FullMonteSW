@@ -1,6 +1,6 @@
 ADD_LIBRARY(FullMonteKernelBase SHARED Kernel.cpp OStreamObserver.cpp)
  
-TARGET_LINK_LIBRARIES(FullMonteKernelBase FullMonteGeometry FullMonteData)
+TARGET_LINK_LIBRARIES(FullMonteKernelBase FullMonteGeometry FullMonteData ${Boost_SYSTEM_LIBRARY})
 
 IF(WRAP_TCL)
     INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})

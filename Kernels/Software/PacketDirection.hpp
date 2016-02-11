@@ -50,6 +50,8 @@ inline PacketDirection PacketDirection::scatter(SSE::Vector2 theta,SSE::Vector2 
  * [0] cos(theta)	[1] sin(theta)	[2] cos(phi)	[3] sin(phi)
  */
 
+// TODO: Hoist SSE-specific code out of here
+
 inline PacketDirection PacketDirection::scatter(SSE::Vector<4> deflAz) const
 {
     // Trying to conform to MSDN docs

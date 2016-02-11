@@ -1,3 +1,5 @@
+#ifndef KERNELS_SOFTWARE_LOGGERS_LOGGEREVENT_HPP
+#define KERNELS_SOFTWARE_LOGGERS_LOGGEREVENT_HPP
 #include "Logger.hpp"
 #include <mutex>
 
@@ -7,87 +9,47 @@
  *
  */
 
-
-class LoggerEvent : public LoggerNull, public MCEventCounts
+class LoggerEvent : public LoggerBase
 {
-    public:
-
-    LoggerEvent(){ }
-    LoggerEvent(const LoggerEvent&) = delete;
-    LoggerEvent(LoggerEvent&& le_) = delete;
-
-    inline void eventLaunch(const Ray3 r,unsigned IDt,double w){ ++Nlaunch; };   // launch new packet
-
-    inline void eventAbsorb(const Point3 p,unsigned IDt,double w0,double dw){ ++Nabsorb; };     // packet absorbed
-    inline void eventScatter(const UVect3 d0,const UVect3 d,double g){ ++Nscatter; };
-
-    inline void eventBoundary(const Point3 p,int,int,int){ ++Nbound; };   // boundary (same material)
-    inline void eventInterface(const Ray3,int,unsigned){ ++Ninterface; }; // found a material interface; possible results are:
-    inline void eventRefract(const Point3,UVect3){ ++Nrefr; };                //      refracted
-    inline void eventReflectInternal(const Point3,const UVect3){ ++Ntir; };        //      internal reflection
-    inline void eventReflectFresnel(const Point3,UVect3){ ++Nfresnel; };         //      fresnel reflection
-
-    // termination events
-    inline void eventExit(const Ray3,int,double){ ++Nexit; };        // exited geometry
-    inline void eventDie(double){ ++Ndie; };                                    // lost Russian roulette
-    inline void eventRouletteWin(double,double){ ++Nwin; };                     // won roulette
-
-    inline void eventAbnormal(const Packet&,unsigned,unsigned){ ++Nabnormal; }
-
-    friend class LoggerEventMT;
-};
-
-
-// Multi-threaded logger concept
-// Must:
-//	be move constructible
-//	have a ThreadWorker type which
-//	have a get_worker() method which returns a ThreadWorker attached to the object
-//	return results
-//
-// Should not be:
-//	copy constructible
-
-
-class LoggerEventMT : public LoggerEvent, private std::mutex {
 public:
+    LoggerEvent(){ }
+    LoggerEvent(LoggerEvent&& le_) : m_events(le_.m_events)
+    	{ le_.clear(); }
 
-	/// Default construction: init mutex
-	LoggerEventMT(){}
+    // Logger concept requirements
+	typedef MCEventCounts State;
+	const State& state() const { return m_events; }
 
-	/// Move construction: move existing LoggerEvent, create a new mutex (not move-constructible)
-	LoggerEventMT(LoggerEventMT&& le_) = delete;
-	LoggerEventMT(const LoggerEventMT&) = delete;
+    void clear()
+    {
+    	m_events=MCEventCounts();
+    }
 
-	/** Thread worker class for the LoggerEventMT.
-	 * Implements
-	 *
-	 */
-	class ThreadWorker : public LoggerEvent {
-		LoggerEventMT& parent;
-	public:
-		/// Create a new ThreadWorker with reference to the specified parent_
-		ThreadWorker(LoggerEventMT& parent_) : parent(parent_){}
-
-		/// Move constructor, copying the reference to the parent
-		//ThreadWorker(ThreadWorker&& tw_) : LoggerEvent(std::move(tw_)),parent(tw_.parent){}
-
-		/// Commit results to parent before deleting
-		~ThreadWorker(){ commit(); }
-
-		/// Atomically commit results to the parent by locking parent's mutex, adding, and then clearing local counter
-		void commit()
-		{
-			parent.lock();
-			parent += *this;
-			parent.unlock();
-			clear();
-		}
-
-		void eventCommit(){ commit(); }
-	};
+    static std::list<OutputData*> results(const State& st){ return std::list<OutputData*>(1, new MCEventCountsOutput(st)); }
+    std::list<OutputData*> results() const { return results(m_events); }
 
 
-	/// Returns a new worker thread
-	ThreadWorker get_worker() { return ThreadWorker(*this); }
+    // Event-specific overrides
+
+    inline void eventLaunch(const Ray3 r,unsigned IDt,double w)					{ ++m_events.Nlaunch; 	}	// launch new packet
+
+    inline void eventAbsorb(const Point3 p,unsigned IDt,double w0,double dw)	{ ++m_events.Nabsorb; 	} 	// packet absorbed
+    inline void eventScatter(const UVect3 d0,const UVect3 d,double g)			{ ++m_events.Nscatter; 	}
+
+    inline void eventBoundary(const Point3 p,int,int,int)						{ ++m_events.Nbound; 	}   // boundary (same material)
+    inline void eventInterface(const Ray3,int,unsigned)							{ ++m_events.Ninterface;} 	// found a material interface; possible results are:
+    inline void eventRefract(const Point3,UVect3)								{ ++m_events.Nrefr; 	}   	//      refracted
+    inline void eventReflectInternal(const Point3,const UVect3)					{ ++m_events.Ntir; 		}       //      internal reflection
+    inline void eventReflectFresnel(const Point3,UVect3)						{ ++m_events.Nfresnel; 	}       //      fresnel reflection
+
+    inline void eventExit(const Ray3,int,double)								{ ++m_events.Nexit; 	} 	// exited geometry
+    inline void eventDie(double)												{ ++m_events.Ndie; 		}  	// lost Russian roulette
+    inline void eventRouletteWin(double,double)									{ ++m_events.Nwin; 		}   // won roulette
+
+    inline void eventAbnormal(const Packet&,unsigned,unsigned)					{ ++m_events.Nabnormal; }
+
+private:
+    MCEventCounts m_events;
 };
+
+#endif
