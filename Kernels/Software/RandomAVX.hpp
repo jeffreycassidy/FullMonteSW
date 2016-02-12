@@ -94,8 +94,6 @@ class RNG_SFMT_AVX {
     inline __m256i draw();
 
     inline uint32_t draw_uint32();
-    //inline double draw_double_u01();
-    //inline float  draw_float_u01();
 
     // Floating-point [0,1)
 
@@ -110,18 +108,11 @@ class RNG_SFMT_AVX {
     // Unit exponential distribution
     inline __m128 draw_m128f1_exp();
 
-    //inline __m128d draw_m128d1_u01();
-    //inline __m128d draw_m128d2_u01();
-
     // Unit vectors
     inline __m128 draw_m128f2_uvect();
     inline __m128 draw_m128f3_uvect();
 
     inline pair<__m256,__m256> draw_m256f8_uvect2();
-
-
-    //inline const uint64_t* draw_u64_2();
-    //inline const uint32_t* draw_u32_4();
 };
 
 //inline __m128d RNG_SFMT::draw_m128d2_u01()

@@ -36,14 +36,14 @@ public:
 			{ return float(simulatedPacketCount())/float(Npkt_); }
 
 	// remaining to be implemented by derived classes
-	virtual bool 				done() 					const=0;
-	virtual void 				awaitFinish()			=0;
+	virtual bool 				done() 					const override=0;
+	virtual void 				awaitFinish()			override=0;
 	virtual unsigned long long 	simulatedPacketCount() 	const=0;
 
 protected:
 	// remaining to be implemented by derived classes
-	virtual void prepare_()=0;
-	virtual void start_()=0;
+	virtual void prepare_() override=0;
+	virtual void start_() override=0;
 
 	unsigned long long Npkt_=1000000;
 	unsigned Nstep_max_=10000;

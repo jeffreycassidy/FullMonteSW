@@ -61,8 +61,8 @@ public:
 	}
 
 private:
-	void postfinish();
-	void prestart();
+	virtual void postfinish() override;
+	virtual void prestart() override;
 
 	Logger m_logger;
 };

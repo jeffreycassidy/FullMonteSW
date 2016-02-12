@@ -8,7 +8,6 @@
 #ifndef STORAGE_TIMOS_TIMOSANTLRPARSER_HPP_
 #define STORAGE_TIMOS_TIMOSANTLRPARSER_HPP_
 
-#include "../CommonParser/ANTLRParser.hpp"
 #include "TIMOSReader.hpp"
 
 class TIMOSAntlrParser : public TIMOSReader

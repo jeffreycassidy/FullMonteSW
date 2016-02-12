@@ -48,7 +48,7 @@ private:
 	static void runWorkers(ThreadedMCKernelBase* K,unsigned long long n);
 
 	virtual void prestart()				=0;
-	virtual void postfinish()			=0;
+	virtual void postfinish()			override=0;
 
 	boost::random::ecuyer1988 					m_seedGenerator;
 

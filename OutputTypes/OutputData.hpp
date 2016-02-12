@@ -33,7 +33,7 @@ public:
 
 	virtual const std::string& typeString() const override { return s_typeString; }
 
-	virtual void acceptVisitor(Visitor* v){ v->doVisit((Derived*)this); }
+	virtual void acceptVisitor(Visitor* v) override{ v->doVisit((Derived*)this); }
 
 private:
 	static const std::string s_typeString;
