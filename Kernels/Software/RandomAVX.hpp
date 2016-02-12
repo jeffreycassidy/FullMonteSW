@@ -246,7 +246,7 @@ inline __m128 RNG_SFMT_AVX::draw_m128f2_uvect()
 {
 	if (uv2d_count == 16)
 	{
-		__m256 twopi = _mm256_set1_ps(2.0*boost::math::constants::pi<float>());
+		__m256 twopi = _mm256_set1_ps(boost::math::constants::two_pi<float>());
 		__m256 x,y;
 
 		std::make_pair(std::ref(x),std::ref(y)) = sincos_psp(_mm256_mul_ps(twopi,draw_m256f8_u01()));
