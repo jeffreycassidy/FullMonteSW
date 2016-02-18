@@ -27,7 +27,7 @@ public:
 
 	float length() const
 	{
-		std::array<float,3> v{ m_endpoint[1][0]-m_endpoint[0][0], m_endpoint[1][1]-m_endpoint[0][1], m_endpoint[1][2]-m_endpoint[0][2] };
+		std::array<float,3> v{{ m_endpoint[1][0]-m_endpoint[0][0], m_endpoint[1][1]-m_endpoint[0][1], m_endpoint[1][2]-m_endpoint[0][2] }};
 		return std::sqrt(v[0]*v[0] + v[1]*v[1] + v[2]*v[2]);
 	}
 

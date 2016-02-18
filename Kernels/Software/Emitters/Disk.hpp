@@ -23,7 +23,7 @@ public:
 
 	PacketDirection direction(RNG& rng) const
 	{
-		SSE::Vector2 azuv(rng.draw_m128f2_uvect());
+		SSE::Vector2 azuv(rng.uvect2D());
 
 		SSE::Scalar sinpsi = azuv.component<0>();
 		SSE::Scalar cospsi = azuv.component<1>();

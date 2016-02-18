@@ -41,8 +41,8 @@ struct LineFixture
 		float absN = std::sqrt(n[0]*n[0] + n[1]*n[1] + n[2]*n[2]);
 		BOOST_CHECK_SMALL(absN, m_maxDistanceToLine);
 
-		BOOST_CHECK_LT(d,m_length);
-		BOOST_CHECK_GT(d,0.0f);
+		BOOST_CHECK_LE(d,m_length);
+		BOOST_CHECK_GE(d,0.0f);
 	}
 
 	std::array<float,3> m_p0,m_p1;

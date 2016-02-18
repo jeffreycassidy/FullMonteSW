@@ -9,7 +9,7 @@
 #define KERNELS_SOFTWARE_TETRASURFACEKERNEL_HPP_
 
 #include "TetraMCKernel.hpp"
-#include "RandomAVX.hpp"
+#include "RNG_SFMT_AVX.hpp"
 
 #include <FullMonte/Kernels/Software/Logger/LoggerTuple.hpp>
 #include <FullMonte/Kernels/Software/Logger/LoggerEvent.hpp>
@@ -43,7 +43,7 @@ private:
 public:
 	typedef RNG_SFMT_AVX RNG;
 	TetraSurfaceKernel(const TetraMesh* mesh) :
-		TetraMCKernel<RNG_SFMT_AVX>(mesh)
+		TetraMCKernel<RNG>(mesh)
 	{
 		get<2>(m_logger).resize(mesh->getNf()+1);
 		get<2>(m_logger).qSize(1<<14);

@@ -8,151 +8,78 @@
 #ifndef KERNELS_SOFTWARE_BLOCKRANDOMDISTRIBUTION_HPP_
 #define KERNELS_SOFTWARE_BLOCKRANDOMDISTRIBUTION_HPP_
 
-#include <mmintrin.h>
-#include <smmintrin.h>
-#include <emmintrin.h>
-#include <xmmintrin.h>
+#include <cstddef>
+#include <boost/align/is_aligned.hpp>
 
-/**
+namespace RandomDistribution
+{
+
+template<class RNG,class Distribution,typename T>void generate(RNG& rng,Distribution& d,T* o)
+{
+	d.calculate(rng,o);
+}
+
+};
+
+
+/** Buffers a random-number distribution that calculates its results in blocks.
  *
- *
+ * @tparam		Distribution		The distribution class
+ * @tparam		OutputBlocks		Number of output blocks to buffer
  */
 
-namespace BlockDistribution
-{
+/**
+ * @tparam		RNG					Random number generator which functions with the chosen Distribution through
+ * 										BlockDistribution::generate(rng, distribution, Nblocks)
+ */
 
-/// Use block RNG to calculate values of a given distribution, and store them in the designated place
-template<class BlockRNG,class Distribution>void calculate(RNG& rng,const Distribution& d,Distribution::result_type* p);
-
-};
-
-class Distribution
-{
-public:
-	typedef	float					result_type;
-	static constexpr std::size_t 	OutputBlockSize = 4;
-
-	typedef uint32_t				input_type;
-	static constexpr std::size_t	InputBlockSize = 8;
-};
-
-
-struct FloatVectorBase
-{
-    static constexpr uint32_t  	exp_float24 = 0x40000000;		// exponent for float in [2,4)
-    static constexpr uint32_t  	exp_float 	= 0x3f800000;
-
-    static constexpr uint32_t	float_signmask	= 0x80000000;	// 1b  sign
-    static constexpr uint32_t	float_expmask	= 0x7f800000;	// 8b  excess-128 exponent
-    static constexpr uint32_t	float_mantmask	= 0x007fffff;	// 23b mantissa (implicit leading 1)
-
-    static const __m256 expmask()
-    {
-    	return _mm256_castsi256_ps(_mm256_set1_epi32(float_expmask));
-    }
-
-    static const __m256 inv_expmask()
-    {
-    	return _mm256_castsi256_ps(_mm256_set1_epi32(~float_expmask));
-    }
-
-    static const __m256 signmask()
-    {
-    	return _mm256_castsi256_ps(_mm256_set1_epi32(float_signmask));
-    }
-
-    static const __m256 inv_signmask()
-    {
-    	return _mm256_castsi256_ps(_mm256_set1_epi32(~float_signmask));
-    }
-
-    static const __m256 mantmask()
-    {
-    	return _mm256_castsi256_ps(_mm256_set1_epi32(float_mantmask));
-    }
-
-    static const __m256 inv_mantmask()
-    {
-    	return _mm256_castsi256_ps(_mm256_set1_epi32(~float_mantmask));
-    }
-
-    /// Returns a vector filled with 2^p
-    static const __m256 ldexp(int p)
-    {
-    	return _mm256_castsi256_ps(_mm256_set1_epi32(((p+128)&0xff) << 23));
-    }
-};
-
-// [-1,1)
-// [0,1)
-// 2D unit
-// 3D unit
-// 2D isospherical (sin/cos phi, sin/cos theta)
-
-class FloatPM1_8_Distribution : public FloatVectorBase
-{
-public:
-	typedef float					result_type;
-	static constexpr std::size_t	OutputBlockSize=8;
-
-	typedef uint32_t				input_type;
-	static constexpr std::size_t	InputBlockSize=8;
-
-	template<class RNG>void calculate(RNG& rng,float *dst)
-	{
-		const uint32_t* ip = rng.draw();
-		__mm256i i = _mm256_load_epi32(t);
-
-		_mm256_or_ps(
-				_mm256_srli_epi32(i,9),
-				ldexp(1));
-
-		_mm256_store_ps(dst,o);
-	}
-};
-
-
-//static const uint64_t 		exp_double_h = 0x3ff0000000000000ULL;
-
-//inline __m256 RNG_SFMT_AVX::draw_m256f8_u01()
-//{
-//    __m256i  exp = _mm256_set1_epi32(exp_float);
-//    __m256 offs = _mm256_set1_ps(1.0);
-//
-//    rnd = _emu_mm256_srli_epi32(rnd,9);
-//    __m256 rndf = _mm256_or_ps(_mm256_castsi256_ps(rnd),_mm256_castsi256_ps(exp));
-//    return _mm256_sub_ps(rndf,offs);
-//}
-
-
-
-template<class RNG,class Distribution,std::size_t OutputBlocks=1>class BlockDistribution
+template<class Distribution,std::size_t OutputBlocks=1,std::size_t Align=Distribution::OutputElementSize*sizeof(typename Distribution::result_type)>class alignas(Align) BlockRandomDistribution
 {
 public:
 	typedef typename Distribution::result_type	result_type;
-	static constexpr std::size_t				outputBlockSize = Distribution::OutputBlockSize;
+	static constexpr std::size_t				outputPitch = Distribution::OutputElementSize;
+	static constexpr std::size_t				outputBlockSize = Distribution::OutputElementSize*Distribution::OutputsPerInputBlock;
+	static constexpr std::size_t				outputBufferSize = outputBlockSize*OutputBlocks;
 
-	const result_type* draw(RNG& rng);
+	BlockRandomDistribution();
+
+	/// Return a pointer to a result, _possibly_ invoking the RNG if needed to refill the buffer
+	template<class RNG>const result_type* draw(RNG& rng);
+	template<class RNG>const result_type* operator()(RNG& rng){ return draw(rng); }
+
+	template<class RNG>void generate(RNG& rng,std::size_t N)
+	{
+		for(unsigned i=0;i<N;i += outputBlockSize)
+			m_distribution.calculate(rng,m_outputBuffer+i);
+	}
+
+	/// Return a reference to the generating distribution
+	Distribution& distribution(){ return m_distribution; }
 
 private:
-
-	result_type		m_outputBuffer[OutputBlockSize];
+	result_type		m_outputBuffer[outputBufferSize];
 	unsigned		m_pos=0;
 	Distribution	m_distribution;
 };
 
-template<class RNG,class OutputType>const OutputType* BlockDistribution<RNG,OutputType>::draw(RNG& rng)
+template<class Distribution,std::size_t OutputBlocks,std::size_t Align>template<class RNG>const typename Distribution::result_type* BlockRandomDistribution<Distribution,OutputBlocks,Align>::draw(RNG& rng)
 {
 	if (m_pos == 0)
-		BlockDistribution::calculate(rng,m_distribution,m_outputBuffer);
+		for(unsigned i=0;i<OutputBlocks; i += outputBlockSize)
+			RandomDistribution::generate(rng,m_distribution,m_outputBuffer+i);
 
-	const OutputType* p = m_outputBuffer+m_pos;
+	const typename Distribution::result_type* p = m_outputBuffer + m_pos;
 
-	m_pos = (m_pos+1) % outputBufferSize;
+	m_pos = (m_pos + outputPitch) % BlockRandomDistribution<Distribution,OutputBlocks,Align>::outputBufferSize;
 
 	return p;
 }
 
-
+template<class Distribution,std::size_t OutputBlocks,std::size_t Align>BlockRandomDistribution<Distribution,OutputBlocks,Align>::BlockRandomDistribution()
+{
+	// Check that the buffer is aligned at least to the granularity of output elements
+	if (!boost::alignment::is_aligned(Align,m_outputBuffer))
+		throw std::bad_alloc();
+}
 
 #endif /* KERNELS_SOFTWARE_BLOCKRANDOMDISTRIBUTION_HPP_ */

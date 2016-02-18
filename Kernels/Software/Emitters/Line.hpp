@@ -22,7 +22,7 @@ public:
 
 	SSE::Point3 position(RNG& rng) const
 	{
-		return m_origin + m_displacement*SSE::Scalar::fill(rng.draw_m128f1_u01());
+		return m_origin + m_displacement*SSE::Scalar(*rng.floatU01());
 	}
 
 private:

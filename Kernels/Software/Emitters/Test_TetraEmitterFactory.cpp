@@ -12,7 +12,7 @@
 
 #include <FullMonte/Storage/TIMOS/TIMOSAntlrParser.hpp>
 
-#include <FullMonte/Kernels/Software/RandomAVX.hpp>
+#include <FullMonte/Kernels/Software/RNG_SFMT_AVX.hpp>
 
 #include <FullMonte/Kernels/Software/Emitters/TetraMeshEmitterFactory.hpp>
 

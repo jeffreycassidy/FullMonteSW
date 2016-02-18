@@ -61,18 +61,10 @@ std::vector<SimpleMaterial> TIMOSReader::materials_simple() const
 	assert(opt.by_region);
 	assert(!opt.matched);
 
-	mat[0].mu_s=0.0;
-	mat[0].mu_a=0.0;
-	mat[0].g=1.0;
-	mat[0].n=opt.n_ext;
+	mat[0] = SimpleMaterial(0.0f,0.0f,0.0f,opt.n_ext);
 
 	for(unsigned i=0; i<opt.mat.size(); ++i)
-	{
-		mat[i+1].mu_s = opt.mat[i].mu_s;
-		mat[i+1].mu_a = opt.mat[i].mu_a;
-		mat[i+1].g = opt.mat[i].g;
-		mat[i+1].n = opt.mat[i].n;
-	}
+		mat[i+1] = SimpleMaterial(opt.mat[i].mu_s, opt.mat[i].mu_a, opt.mat[i].g, opt.mat[i].n);
 
 	return mat;
 }

@@ -16,7 +16,7 @@
 #include <FullMonte/Kernels/Software/ThreadedMCKernelBase.hpp>
 #include <FullMonte/Kernels/Software/Emitters/TetraMeshEmitterFactory.cpp>
 
-#include "Material.hpp"
+#include "RNG_SFMT_AVX.hpp"
 
 template<class RNG>class TetraMCKernel : public ThreadedMCKernelBase, public TetraKernelBase
 {
@@ -33,7 +33,7 @@ public:
 protected:
 	virtual void parentPrepare() 		override;
 
-	std::vector<Material> mat_;
+	std::vector<Material> m_mats;
 
 	Emitter::EmitterBase<RNG>* m_emitter;
 };
@@ -63,15 +63,15 @@ template<class RNG>void TetraMCKernel<RNG>::parentPrepare()
 
 	m_emitter = factory.emitter();
 
-	mat_.resize(m_materials.size());
+	m_mats.resize(m_materials.size());
 
 	// copy materials
 	boost::copy(
-		m_materials | boost::adaptors::transformed(std::function<Material(SimpleMaterial)>([](SimpleMaterial sm){ return Material(sm.mu_a,sm.mu_s,sm.g,sm.n); })),
-		mat_.begin());
+		m_materials,
+		m_mats.begin());
 
 	cout << "Materials: " << endl;
-	for(const Material& m : mat_)
+	for(const Material& m : m_mats)
 		cout << m << endl;
 
 	std::vector<unsigned> hist;

@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE(mouse)
 
 	while(!VK.done())
 	{
-		cout << "Progress: " << setw(8) << fixed << setprecision(3) << 100.0f*VK.progressFraction() << endl;
+		cout << "Progress: " << setw(8) << fixed << setprecision(3) << 100.0f*VK.progressFraction() << endl << flush;
 		usleep(1000000);
 	}
 

@@ -17,7 +17,7 @@ namespace Source
 class PointSource : public Source::detail::cloner<Source::Base,Source::PointSource>
 {
 public:
-	PointSource(float w=1.0,std::array<float,3> p={0.0,0.0,0.0},unsigned elementHint=-1U) :
+	PointSource(float w=1.0,std::array<float,3> p={{0.0,0.0,0.0}},unsigned elementHint=-1U) :
 		cloner(w),
 		m_pos(p),
 		m_elementHint(elementHint){}

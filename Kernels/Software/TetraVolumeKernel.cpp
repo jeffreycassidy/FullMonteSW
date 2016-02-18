@@ -27,4 +27,3 @@ void TetraVolumeKernel::postfinish()
 	for(auto r : res)
 		addResults(r);
 }
-

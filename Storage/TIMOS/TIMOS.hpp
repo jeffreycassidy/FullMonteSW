@@ -49,7 +49,7 @@ protected:
 
 
 	struct Tetra {
-		std::array<unsigned,4>	IDps=std::array<unsigned,4>{0,0,0,0};
+		std::array<unsigned,4>	IDps=std::array<unsigned,4>{{0,0,0,0}};
 		unsigned				region=0;
 
 		Tetra(){}

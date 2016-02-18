@@ -8,7 +8,6 @@
 #ifndef KERNELS_SOFTWARE_TETRAVOLUMEKERNEL_HPP_
 #define KERNELS_SOFTWARE_TETRAVOLUMEKERNEL_HPP_
 
-#include "RandomAVX.hpp"
 #include "TetraMCKernel.hpp"
 #include "TetraMCKernelThread.hpp"
 

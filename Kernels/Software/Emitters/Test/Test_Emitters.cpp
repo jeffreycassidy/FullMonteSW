@@ -11,6 +11,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include <array>
+#include <iostream>
 
 #include "SourceFixture.hpp"
 #include "IsotropicFixture.hpp"
@@ -18,7 +19,7 @@
 #include "OrthogonalFixture.hpp"
 #include "PacketDirectionFixture.hpp"
 
-#include "../../RandomAVX.hpp"
+#include "../../RNG_SFMT_AVX.hpp"
 
 #include <boost/range/algorithm.hpp>
 
@@ -31,7 +32,7 @@
 boost::random::mt19937_64 			rng;
 boost::random::uniform_01<float>	 u01;
 
-
+using namespace std;
 
 /** Reference implementation that looks OK and passes unit tests */
 
@@ -86,6 +87,7 @@ BOOST_FIXTURE_TEST_CASE(isops,IsoPS)
 
 	Emitter::PositionDirectionEmitter<RNG_SFMT_AVX,Emitter::Point,Emitter::Isotropic<RNG_SFMT_AVX>> ips(ps,is);
 
+	cout << "Isotropic tetrahedron source (1)" << endl;
 	for(unsigned i=0;i<100000;++i)
 		testPacket(ips.emit(rng));
 
@@ -97,6 +99,7 @@ BOOST_FIXTURE_TEST_CASE(dummyps, IsoPS)
 	std::array<float,3> p{ 1.0, 2.0, 3.0 };
 	positionFixture.m_p = std::array<float,3>{ p[0], p[1], p[2] };
 
+	cout << "Isotropic point source" << endl;
 	for(unsigned i=0;i<100000;++i)
 		testPacket(launchIsotropic(p));
 
@@ -196,6 +199,7 @@ BOOST_FIXTURE_TEST_CASE(pencil,Pencil)
 
 	Emitter::PositionDirectionEmitter<RNG,Emitter::Point,Emitter::Directed> pb(P,D);
 
+	cout << "Pencil beam" << endl;
 	for(unsigned i=0;i<100000;++i)
 		testPacket(pb.emit(rng));
 
@@ -224,6 +228,7 @@ BOOST_FIXTURE_TEST_CASE(line,Line)
 
 	Emitter::PositionDirectionEmitter<RNG,Emitter::Line<RNG>,Emitter::Disk<RNG>> ls(L,D);
 
+	std::cout << "Line source" << std::endl;
 	for(unsigned i=0;i<100000;++i)
 		testPacket(ls.emit(rng));
 

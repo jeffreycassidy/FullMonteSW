@@ -188,7 +188,7 @@ void TetraMesh::tetrasToFaces()
 
 	F.push_back(Face(O,O,O));
 	F_p.push_back(FaceByPointID(0,0,0));
-	F_t.push_back(array<unsigned,2>{0,0});
+	F_t.push_back(array<unsigned,2>{{0,0}});
 
 	T_f = vector<TetraByFaceID>(T_p.size(),TetraByFaceID{0,0,0,0});
 
@@ -319,7 +319,7 @@ vector<Tetra> TetraMesh::makeKernelTetras() const
 
 
 // checks validity of TetraMesh construct
-bool TetraMesh::checkValid() const
+bool TetraMesh::checkValid(bool) const
 {
 	bool valid=true;
 

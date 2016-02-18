@@ -19,19 +19,17 @@ template<class RNG>class Isotropic
 {
 public:
 
-	// TODO: Hoist the SSE code out of here if at all possible
-
 	PacketDirection direction(RNG& rng) const
 	{
 		__m128 one = _mm_set_ss(1.0f);				// [ 1 0 0 0]
 		__m128 zero = _mm_setzero_ps();				// [ 0 0 0 0]
 
-		__m128 azuv = rng.draw_m128f2_uvect();
+		__m128 azuv = _mm_loadu_ps(rng.uvect2D());
 		__m128 b = _mm_shuffle_ps(_mm_addsub_ps(zero,azuv),zero,_MM_SHUFFLE(0,1,0,1));
 
 		azuv = _mm_movelh_ps(azuv,azuv);			// [cos(theta), sin(theta), cos(theta), sin(theta)]
 
-		__m128 sinphi = rng.draw_m128f1_pm1();										// sin(phi) = [-1,1)
+		__m128 sinphi = _mm_load1_ps(rng.floatPM1());								// sin(phi) = [-1,1)
 		__m128 cosphi = _mm_sqrt_ss(_mm_sub_ss(one,_mm_mul_ss(sinphi,sinphi)));		// cos(phi) = 1-sin2(phi)
 
 		__m128 cpcpspsp = _mm_shuffle_ps(cosphi,sinphi,_MM_SHUFFLE(0,0,0,0));		// [cos(phi) cos(phi) sin(phi) sin(phi)]

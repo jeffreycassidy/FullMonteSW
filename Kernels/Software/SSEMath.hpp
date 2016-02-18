@@ -46,9 +46,9 @@ public:
 	Scalar() : SSEBase(_mm_setzero_ps()){}
 
 	/// Fill a Scalar using the bottom element (useful when extending the output of _ss functions)
-	static Scalar fill(__m128 s)
+	template<unsigned I=0>static Scalar fill(__m128 s)
 	{
-		return Scalar(_mm_shuffle_ps(s,s,_MM_SHUFFLE(0,0,0,0)));
+		return Scalar(_mm_shuffle_ps(s,s,_MM_SHUFFLE(I,I,I,I)));
 	}
 
 	explicit Scalar(float s) 	: SSEBase(_mm_set1_ps(s)){}
@@ -73,6 +73,7 @@ template<std::size_t D>class Vector : public SSEBase
 public:
 	Vector(){}
 	explicit Vector(__m128 v) : SSEBase(v){}
+	explicit Vector(const float* p) : SSEBase(_mm_loadu_ps(p)){}		///< Construct from unaligned pointer
 
 	template<typename T>explicit Vector(std::array<T,D> a,
 			typename std::enable_if< std::is_floating_point<T>::value, int>::type=0)

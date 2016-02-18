@@ -1,4 +1,4 @@
-ADD_LIBRARY(FullMonteKernelBase SHARED Kernel.cpp OStreamObserver.cpp)
+ADD_LIBRARY(FullMonteKernelBase SHARED Kernel.cpp OStreamObserver.cpp TetraKernelBase.cpp)
  
 TARGET_LINK_LIBRARIES(FullMonteKernelBase FullMonteGeometry FullMonteData ${Boost_SYSTEM_LIBRARY})
 

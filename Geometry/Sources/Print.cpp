@@ -86,8 +86,6 @@ void Printer::printPower(float w)
 
 void Printer::visit(PointSource* p)
 {
-	std::array<float,3> pos = p->position();
-
 	m_os << "Point source ";
 	printPosition(p->position());
 	m_os << ' ';

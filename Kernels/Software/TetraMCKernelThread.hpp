@@ -12,50 +12,45 @@
 #include <FullMonte/Geometry/Tetra.hpp>
 
 #include <FullMonte/Kernels/Software/TetraMCKernel.hpp>
-#include <FullMonte/Kernels/Software/Material.hpp>
 
-#include "SSEMath.hpp"
+#include "BlockRandomDistribution.hpp"
+#include "HenyeyGreenstein.hpp"
+#include "FloatUnitExpDistribution.hpp"
+#include "FloatU01Distribution.hpp"
 
-template<class RNG>template<class Logger> class TetraMCKernel<RNG>::Thread : public ThreadedMCKernelBase::Thread
+#include "SSEConvert.hpp"// for as_array
+
+#define MAX_MATERIALS 16
+
+
+template<class RNGType>template<class Logger> class alignas(32) TetraMCKernel<RNGType>::Thread : public ThreadedMCKernelBase::Thread
 {
 public:
-	~Thread(){ free(hg_buffers[0]); }
+	typedef RNGType RNG;
+
+	~Thread(){ }
 
     // move-constructs the logger and gets thread ready to run but does not actually start it (call doWork())
-	Thread(const TetraMCKernel<RNG>& K,Logger&& logger_);
+	Thread(const TetraMCKernel<RNGType>& K,Logger&& logger_);
 
     /// Main body which does all the work
     void doWork();
     int doOnePacket(LaunchPacket pkt);
-    inline __m128 getNextHG(unsigned matID);
 
     /// Seed the RNG
     void seed(unsigned s)
     {
-    	rng.seed(s);
+    	m_rng.seed(s);
     }
+
+    inline bool scatter(Packet& pkt,const TetraKernelBase::Material& mat,const Tetra& region);
 
 private:
 	const TetraMCKernel<RNG>& 		m_parentKernel;
-	Logger 	logger;								///< Logger object
-    RNG 	rng;
+	Logger 	logger;											///< Logger object
+    RNG 	m_rng;											///< Random-number generator
 
-    static const unsigned HG_BUFFERS=20;		///< Number of distinct g values to buffer
-    static const unsigned HG_BUFSIZE=8;			///< Number of spin vectors to buffer
-
-    float * hg_buffers[HG_BUFFERS];				// should be float * const but GCC whines about not being initialized
-    unsigned hg_next[HG_BUFFERS];
 };
-
-
-template<class RNG>template<class Logger>inline __m128 TetraMCKernel<RNG>::Thread<Logger>::getNextHG(unsigned matID)
-{
-	if (hg_next[matID] == HG_BUFSIZE){
-		m_parentKernel.mat_[matID].VectorHG(rng.draw_m256f8_pm1(),rng.draw_m256f8_uvect2(),hg_buffers[matID]);
-		hg_next[matID]=0;
-	}
-	return _mm_load_ps(hg_buffers[matID] + ((hg_next[matID]++)<<2));
-}
 
 
 // move-constructs the logger and gets thread ready to run but does not actually start it (call start())
@@ -63,19 +58,6 @@ template<class RNG>template<class Logger>TetraMCKernel<RNG>::Thread<Logger>::Thr
 	m_parentKernel(K),
 	logger(std::move(logger_))
 {
-	// Allocate HG buffers (currently necessary to get correct alignment; future GCC may relieve the requirement)
-	//
-	void *p;
-	int st = posix_memalign(&p,32,HG_BUFFERS*HG_BUFSIZE*4*sizeof(float));
-
-	if (st || !p || ((unsigned long long)(p) & 0x1F))
-		throw std::bad_alloc();
-
-	for(unsigned i=0; i<HG_BUFFERS; ++i)
-	{
-		hg_buffers[i] = (float*)p + 4*HG_BUFSIZE*i;
-		hg_next[i] = HG_BUFSIZE;
-	}
 }
 
 template<class RNG>template<class Logger>void TetraMCKernel<RNG>::Thread<Logger>::doWork()
@@ -84,7 +66,7 @@ template<class RNG>template<class Logger>void TetraMCKernel<RNG>::Thread<Logger>
 
 	for( ; m_nPktDone < m_nPktReq; ++m_nPktDone)
 	{
-		lpkt = m_parentKernel.m_emitter->emit(rng);
+		lpkt = m_parentKernel.m_emitter->emit(m_rng);
 		doOnePacket(lpkt);
 	}
 
@@ -107,13 +89,13 @@ enum TerminationResult { Continue=0, RouletteWin, RouletteLose, TimeGate, Other=
 
 typedef Tetra Region;
 
-template<class RNG>pair<TerminationResult,double> terminationCheck(const double wmin,const double prwin,RNG& rng,Packet& pkt,const Material& mat,const Region& region)
+template<class RNG>pair<TerminationResult,double> terminationCheck(const double wmin,const double prwin,RNG& rng,Packet& pkt,const TetraKernelBase::Material& mat,const Region& region)
 {
     // do roulette
 	double w0=pkt.w;
     if (pkt.w < wmin)
     {
-    	if (rng.draw_float_u01() < prwin)
+    	if (*rng.floatU01() < prwin)
     	{
     		pkt.w /= prwin;
     		return make_pair(RouletteWin,pkt.w-w0);
@@ -125,23 +107,20 @@ template<class RNG>pair<TerminationResult,double> terminationCheck(const double 
     	return make_pair(Continue,0.0);
 }
 
-
-/** would be nice to hoist the Henyey-Greenstein RNG out of the worker into the RNG class (or Material class?) */
-
-template<class Worker>inline bool scatter(Packet& pkt,Worker& wkr,const Material& mat,const Region& region)
+template<class RNGType>template<class Logger>inline bool TetraMCKernel<RNGType>::Thread<Logger>::scatter(Packet& pkt,const TetraKernelBase::Material& mat,const Region& region)
 {
-	if (!mat.isScattering())
+	if (!mat.scatters())
 		return false;
 
-	__m128 spinmatrix = wkr.getNextHG(region.matID);
+	__m128 spinmatrix = _mm_load_ps(m_rng.hg(region.matID));
 	pkt.dir = pkt.dir.scatter(SSE::Vector<4>(spinmatrix));
 	return true;
 }
 
-inline pair<float,float> absorb(const Packet& pkt,const Material& mat,const Tetra& tet)
+inline pair<float,float> absorb(const Packet& pkt,const TetraKernelBase::Material& mat,const Tetra& tet)
 {
 	float w0=pkt.weight();
-	float dw=w0*mat.getAbsorbedFraction();
+	float dw=w0*mat.absorbedFraction();
 	return make_pair(w0-dw,dw);
 }
 
@@ -151,7 +130,7 @@ template<class RNG>template<class Logger>int TetraMCKernel<RNG>::Thread<Logger>:
     unsigned Nhit,Nstep;
     StepResult stepResult;
     Tetra currTetra = m_parentKernel.m_mesh->getTetra(lpkt.element);
-    Material currMat = m_parentKernel.mat_[currTetra.matID];
+    Material currMat = m_parentKernel.m_mats[currTetra.matID];
 
     unsigned IDt=lpkt.element;
 
@@ -169,7 +148,9 @@ template<class RNG>template<class Logger>int TetraMCKernel<RNG>::Thread<Logger>:
     for(Nstep=0; Nstep < m_parentKernel.Nstep_max_; ++Nstep)
     {
         // draw a hop length; pkt.s = { physical distance, MFPs to go, time, 0 }
-        pkt.s = _mm_mul_ps(rng.draw_m128f1_exp(),currMat.s_init);
+        pkt.s = _mm_mul_ps(
+        			_mm_load1_ps(m_rng.floatExp()),
+					currMat.m_init);
 
         // attempt hop
         stepResult = currTetra.getIntersection(pkt.p,__m128(pkt.direction()),pkt.s);
@@ -186,18 +167,24 @@ template<class RNG>template<class Logger>int TetraMCKernel<RNG>::Thread<Logger>:
                 log_event(logger,Events::nohit,pkt,currTetra);
                 return -1;
             }
-            pkt.s = _mm_add_ps(pkt.s,_mm_mul_ps(stepResult.distance,currMat.s_prop));
+            pkt.s = _mm_add_ps(
+            			pkt.s,
+						_mm_mul_ps(
+								stepResult.distance,
+								currMat.m_prop));
+
             IDm_bound = m_parentKernel.m_mesh->getMaterial(stepResult.IDte);
+
             if (IDm == IDm_bound) { // no material change
             	log_event(logger,Events::boundary,pkt.p,stepResult.IDfe,IDt,stepResult.IDte);
                 IDt_next = stepResult.IDte;
             }
             else // boundary with material change
             {
-                n2 = m_parentKernel.mat_[IDm_bound].getn();
-                n1 = currMat.getn();
+                n2 = m_parentKernel.m_mats[IDm_bound].n();
+                n1 = currMat.n();
 
-                if (n1 == n2 || m_parentKernel.mat_[IDm_bound].isMatched()) // no refractive index difference
+                if (n1 == n2) // no refractive index difference
                 {
                 	log_event(logger,Events::boundary,pkt.p,stepResult.IDfe,IDt,stepResult.IDte);
                     IDt_next = stepResult.IDte;
@@ -239,7 +226,10 @@ template<class RNG>template<class Logger>int TetraMCKernel<RNG>::Thread<Logger>:
 										costheta));
 
 					    __m128 pr = FresnelSSE(n1_n2_ratio,sini_cosi_sint_cost);
-                        if (_mm_movemask_ps(_mm_cmplt_ss(rng.draw_m128f1_u01(),pr))&1)
+                        if (_mm_movemask_ps(
+                        		_mm_cmplt_ss(
+                        				_mm_load_ss(m_rng.floatU01()),
+										pr))&1)
                         {
                             newdir = reflect(__m128(pkt.direction()),normal,sini_cosi_sint_cost);
                             log_event(logger,Events::fresnel,pkt.p,__m128(pkt.direction()));
@@ -254,7 +244,6 @@ template<class RNG>template<class Logger>int TetraMCKernel<RNG>::Thread<Logger>:
 								    _mm_shuffle_ps(sini_cosi_sint_cost,sini_cosi_sint_cost,_MM_SHUFFLE(3,3,3,3))));
 						    log_event(logger,Events::refract,pkt.p,__m128(pkt.direction()));
                             IDt_next = stepResult.IDte;
-                        // configure material properties
                         } // if: fresnel reflection
                     }
                     pkt.dir = PacketDirection(SSE::UnitVector3(SSE::Vector3(newdir),SSE::NoCheck));
@@ -276,8 +265,8 @@ template<class RNG>template<class Logger>int TetraMCKernel<RNG>::Thread<Logger>:
             if (IDm != IDm_next)
             {
                 IDm = IDm_next;
-                currMat = m_parentKernel.mat_[IDm];
-                pkt.s = _mm_div_ss(_mm_movehdup_ps(pkt.s), _mm_set_ss(currMat.getMuT()));
+                currMat = m_parentKernel.m_mats[IDm];
+                pkt.s = _mm_div_ss(_mm_movehdup_ps(pkt.s), _mm_set_ss(currMat.muT()));
             }
             stepResult=currTetra.getIntersection(pkt.p,__m128(pkt.direction()),pkt.s);
             pkt.p   = stepResult.Pe;
@@ -285,6 +274,7 @@ template<class RNG>template<class Logger>int TetraMCKernel<RNG>::Thread<Logger>:
         if (Nhit >= m_parentKernel.Nhit_max_)
         {
         	cerr << "Terminated due to unusual number of interface hits" << endl;
+        	cerr << "  Nhit=" << Nhit << " dimensionless step remaining=" << as_array(pkt.s)[0] << endl;
         	log_event(logger,Events::abnormal,pkt,Nstep,Nhit);
         	return -2;
         }
@@ -300,7 +290,7 @@ template<class RNG>template<class Logger>int TetraMCKernel<RNG>::Thread<Logger>:
         TerminationResult term;
         w0=pkt.w;
 
-        tie(term,dw)=terminationCheck(m_parentKernel.wmin_,m_parentKernel.prwin_,rng,pkt,currMat,currTetra);
+        tie(term,dw)=terminationCheck(m_parentKernel.wmin_,m_parentKernel.prwin_,m_rng,pkt,currMat,currTetra);
 
         switch(term){
         case Continue:								// Continues, no roulette
@@ -325,8 +315,8 @@ template<class RNG>template<class Logger>int TetraMCKernel<RNG>::Thread<Logger>:
         	break;
         }
 
-    	if (scatter(pkt,*this,currMat,currTetra))
-    		log_event(logger,Events::scatter,__m128(pkt.direction()),__m128(pkt.direction()),currMat.getParam_g());
+    	if (scatter(pkt,currMat,currTetra))
+    		log_event(logger,Events::scatter,__m128(pkt.direction()),__m128(pkt.direction()),std::numeric_limits<float>::quiet_NaN());
     }
 
     // should only fall through to here in abnormal circumstances (too many steps)

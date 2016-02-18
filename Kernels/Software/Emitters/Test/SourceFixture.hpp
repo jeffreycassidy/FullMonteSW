@@ -8,7 +8,7 @@
 #ifndef KERNELS_SOFTWARE_EMITTERS_TEST_SOURCEFIXTURE_HPP_
 #define KERNELS_SOFTWARE_EMITTERS_TEST_SOURCEFIXTURE_HPP_
 
-#include "../../RandomAVX.hpp"
+#include "../../RNG_SFMT_AVX.hpp"
 
 #ifdef VTK_OUTPUT
 #include "VTKPointCloud.hpp"

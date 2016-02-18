@@ -24,10 +24,10 @@
 #include <emmintrin.h>
 
 constexpr std::array<std::array<unsigned char,3>,4> tetra_face_indices {
-	std::array<unsigned char,3>{ 0, 1, 2 },
-	std::array<unsigned char,3>{ 0, 1, 3 },
-	std::array<unsigned char,3>{ 0, 2, 3 },
-	std::array<unsigned char,3>{ 1, 2, 3 }
+	std::array<unsigned char,3>{{ 0, 1, 2 }},
+	std::array<unsigned char,3>{{ 0, 1, 3 }},
+	std::array<unsigned char,3>{{ 0, 2, 3 }},
+	std::array<unsigned char,3>{{ 1, 2, 3 }}
 };
 
 struct face_opposite {
@@ -36,19 +36,19 @@ struct face_opposite {
 };
 
 constexpr std::array<face_opposite,4> tetra_face_opposite_point_indices {
-	face_opposite{std::array<unsigned char,3>{ 0, 1, 2 },3},
-	face_opposite{std::array<unsigned char,3>{ 0, 1, 3 },2},
-	face_opposite{std::array<unsigned char,3>{ 0, 2, 3 },1},
-	face_opposite{std::array<unsigned char,3>{ 1, 2, 3 },0}
+	face_opposite{std::array<unsigned char,3>{{ 0, 1, 2 }},3},
+	face_opposite{std::array<unsigned char,3>{{ 0, 1, 3 }},2},
+	face_opposite{std::array<unsigned char,3>{{ 0, 2, 3 }},1},
+	face_opposite{std::array<unsigned char,3>{{ 1, 2, 3 }},0}
 };
 
 constexpr std::array<std::array<unsigned char,2>,6> tetra_edge_indices {
-	std::array<unsigned char,2>{ 0, 1},
-	std::array<unsigned char,2>{ 0, 2},
-	std::array<unsigned char,2>{ 0, 3},
-	std::array<unsigned char,2>{ 1, 2},
-	std::array<unsigned char,2>{ 1, 3},
-	std::array<unsigned char,2>{ 2, 3}
+	std::array<unsigned char,2>{{ 0, 1}},
+	std::array<unsigned char,2>{{ 0, 2}},
+	std::array<unsigned char,2>{{ 0, 3}},
+	std::array<unsigned char,2>{{ 1, 2}},
+	std::array<unsigned char,2>{{ 1, 3}},
+	std::array<unsigned char,2>{{ 2, 3}}
 };
 
 template<typename T,std::size_t N>std::array<T,N>& operator+=(std::array<T,N>& lhs,const std::array<T,N> rhs)
@@ -138,7 +138,7 @@ class TetraMesh : public TetraMeshBase {
     tetra_struct_const_iterator tetra_begin() const { return tetras.begin(); }
     tetra_struct_const_iterator tetra_end()   const { return tetras.end(); }
 
-	bool checkValid() const;
+	virtual bool checkValid(bool) const override;
 
 	enum TetraFileType { MatlabTP };
 

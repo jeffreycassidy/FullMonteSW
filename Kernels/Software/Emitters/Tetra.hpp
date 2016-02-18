@@ -54,7 +54,7 @@ template<class RNG>SSE::Vector3 Tetra<RNG>::position(RNG& rng) const
 
     // TODO: SSEify the items below? Fold into RNG to parallelize?
 
-    std::array<float,3> rnd{ rng.draw_float_u01(), rng.draw_float_u01(), rng.draw_float_u01() };
+    std::array<float,3> rnd{ *rng.floatU01(), *rng.floatU01(), *rng.floatU01() };
     if (rnd[0]+rnd[1] > 1.0)
     {
         rnd[0] = 1.0-rnd[0];
