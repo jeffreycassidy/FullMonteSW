@@ -24,7 +24,7 @@
 
 using namespace std;
 
-const string dir("/Users/jcassidy/src/FullMonteSW/data");
+const string dir("/Users/jcassidy/src/FullMonte");
 
 BOOST_AUTO_TEST_CASE(mouse)
 {
@@ -51,7 +51,8 @@ BOOST_AUTO_TEST_CASE(mouse)
 	VK.rouletteWMin(1e-5);
 	VK.materials(mats);
 	VK.source(src);
-	VK.packetCount(1000000);
+	VK.packetCount(10000);
+	VK.threadCount(1);
 
 	cout << "Async start" << endl;
 	VK.startAsync();

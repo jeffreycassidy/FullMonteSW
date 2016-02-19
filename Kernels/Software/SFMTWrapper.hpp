@@ -25,7 +25,8 @@ namespace URNG
 
 	template<>inline void generate(sfmt_t& rng,uint32_t* dst,std::size_t N)
 	{
-		assert(N % 624 == 0);
+		assert(N >= 624);
+		assert(N % 4 == 0);
 		sfmt_fill_array32(&rng,dst,N);
 	}
 };

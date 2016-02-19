@@ -15,7 +15,7 @@ public:
 	SimpleMaterial(float muS,float muA,float g_,float n,float muX=0.0f) :
 		mu_a(muA),
 		mu_s(muS),
-		g(g_),
+		m_g(g_),
 		m_n(n),
 		mu_x(muX){}
 
@@ -23,18 +23,19 @@ public:
 	float muA() const	{ return mu_a; 				}
 	float muT() const 	{ return mu_a+mu_s+mu_x; 	}
 	float n() 	const	{ return m_n; 				}
+	float g()	const	{ return m_g;				}
 
 	/// Albedo in terms of mu_s' (!= 1-absfrac unless g==0.0)
 	float albedo() const { float msp=mu_s_prime(); return (msp > 0 || mu_a > 0) ? msp/(msp+mu_a) : 1.0f; }
 
 	/// Reduced scattering coefficient
-	float mu_s_prime() const { return mu_s*(1.0-g); }
+	float mu_s_prime() const { return mu_s*(1.0-m_g); }
 
 	/// Fraction of energy absorbed at each interaction
 	float absfrac() const { return (mu_s > 0 || mu_a > 0) ? 1-mu_s/(mu_s+mu_a) : 0; }
 
 private:
-	float mu_a,mu_s,g,m_n,mu_x=0.0f;
+	float mu_a,mu_s,m_g,m_n,mu_x=0.0f;
 };
 
 #endif /* GEOMETRY_SIMPLEMATERIAL_HPP_ */

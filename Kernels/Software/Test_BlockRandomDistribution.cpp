@@ -17,6 +17,8 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/range/algorithm.hpp>
 
+#include <array>
+
 struct DummyConstRNGVector
 {
 	uint32_t 	m_val=0;
@@ -293,3 +295,58 @@ BOOST_AUTO_TEST_CASE(hgExtremes)
 		}
 	}
 }
+
+struct Open_tag {};
+struct Closed_tag {};
+
+constexpr Open_tag Open{};
+constexpr Closed_tag Closed{};
+
+template<typename T,typename U,class Comp=std::less<T>>bool ocCompare(Open_tag,const T lhs,const U rhs,const Comp& c = std::less<T>())
+{
+	return c(lhs,rhs);
+}
+
+template<typename T,typename U,class Comp=std::less<T>>bool ocCompare(Closed_tag,const T lhs,const U rhs,const Comp& c = std::less<T>())
+{
+	return !c(rhs,lhs);
+}
+
+template<typename T,typename LowerType=Open_tag,typename UpperType=Closed_tag,class Comp=std::less<T>>struct Interval
+{
+	T lower;
+	T upper;
+
+	Comp comp;
+
+	Interval(T lb,T ub,Comp c=Comp()) : lower(lb),upper(ub),comp(c){}
+
+	bool operator()(const T x) const { return ocCompare(LowerType(),lower,x,comp) && ocCompare(UpperType(),x,upper,comp); }
+};
+
+BOOST_AUTO_TEST_CASE(comparisons)
+{
+	BOOST_CHECK(!ocCompare(Open,1U,1U));
+	BOOST_CHECK( ocCompare(Open,1U,2U));
+	BOOST_CHECK(!ocCompare(Open,2U,1U));
+
+	BOOST_CHECK(!ocCompare(Closed,1U,0U));
+	BOOST_CHECK( ocCompare(Closed,1U,1U));
+	BOOST_CHECK( ocCompare(Closed,1U,2U));
+
+	Interval<float,Closed_tag,Open_tag> i(0.0f,1.0f);
+
+	BOOST_CHECK(i(0.0f));
+	BOOST_CHECK(!i(1.0f));
+	BOOST_CHECK(!i(-1e-9f));
+	BOOST_CHECK(!i(std::numeric_limits<float>::infinity()));
+	BOOST_CHECK(!i(-std::numeric_limits<float>::infinity()));
+	BOOST_CHECK(!i(std::numeric_limits<float>::quiet_NaN()));
+}
+
+// quartiles
+// mean
+// variance
+
+// scalar -> 1:1 correspondence to ICDF
+// vector -> no simple relationship

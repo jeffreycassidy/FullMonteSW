@@ -1,6 +1,6 @@
 ADD_SUBDIRECTORY(Emitters)
 
-ADD_LIBRARY(FullMonteSWKernel SHARED TetraVolumeKernel.cpp TetraSurfaceKernel.cpp SSEMath.cpp ThreadedMCKernelBase.cpp sse.cpp PacketDirection.cpp)
+ADD_LIBRARY(FullMonteSWKernel SHARED TetraVolumeKernel.cpp TetraSurfaceKernel.cpp SSEMath.cpp ThreadedMCKernelBase.cpp sse.cpp PacketDirection.cpp HenyeyGreenstein.cpp)
 TARGET_LINK_LIBRARIES(FullMonteSWKernel SFMT FullMonteKernelBase FullMonteData)
 
 if (ANTLR3_INCLUDE_DIR)

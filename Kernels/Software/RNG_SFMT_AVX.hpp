@@ -20,7 +20,7 @@
 #include "FloatUVect2Distribution.hpp"
 
 #ifndef MAX_MATERIALS
-#define MAX_MATERIALS 16
+#define MAX_MATERIALS 32
 #endif
 
 class alignas(32) RNG_SFMT_AVX
@@ -45,6 +45,8 @@ public:
 	static constexpr result_type max(){ return std::numeric_limits<result_type>::max(); }
 
 	uint32_t operator()(){ return *m_ui32Queue(m_sfmt); }
+
+	void gParamSet(unsigned i,float g){ m_hgQueue[i].distribution().gParam(g); }
 
 private:
 	BlockRNGAdaptor<sfmt_t,uint32_t,1024,8,32> 				m_sfmt;

@@ -20,7 +20,7 @@
 
 #include "SSEConvert.hpp"// for as_array
 
-#define MAX_MATERIALS 16
+#define MAX_MATERIALS 32
 
 
 template<class RNGType>template<class Logger> class alignas(32) TetraMCKernel<RNGType>::Thread : public ThreadedMCKernelBase::Thread
@@ -58,6 +58,11 @@ template<class RNG>template<class Logger>TetraMCKernel<RNG>::Thread<Logger>::Thr
 	m_parentKernel(K),
 	logger(std::move(logger_))
 {
+	if (m_parentKernel.materials().size() > MAX_MATERIALS)
+		throw std::logic_error("More materials than the max allowed");
+
+	for(unsigned i=0;i<m_parentKernel.materials().size(); ++i)
+		m_rng.gParamSet(i,m_parentKernel.materials()[i].g());
 }
 
 template<class RNG>template<class Logger>void TetraMCKernel<RNG>::Thread<Logger>::doWork()
@@ -113,6 +118,13 @@ template<class RNGType>template<class Logger>inline bool TetraMCKernel<RNGType>:
 		return false;
 
 	__m128 spinmatrix = _mm_load_ps(m_rng.hg(region.matID));
+
+//#ifndef NDEBUG
+//	float f[4];
+//	_mm_store_ps(f,spinmatrix);
+//	std::cout << std::fixed << std::setprecision(6) << std::setw(9) << f[0] << ' ' << std::setw(9) << f[1] << ' ' << std::setw(9) << f[2] << ' ' << std::setw(9) <<  f[3] << std::endl;
+//#endif
+
 	pkt.dir = pkt.dir.scatter(SSE::Vector<4>(spinmatrix));
 	return true;
 }
@@ -147,6 +159,9 @@ template<class RNG>template<class Logger>int TetraMCKernel<RNG>::Thread<Logger>:
     // start another hop
     for(Nstep=0; Nstep < m_parentKernel.Nstep_max_; ++Nstep)
     {
+    	assert(0 <= _mm_cvtss_f32(pkt.s) &&_mm_cvtss_f32(pkt.s) < 1e3);
+        assert(pkt.dir.d.check(SSE::Silent,1e-4) && pkt.dir.a.check(SSE::Silent,1e-4) && pkt.dir.b.check(SSE::Silent,1e-4));
+
         // draw a hop length; pkt.s = { physical distance, MFPs to go, time, 0 }
         pkt.s = _mm_mul_ps(
         			_mm_load1_ps(m_rng.floatExp()),
@@ -247,6 +262,7 @@ template<class RNG>template<class Logger>int TetraMCKernel<RNG>::Thread<Logger>:
                         } // if: fresnel reflection
                     }
                     pkt.dir = PacketDirection(SSE::UnitVector3(SSE::Vector3(newdir),SSE::NoCheck));
+
                 } // if: refractive index difference
             } // if: material change
 

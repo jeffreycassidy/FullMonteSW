@@ -191,7 +191,7 @@ template<std::size_t D>inline Scalar dot(Vector<D> lhs,Vector<D> rhs)
 }
 
 
-enum Checking { NoCheck, Assert, Except, Normalize };
+enum Checking { NoCheck, Assert, Except, Normalize, Silent };
 
 template<std::size_t D>class UnitVector : public Vector<D>
 {
@@ -237,26 +237,29 @@ public:
 
 	bool check(Checking c,float eps=1e-5)
 	{
-		float e;
+		if (c == NoCheck)
+			return true;
+
+		float e = std::abs(float(Scalar::sqrt(dot(*this,*this)))-1.0f);
+
 		switch(c)
 		{
 		case Assert:
-		case Except:
-			e = std::abs(float(Scalar::sqrt(dot(*this,*this)))-1.0f);
-			if (c==Except && e > eps)
-				throw std::logic_error("Non-unit vector in UnitVector::check()");
-			else if (c==Assert)
-				assert(e < eps);
-			return e<eps;
+			assert(e < eps);
+			break;
 
-		case NoCheck:
-			return true;
+		case Except:
+			if (e > eps)
+				throw std::logic_error("Non-unit vector in UnitVector::check()");
+			break;
 
 		case Normalize:
 			*this = normalize(*this);
-			return true;
+		default:
+			break;
 		}
-		return true;
+
+		return e < eps;
 	}
 
 

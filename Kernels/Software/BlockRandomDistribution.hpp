@@ -65,7 +65,7 @@ private:
 template<class Distribution,std::size_t OutputBlocks,std::size_t Align>template<class RNG>const typename Distribution::result_type* BlockRandomDistribution<Distribution,OutputBlocks,Align>::draw(RNG& rng)
 {
 	if (m_pos == 0)
-		for(unsigned i=0;i<OutputBlocks; i += outputBlockSize)
+		for(unsigned i=0;i<OutputBlocks*outputBlockSize; i += outputBlockSize)
 			RandomDistribution::generate(rng,m_distribution,m_outputBuffer+i);
 
 	const typename Distribution::result_type* p = m_outputBuffer + m_pos;

@@ -22,6 +22,9 @@ public:
 	typedef uint32_t				input_type;
 	static constexpr std::size_t	InputBlockSize=8;			///< Inputs consumed per invocation
 
+
+	//static constexpr Interval<float,Open,Closed> range{0.0f,std::numeric_limits<float>::infinity()};
+
 	template<class RNG>void calculate(RNG& rng,float *dst)
 	{
 		const uint32_t* rp = rng.getBlock();
