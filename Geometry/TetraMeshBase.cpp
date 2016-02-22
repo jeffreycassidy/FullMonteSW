@@ -3,6 +3,10 @@
 
 #include "TetraMeshBase.hpp"
 
+#include <vector>
+
+using namespace std;
+
 // Very naive search to find closest point
 //unsigned TetraMeshBase::findNearestPoint(const Point<3,double>& p) const
 //{
@@ -100,91 +104,45 @@
 //
 //    return within;
 //}
-
-bool TetraMeshBase::checkValid(bool printResults) const
-{
-	bool IDps_ok=true;
-
-	// check tetra point indices: all should be nonzero and fall within the size of the points vector
-
-    for(TetraByPointID IDps : T_p)
-    	for(unsigned IDp : IDps)
-    	{
-    		if (IDp >= P.size())
-    		{
-    			if (printResults)
-    				cout << "  ERROR: Point index out of range (max " << P.size() << ") in Tetra: " << IDps << endl;
-    			IDps_ok=false;
-    		}
-    	}
-    cout << "Tetra point indices in range: " << (IDps_ok ? "OK" : "Error") << endl;
-
-
-    return IDps_ok;
-}
+//
+//bool TetraMeshBase::checkValid(bool printResults) const
+//{
+//	bool IDps_ok=true;
+//
+//	// check tetra point indices: all should be nonzero and fall within the size of the points vector
+//
+//    for(TetraByPointID IDps : m_tetraPoints)
+//    	for(unsigned IDp : IDps)
+//    	{
+//    		if (IDp >= P.size())
+//    		{
+//    			if (printResults)
+//    				cout << "  ERROR: Point index out of range (max " << P.size() << ") in Tetra: " << IDps << endl;
+//    			IDps_ok=false;
+//    		}
+//    	}
+//    cout << "Tetra point indices in range: " << (IDps_ok ? "OK" : "Error") << endl;
+//
+//
+//    return IDps_ok;
+//}
 
 void TetraMeshBase::remapMaterial(unsigned from,unsigned to)
 {
-	for(unsigned& m : T_m)
+	for(unsigned& m : m_tetraMaterials)
 		if (m == from)
 			m = to;
 }
 
+vector<unsigned> TetraMeshBase::tetraMaterialCount() const
+{
+	std::vector<unsigned> Nm;
+	for(const auto m : m_tetraMaterials)
+	{
+		if (m > Nm.size())
+			Nm.resize(m+1);
+		Nm[m]++;
+	}
+	return Nm;
+}
 
-
-/*
-	readFileMatlabTP(fn,ids,coords)
-
-Args
-	fn			File name to open
-
-Returns
-	ids			Vector of TetraByPointID, specifies the tetrahedra in terms of their points
-	coords		Vector of Point<3,double> giving the actual point coordinates
-
-	pair<int,int> contains (number of faces, number of points)
-
-
-	NOTE: Arrays are 1-based so they will agree with Matlab/Octave
-			0 is used as a special value (for not-found or exited)
-
-*/
-
-
-//bool TetraMeshBase::readFileMatlabTP(string fn)
-//{
-//	ifstream is(fn.c_str(),ios_base::in);
-//
-//    if(!is.good()){
-//        cerr << "Failed to open " << fn << " for reading; abort" << endl;
-//        return false;
-//    }
-//	int Nt,Np;
-//
-//    // read sizes
-//    is >> Np;
-//	is >> Nt;
-//
-//	// read point coordinates -- uses 1-based addressing
-//	P.resize(Np+1);
-//	P[0]=Point<3,double>();
-//	for (vector<Point<3,double> >::iterator it = P.begin()+1; it != P.end(); ++it)
-//		is >> *it;
-//
-//	T_p.resize(Nt+1);
-//    T_m.resize(Nt+1);
-//	unsigned t[4]={0,0,0,0},i=1,max_m=0;
-//	T_p[0]=TetraByPointID(t);
-//    T_m[0]=0;
-//    TetraByPointID IDps;
-//	for (vector<TetraByPointID>::iterator it=T_p.begin()+1; it != T_p.end(); ++it,++i)
-//	{
-//		is >> IDps;
-//		is >> T_m[i];
-//        *it=IDps.getSort();
-//		max_m = max(max_m,T_m[i]);
-//	}
-//
-//	return true;
-//}
-//

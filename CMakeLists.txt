@@ -1,0 +1,77 @@
+PROJECT(FullMonte)
+CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
+
+CONFIGURE_FILE(testdata.h.in testdata.h)
+CONFIGURE_FILE(config.h.in   config.h)
+INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR})
+
+## Compiler setup
+SET(CMAKE_CXX_STANDARD 11)
+
+### Architecture
+SET(ARCH avx2 CACHE STRING "Architecture flag for -m option")
+
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-missing-braces")
+
+MESSAGE("Arch: ${ARCH}")
+
+IF(${ARCH} STREQUAL "avx")
+    ADD_DEFINITIONS(-DUSE_AVX)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx")
+ELSEIF(${ARCH} STREQUAL "avx2")
+    ADD_DEFINITIONS(-DUSE_AVX2)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
+ENDIF()
+
+### Warnings and esoteric settings
+IF(${CMAKE_CXX_COMPILER_ID} MATCHES "GNU")
+    # Required to avoid an error in colliding mangled names
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fabi-version=6")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi")
+ELSEIF(${CMAKE_CXX_COMPILER_ID} MATCHES "CLANG")
+    # Required to avoid all kinds of (harmless) warnings due to Boost concept checks
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-local-typedef")
+ENDIF()
+
+
+
+## Include dirs for FullMonte
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/..)
+
+
+
+## Wrapping options
+OPTION(WRAP_TCL ON)
+OPTION(WRAP_VTK ON)
+
+IF(WRAP_TCL)
+    FIND_PACKAGE(SWIG REQUIRED)
+    INCLUDE(${SWIG_USE_FILE})
+
+	FIND_PACKAGE(TCL REQUIRED)
+    FIND_PACKAGE(TclStub REQUIRED)
+    ADD_DEFINITIONS(-DUSE_TCL_STUBS)
+	INCLUDE_DIRECTORIES(${TCL_INCLUDE_PATH})
+ENDIF()
+
+
+## Boost required components
+FIND_PACKAGE(Boost REQUIRED COMPONENTS unit_test_framework serialization system program_options)
+
+INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
+LINK_DIRECTORIES(${Boost_LIBRARY_DIR})
+
+SET(TEST_THREAD_COUNT 8 CACHE STRING "Number of threads for test cases")
+
+
+IF (WRAP_VTK)
+	FIND_PACKAGE(VTK REQUIRED)
+	ADD_SUBDIRECTORY(VTK)
+ENDIF()
+
+ADD_SUBDIRECTORY(SFMT)
+ADD_SUBDIRECTORY(Geometry)
+ADD_SUBDIRECTORY(Storage)
+ADD_SUBDIRECTORY(Kernels)
+ADD_SUBDIRECTORY(OutputTypes)
+

@@ -1,58 +1,10 @@
-#pragma once
-#include "Logger.hpp"
+#ifndef KERNELS_SOFTWARE_LOGGER_LOGGERVOLUME_HPP_
+#define KERNELS_SOFTWARE_LOGGER_LOGGERVOLUME_HPP_
+
+#include "LoggerBase.hpp"
 #include "AccumulationArray.hpp"
-#include <FullMonte/OutputTypes/fluencemap.hpp>
 
-#include <boost/range/algorithm.hpp>
-#include <boost/range/adaptor/transformed.hpp>
-
-template<typename T>double get_energy(const T& v);
-template<>inline double get_energy(const double& v){ return v; }
-
-template<class T>class VolumeArray : public clonable<LoggerResults,VolumeArray<T>> {
-	const TetraMesh& mesh;
-	vector<T> v;
-
-public:
-	VolumeArray(const VolumeArray& v_) = default;
-    VolumeArray(VolumeArray&& lv_)        : mesh(lv_.mesh),v(std::move(lv_.v)){};
-    VolumeArray(const TetraMesh& mesh_)    : mesh(mesh_),v(mesh.getNt()+1){};
-    VolumeArray(const TetraMesh& mesh_,vector<T>&& v_) : mesh(mesh_),v(std::move(v_)){}
-    VolumeArray(const TetraMesh& mesh_,const vector<T>& v_)  : mesh(mesh_),v(v_){}
-
-    /// Returns a VolumeFluenceMap for the absorption accumulated so far*/
-    /** The value of asFluence determines whether it returns total energy (false) or fluence as E/V/mu_a (true) */
-    void fluenceMap(VolumeFluenceMap&,const vector<Material>&,bool asFluence=true);
-
-    vector<double> absorbed_energy() const
-	{
-    	vector<double> ov(v.size());
-
-    	boost::copy(v | boost::adaptors::transformed(get_energy<T>), ov.begin());
-    	return ov;
-	}
-
-    /// Returns (if available from AccumulatorT) a hit map
-    void hitMap(map<unsigned,unsigned long long>& m);
-
-    typedef typename vector<T>::const_iterator const_iterator;
-
-    const_iterator begin() const { return v.begin(); }
-    const_iterator end()   const { return v.end(); }
-
-    virtual string getTypeString() const { return "logger.results.volume.energy"; }
-
-    double getTotal() const {
-    	double sum=0.0;
-    	for(double E : v)
-    		sum += E;
-    	return sum;
-    }
-
-	virtual void summarize(ostream& os) const {
-		os << "Volume array total energy is " << setprecision(4) << getTotal() << " (" << v.size() << " elements)" << endl;
-	}
-};
+#include <FullMonte/OutputTypes/FluenceMapBase.hpp>
 
 /*! Basic volume logger.
  *
@@ -64,38 +16,31 @@ public:
  * 	Copy-constructible
  * 	Constructor of type Accumulator(unsigned size,args...)
  *
- * Accumulator WorkerThread requirements:
+ * Accumulator ThreadWorker requirements:
  * 	Copy-constructible
  *
  *
  *	Examples: vector<T>& (single-thread), QueuedAccumulatorMT (thread-safe)
  */
 
-template<class T>class LoggerVolume;
-template<class T>ostream& operator<<(ostream& os,const VolumeArray<T>& lv);
 
-template<class T>ostream& operator<<(ostream& os,const LoggerVolume<T>& lv)
+template<class Accumulator>class LoggerVolume
 {
-	return os << lv.getResults();
-}
-
-template<class Accumulator>class LoggerVolume {
-	Accumulator acc;
-	const TetraMesh& mesh;
-
 public:
-	template<typename... Args>LoggerVolume(const TetraMesh& mesh_,Args... args) : acc(mesh_.getNt()+1,args...),mesh(mesh_){}
-	LoggerVolume(LoggerVolume&& lv_) : acc(std::move(lv_.acc)),mesh(lv_.mesh){}
+	LoggerVolume(){}
+	LoggerVolume(unsigned Nt,unsigned Nq) : acc(Nt),m_Nq(Nq){}
+	LoggerVolume(LoggerVolume&& lv_) = delete;
 	LoggerVolume(const LoggerVolume& lv_) = delete;
 
-	class WorkerThread : public LoggerNull {
-		typename Accumulator::WorkerThread wt;
+	class ThreadWorker : public LoggerBase {
+		typename Accumulator::ThreadWorker wt;
 	public:
-		typedef void logger_member_tag;
-		WorkerThread(Accumulator& parent_) : wt(parent_.get_worker()){};
-		WorkerThread(const WorkerThread& wt_) = delete;
-		WorkerThread(WorkerThread&& wt_) : wt(std::move(wt_.wt)){}
-		~WorkerThread(){ wt.commit(); }
+
+		typedef std::true_type is_logger;
+		ThreadWorker(Accumulator& parent_,unsigned Nq) : wt(parent_.get_worker(Nq)){};
+		ThreadWorker(const ThreadWorker& wt_) = delete;
+		ThreadWorker(ThreadWorker&& wt_) : wt(std::move(wt_.wt)){}
+		~ThreadWorker(){ /*wt.commit();*/ }
 
 	    inline void eventAbsorb(Point3 p,unsigned IDt,double w0,double dw)
 	    	{ wt[IDt] += dw; }
@@ -106,15 +51,32 @@ public:
 	    inline void eventCommit(){ wt.commit(); }
 	};
 
-	typedef WorkerThread ThreadWorker;
+	static std::list<OutputData*> results(const std::vector<double>& values)
+	{
+		// convert to float
+		std::vector<float> vf(values.size());
+		boost::copy(values, vf.begin());
 
-	typedef VolumeArray<typename Accumulator::ElementType> ResultType;
-	typedef true_type single_result_tag;
+		// create vector
+		SpatialMapBase<float,unsigned> *vmap = SpatialMapBase<float,unsigned>::newFromVector(std::move(vf));
+		OutputData* O = new VolumeAbsorbedEnergyMap(vmap);
+		std::list<OutputData*> L;
+		L.push_back(O);
+		return L;
+	}
+	std::list<OutputData*> results() const { return results(acc.values()); }
 
-	WorkerThread get_worker() { return WorkerThread(acc);  };
+	/// Access to the back-end accumulator
+	Accumulator& accumulator();
 
-	typedef VolumeArray<typename Accumulator::ElementType> result_type ;
+	ThreadWorker get_worker() { return ThreadWorker(acc,m_Nq);  };
 
-	result_type getResults() const { return result_type(mesh,acc.getResults()); }
+	void resize(unsigned N){ acc.resize(N); }
+	void qSize(unsigned Nq){ m_Nq=Nq; }
+
+private:
+	Accumulator acc;
+	unsigned m_Nq=1<<14;	///< Number of accumulations in queue
 };
 
+#endif

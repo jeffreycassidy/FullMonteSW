@@ -6,6 +6,8 @@
 
 using namespace std;
 
+// TODO: Move this to Kernels/Software since it's really SSE-specific
+
 typedef struct { 
         __m128 Pe;          // 4x16B = 64 B
         __m128 distance;

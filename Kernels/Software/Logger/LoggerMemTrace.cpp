@@ -1,11 +1,5 @@
 #include "LoggerMemTrace.hpp"
 
-LoggerMemTrace::~LoggerMemTrace()
-{
-    os_tetra.close();
-    os_exit.close();
-}
-
 // On launch, write out previous tetra record unless it's the same tetra
 void LoggerMemTrace::eventLaunch(const Ray3,unsigned IDt,double)
 {
@@ -66,13 +60,11 @@ void LoggerMemTrace::eventExit(const Ray3,int IDf,double)
 void LoggerMemTrace::logTetraHits(unsigned IDt,unsigned Nabs)
 {
     TetraRecord tmp = { IDt,Nabs} ;
-    os_tetra.write((const char*)&tmp,sizeof(TetraRecord));
     Nabs=0;
 }
 
 void LoggerMemTrace::logExit(int IDf,unsigned Nexit)
 {
     ExitRecord tmp = {abs(IDf),Nexit};
-    os_exit.write((const char*)&tmp,sizeof(ExitRecord));
     Nexit=0;
 }

@@ -14,6 +14,7 @@
 
 #include <sstream>
 
+#include <fstream>
 #include <iomanip>
 
 struct delim {
@@ -43,7 +44,7 @@ template<typename T,size_t N>std::ostream& operator<<(const delim_stream ds,cons
 }
 
 using namespace std;
-//
+
 //void TIMOSWriter::write(const TetraMesh& M) const
 //{
 //    ofstream os(meshFn_.c_str());
@@ -84,33 +85,74 @@ using namespace std;
 //	if (os.fail())
 //		throw write_exception("TIMOSWriter::write(std::vector<Material>&) writing failed");
 //}
-//
-//#define IS_A(p,t,s) const t* p = dynamic_cast<const t*>(s)
-//
-//void TIMOSWriter::write(const vector<SourceDescription*>& src) const
-//{
-//	ofstream os(sourceFn_.c_str());
-//
-//	if(!os.good())
-//		throw open_for_write_exception("TIMOSWriter::write(std::vector<SourceDescription>&) failed to open file for writing");
-//
-//	os << boost::size(src) << endl;
-//	for(const SourceDescription* s : src)
-//	{
-//		if (IS_A(p,IsotropicPointSourceDescription,s))
-//			os << "1 " << delim{""," ",""} << p->getOrigin() << endl;
-//		else if (IS_A(p,VolumeSourceDescription,s))
-//			os << "2 " << p->getIDt() << endl;
-//		else
-//			throw std::exception();
-//
-//		os << ' ' << s->getPower() << endl;
-//	}
-//
-//	if(os.fail())
-//		throw write_exception("TIMOSWriter::write(std::vector<Material>&) writing failed");
-//}
 
+void TIMOSWriter::SourceVisitor::startVisit(Source::Base* b)
+{
+	const auto f = m_os.flags();
+	m_os << setprecision(4) << fixed << right;
+	b->acceptVisitor(this);
+	m_os.flags(f);
+}
+
+void TIMOSWriter::SourceVisitor::visit(Source::PointSource* p)
+{
+	std::array<float,3> pos = p->position();
+	m_os << std::setw(2) << TIMOS::SourceDef::Point << ' ' <<
+			std::setw(9) << pos[0] << ' ' << std::setw(9) << pos[1] << ' ' << std::setw(9) << pos[2] << ' ' <<
+			std::setw(10) << (unsigned long long)(p->power()) << endl;
+}
+
+void TIMOSWriter::SourceVisitor::visit(Source::Volume* v)
+{
+	m_os << std::setw(2) << TIMOS::SourceDef::Volume << ' ' << std::setw(7) << v->elementID() << ' ' <<
+			std::setw(10) << (unsigned long long)(v->power()) << std::endl;
+}
+
+void TIMOSWriter::SourceVisitor::visit(Source::SurfaceTri* st)
+{
+	std::array<unsigned,3> f = st->triPointIDs();
+	m_os << std::setw(2) << TIMOS::SourceDef::Face << ' ' <<
+			std::setw(7) << f[0] << ' ' <<
+			std::setw(7) << f[1] << ' ' <<
+			std::setw(7) << f[2] << ' ' <<
+			std::setw(10) << (unsigned long long)(st->power()) << std::endl;
+}
+
+void TIMOSWriter::SourceVisitor::visit(Source::Composite* c)
+{
+	for(Source::Base * s : c->elements())
+		s->acceptVisitor(this);
+}
+
+void TIMOSWriter::SourceVisitor::visit(Source::PencilBeam* pb)
+{
+	std::array<float,3> pos = pb->position();
+	std::array<float,3> dir = pb->direction();
+
+	m_os << setw(2) << TIMOS::SourceDef::PencilBeam << ' ' << pb->elementHint() << ' ' <<
+		std::setw(9) << pos[0] << ' ' << std::setw(9) << pos[1] << ' ' << std::setw(9) << pos[2] << ' ' <<
+		std::setw(7) << dir[0] << ' ' << std::setw(7) << dir[1] << ' ' << std::setw(7) << dir[2] << ' ' <<
+		std::setw(10) << (unsigned long long)(pb->power()) << endl;
+}
+
+void TIMOSWriter::SourceVisitor::visit(Source::Ball* b)
+{}
+void TIMOSWriter::SourceVisitor::visit(Source::Line* l)
+{}
+void TIMOSWriter::SourceVisitor::visit(Source::Base* b)
+{}
+void TIMOSWriter::SourceVisitor::visit(Source::Surface* s)
+{}
+
+
+void TIMOSWriter::write(Source::Base* b)
+{
+	std::ostream& os = std::cout;
+	writeUserComments(os,m_comment);
+
+	SourceVisitor SV(os);
+	SV.startVisit(b);
+}
 
 // Writes out the volume fluence given an input vector of volume fluence
 

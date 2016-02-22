@@ -23,7 +23,6 @@ int main(int argc,char **argv)
 
 	TetraMesh M = R.mesh();
 	vector<SourceDescription*> src = R.sources();
-	vector<Material> mat = R.materials();
 
 	//vector<TIMOS::Region> reg = R.legend();
 

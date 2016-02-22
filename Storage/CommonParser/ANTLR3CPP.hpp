@@ -1,3 +1,6 @@
+#ifndef ANTLR3CPP_INCLUDED
+#define ANTLR3CPP_INCLUDED
+
 #include <antlr3.h>
 #include <antlr3defs.h>
 
@@ -79,6 +82,7 @@ template<>inline std::string convert_string(std::string s){ return s; }
 
 
 class ast_visitor {
+
 protected:
 	virtual bool do_validate(){ return true; }
 	virtual void do_preorder(ANTLR3CPP::base_tree bt){ }
@@ -92,6 +96,7 @@ protected:
 	}
 
 public:
+	virtual ~ast_visitor(){}
 	void walk(ANTLR3CPP::base_tree bt)
 	{
 		do_preorder(bt);
@@ -148,3 +153,4 @@ template<class T>T convert_tuple(const base_tree bt)
 
 
 }
+#endif

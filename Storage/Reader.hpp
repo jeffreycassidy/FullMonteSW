@@ -10,15 +10,14 @@
 
 #include <vector>
 #include <FullMonte/Geometry/TetraMesh.hpp>
-#include <FullMonte/Geometry/Material.hpp>
-
-class SourceDescription;
+#include <FullMonte/Geometry/Sources/Base.hpp>
+#include <FullMonteSW/FullMonte/Kernels/Software/Material.hpp>
 
 class Reader {
 public:
+	Reader(){}
 	virtual TetraMesh 						mesh()			const=0;
-	virtual std::vector<Material> 			materials() 	const=0;
-	virtual std::vector<SourceDescription*> sources()		const=0;
+	virtual std::vector<Source::Base*> 		sources()		const=0;
 
 	virtual ~Reader(){}
 

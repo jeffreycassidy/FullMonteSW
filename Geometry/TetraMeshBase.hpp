@@ -1,9 +1,6 @@
-#ifndef TETRAMESHBASE_INCLUDED_
-#define TETRAMESHBASE_INCLUDED_
+#ifndef GEOMETRY_TETRAMESHBASE_INCLUDED_
+#define GEOMETRY_TETRAMESHBASE_INCLUDED_
 
-#ifndef SWIG
-#include <iostream>
-#include <fstream>
 #include <vector>
 
 #include "newgeom.hpp"
@@ -12,76 +9,83 @@
 #include <boost/serialization/nvp.hpp>
 #include <boost/serialization/access.hpp>
 
-#include <boost/range/adaptor/transformed.hpp>
 
-#include <boost/mpl/bool.hpp>
+/** TetraMeshBase contains the bare essentials of a tetrahedral mesh: points, tetras (by 4 point indices) and a region code for
+ * each tetra. Generally tetra 0 and point 0 are dummy entries, to facilitate conversion between 0-based and 1-based indexing.
+ * Likewise region 0 is a special code to indicate the exterior of the mesh.
+ *
+ */
 
-//#include <FullMonte/Geometry/TetraMeshBase.hpp>
-#endif
-
-
-class TetraMeshBase {
-private:
-	template<class Archive>void serialize(Archive& ar,const unsigned int version)
-		{	ar & BOOST_SERIALIZATION_NVP(P) & BOOST_SERIALIZATION_NVP(T_p) & BOOST_SERIALIZATION_NVP(T_m); }
-
-protected:
-	std::vector<Point<3,double> >    P;          // point vector
-	std::vector<TetraByPointID>      T_p;        // tetra -> 4 point IDs
-	std::vector<unsigned>			T_m;		// tetra -> material
-
+class TetraMeshBase
+{
 public:
-
-	virtual void Delete(){ delete this; }
-
-	virtual ~TetraMeshBase(){}
-
-	const std::vector<Point<3,double>>& 	points() const 	 	{ return P; }
-	const std::vector<TetraByPointID>& 	tetrasByID() const 	{ return T_p; }
-
-	virtual bool checkValid(bool printResults=false) const;
-
 	TetraMeshBase(){};
+
+	TetraMeshBase(TetraMeshBase&& M) : m_points(std::move(M.m_points)),m_tetraPoints(std::move(M.m_tetraPoints)),m_tetraMaterials(std::move(M.m_tetraMaterials)){}
 	TetraMeshBase(const TetraMeshBase& M) = default;
-    TetraMeshBase(unsigned Np_,unsigned Nt_) : P(Np_+1,Point<3,double>{0,0,0}),T_p(Nt_+1,TetraByPointID{0,0,0,0}){}
+	TetraMeshBase& operator=(TetraMeshBase&&) = default;
+	TetraMeshBase& operator=(const TetraMeshBase&) = default;
 
 	TetraMeshBase(const std::vector<Point<3,double> >& P_,const std::vector<TetraByPointID>& T_p_,const std::vector<unsigned>& T_m_=std::vector<unsigned>())
-		: P(P_),T_p(T_p_),T_m(T_m_) { if(T_m.size() != T_p.size()) T_m.resize(T_p.size(),0);  }
+		: m_points(P_),m_tetraPoints(T_p_),m_tetraMaterials(T_m_)
+	{
+		if(m_tetraMaterials.size() != m_tetraPoints.size())
+			m_tetraMaterials.resize(m_tetraPoints.size(),0);
+	}
 
-	unsigned getNp() const { return P.size()-1; };
-	unsigned getNt() const { return T_p.size()-1; };
+	virtual void Delete(){ delete this; }
+	virtual ~TetraMeshBase(){}
+
+	const std::vector<Point<3,double>>& 	points() const 	 	{ return m_points; }
+	const std::vector<TetraByPointID>& 	tetrasByID() const 	{ return m_tetraPoints; }
+
+	void remapMaterial(unsigned from,unsigned to);
+	std::vector<unsigned> tetraMaterialCount() const;
+
+	unsigned getNp() const { return m_points.size()-1; };
+	unsigned getNt() const { return m_tetraPoints.size()-1; };
 
 	// Accessors for various point/face constructs
-	const Point<3,double>&  getPoint(unsigned id)           const { return P[id]; }
-	const TetraByPointID&   getTetraPointIDs(unsigned id)  	const { return T_p[id]; }
-    Point<3,double>         getTetraPoint(unsigned IDt,unsigned i) const { return P[T_p[IDt][i]]; }
+	const Point<3,double>&  getPoint(unsigned id)           const { return m_points[id]; }
+	const TetraByPointID&   getTetraPointIDs(unsigned id)  	const { return m_tetraPoints[id]; }
+    Point<3,double>         getTetraPoint(unsigned IDt,unsigned i) const { return m_points[m_tetraPoints[IDt][i]]; }
 
     double                  getTetraVolume(TetraByPointID IDps) const
-        { return abs(scalartriple(P[IDps[0]],P[IDps[1]],P[IDps[2]],P[IDps[3]])/6); }
+        { return std::abs(scalartriple(m_points[IDps[0]],m_points[IDps[1]],m_points[IDps[2]],m_points[IDps[3]])/6); }
 
-    double                  getTetraVolume(unsigned IDt) const { return getTetraVolume(T_p[IDt]); }
+    double                  getTetraVolume(unsigned IDt) const { return getTetraVolume(m_tetraPoints[IDt]); }
 
-    void remapMaterial(unsigned from,unsigned to);
-
-    const std::vector<Point<3,double> >& getPoints() const { return P; }
-    const std::vector<TetraByPointID>& getTetrasByPointID() const { return T_p; }
+    const std::vector<Point<3,double> >& getPoints() const { return m_points; }
+    const std::vector<TetraByPointID>& getTetrasByPointID() const { return m_tetraPoints; }
 
 
-    unsigned                getMaterial(unsigned IDt) const { return T_m[IDt]; }
-    const std::vector<unsigned>& getMaterials() const { return T_m; }
+    unsigned                getMaterial(unsigned IDt) const { return m_tetraMaterials[IDt]; }
+    const std::vector<unsigned>& getMaterials() const { return m_tetraMaterials; }
 
-    // check if tetra has any point within the region
-    array<Point<3,double>,4> tetraPoints(unsigned IDt) const {
-    	array<Point<3,double>,4> p;
+    // adjust units
+    float			cmPerLengthUnit() 			const 	{ return m_cmPerLengthUnit; }
+    void			cmPerLengthUnit(float l)			{ m_cmPerLengthUnit=l;		}
+
+    std::array<Point<3,double>,4> tetraPoints(unsigned IDt) const
+    {
+    	std::array<Point<3,double>,4> p;
     	for(unsigned i=0;i<4;++i)
-    		p[i]=P[T_p[IDt][i]];
+    		p[i]=m_points[m_tetraPoints[IDt][i]];
     	return p;
     }
 
+protected:
+	std::vector<Point<3,double> >    	m_points;          	///< Point vector
+	std::vector<TetraByPointID>      	m_tetraPoints;    	///< Tetra -> 4 point IDs
+	std::vector<unsigned>				m_tetraMaterials;	///< Tetra -> material
 
-    //template<class Region>TetraMeshBase clipTo(const Region& r) const;
+private:
+	float m_cmPerLengthUnit=1.0f;			///< Scale parameter (1.0 -> cm, 0.1 -> mm)
 
-    friend class boost::serialization::access;
+	template<class Archive>void serialize(Archive& ar,const unsigned int version)
+		{	ar & BOOST_SERIALIZATION_NVP(m_points) & BOOST_SERIALIZATION_NVP(m_tetraPoints) & BOOST_SERIALIZATION_NVP(m_tetraMaterials); }
+
+	friend class boost::serialization::access;
 };
 
 #endif

@@ -4,9 +4,6 @@
 
 using namespace std;
 
-// TODO: Add a routine to calculate face area using cross product
-// TODO: Map from uniform square coords to face points (for face source type)
-
 template<class T>int signum(T a)
 {
     return (a>T(0)) - (a<T(0));
@@ -103,9 +100,9 @@ Vector<3,double> Face::normalComponent(const Vector<3,double>& v) const
 	return v*dot(v,normal);
 }
 */
-
-ostream& operator<<(ostream& os,const Face& f)
-{
-	return os << "n=" << f.normal << " C=" << f.C;
-}
+//
+//ostream& operator<<(ostream& os,const Face& f)
+//{
+//	return os << "n=" << f.normal << " C=" << f.C;
+//}
 

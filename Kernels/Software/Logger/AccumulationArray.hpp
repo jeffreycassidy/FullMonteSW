@@ -23,30 +23,22 @@ using namespace std;
  * 	copy-constructible
  */
 
-template<class T>class QueuedAccumulatorMT {
-	std::mutex m;
-	vector<T> v;
-	unsigned default_bufsz;
-
-protected:
-	T& operator[](unsigned i){ return v[i]; }
+template<class T>class QueuedAccumulatorMT
+{
 
 public:
 	/** Create a new QueuedAccumulatorMT.
 	 * @param sz_		Accumulator size (number of elements)
 	 * @param bufsz_	Buffer size (number of slots in worker thread accumulator buffer before merging with master results)
 	 */
-	QueuedAccumulatorMT(unsigned sz_,unsigned bufsz_=(1<<20)) : v(sz_),default_bufsz(1<<10){}
+	QueuedAccumulatorMT(unsigned dim=0) : v(dim){}
 
 	/// Move constructor: create new mutex (non-movable), move vector contents and copy default buffer size
-	QueuedAccumulatorMT(QueuedAccumulatorMT&& qa_) : m(),v(std::move(qa_.v)),default_bufsz(1<<10){}
-
-	/// Copy constructor deleted because mutex should not be copied
-	QueuedAccumulatorMT(const QueuedAccumulatorMT&) =delete;
+	//QueuedAccumulatorMT(QueuedAccumulatorMT&& qa_) : m_mutex(),v(std::move(qa_.v)),m_queueSizedefault_bufsz(1<<10){}
 
 	typedef T ElementType;
 
-	class WorkerThread {
+	class ThreadWorker {
 		/// Master accumulation array
 		QueuedAccumulatorMT& master;
 
@@ -63,20 +55,20 @@ public:
 
 	public:
 		/// Creates a new QueuedAccumulatorMT referencing the same master list, but with a new buffer
-		WorkerThread(QueuedAccumulatorMT& master_,unsigned bufsz_=0) : master(master_),bufsz(bufsz_ == 0 ? master_.default_bufsz : bufsz_),
+		ThreadWorker(QueuedAccumulatorMT& master_,unsigned queueSize) : master(master_),bufsz(queueSize),
 				q_start(new BufElType[bufsz]),q_curr(q_start-1),q_end(q_start+bufsz),i_last(-1){}
 
 		/// Copy constructor deleted; inefficient since it requires allocation of buffer space
-		WorkerThread(const WorkerThread&) = delete;
+		ThreadWorker(const ThreadWorker&) = delete;
 
 		/// Move constructor; steals resources and sets pointers NULL to inhibit flush/delete
-		WorkerThread(WorkerThread&& acc_) : master(acc_.master),bufsz(acc_.bufsz),
+		ThreadWorker(ThreadWorker&& acc_) : master(acc_.master),bufsz(acc_.bufsz),
 				q_start(acc_.q_start),q_curr(acc_.q_curr),q_end(acc_.q_end),i_last(acc_.i_last){
 			*((BufElType**)&acc_.q_start)=acc_.q_curr=NULL;
 		}
 
 		/// Flushes the buffer and deletes it
-		~WorkerThread(){ commit(); delete q_start; }
+		~ThreadWorker(){ commit(); delete q_start; }
 
 		/// Returns a reference to an accumulation buffer for the given index i
 		T& operator[](unsigned i){
@@ -95,16 +87,13 @@ public:
 
 		/// Commit all buffered updates atomically
 		void commit(){
-			double sum=0;
 			// commit atomically to shared accumulator
-			if (q_start != NULL){
-				master.m.lock();
+			if (q_start != NULL)
+			{
+				master.m_mutex.lock();
 				for(std::pair<unsigned,T>* p=q_start; p < min(q_curr+1,q_end); ++p)
-				{
 					master[p->first] += p->second;
-					sum += p->second;
-				}
-				master.m.unlock();
+				master.m_mutex.unlock();
 
 				// reset state
 				q_curr=q_start-1;
@@ -113,19 +102,19 @@ public:
 		}
 	};
 
-	/// Public access is const
-	const T& operator[](unsigned i) const { return v[i]; }
+	T& operator[](unsigned i){ return v[i]; }
 
-	typedef typename vector<T>::const_iterator const_iterator;
+	void resize(unsigned N){ v.resize(N,T()); }
 
-	const_iterator begin() const { return v.begin(); }		///< Iterator to beginning
-	const_iterator end()   const { return v.end(); }		///< Itererator to end
-
-	const vector<T>& getResults() const { return v; }
-	vector<T> getResults() { return v; }
+	///< WARNING: Returns a const& but due to multi-threading access may not be safe (other threads may be writing)
+	const std::vector<T>& values() const { return v; }
 
 	/// Return a worker thread object
-	WorkerThread get_worker(unsigned bufsz_=0) { return WorkerThread(*this,default_bufsz); };
+	ThreadWorker get_worker(unsigned qSize=0) { return ThreadWorker(*this,qSize); };
+
+private:
+	std::mutex 	m_mutex;
+	vector<T> 	v;
 };
 
 #endif

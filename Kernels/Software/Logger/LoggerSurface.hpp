@@ -1,114 +1,35 @@
-#pragma once
+#ifndef KERNELS_SOFTWARE_LOGGERS_ACCUMULATIONARRAY_HPP_
+#define KERNELS_SOFTWARE_LOGGERS_ACCUMULATIONARRAY_HPP_
 #include "Logger.hpp"
-#include <FullMonte/OutputTypes/fluencemap.hpp>
-#include "AccumulationArray.hpp"
 #include <FullMonte/Kernels/Software/Packet.hpp>
-
-#include <boost/range/algorithm.hpp>
-#include <boost/range/adaptor/transformed.hpp>
-
-/** Holds quantities accumulated over a surface, using sequential IDs ranging [0,N).
- * @tparam T	Type to be accumulated; must support operator[](unsigned), operator+=(double) and operator+=(T)
- */
-
-template<class T>class SurfaceArray;
-template<class T>ostream& operator<<(ostream&,const SurfaceArray<T>&);
-
-template<typename T>double get_emitted_energy(const T& v);
-template<>inline double get_emitted_energy(const double& v){ return v; }
-
-template<class T>class SurfaceArray : public clonable<LoggerResults,SurfaceArray<T>> {
-	const TetraMesh& mesh;
-	vector<T> s;
-
-public:
-	SurfaceArray(const SurfaceArray& s_) = default;
-    SurfaceArray(SurfaceArray&& ls_)        : mesh(ls_.mesh),s(std::move(ls_.s)){};
-    SurfaceArray(const TetraMesh& mesh_)    : mesh(mesh_),s(mesh_.getNt()+1){};
-    SurfaceArray(const TetraMesh& mesh_,vector<T>&& s_) : mesh(mesh_),s(std::move(s_)){};
-    SurfaceArray(const TetraMesh& mesh_,const vector<T>& s_) : mesh(mesh_),s(s_){};
-
-    /// Returns a VolumeFluenceMap for the absorption accumulated so far
-    /** The value of asFluence determines whether it returns total energy (false) or fluence as E/V/mu_a (true) */
-    void fluenceMap(SurfaceFluenceMap&,bool asFluence=true);
-
-    /// Returns a hit map TODO: Improve this comment and check how the function works
-    void hitMap(map<unsigned,unsigned long long>& m);
-
-    void resultMap(map<FaceByPointID,double>& m,bool per_area=true);
-
-    vector<double> emitted_energy() const
-	{
-    	vector<double> ov(s.size());
-    	boost::copy(s | boost::adaptors::transformed(get_emitted_energy<T>), ov.begin());
-    	return ov;
-	}
-
-    typename vector<T>::const_iterator begin() const { return s.begin(); }
-    typename vector<T>::const_iterator end()   const { return s.end(); }
-
-    virtual string getTypeString() const { return "logger.results.surface.energy"; }
-
-	virtual void summarize(ostream& os) const { os << *this; }
-
-	double getTotal() const {
-		double sum=0.0;
-		for(double E : s)
-			sum += E;
-		return sum;
-	}
-
-    // Provides a way of summarizing to an ostream
-    friend ostream& operator<<<>(ostream& os,const SurfaceArray<T>& sa);
-};
-
-template<class T>ostream& operator<<(ostream& os,const SurfaceArray<T>&ls)
-{
-	return os << "Surface array total energy is " << setprecision(4) << ls.getTotal() << " (" << ls.s.size() << " elements)" << endl;
-}
-//template<>ostream& operator<<(ostream& os,const SurfaceArray<double>& ls);
-
-template<class T>class LoggerSurface;
-template<class T>ostream& operator<<(ostream& os,const LoggerSurface<T>& ls);
+#include <FullMonte/OutputTypes/FluenceMapBase.hpp>
+#include <type_traits>
 
 /** Handles logging of surface exit events.
  *
  * @tparam 	Accumulator		Must support the AccumulatorConcept.
  */
 
-template<class Accumulator>class LoggerSurface {
-	Accumulator acc;
-	const TetraMesh& mesh;
+template<class Accumulator>class LoggerSurface
+{
 public:
-
-	typedef vector<typename Accumulator::ElementType> results_type;
-
-	/** Construct and associate with a tetrahedral mesh.
-	 * @param mesh_		Associated mesh, used to get the number of
-	 * @param args...	Arguments to be passed through to the constructor for the underlying Accumulator type
-	 */
-
-	template<typename... Args>LoggerSurface(const TetraMesh& mesh_,Args... args) : acc(mesh_.getNf()+1,args...),mesh(mesh_){}
-	LoggerSurface(LoggerSurface&& ls_) : acc(std::move(ls_.acc)),mesh(ls_.mesh){}
-
-	/// Copy constructor deleted - no need for it
-	LoggerSurface(const LoggerSurface& ls_) = delete;
-
-	class WorkerThread : public LoggerNull {
-		typename Accumulator::WorkerThread acc;
+	class ThreadWorker : public LoggerBase
+	{
+		typename Accumulator::ThreadWorker acc;
 	public:
-		typedef void logger_member_tag;
+		typedef std::true_type is_logger;
+
 		/// Construct from an Accumulator by getting a worker thread from the parent
-		WorkerThread(Accumulator& parent_) : acc(parent_.get_worker()){}
+		ThreadWorker(Accumulator& parent_,unsigned Nq) : acc(parent_.get_worker(Nq)){}
 
 		/// Move constructor by simply moving the accumulator
-		WorkerThread(WorkerThread&& wt_) : acc(std::move(wt_.acc)){}
+		ThreadWorker(ThreadWorker&& wt_) : acc(std::move(wt_.acc)){}
 
 		/// Copy constructor deleted
-		WorkerThread(const WorkerThread& wt_) = delete;
+		ThreadWorker(const ThreadWorker& wt_) = delete;
 
 		/// Commit results back to parent before deleting
-		~WorkerThread() { acc.commit(); }
+		~ThreadWorker() { acc.commit(); }
 
 		/// Record exit event by accumulating weight to the appropriate surface entry
 		inline void eventExit(const Ray3,int IDf,double w){ acc[abs(IDf)] += w; }
@@ -117,26 +38,31 @@ public:
 		void eventCommit(){ acc.commit(); }
 	};
 
-	typedef WorkerThread ThreadWorker;
-
-	/// Merge a worker thread's partial results
-	LoggerSurface& operator+=(const WorkerThread& wt_){ wt_.commit(); return *this; }
+	void resize(unsigned N){ acc.resize(N); }
+	void qSize(unsigned Nq){ m_Nq=Nq; }
 
 	/// Return a worker thread
-	WorkerThread get_worker() { return WorkerThread(acc); }
+	ThreadWorker get_worker() { return ThreadWorker(acc,m_Nq); }
 
-	typedef SurfaceArray<typename Accumulator::ElementType> result_type;
+	static std::list<OutputData*> results(const std::vector<double>& values)
+	{
+		// convert to float
+		std::vector<float> se(values.size());
+		boost::copy(values, se.begin());
 
-	typedef SurfaceArray<typename Accumulator::ElementType> ResultType;
-	typedef true_type single_result_tag;
+		// create vector
+		SpatialMapBase<float,unsigned> *smap = SpatialMapBase<float,unsigned>::newFromVector(std::move(se));
+		OutputData* O = new SurfaceExitEnergyMap(smap);
+		std::list<OutputData*> L;
+		L.push_back(O);
+		return L;
+	}
 
-	result_type getResults() const { return result_type(mesh,acc.getResults()); }
+	std::list<OutputData*> results() const { return results(acc.values()); }
 
-	template<typename T>friend ostream& operator<<(ostream& os,const LoggerSurface<T>& ls);
+private:
+	Accumulator acc;
+	unsigned m_Nq=1<<14;
 };
 
-template<class T>ostream& operator<<(ostream& os,const LoggerSurface<T>& ls)
-{
-	return os << ls.getResults();
-}
-
+#endif
