@@ -6,7 +6,7 @@
 #include "PacketDirection.hpp"
 
 
-/** Represents a packet at the moment of launch, without a step length (weight implicitly 1.0) */
+/** Represents a packet at the moment of launch, without a step length (not yet drawn) or weight (implicitly 1.0) */
 
 struct LaunchPacket
 {

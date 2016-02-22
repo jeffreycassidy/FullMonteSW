@@ -12,7 +12,6 @@
 
 class TIMOSAntlrParser : public TIMOSReader
 {
-
 public:
 	TIMOSAntlrParser(){}
 	TIMOSAntlrParser(const std::string pfx) : TIMOSReader(pfx){}
@@ -32,7 +31,7 @@ private:
 	virtual Mesh						parse_mesh(std::string fn)		const override;
 	virtual std::vector<LegendEntry> 	parse_legend(std::string fn)	const override;
 
-	//static const std::unordered_map<int,std::string> toks;
+	static const std::unordered_map<int,std::string> s_tokens;
 };
 
 

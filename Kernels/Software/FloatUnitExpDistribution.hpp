@@ -12,6 +12,10 @@
 
 #include "avx_mathfun.h"
 
+/** Floating-point unit exponential distribution (mean = 1/lambda = 1.0, var = 1/lambda^2 = 1.0)
+ *
+ */
+
 class FloatUnitExpDistribution : public FloatVectorBase
 {
 public:
@@ -21,9 +25,6 @@ public:
 
 	typedef uint32_t				input_type;
 	static constexpr std::size_t	InputBlockSize=8;			///< Inputs consumed per invocation
-
-
-	//static constexpr Interval<float,Open,Closed> range{0.0f,std::numeric_limits<float>::infinity()};
 
 	template<class RNG>void calculate(RNG& rng,float *dst)
 	{

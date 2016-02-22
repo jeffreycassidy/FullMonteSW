@@ -9,19 +9,12 @@
 #include <boost/range/algorithm.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 
+#include <boost/serialization/array.hpp>
+#include <boost/serialization/access.hpp>
+
 #include <initializer_list>
 
 template<size_t D,class T>class Vector;
-
-///** Counts the number of times a[i] > a[i-1], including wrapping to compare a[0] > a[D-1] */
-//
-//template<typename T,std::size_t D>unsigned orderCount(const std::array<T,D> a)
-//{
-//	unsigned n=a[0] > a[D-1];
-//	for(unsigned i=1;i<D;++i)
-//		n += a[i] > a[i-1];
-//	return n;
-//}
 
 class FaceByPointID;
 
@@ -33,6 +26,11 @@ public:
     TetraByPointID(unsigned A,unsigned B,unsigned C,unsigned D) : std::array<unsigned,4>{{A,B,C,D}}	{}
 
 	FaceByPointID getFace         (unsigned faceNum);
+
+private:
+	template<class Archive>void serialize(Archive& ar,const unsigned ver)
+		{ ar & boost::serialization::base_object<std::array<unsigned,4>>(*this); }
+	friend boost::serialization::access;
 };
 
 class TetraByFaceID : public std::array<int,4>
@@ -56,6 +54,11 @@ public:
 		unsigned id=inv?-p[faceNum] : p[faceNum];
 		return std::make_pair(inv,id);
 	}
+
+private:
+	template<class Archive>void serialize(Archive& ar,const unsigned ver)
+		{ ar & boost::serialization::base_object<std::array<int,4>>(*this); }
+	friend boost::serialization::access;
 };
 
 class FaceByPointID : public std::array<unsigned,3>
@@ -67,12 +70,16 @@ public:
 
     // flips the orientation of the face [A,B,C] -> [A,C,B]
     FaceByPointID flip() const { const std::array<unsigned,3>&p =*this; return FaceByPointID(p[0],p[2],p[1]); }
+
+private:
+	template<class Archive>void serialize(Archive& ar,const unsigned ver)
+		{ ar & boost::serialization::base_object<std::array<unsigned,3>>(*this); }
+	friend boost::serialization::access;
 };
 
 template<size_t D,class T>class Point : public std::array<T,D>
 {
-	public:
-
+public:
 	using std::array<T,D>::operator=;
 
 	Point()                { std::array<T,D>::fill(T()); };
@@ -86,41 +93,17 @@ template<size_t D,class T>class Point : public std::array<T,D>
 	Point operator+(const Vector<D,T>& v) const { Point t; for(unsigned i=0;i<D;++i){ t[i]=(*this)[i]+v[i]; } return t; }
 	Point operator-(const Vector<D,T>& v) const { Point t; for(unsigned i=0;i<D;++i){ t[i]=(*this)[i]-v[i]; } return t; }
 
-//	friend ostream& operator<<(ostream& os,const Point<D,T>& P)
-//	{
-//		os << P[0];
-//		for(unsigned i=1;i<D;++i)
-//			os << ',' << P[i];
-//		return os;
-//	}
+	template<class Archive>void serialize(Archive& ar,const unsigned ver)
+		{ ar & boost::serialization::base_object<std::array<T,D>>(*this); }
+	friend boost::serialization::access;
 };
-
-//template<size_t D,class T>std::ostream& operator<<(std::ostream& os,const std::array<T,D>& P)
-//{
-//	os << '(' << P[0];
-//	for(unsigned i=1; i<D; ++i){ os << ',' << P[i]; }
-//	os << ')';
-//	return os;
-//}
-//
-//
-//template<size_t D,class T>std::istream& operator>>(std::istream& is,Point<D,T>& P)
-//{
-//	is >> std::skipws;
-//	bool paren=false;
-//
-//	if(is.peek()=='('){ paren=true; is.ignore(1); }
-//	for(size_t i=0; i<D; ++i){ is >> P[i]; if(i < D-1 && is.peek()==','){ is.ignore(1); } }
-//	if (paren){ is.ignore(1); }
-//	return is;
-//}
 
 
 // A Vector extends the Point class with a norm, dot product, cross product, add/sub and scalar multiply/divide
 //    vector can be defined as going between two points, or implicitly as the origin (0,0,0) to a point
 template<size_t D,class T>class Vector : public Point<D,T>
 {
-	public:
+public:
 	using Point<D,T>::operator=;
 	using Point<D,T>::operator[];
 	using Point<D,T>::operator-;
@@ -209,13 +192,6 @@ template<size_t D,class T>class UnitVector : public Vector<D,T>
 
     UnitVector operator-() const { UnitVector t(*this); for(unsigned i=0;i<D;++i) t[i] = -t[i]; return t; }
 
-//    friend ostream& operator<<(ostream& os,const UnitVector& uv)
-//    {
-//    	os << '<' << uv[0];
-//    	for(unsigned i=1;i<D;++i)
-//    		os << ',' << uv[i];
-//    	return os << '>';
-//    }
 };
 
 template<size_t D,class T> Vector<D,T> cross(const Vector<D,T>& a,const Vector<D,T>& b)
@@ -260,16 +236,7 @@ template<size_t D,class T>class Ray
 	const UnitVector<D,T>& getDirection() const { return d; }
 
     void setOrigin(Point<3,double> p_){ P=p_; }
-
-	//void print(ostream& os) const { os << "Ray: " << P << " " << d << std::endl; }
 };
-
-//Point<3,double> pointFrom(__m128 p);
-//Ray<3,double> rayFrom(__m128 p,__m128 d);
-
-
-//UnitVector<3,double> uvectFrom(__m128 v);
-
 
 struct PointIntersectionResult
 {
@@ -280,69 +247,5 @@ struct PointIntersectionResult
 
 // returns true if P+td falls within triangle defined by points T for some non-negative t
 PointIntersectionResult RayTriangleIntersection(Point<3,double> p,UnitVector<3,double> d,Point<3,double> T[3]);
-
-// IO manipulator for printing points (parentheses or not, commas or not, etc)
-//class GeomManip {
-//    char delimchar;
-//    bool parens;
-//    char parenchar[2];
-//    char uvparenchar[2];
-//    char idparenchar[2];
-//    ostream& os;
-//    public:
-//
-//    explicit GeomManip(ostream& os_=cout) : delimchar(','),parens(false),os(os_){
-//        parenchar[0]='(';     parenchar[1]=')';
-//        uvparenchar[0] = '<'; uvparenchar[1]='>';
-//        idparenchar[0] = '['; idparenchar[1]=']';}
-//
-//    static GeomManip plainwhite(){
-//        GeomManip gm;
-//        gm.parens=false;
-//        gm.delimchar=' ';
-//        return gm;
-//    }
-//
-//    friend GeomManip operator<<(ostream&,const GeomManip&);
-//
-//    template<size_t D,class T>friend ostream& operator<<(const GeomManip& gm,const Point<D,T>& p);
-//};
-//
-//template<size_t D,class T>ostream& operator<<(const GeomManip& gm,const UnitVector<D,T>& u)
-//{
-//    if(gm.parens)
-//        gm.os << gm.uvparenchar[0];
-//    for(unsigned i=0;i<(unsigned)D; ++i)
-//    {
-//        gm.os << u[i];
-//        if (i<D-1)
-//            gm.os << gm.delimchar;
-//    }
-//    if(gm.parens)
-//        gm.os << gm.uvparenchar[1];
-//    return gm.os;
-//}
-//
-//template<size_t D,class T>ostream& operator<<(const GeomManip& gm,const Point<D,T>& p)
-//{
-//    if(gm.parens)
-//        gm.os << gm.parenchar[0];
-//    for(unsigned i=0;i<(unsigned)D; ++i)
-//    {
-//        gm.os << p[i];
-//        if (i<D-1)
-//            gm.os << gm.delimchar;
-//    }
-//    if(gm.parens)
-//        gm.os << gm.parenchar[1];
-//    return gm.os;
-//}
-//
-//extern GeomManip plainwhite;
-//
-//std::istream& operator>>(std::istream& is,TetraByPointID& P);
-//std::istream& operator>>(std::istream& is,FaceByPointID& F);
-//std::ostream& operator<<(std::ostream& os,TetraByPointID& T);
-//std::ostream& operator<<(std::ostream& os,FaceByPointID& T);
 
 #endif

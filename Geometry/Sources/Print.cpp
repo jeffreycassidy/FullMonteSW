@@ -26,7 +26,9 @@ using namespace std;
 namespace Source
 {
 
-class Printer : public Visitor
+/** Visitor class which prints text descriptions to a std::ostream& */
+
+class Printer : public Source::Visitor
 {
 public:
 	Printer(std::ostream& os);

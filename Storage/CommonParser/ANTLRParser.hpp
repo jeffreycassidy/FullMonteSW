@@ -2,18 +2,12 @@
 #define ANTLRPARSER_INCLUDED
 
 #include <antlr3.h>
-#include <antlr3defs.h>
 
 #include "ANTLR3CPP.hpp"
 
 #include <string>
-#include <iostream>
-#include <iomanip>
 #include <cassert>
 #include <sstream>
-#include <vector>
-
-#include <unordered_map>
 
 template<class ANTLR3LP>class ANTLRParser {
 	pANTLR3_INPUT_STREAM 				input_=nullptr;
@@ -28,9 +22,13 @@ public:
 	ANTLRParser(std::string fn)
 	{
 		input_ 	= antlr3FileStreamNew((pANTLR3_UINT8)fn.c_str(),ANTLR3_ENC_8BIT);
-		std::cout << "here in ANTLRParser.hpp. input_= "<< input_ <<" (pANTLR3_UINT8)fn.c_str()= " <<(pANTLR3_UINT8)fn.c_str()<< std::endl;
-		//printf("input_ = %d  (pANTLR3_UINT8)fn.c_str()=  %d \n",input_ ,(pANTLR3_UINT8)fn.c_str());
-		assert(input_);
+
+		if (!input_)
+		{
+			std::stringstream ss;
+			ss << "ANTLRParser: failed to open file '" << fn.c_str();
+			throw std::ios_base::failure(ss.str());
+		}
 
 		lex_ 	= ANTLR3LP::Lexer::CreateLexer(input_);
 		assert(lex_);

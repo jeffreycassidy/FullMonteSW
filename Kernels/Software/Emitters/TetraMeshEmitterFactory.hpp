@@ -22,7 +22,7 @@ class TetraMesh;
 namespace Emitter
 {
 
-template<typename T>class EmitterBase;
+template<typename RNG>class EmitterBase;
 
 /** TetraEmitterFactory takes generic source descriptions (descendents of Source::Base) and makes them into
  * emitters that can be used with the tetrahedral MC kernel.

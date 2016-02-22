@@ -72,7 +72,7 @@ template<class RNG>void TetraMCKernel<RNG>::parentPrepare()
 
 	cout << "Materials: " << endl;
 	for(const Material& m : m_mats)
-		cout << m << endl;
+		cout << "  " << m << endl;
 
 	std::vector<unsigned> hist;
 	for(unsigned i=0; i<=m_mesh->getNt(); ++i)
@@ -86,7 +86,7 @@ template<class RNG>void TetraMCKernel<RNG>::parentPrepare()
 	cout << "Material | Tetra Count" << endl;
 	unsigned i=0;
 	for(auto h : hist)
-		cout << ++i << ": " << h << endl;
+		cout << std::setw(2) << i++ << ": " << h << endl;
 }
 
 

@@ -4,9 +4,11 @@ FullMonte
 (c) 2012-2016 Jeffrey Cassidy and the University of Toronto
 
 Contains SFMT (Matsumoto and Saito's SIMD-Oriented Fast Mersenne Twister) in SFMT/, which is subject to separate copyright and
-license provisions.
+license provisions (see `SFMT/LICENSE`). The `CMakeLists.txt` file contained there is my own work, but the files are otherwise the original SFMT-1.4.1 from the <a href="www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/SFMT">authors' website</a>.
 
-Contains the TIM-OS test suite <a href="https://sites.google.com/a/imaging.sbes.vt.edu/tim-os">here</a> from Shen and Wang (2010), including a version of Dogdas et al's <a href="http://neuroimage.usc.edu/neuro/Digimouse">Digimouse</a> (2007).
+The files in `data/TIM-OS` contain the TIM-OS test suite <a href="https://sites.google.com/a/imaging.sbes.vt.edu/tim-os">available here</a> from Shen and Wang (2010), including a version of Dogdas et al's <a href="http://neuroimage.usc.edu/neuro/Digimouse">Digimouse</a> (2007).
+
+Contains <a href="gruntthepeon.free.fr/ssemath">Julien Pommier</a>'s "ssemath.h" SSE math library which is available under the zlib license as `Kernels/Software/sse_mathfun.h`. The SSE implementations were extended to larger vector lengths using AVX instructions `avx\_mathfun.h`.
 
 
 ## Citations
@@ -55,7 +57,7 @@ Paraview (for result visualization; requires VTK) - www.paraview.org
 
 Tcl/Tk/OpenGL (for Tcl script bindings) on Linux try sudo apt-get install freeglut3-dev tcl8.5-dev tk8.5-dev
 
-Swig 3.0 (for Tcl script bindings) - www.swig.org (also often a package in Linux, eg "swig" or "swig3.0")
+Swig 3.0 (for generating Tcl script bindings) - www.swig.org (also often a package in Linux, eg "swig" or "swig3.0")
 
 
 #### Qt support (GUI in progress)
@@ -91,6 +93,9 @@ To output VTK files or perform visualization, the `WRAP_VTK` option must be enab
 Basic functionality can be checked by running `Kernels/Software/Test_Mouse` which is a basic bioluminescence simulation based on the
 Digimouse test data released with TIM-OS by Shen and Wang (2010). It loads the mesh, optical properties, and source definitions, checks
 that the data is loaded correctly (number of mesh elements, sources, etc), then runs the simulator and checks that the basic energy-conservation laws are followed, and that the event counts are approximately correct.
+
+If FullMonte was built with `WRAP_VTK` enabled, then it will also output .vtk files showing the surface and volume fluence, which can
+be loaded into Paraview (using the `VisualizeMouse.pvsm` state file).
 
 
 ## Unit Tests

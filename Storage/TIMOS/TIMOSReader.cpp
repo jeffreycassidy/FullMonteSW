@@ -5,15 +5,8 @@
  *      Author: jcassidy
  */
 
-#include <string>
-#include <iostream>
-#include <iomanip>
 #include <cassert>
-#include <sstream>
-
-#include <sys/stat.h>
-
-#include <unordered_map>
+#include <vector>
 
 #include "TIMOS.hpp"
 #include "TIMOSReader.hpp"
@@ -26,11 +19,8 @@
 
 using namespace std;
 
-
-
 TetraMesh TIMOSReader::mesh() const
 {
-	assert (!meshFn_.empty() || !"No filename specified for TIMOSReader::mesh");
 	TIMOS::Mesh tm = parse_mesh(meshFn_);
 
 	std::vector<TetraByPointID> T(tm.T.size()+1);
@@ -54,7 +44,6 @@ TetraMesh TIMOSReader::mesh() const
 
 std::vector<SimpleMaterial> TIMOSReader::materials_simple() const
 {
-	assert (!optFn_.empty() || !"No filename specified for TIMOSReader::materials");
 	TIMOS::Optical opt = parse_optical(optFn_);
 	std::vector<SimpleMaterial> mat(opt.mat.size()+1);
 
@@ -100,41 +89,3 @@ std::vector<TIMOS::LegendEntry> TIMOSReader::legend() const
 	return L;
 }
 
-
-//bool TetraMeshBase::readFileMatlabTP(string fn)
-//{
-//	ifstream is(fn.c_str(),ios_base::in);
-//
-//    if(!is.good()){
-//        cerr << "Failed to open " << fn << " for reading; abort" << endl;
-//        return false;
-//    }
-//	int Nt,Np;
-//
-//    // read sizes
-//    is >> Np;
-//	is >> Nt;
-//
-//	// read point coordinates -- uses 1-based addressing
-//	P.resize(Np+1);
-//	P[0]=Point<3,double>();
-//	for (vector<Point<3,double> >::iterator it = P.begin()+1; it != P.end(); ++it)
-//		is >> *it;
-//
-//	T_p.resize(Nt+1);
-//    T_m.resize(Nt+1);
-//	unsigned t[4]={0,0,0,0},i=1,max_m=0;
-//	T_p[0]=TetraByPointID(t);
-//    T_m[0]=0;
-//    TetraByPointID IDps;
-//	for (vector<TetraByPointID>::iterator it=T_p.begin()+1; it != T_p.end(); ++it,++i)
-//	{
-//		is >> IDps;
-//		is >> T_m[i];
-//        *it=IDps.getSort();
-//		max_m = max(max_m,T_m[i]);
-//	}
-//
-//	return true;
-//}
-//

@@ -11,6 +11,7 @@
 namespace Source
 {
 
+// Forward declarations
 class PointSource;
 class Ball;
 class Line;
@@ -20,6 +21,8 @@ class Surface;
 class SurfaceTri;
 class Base;
 class PencilBeam;
+
+/** Virtual base class to visit sources and perform some action on them */
 
 class Visitor
 {

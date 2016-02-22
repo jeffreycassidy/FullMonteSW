@@ -15,6 +15,8 @@
 #include "Tetra.hpp"
 #include "Composite.hpp"
 
+#include "TetraMeshEmitterFactory.hpp"
+
 // Source descriptions
 #include <FullMonte/Geometry/Sources/Composite.hpp>
 #include <FullMonte/Geometry/Sources/PointSource.hpp>
@@ -28,7 +30,8 @@
 #include <FullMonte/Geometry/Convenience.hpp>
 
 #include <FullMonte/Geometry/TetraMesh.hpp>
-#include <FullMonte/Kernels/Software/Emitters/TetraMeshEmitterFactory.hpp>
+
+
 
 
 #include "../SSEMath.hpp"
@@ -128,8 +131,6 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Volume* vs)
 {
 	unsigned IDt=vs->elementID();
 
-	std::cout << "  Emitter factory: Volume element " << vs->elementID() << std::endl;
-
 	Tetra<RNG> 		T(
 			SSE::Vector3(convertArrayTo<float>(m_mesh->getTetraPoint(IDt,0))),
 			SSE::Vector3(convertArrayTo<float>(m_mesh->getTetraPoint(IDt,1))),
@@ -151,7 +152,6 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Line* l)
 
 template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Composite* c)
 {
-	std::cout << "Composite source" << std::endl;
 	for(Source::Base* el : c->elements())
 		el->acceptVisitor(this);
 }

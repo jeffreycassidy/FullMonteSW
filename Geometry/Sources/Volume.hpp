@@ -12,6 +12,8 @@
 
 namespace Source {
 
+/** Source launching from within the volume of a single element, specified by ID */
+
 class Volume : public Source::detail::cloner<Base,Volume>
 {
 public:

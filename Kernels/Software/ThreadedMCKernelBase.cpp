@@ -78,11 +78,11 @@ void ThreadedMCKernelBase::Thread::awaitFinish()
 
 void ThreadedMCKernelBase::Thread::threadFunction(ThreadedMCKernelBase::Thread* t)
 {
-	std::stringstream ss;
-	ss << "Starting a thread with " << t->m_nPktReq << " packets" << std::endl;
-	std::cout << ss.str();
+	//std::stringstream ss;
+	//ss << "Starting a thread with " << t->m_nPktReq << " packets" << std::endl;
+	//std::cout << ss.str();
 	t->m_done=false;
 	t->doWork();
-	std::cout << "  and we're done" << std::endl;
+	//std::cout << "  and we're done" << std::endl;
 	t->m_done=true;
 }

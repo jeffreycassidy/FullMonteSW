@@ -13,6 +13,8 @@
 
 namespace Source {
 
+/** Source specified as a triangle of three point IDs */
+
 class SurfaceTri : public Source::detail::cloner<Surface,SurfaceTri> {
 public:
 	SurfaceTri(float w,std::array<unsigned,3> triPointIDs) :

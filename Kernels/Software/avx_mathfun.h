@@ -58,13 +58,8 @@
 //# define ALIGN16_END __attribute__((aligned(16)))
 //#endif
 
-/* __m128 is ugly to write */
-//typedef __m128 v4sf;  // vector of 4 float (sse1)
-
 # include <emmintrin.h>
-//# include <emmintrin.h>
 #include <immintrin.h>
-//typedef __m128i v4si; // vector of 4 int (sse2)
 
 /* declare some SSE constants -- why can't I figure a better way to do that? */
 #define _PS_CONST(Name, Val)                                            \
@@ -141,12 +136,24 @@ inline __m256 _mm256_abs_ps(__m256 x)
 	return _mm256_set_m128i( _mm_##Cmd(ahi,imm), _mm_##Cmd(alo,imm));		\
 }
 
+#ifdef HAVE_AVX2
+#elseif HAVE_AVX
+
 #warning "AVX2 integer (epi8/16/32/64) instructions are emulated using SSE instructions, starting here"
 M256I_EQUIV2(add_epi32)
 M256I_EQUIV1IMM(slli_epi32)
 M256I_EQUIV2(sub_epi32)
 M256I_EQUIV1IMM(srli_epi32)
+
+#define _mm256_add_epi32 _emu_mm256_epi32
+#define _mm256_slli_epi32 _emu_mm256_slli_epi32
+#define _mm256_sub_epi32 _emu_mm256_sub_epi32
+#define _mm256_srli_epi32 _emu_mm256_srli_epi32
+
 #warning "  and ending here"
+
+#endif
+
 
 _PI32_CONST(1, 1);
 _PI32_CONST(inv1, ~1);
@@ -743,7 +750,7 @@ inline std::pair<__m256,__m256> sincos_psp(__m256 x){
   emm2 = _mm256_cvttps_epi32(y);
 
   /* j=(j+1) & (~1) (see the cephes sources) */
-  emm2 = _emu_mm256_add_epi32(emm2, _mm256_castps_si256(_pi32_1));
+  emm2 = _mm256_add_epi32(emm2, _mm256_castps_si256(_pi32_1));
   emm2 = _mm256_castps_si256(_mm256_and_ps(_mm256_castsi256_ps(emm2), _pi32_inv1));
   y = _mm256_cvtepi32_ps(emm2);
 
@@ -751,13 +758,13 @@ inline std::pair<__m256,__m256> sincos_psp(__m256 x){
 
   /* get the swap sign flag for the sine */
   emm0 = _mm256_castps_si256(_mm256_and_ps(_mm256_castsi256_ps(emm2), _pi32_4));
-  emm0 = _emu_mm256_slli_epi32(emm0, 29);
+  emm0 = _mm256_slli_epi32(emm0, 29);
   __m256 swap_sign_bit_sin = _mm256_castsi256_ps(emm0);
 
   /* get the polynom selection mask for the sine*/
   emm2 = _mm256_castps_si256(_mm256_and_ps(_mm256_castsi256_ps(emm2), _pi32_2));
 
-  //emm2 = _mm256_cmpeq_epi32(emm2, _mm256_setzero_ps());
+//  emm2 = _mm256_cmpeq_epi32(emm2, _mm256_setzero_ps());
   // Need to break this out into a pair of __m128 epi32 ops :(
 
   __m128i emm2hi = _mm_castps_si128(_mm256_extractf128_ps(_mm256_castsi256_ps(emm2),1));
@@ -771,40 +778,7 @@ inline std::pair<__m256,__m256> sincos_psp(__m256 x){
 				  _mm_castsi128_ps( _mm_cmpeq_epi32(emm2lo,zero_epi32))));
 
   __m256 poly_mask = _mm256_castsi256_ps(emm2);
-//#else
-//  /* store the integer part of y in mm2:mm3 */
-//  xmm3 = _mm_movehl_ps(xmm3, y);
-//  mm2 = _mm_cvttps_pi32(y);
-//  mm3 = _mm_cvttps_pi32(xmm3);
-//
-//  /* j=(j+1) & (~1) (see the cephes sources) */
-//  mm2 = _mm_add_pi32(mm2, *(v2si*)_pi32_1);
-//  mm3 = _mm_add_pi32(mm3, *(v2si*)_pi32_1);
-//  mm2 = _mm_and_si64(mm2, *(v2si*)_pi32_inv1);
-//  mm3 = _mm_and_si64(mm3, *(v2si*)_pi32_inv1);
-//
-//  y = _mm_cvtpi32x2_ps(mm2, mm3);
-//
-//  mm4 = mm2;
-//  mm5 = mm3;
-//
-//  /* get the swap sign flag for the sine */
-//  mm0 = _mm_and_si64(mm2, *(v2si*)_pi32_4);
-//  mm1 = _mm_and_si64(mm3, *(v2si*)_pi32_4);
-//  mm0 = _mm_slli_pi32(mm0, 29);
-//  mm1 = _mm_slli_pi32(mm1, 29);
-//  __m256 swap_sign_bit_sin;
-//  COPY_MM_TO_XMM(mm0, mm1, swap_sign_bit_sin);
-//
-//  /* get the polynom selection mask for the sine */
-//
-//  mm2 = _mm_and_si64(mm2, *(v2si*)_pi32_2);
-//  mm3 = _mm_and_si64(mm3, *(v2si*)_pi32_2);
-//  mm2 = _mm_cmpeq_pi32(mm2, _mm_setzero_si64());
-//  mm3 = _mm_cmpeq_pi32(mm3, _mm_setzero_si64());
-//  __m256 poly_mask;
-//  COPY_MM_TO_XMM(mm2, mm3, poly_mask);
-//#endif
+
 
   /* The magic pass: "Extended precision modular arithmetic" 
      x = ((x - y * DP1) - y * DP2) - y * DP3; */
@@ -818,26 +792,12 @@ inline std::pair<__m256,__m256> sincos_psp(__m256 x){
   x = _mm256_add_ps(x, xmm2);
   x = _mm256_add_ps(x, xmm3);
 
-//#ifdef USE_SSE2
-
-  emm4 = _emu_mm256_sub_epi32(emm4, _mm256_castps_si256(_pi32_2));
+  emm4 = _mm256_sub_epi32(emm4, _mm256_castps_si256(_pi32_2));
   emm4 = _mm256_castps_si256(_mm256_andnot_ps(_mm256_castsi256_ps(emm4), _pi32_4));
-  emm4 = _emu_mm256_slli_epi32(emm4, 29);
+  emm4 = _mm256_slli_epi32(emm4, 29);
 
 
   __m256 sign_bit_cos = _mm256_castsi256_ps(emm4);
-//#else
-//  /* get the sign flag for the cosine */
-//  mm4 = _mm_sub_pi32(mm4, *(v2si*)_pi32_2);
-//  mm5 = _mm_sub_pi32(mm5, *(v2si*)_pi32_2);
-//  mm4 = _mm_andnot_si64(mm4, *(v2si*)_pi32_4);
-//  mm5 = _mm_andnot_si64(mm5, *(v2si*)_pi32_4);
-//  mm4 = _mm_slli_pi32(mm4, 29);
-//  mm5 = _mm_slli_pi32(mm5, 29);
-//  __m256 sign_bit_cos;
-//  COPY_MM_TO_XMM(mm4, mm5, sign_bit_cos);
-//  _mm_empty(); /* good-bye mmx */
-//#endif
 
   sign_bit_sin = _mm256_xor_ps(sign_bit_sin, swap_sign_bit_sin);
   
@@ -876,10 +836,8 @@ inline std::pair<__m256,__m256> sincos_psp(__m256 x){
   xmm1 = _mm256_add_ps(ysin1,ysin2);
   xmm2 = _mm256_add_ps(y,y2);
  
-  /* update the sign */
-  //_mm256_store_ps(s,_mm256_xor_ps(xmm1, sign_bit_sin));
-  //_mm256_store_ps(c,_mm256_xor_ps(xmm2, sign_bit_cos));
-
-  return std::make_pair(_mm256_xor_ps(xmm1, sign_bit_sin),_mm256_xor_ps(xmm2, sign_bit_cos));
+  return std::make_pair(
+		  _mm256_xor_ps(xmm1, sign_bit_sin),
+		  _mm256_xor_ps(xmm2, sign_bit_cos));
 }
 #endif

@@ -29,8 +29,10 @@ using namespace std;
 #include "testdata.h"
 #include "config.h"
 
+// CMake-configured path to source directory
 const string dir(TEST_DATA_PATH "/TIM-OS/mouse");
 
+// headers needed to write out VTK files if so enabled
 #ifdef WRAP_VTK
 #include <vtkCellTypes.h>
 #include <vtkCellArray.h>
@@ -286,8 +288,6 @@ BOOST_AUTO_TEST_CASE(mouseSurf)
 	const unsigned region = 0U;
 
 	std::vector<unsigned> IDfs = M.getRegionBoundaryTris(region);
-
-	cout << "Boundary of region " << region << " has " << IDfs.size() << " tris" << endl;
 
 	vtkFloatArray *vtkPhi = vtkFloatArray::New();
 	vtkPhi->SetNumberOfTuples(IDfs.size());

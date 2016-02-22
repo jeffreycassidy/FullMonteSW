@@ -13,7 +13,8 @@
 namespace Source {
 namespace detail {
 
-/** Base class providing covariant clone method and delete */
+/** CTRP class providing covariant clone method, deleteSelf, and a visitor method */
+
 template<typename Base,typename Derived>struct cloner : public Base
 {
 	void deleteSelf()
@@ -40,6 +41,8 @@ template<typename Base,typename Derived>struct cloner : public Base
 };
 
 
+
+/** Abstract source base class with the minimum required items (virtual destructor, visitor facilities, power) */
 
 class Base
 {

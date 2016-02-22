@@ -11,6 +11,7 @@
 #include <immintrin.h>
 #include <boost/math/constants/constants.hpp>
 
+// Emulate the AVX2 _mm256_srli_epi32 instruction
 inline __m256i _EMU_mm256_srli_epi32(__m256i x,unsigned N)
 {
 	__m128i h = _mm256_extractf128_si256(x,1);

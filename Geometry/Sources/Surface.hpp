@@ -12,6 +12,8 @@
 
 namespace Source {
 
+/** Source specified as a surface element */
+
 class Surface : public Source::detail::cloner<Base,Surface> {
 public:
 	Surface(float w,unsigned surfaceElement) :

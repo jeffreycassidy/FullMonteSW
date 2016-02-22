@@ -13,11 +13,8 @@
 
 #include <FullMonte/Storage/CommonParser/ANTLRParser.hpp>
 
-//#include <unordered_map>
+#include <unordered_map>
 
-//const std::unordered_map<int,string> TIMOSAntlrParser::Parser::toks {
-//	#include "TIMOS_tokens.h"
-//};
 
 class TIMOSAntlrParser::ANTLR3LP
 {
@@ -29,8 +26,14 @@ public:
 	ADD_START_RULE(TIMOS,Mesh,meshfile)
 	ADD_START_RULE(TIMOS,Source,sourcefile)
 	ADD_START_RULE(TIMOS,Legend,legendfile)
+
+	std::unordered_map<int,string> s_tokens;
 };
 
+const std::unordered_map<int,string> TIMOSAntlrParser::s_tokens
+{
+	#include "TIMOS_tokens.h"
+};
 
 class TIMOSAntlrParser::sourcefile_ast_visitor : public ANTLR3CPP::ast_visitor {
 	std::vector<TIMOS::SourceDef> src;

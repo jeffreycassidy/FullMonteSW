@@ -13,7 +13,7 @@
 namespace Emitter
 {
 
-/** Base class for all emitters. All it needs to do is emit a LaunchPacket using the virtual emit(RNG&) method.
+/** Base class for all emitters. All it needs to do is emit a LaunchPacket (dir, pos, element ID) using the virtual emit(RNG&) method.
  *
  * @tparam 	RNG		The random-number generator to be used with this class
  */
@@ -32,7 +32,7 @@ private:
 
 
 /** Convenience class that permits composing a position distribution with a direction distribution. By design, the source emits
- * only within a single geometry-model element.
+ * only within a single geometry-model element maintained by this base class.
  *
  * @tparam		RNG			Random number generator class
  * @tparam		Position	Class with a position(RNG&) function to provide the origin point

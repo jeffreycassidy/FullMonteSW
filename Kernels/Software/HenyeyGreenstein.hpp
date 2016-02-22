@@ -74,7 +74,7 @@ private:
 
 
 
-/** Evaluate the Henyey-Greenstein function for random numbers, storing output in 32 floats at o.
+/** Evaluate the Henyey-Greenstein function for random numbers, storing output in 32 (8x4) floats at o.
  */
 
 template<class RNG>void HenyeyGreenstein8f::calculate(RNG& rng,float* o) const

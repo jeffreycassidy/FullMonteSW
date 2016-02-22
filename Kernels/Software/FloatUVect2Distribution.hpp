@@ -10,6 +10,10 @@
 
 #include "FloatVectorBase.hpp"
 
+/** 2D unit vector distribution returning 2 floats per draw.
+ *
+ */
+
 class FloatUVect2Distribution : public FloatVectorBase
 {
 public:
@@ -44,6 +48,7 @@ public:
 		__m256 costheta, sintheta;
 		std::tie(sintheta,costheta) = sincos_psp(theta);
 
+		// swizzle (sin_0,cos_0,sin_1,cos_1,...)
 		_mm256_store_ps(dst,	_mm256_unpacklo_ps(sintheta,costheta));
 		_mm256_store_ps(dst+8,	_mm256_unpackhi_ps(sintheta,costheta));
 	}
