@@ -54,8 +54,8 @@ PointIntersectionResult RayTriangleIntersection(Point<3,double> P,UnitVector<3,d
 
 FaceByPointID TetraByPointID::getFace(unsigned faceNum)
 {
-	unsigned tmp[3];
-	copy(begin(),end(),tmp);
+	std::array<unsigned,3> tmp;
+	std::copy(begin(),end(),tmp.begin());
 	switch(faceNum){
 		case 0: break;
 		case 1: tmp[1]=(*this)[2]; tmp[2]=(*this)[3]; break;
@@ -66,67 +66,3 @@ FaceByPointID TetraByPointID::getFace(unsigned faceNum)
 	return FaceByPointID(tmp);
 }
 
-
-UnitVector<3,double> uvect3FromPolar(double phi,double lambda)
-{
-    double p[3] = { cos(phi)*sin(lambda), cos(phi)*cos(lambda), sin(phi) };
-    return UnitVector<3,double>(p);
-}
-
-GeomManip plainwhite=GeomManip::plainwhite();
-
-GeomManip operator<<(ostream& os,const GeomManip& gm_)
-{
-    GeomManip gm(os);
-    gm.delimchar = gm_.delimchar;
-    gm.parens = gm_.parens;
-    gm.parenchar[0] = gm_.parenchar[0];
-    gm.parenchar[1] = gm_.parenchar[1];
-    gm.uvparenchar[0] = gm_.uvparenchar[0];
-    gm.uvparenchar[1] = gm_.uvparenchar[1];
-    gm.idparenchar[0] = gm_.idparenchar[0];
-    gm.idparenchar[1] = gm_.idparenchar[1];
-    return gm;
-}
-
-
-std::ostream& operator<<(std::ostream& os,const FaceByPointID& F)
-{
-	os << '(';
-	for(int i=0; i<3; ++i){ os << F[i] << (i<2? ',' : ')'); }
-	return os;
-}
-
-
-std::istream& operator>>(std::istream& is,TetraByPointID& P)
-{
-	is >> std::skipws;
-	bool paren=false;
-
-	if(is.peek()=='('){ paren=true; is.ignore(1); }
-	for(int i=0; i<4; ++i){ is >> P[i]; if(i < 3 && is.peek()==','){ is.ignore(1); } }
-	if (paren){ is.ignore(1); }
-	return is;
-}
-
-std::istream& operator>>(std::istream& is,FaceByPointID& F)
-{
-	is >> std::skipws;
-	bool paren=false;
-
-	if(is.peek()=='('){ paren=true; is.ignore(1); }
-	for(int i=0; i<3; ++i){ is >> F[i]; if(i < 3 && is.peek()==','){ is.ignore(1); } }
-	if (paren){ is.ignore(1); }
-	return is;
-}
-
-std::ostream& operator<<(std::ostream& os,TetraByPointID& T)
-{
-	return os << "Tetra <" << T[0] << ',' << T[1] << ',' << T[2] << ',' << T[3] << '>';
-}
-
-
-std::ostream& operator<<(std::ostream& os,FaceByPointID& F)
-{
-	return os << "Face <" << F[0] << ',' << F[1] << ',' << F[2] << '>';
-}

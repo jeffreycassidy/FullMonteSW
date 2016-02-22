@@ -30,6 +30,11 @@ public:
 	void setSourceFileName(std::string fn){ sourceFn_=fn; }
 	void setLegendFileName(std::string fn){ legendFn_=fn; }
 
+	struct LegendEntry {
+		std::string 		label;
+		std::array<float,3> colour;
+	};
+
 protected:
 	struct SourceDef {
 		unsigned type=0;
@@ -74,6 +79,8 @@ protected:
 		bool by_region=false;
 		float n_ext=NAN;
 	};
+
+
 
 	static Source::Base* 	convertToSource(SourceDef);
 	static SourceDef 		convertFromSource(const Source::Base*);

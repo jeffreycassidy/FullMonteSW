@@ -171,7 +171,7 @@ public:
 
 
 class legendfile_ast_visitor : public ANTLR3CPP::ast_visitor {
-	std::vector<LegendEntry> legend_;
+	std::vector<TIMOS::LegendEntry> legend_;
 
 protected:
 	virtual void do_expand(ANTLR3CPP::base_tree bt)
@@ -202,7 +202,7 @@ protected:
 
 public:
 
-	const std::vector<LegendEntry>& legend() const { return legend_; }
+	const std::vector<TIMOS::LegendEntry>& legend() const { return legend_; }
 };
 
 
@@ -275,7 +275,7 @@ TIMOS::Optical TIMOSAntlrParser::parse_optical(std::string fn) const
 	return OV.opt();
 }
 
-std::vector<LegendEntry> TIMOSAntlrParser::parse_legend(std::string fn) const
+std::vector<TIMOS::LegendEntry> TIMOSAntlrParser::parse_legend(std::string fn) const
 {
 	struct stat info;
 	if ( stat(fn.c_str(),&info) != 0 )

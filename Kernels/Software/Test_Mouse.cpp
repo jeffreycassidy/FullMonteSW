@@ -167,19 +167,15 @@ BOOST_AUTO_TEST_CASE(mouse)
 
 	VolumeFluenceMap phi = FC.convertToFluence(*V);
 
-	cout << "Finished OK" << endl;
-
 	vtkFloatArray *vtkPhi = vtkFloatArray::New();
 	getVTKFloatArray(phi.get(),vtkPhi);
 
 	ug->GetCellData()->SetScalars(vtkPhi);
 
-	cout << "Setting scalars" << endl;
-
 	vtkUnstructuredGridWriter *W = vtkUnstructuredGridWriter::New();
 
 	W->SetInputData(ug);
-	W->SetFileName("mouse.regions.vtk");
+	W->SetFileName("mouse.volume.vtk");
 	W->Update();
 	W->Delete();
 #endif

@@ -6,12 +6,9 @@
 
 #include <boost/algorithm/cxx11/any_of.hpp>
 #include <boost/range/adaptor/indexed.hpp>
-#include <boost/range/counting_range.hpp>
 #include <boost/range/adaptor/filtered.hpp>
 
 #include "TetraMesh.hpp"
-
-#include "../Kernels/Software/sse.hpp"
 
 using namespace std;
 
@@ -25,10 +22,10 @@ vector<unsigned> TetraMesh::tetras_close_to(const Point<3,double> p0,const float
 	vector<unsigned> Tlist;
 	const float r2=r*r;
 
-	for(unsigned i=1;i<T_p.size();++i)
+	for(unsigned i=1;i<m_tetraPoints.size();++i)
 		if (boost::algorithm::any_of(
-				T_p[i],
-				[p0,r2,this](unsigned i){ return Vector<3,double>(this->P[i],p0).norm2_l2()<r2; }))
+				m_tetraPoints[i],
+				[p0,r2,this](unsigned i){ return Vector<3,double>(m_points[i],p0).norm2_l2()<r2; }))
 			Tlist.push_back(i);
 	return Tlist;
 }
@@ -77,37 +74,33 @@ vector<unsigned> TetraMesh::facesBoundingRegion(unsigned i) const
 	return idx;
 }
 
-const vector<unsigned>& TetraMesh::tetrasInRegion(unsigned i) const
-{
-	return tetra_perm[i];
-}
-
-void TetraMesh::make_tetra_perm()
-{
-	// get max region code
-	unsigned max_region = *boost::max_element(T_m);
-
-	// init permutation vector
-	tetra_perm.resize(max_region+1);
-	for(auto& v : tetra_perm)
-		v.clear();
-
-		// create permutation vector
-	for(const auto r : T_m | boost::adaptors::indexed(0U))
-		tetra_perm[r.value()].push_back(r.index());
-
-	// print region summary
-	size_t sum=0;
-
-	
-for(const auto& v : tetra_perm | boost::adaptors::indexed(0U))
-	{
-		sum += v.value().size();
- 		cout << "  Region " << v.index() << ": " << v.value().size() << " elements" << endl;
-
-	}
-	cout << "Total " << sum << " elements" << endl;
-}
+//
+//void TetraMesh::make_tetra_perm()
+//{
+//	// get max region code
+//	unsigned max_region = *boost::max_element(T_m);
+//
+//	// init permutation vector
+//	tetra_perm.resize(max_region+1);
+//	for(auto& v : tetra_perm)
+//		v.clear();
+//
+//		// create permutation vector
+//	for(const auto r : T_m | boost::adaptors::indexed(0U))
+//		tetra_perm[r.value()].push_back(r.index());
+//
+//	// print region summary
+//	size_t sum=0;
+//
+//
+//for(const auto& v : tetra_perm | boost::adaptors::indexed(0U))
+//	{
+//		sum += v.value().size();
+// 		cout << "  Region " << v.index() << ": " << v.value().size() << " elements" << endl;
+//
+//	}
+//	cout << "Total " << sum << " elements" << endl;
+//}
 
 //void TetraMesh::fromBinary(const string& pts,const string& tetras,const string& faces)
 //{
@@ -157,21 +150,16 @@ Returns
 	id		Face ID
 	flip	True if orientation is opposite
 */
-
-int TetraMesh::getFaceID(FaceByPointID f) const
-{
-	bool neg;
-
-	FaceByPointID tmpR = f.getRotateMin();
-
-	if ((neg = (tmpR[2] < tmpR[1])))
-		swap(tmpR[2],tmpR[1]);
-
-	auto it = faceMap.find(tmpR);
-	assert(it != faceMap.end());
-
-    return it == faceMap.end() ? 0 : (neg ? it->second : -it->second);
-}
+//
+//int TetraMesh::getFaceID(FaceByPointID f) const
+//{
+//	boost::sort(f);
+//
+//	auto it = faceMap.find(f);
+//	assert(it != faceMap.end());
+//
+//    return it == faceMap.end() ? 0 : (neg ? it->second : -it->second);
+//}
 
 
 void TetraMesh::tetrasToFaces()
@@ -190,9 +178,9 @@ void TetraMesh::tetrasToFaces()
 	F_p.push_back(FaceByPointID(0,0,0));
 	F_t.push_back(array<unsigned,2>{{0,0}});
 
-	T_f = vector<TetraByFaceID>(T_p.size(),TetraByFaceID{0,0,0,0});
+	T_f = vector<TetraByFaceID>(m_tetraPoints.size(),TetraByFaceID{0,0,0,0});
 
-	for(auto T : T_p | boost::adaptors::indexed(0U))
+	for(auto T : m_tetraPoints | boost::adaptors::indexed(0U))
 	{
 		TetraByPointID IDps_sort = T.value();
 		boost::sort(IDps_sort);
@@ -213,9 +201,9 @@ void TetraMesh::tetrasToFaces()
 
 				if(p.second)			// new tuple inserted; ensure face is such that opposite point is above face
 				{
-					F.push_back(Face(P[Ft[0]], P[Ft[1]], P[Ft[2]]));
+					F.push_back(Face(m_points[Ft[0]], m_points[Ft[1]], m_points[Ft[2]]));
 
-					if (F.back().pointHeight(P[IDps_sort[perm.value().oppidx]]) < 0)
+					if (F.back().pointHeight(m_points[IDps_sort[perm.value().oppidx]]) < 0)
 						F.back().flip();
 					F_t.push_back(array<unsigned,2>{(unsigned)T.index(),0});
 					F_p.push_back(Ft);
@@ -231,10 +219,10 @@ void TetraMesh::tetrasToFaces()
 
 	std::size_t Nf_surf = boost::size(F_t |		 boost::adaptors::filtered([](array<unsigned,2> i){ return i[1]==0; }));
 
-	cout << "New mesh construction: " << P.size() << " points, " << T_p.size() << " tetras, " << faceMap.size() <<
+	cout << "New mesh construction: " << m_points.size() << " points, " << m_tetraPoints.size() << " tetras, " << faceMap.size() <<
 			" faces (" << Nf_surf << " surface)" << endl;
 
-	assert(T_p.size() == T_f.size());
+	assert(m_tetraPoints.size() == T_f.size());
 
 
 	// stable partition to place all surface faces first
@@ -260,11 +248,11 @@ void TetraMesh::tetrasToFaces()
 
 vector<Tetra> TetraMesh::makeKernelTetras() const
 {
-	vector<Tetra> T(T_p.size());
+	vector<Tetra> T(m_tetraPoints.size());
 
-	assert(T.size()   == T_p.size());
-	assert(T_f.size() == T_p.size());
-	assert(T_m.size() == T_p.size());
+	assert(T.size()   == m_tetraPoints.size());
+	assert(T_f.size() == m_tetraPoints.size());
+	assert(m_tetraMaterials.size() == m_tetraPoints.size());
 
 	assert(F.size() == F_p.size());
 	assert(F_t.size() == F_p.size());
@@ -272,7 +260,7 @@ vector<Tetra> TetraMesh::makeKernelTetras() const
 	for(auto tet : T | boost::adaptors::indexed(0U))
 	{
 		tet.value().IDfs  = T_f[tet.index()];
-		tet.value().matID = T_m[tet.index()];
+		tet.value().matID = m_tetraMaterials[tet.index()];
 
 		UnitVector<3,double> n[4];
 		double C[4];
@@ -316,28 +304,15 @@ vector<Tetra> TetraMesh::makeKernelTetras() const
 	return T;
 }
 
-
-
-// checks validity of TetraMesh construct
-bool TetraMesh::checkValid(bool) const
-{
-	bool valid=true;
-
-	valid &= TetraMeshBase::checkValid();
-
-	// TODO: more checks here
-	return valid;
-}
-
 bool TetraMesh::checkFaces() const
 {
 	bool status_ok=true;
 	unsigned i=1;
-	for(vector<TetraByPointID>::const_iterator it=T_p.begin()+1; it != T_p.end(); ++it,++i){
+	for(vector<TetraByPointID>::const_iterator it=m_tetraPoints.begin()+1; it != m_tetraPoints.end(); ++it,++i){
 		for(int j=0;j<4;++j)
 		{
 			unsigned pID = (*it)[tetra_face_opposite_point_indices[j].oppidx];
-			Point<3,double> pt=P[pID];
+			Point<3,double> pt=m_points[pID];
 			int f=T_f[i][j];
 			double h;
 			if ((h=(f<0?-1:1)*F[abs(f)].pointHeight(pt)) < 0){
@@ -356,7 +331,7 @@ unsigned TetraMesh::findNearestPoint(const Point<3,double>& p) const
 	double d2=numeric_limits<double>::infinity(),t;
 	unsigned id=0,c=1;
 
-	for(vector<Point<3,double> >::const_iterator it=P.begin()+1; it != P.end(); ++it,++c)
+	for(vector<Point<3,double> >::const_iterator it=m_points.begin()+1; it != m_points.end(); ++it,++c)
 	{
 		if ((t=norm2_l2(Vector<3,double>(*it,p))) < d2)
 		{
@@ -465,7 +440,7 @@ bool Tetra::pointWithin(__m128 p) const
 bool TetraMesh::isWithinByPoints(int tID,const Point<3,double>& p) const
 {
     float M[3][4];
-    const Point<3,double> &A=P[T_p[tID][0]], &B=P[T_p[tID][1]], &C=P[T_p[tID][2]], &D=P[T_p[tID][3]];
+    const Point<3,double> &A=m_points[m_tetraPoints[tID][0]], &B=m_points[m_tetraPoints[tID][1]], &C=m_points[m_tetraPoints[tID][2]], &D=m_points[m_tetraPoints[tID][3]];
     Vector<3,double> e[3];
 
     // calculate edge vectors
@@ -611,9 +586,9 @@ std::tuple<PointIntersectionResult,int> TetraMesh::findNextFaceAlongRay(Point<3,
 
 		FaceByPointID IDps = F_p[i];
 		Point<3,double> T[3]{
-			P[IDps[0]],
-			P[IDps[1]],
-			P[IDps[2]]
+			m_points[IDps[0]],
+			m_points[IDps[1]],
+			m_points[IDps[2]]
 		};
 
 		PointIntersectionResult res = RayTriangleIntersection(p,dir,T);
@@ -629,12 +604,6 @@ std::tuple<PointIntersectionResult,int> TetraMesh::findNextFaceAlongRay(Point<3,
 	return make_tuple(best,IDf);
 }
 
-
-bool sameOrientation(FaceByPointID f0,FaceByPointID f1)
-{
-    return f0.orderCount() == f1.orderCount();
-}
-
 unsigned TetraMesh::getTetraFromFace(int IDf) const
 {
     return IDf > 0 ? F_t[IDf][0] : F_t[-IDf][1];
@@ -642,8 +611,8 @@ unsigned TetraMesh::getTetraFromFace(int IDf) const
 
 double TetraMesh::getFaceArea(const FaceByPointID& f) const
 {
-    Vector<3,double> AB(P[f[0]],P[f[1]]);
-    Vector<3,double> AC(P[f[0]],P[f[2]]);
+    Vector<3,double> AB(m_points[f[0]],m_points[f[1]]);
+    Vector<3,double> AC(m_points[f[0]],m_points[f[2]]);
 
     return cross(AB,AC).norm_l2()/2;
 }
@@ -681,26 +650,26 @@ double TetraMesh::getFaceArea(const FaceByPointID& f) const
 //    return make_pair(Nb,boost::shared_array<const uint8_t>((const uint8_t*)t));
 //}
 
-// TODO: Add more integrity checks
-bool TetraMesh::checkIntegrity(bool printResults) const
-{
-    bool status_ok=true,status_fp=true;
-
-    if (printResults)
-        cout << "Checking face ordering in F_p - " << flush;
-    for(vector<FaceByPointID>::const_iterator it=F_p.begin()+1; it != F_p.end(); ++it)
-        status_fp &= ((*it)[0] < (*it)[1]) & ((*it)[1] < (*it)[2]);
-
-    if (printResults)
-        cout << (status_fp ? "OK" : "Error") << endl;
-    status_ok &= status_fp;
-
-
-    if (printResults)
-        cout << "Integrity check complete - status " << (status_ok ? "OK" : "Error") << endl;
-
-    return status_ok;
-}
+//// TODO: Add more integrity checks
+//bool TetraMesh::checkIntegrity(bool printResults) const
+//{
+//    bool status_ok=true,status_fp=true;
+//
+//    if (printResults)
+//        cout << "Checking face ordering in F_p - " << flush;
+//    for(vector<FaceByPointID>::const_iterator it=F_p.begin()+1; it != F_p.end(); ++it)
+//        status_fp &= ((*it)[0] < (*it)[1]) & ((*it)[1] < (*it)[2]);
+//
+//    if (printResults)
+//        cout << (status_fp ? "OK" : "Error") << endl;
+//    status_ok &= status_fp;
+//
+//
+//    if (printResults)
+//        cout << "Integrity check complete - status " << (status_ok ? "OK" : "Error") << endl;
+//
+//    return status_ok;
+//}
 
 
 vector<unsigned> TetraMesh::getRegionBoundaryTris(unsigned r) const
@@ -726,9 +695,9 @@ vector<pair<unsigned,unsigned>> TetraMesh::getRegionBoundaryTrisAndTetras(unsign
 	for(unsigned i=0;i<F_t.size();++i)
 	{
 		unsigned Ta = F_t[i][0], Tb = F_t[i][1];
-		assert(Ta < T_m.size() && Tb < T_m.size());
+		assert(Ta < m_tetraMaterials.size() && Tb < m_tetraMaterials.size());
 
-		unsigned ma = T_m[Ta], mb = T_m[Tb];
+		unsigned ma = m_tetraMaterials[Ta], mb = m_tetraMaterials[Tb];
 
 		if (ma == mb)														// no boundary
 			continue;
@@ -739,10 +708,4 @@ vector<pair<unsigned,unsigned>> TetraMesh::getRegionBoundaryTrisAndTetras(unsign
 	}
 
 	return v;
-}
-
-
-TetraMesh* buildMesh(const TetraMeshBase& M)
-{
-	return new TetraMesh(M);
 }

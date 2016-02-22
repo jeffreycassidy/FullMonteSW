@@ -86,7 +86,7 @@ Source::Base* TIMOSReader::sources() const
 		return src[0];
 }
 
-std::vector<LegendEntry> TIMOSReader::legend() const
+std::vector<TIMOS::LegendEntry> TIMOSReader::legend() const
 {
 	std::vector<LegendEntry> l = parse_legend(legendFn_);
 

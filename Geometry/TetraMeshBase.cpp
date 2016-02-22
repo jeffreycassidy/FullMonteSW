@@ -3,6 +3,10 @@
 
 #include "TetraMeshBase.hpp"
 
+#include <vector>
+
+using namespace std;
+
 // Very naive search to find closest point
 //unsigned TetraMeshBase::findNearestPoint(const Point<3,double>& p) const
 //{
@@ -100,32 +104,32 @@
 //
 //    return within;
 //}
-
-bool TetraMeshBase::checkValid(bool printResults) const
-{
-	bool IDps_ok=true;
-
-	// check tetra point indices: all should be nonzero and fall within the size of the points vector
-
-    for(TetraByPointID IDps : T_p)
-    	for(unsigned IDp : IDps)
-    	{
-    		if (IDp >= P.size())
-    		{
-    			if (printResults)
-    				cout << "  ERROR: Point index out of range (max " << P.size() << ") in Tetra: " << IDps << endl;
-    			IDps_ok=false;
-    		}
-    	}
-    cout << "Tetra point indices in range: " << (IDps_ok ? "OK" : "Error") << endl;
-
-
-    return IDps_ok;
-}
+//
+//bool TetraMeshBase::checkValid(bool printResults) const
+//{
+//	bool IDps_ok=true;
+//
+//	// check tetra point indices: all should be nonzero and fall within the size of the points vector
+//
+//    for(TetraByPointID IDps : m_tetraPoints)
+//    	for(unsigned IDp : IDps)
+//    	{
+//    		if (IDp >= P.size())
+//    		{
+//    			if (printResults)
+//    				cout << "  ERROR: Point index out of range (max " << P.size() << ") in Tetra: " << IDps << endl;
+//    			IDps_ok=false;
+//    		}
+//    	}
+//    cout << "Tetra point indices in range: " << (IDps_ok ? "OK" : "Error") << endl;
+//
+//
+//    return IDps_ok;
+//}
 
 void TetraMeshBase::remapMaterial(unsigned from,unsigned to)
 {
-	for(unsigned& m : T_m)
+	for(unsigned& m : m_tetraMaterials)
 		if (m == from)
 			m = to;
 }
@@ -133,7 +137,7 @@ void TetraMeshBase::remapMaterial(unsigned from,unsigned to)
 vector<unsigned> TetraMeshBase::tetraMaterialCount() const
 {
 	std::vector<unsigned> Nm;
-	for(const auto m : T_m)
+	for(const auto m : m_tetraMaterials)
 	{
 		if (m > Nm.size())
 			Nm.resize(m+1);

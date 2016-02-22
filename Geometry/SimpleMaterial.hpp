@@ -8,20 +8,22 @@
 #ifndef GEOMETRY_SIMPLEMATERIAL_HPP_
 #define GEOMETRY_SIMPLEMATERIAL_HPP_
 
+/** Simple material description mu_s, mu_a, g, n
+ */
+
 class SimpleMaterial
 {
 public:
 	SimpleMaterial(){}
-	SimpleMaterial(float muS,float muA,float g_,float n,float muX=0.0f) :
+	SimpleMaterial(float muS,float muA,float g,float n) :
 		mu_a(muA),
 		mu_s(muS),
-		m_g(g_),
-		m_n(n),
-		mu_x(muX){}
+		m_g(g),
+		m_n(n){}
 
 	float muS()	const	{ return mu_s; 				}
 	float muA() const	{ return mu_a; 				}
-	float muT() const 	{ return mu_a+mu_s+mu_x; 	}
+	float muT() const 	{ return mu_a+mu_s; 		}
 	float n() 	const	{ return m_n; 				}
 	float g()	const	{ return m_g;				}
 
@@ -35,7 +37,8 @@ public:
 	float absfrac() const { return (mu_s > 0 || mu_a > 0) ? 1-mu_s/(mu_s+mu_a) : 0; }
 
 private:
-	float mu_a,mu_s,m_g,m_n,mu_x=0.0f;
+	/// Default material is air
+	float mu_a=0.0f,mu_s=0.0f,m_g=1.0f,m_n=1.0f;
 };
 
 #endif /* GEOMETRY_SIMPLEMATERIAL_HPP_ */

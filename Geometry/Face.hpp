@@ -4,13 +4,9 @@
 
 using namespace std;
  
-class Face {
-	// plane definition
-	UnitVector<3,double> normal;        // normal points into the tetrahedron
-	double               C;
-
-	public:
-
+class Face
+{
+public:
 	Face() : C(std::numeric_limits<double>::quiet_NaN()) {};
     Face(const Point<3,double>&,const Point<3,double>&,const Point<3,double>&);
 	Face(const Point<3,double>&,const Point<3,double>&,const Point<3,double>&,const Point<3,double>&);
@@ -45,4 +41,9 @@ class Face {
     double nC() const { return C; }
 
 	friend ostream& operator<<(ostream&,const Face&);
+
+private:
+	// plane definition
+	UnitVector<3,double> normal;        // normal points into the tetrahedron
+	double               C;
 };

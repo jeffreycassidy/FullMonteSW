@@ -20,6 +20,7 @@ Use of data from Digimouse or TIM-OS should also cite appropriately as specified
 
 ## License
 
+TBD
 
 
 
@@ -41,8 +42,8 @@ Modern compiler with C++11 support (G++ >= 4.8, Clang tested and work)
 
 Boost version >= 1.56.0 with serialization, iostreams, system, program\_options unit\_test\_framework compiled - www.boost.org
 
-Antlr3 java package v3.5.2 - www.antlr3.org/download.html
-Antlr3 C runtime v3.4 - www.antlr3.org/download/C
+
+ANTLR3 (parser generator): - <a href="www.antlr3.org/download.html">java package v3.5.2 </a> and <a href="www.antlr3.org/download/C">C runtime 3.4</a> 
 **When building Antlr3c, be sure to select --enable-64bit when using configure; it defaults to 32bit**
 
 
@@ -50,18 +51,14 @@ Antlr3 C runtime v3.4 - www.antlr3.org/download/C
 
 VTK 6.3.0 with Tcl bindings (for visualization and export of VTK/Paraview files) www.vtk.org
 
+Paraview (for result visualization; requires VTK) - www.paraview.org
+
 Tcl/Tk/OpenGL (for Tcl script bindings) on Linux try sudo apt-get install freeglut3-dev tcl8.5-dev tk8.5-dev
 
 Swig 3.0 (for Tcl script bindings) - www.swig.org (also often a package in Linux, eg "swig" or "swig3.0")
 
-#### 3DConnexion SpaceMouse
 
-Installation instructions for VTK & Paraview support can be found at <a href="http://www.vtk.org/Wiki/VTK/3DConnexion_Devices_Support">vtk.org wiki</a>
-
-Briefly for Mac OS: Install drivers, reboot, install Qt 4.4, build VTK with Qt 4.4 support and advanced options VTK_USE_TDX and VTK_GROUP_QT on.
-
-
-#### Qt support
+#### Qt support (GUI in progress)
 
 Download Qt 4.4 from <a href="http://www.qt.io/download-open-source">qt.io</a> and build following instructions
 
@@ -78,6 +75,7 @@ Unpack the source in a folder, and create a separate folder elsewhere for the bu
 You may find it necessary to specify paths to packages such as Boost (`ccmake -DBOOST_DIR=/path/to/boost`). CMake documentation
 will help with standard packages (VTK, Tcl/Tk, Swig) and compiler settings. ANTLR must be configured separately with `ANTLR3_INCLUDE_DIR` pointing to the folder holding `antlr3.h`, `ANTLR3_LIB_DIR` pointing to the folder holding `libantlr3c.a`, and `ANTLR_JAR` providing the full path to the ANTLR compiler .jar file. 
 
+To output VTK files or perform visualization, the `WRAP_VTK` option must be enabled during build.
 
 **Ensure that build type is set to release for full performance. Architecture should be set appropriately to "avx" or "avx2".**
 
@@ -91,8 +89,8 @@ will help with standard packages (VTK, Tcl/Tk, Swig) and compiler settings. ANTL
 ## Basic simulation kernel
 
 Basic functionality can be checked by running `Kernels/Software/Test_Mouse` which is a basic bioluminescence simulation based on the
-Digimouse test data released with TIM-OS by Shen and Wang (2011). It loads the mesh, optical properties, and source definitions, checks
-that the data is loaded correctly (number of mesh elements, sources, etc) is correct, then runs the simulator and checks that the basic energy-conservation laws are followed, and that the event counts are approximately correct.
+Digimouse test data released with TIM-OS by Shen and Wang (2010). It loads the mesh, optical properties, and source definitions, checks
+that the data is loaded correctly (number of mesh elements, sources, etc), then runs the simulator and checks that the basic energy-conservation laws are followed, and that the event counts are approximately correct.
 
 
 ## Unit Tests
