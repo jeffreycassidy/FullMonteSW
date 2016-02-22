@@ -1,0 +1,8 @@
+*_tokens.h
+*.tokens
+*Lexer.[ch]
+*Parser.[ch]
+test
+*.log
+
+
