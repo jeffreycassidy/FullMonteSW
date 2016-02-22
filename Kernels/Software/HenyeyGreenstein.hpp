@@ -10,8 +10,6 @@
 
 #include <immintrin.h>
 
-#pragma vector aligned
-
 #include "avx_mathfun.h"
 
 #include "FloatVectorBase.hpp"
@@ -89,9 +87,6 @@ template<class RNG>void HenyeyGreenstein8f::calculate(RNG& rng,float* o) const
 	__m256 sinaz, cosaz;
 	std::tie(sinaz,cosaz) = sincos_psp(az);
 
-//		std::cout << "cos( phi ): " << std::fixed << std::setprecision(6) << std::setw(8) << cosaz << std::endl;
-//		std::cout << "sin( phi ): " << std::fixed << std::setprecision(6) << std::setw(8) << sinaz << std::endl;
-
 	__m256 pm1defl = ui32ToPM1(*(const __m256i*)rng.getBlock());
 	__m256 cosdefl, sindefl;
 
@@ -127,9 +122,6 @@ template<class RNG>void HenyeyGreenstein8f::calculate(RNG& rng,float* o) const
 				_mm256_sub_ps(
 						one(),
 						_mm256_mul_ps(cosdefl,cosdefl)));
-
-//		std::cout << "cos(theta): " << std::fixed << std::setprecision(6) << std::setw(8) << cosdefl << std::endl;
-//		std::cout << "sin(theta): " << std::fixed << std::setprecision(6) << std::setw(8) << sindefl << std::endl;
 
 	// interleave sine & cosine values independently
 	__m256 sin_lo = _mm256_unpacklo_ps(sindefl,sinaz);

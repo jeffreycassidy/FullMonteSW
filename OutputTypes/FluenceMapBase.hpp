@@ -35,8 +35,11 @@ public:
 	float totalEmitted()						const	{ return m_totalEmitted;		}
 
 	const SpatialMapBase<float,unsigned>* operator->() const { return m_map.get();		}
+	const SpatialMapBase<float,unsigned>& get() const { return *m_map.get(); }
 
 	void set(SpatialMapBase<float,unsigned>* m){ m_map.reset(m); }
+
+	float operator[](unsigned i) const { return (*m_map.get())[i]; }
 
 private:
 	std::unique_ptr<SpatialMapBase<float,unsigned>>		m_map;

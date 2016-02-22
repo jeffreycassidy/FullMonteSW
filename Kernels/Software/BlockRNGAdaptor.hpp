@@ -1,5 +1,5 @@
 /*
- * SFMT_URNG.hpp
+ * BlockRNGAdaptor.hpp
  *
  *  Created on: Feb 12, 2016
  *      Author: jcassidy
@@ -27,10 +27,10 @@ namespace URNG
 
 
 
-/** BlockRNG - block random-number generation.
+/** BlockRNGAdaptor - Block random-number generation: generates and caches batches of random numbers, returning blocks on
+ * request.
  *
- * NOTE: Call to getBlock may invalidate any previous pointers returned by getBlock!
- * Happens because we make every effort to avoid copying
+ * NOTE: Call to getBlock may invalidate any previous pointers returned by getBlock, because efforts are made to avoid copying.
  *
  * @tparam		RNG				Random-number generator with the overrides required in namespace URNG
  * @tparam		T				The type of random numbers returned

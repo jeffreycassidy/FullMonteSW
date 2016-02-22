@@ -22,52 +22,6 @@
 using namespace std;
 
 
-struct SwigPointerInfo {
-	void* 								p;
-	std::pair<const char*,const char*>	type;
-};
-
-template<typename T>T endianSwap(T i);
-
-template<>uint64_t endianSwap(uint64_t i)
-{
-	i = (i >> 32) | (i << 32);
-	i = ((i >> 16) & 0x0000ffff0000ffffULL) | ((i << 16) & 0xffff0000ffff0000ULL);
-	i = ((i >> 8 ) & 0x00ff00ff00ff00ffULL) | ((i << 8)  & 0xff00ff00ff00ff00ULL);
-	return i;
-}
-
-
-SwigPointerInfo readSwigPointer(const char *s)
-{
-	// format is _XXXXXXXXX_p_TTTTTT where X is pointer value (little-endian hex) and T is type
-	uint64_t ptr;
-	SwigPointerInfo info;
-
-	assert(*s == '_');
-
-	const char *pStart=s+1;
-	const char *pEnd=s+1;
-	for(pEnd=s+1; *pEnd != '\0' && *pEnd != '_';++pEnd){}
-
-	sscanf(pStart,"%llx",&ptr);
-
-	// For some reason, SWIG stores pointers in little-endian strings; have to swap them before using!
-	info.p=reinterpret_cast<void*>(endianSwap(ptr));
-
-	const char *tStart=pEnd, *tEnd=pEnd;
-
-	assert(*(tStart++)=='_');
-	assert(*(tStart++)=='p');
-	assert(*(tStart++)=='_');
-
-	for(tEnd=tStart+1; tEnd != '\0';++tEnd){}
-
-	info.type = make_pair(tStart,tEnd);
-
-	std::cout << "typeStr='" << std::string(tStart,tEnd) << "'" << std::endl;
-	return info;
-}
 
 PointSourceRep::~PointSourceRep()
 {}

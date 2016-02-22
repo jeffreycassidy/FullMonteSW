@@ -40,31 +40,6 @@ void TetraMeshVTK::setInputTetraMesh(const TetraMesh* M)
 	update();
 }
 
-void TetraMeshVTK::setInputTetraMesh(const char* pStr)
-{
-	// kludgy, home-brewed pointer extraction
-	// format is _XXXXXXXXX_p_TTTTTT where X is pointer value (little-endian hex) and T is type
-	std::stringstream ss(pStr);
-	std::string typeStr;
-	char buf[5];
-	uint64_t pval;
-	ss.read(buf,1);
-	ss >> std::hex >> pval;
-	ss.read(buf+1,3);
-	buf[4]=0;
-	if (strcmp("__p_",buf))
-		std::cout << "ERROR: Improperly formatted string" << std::endl;
-	ss >> typeStr;
-
-	// For some reason, SWIG stores pointers in little-endian strings; have to swap them before using!
-	pval = (pval >> 32) | (pval << 32);
-	pval = ((pval >> 16) & 0x0000ffff0000ffffULL) | ((pval << 16) & 0xffff0000ffff0000ULL);
-	pval = ((pval >> 8 ) & 0x00ff00ff00ff00ffULL) | ((pval << 8)  & 0xff00ff00ff00ff00ULL);
-
-	m_M = reinterpret_cast<const TetraMesh*>(pval);
-	update();
-}
-
 void TetraMeshVTK::update()
 {
 	////// Update points
@@ -139,21 +114,21 @@ void TetraMeshVTK::update()
 
 	Modified();
 }
-
-vtkUnstructuredGrid* TetraMeshVTK::getBlankMesh() const
-{
-	vtkUnstructuredGrid* ug = vtkUnstructuredGrid::New();
-
-	ug->SetPoints(m_vtkP);
-	ug->SetCells(VTK_TETRA,m_vtkT);
-	return ug;
-}
-
-vtkUnstructuredGrid* TetraMeshVTK::getRegions() const
-{
-	vtkUnstructuredGrid* ug = getBlankMesh();
-	ug->GetCellData()->SetActiveScalars("regions");
-	ug->GetCellData()->SetScalars(m_vtkRegions);
-
-	return ug;
-}
+//
+//vtkUnstructuredGrid* TetraMeshVTK::getBlankMesh() const
+//{
+//	vtkUnstructuredGrid* ug = vtkUnstructuredGrid::New();
+//
+//	ug->SetPoints(m_vtkP);
+//	ug->SetCells(VTK_TETRA,m_vtkT);
+//	return ug;
+//}
+//
+//vtkUnstructuredGrid* TetraMeshVTK::getRegions() const
+//{
+//	vtkUnstructuredGrid* ug = getBlankMesh();
+//	ug->GetCellData()->SetActiveScalars("regions");
+//	ug->GetCellData()->SetScalars(m_vtkRegions);
+//
+//	return ug;
+//}

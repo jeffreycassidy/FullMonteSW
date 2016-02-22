@@ -61,7 +61,7 @@ public:
 
 	template<class Result>const Result* getResultByType() const
 	{
-		Result* r=nullptr;
+		const Result* r=nullptr;
 		for(unsigned i=0; i<m_results.size() && !r; ++i)
 			r=dynamic_cast<const Result*>(m_results[i]);
 

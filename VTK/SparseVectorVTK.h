@@ -16,6 +16,9 @@
 
 class vtkFloatArray;
 
+template<typename Value,typename Index>class SpatialMapBase;
+
+void getVTKFloatArray(const SpatialMapBase<float,unsigned>& SV,vtkFloatArray* a);
 
 /** Converts from a sparse vector of floats to a vtkFloat*, suitable for colouring a rendered volume/surface
  *

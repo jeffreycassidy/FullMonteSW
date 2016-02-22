@@ -42,23 +42,6 @@ public:
 		get<2>(m_logger).qSize(1<<14);
 	}
 
-//		for(unsigned i=0; i<E.size(); ++i)
-//		{
-//			assert (i <= m_mesh->getNt());
-//			unsigned mat = m_mesh->getMaterial(i);
-//			assert (mat < mats_.size());
-//
-//			double V = m_mesh->getTetraVolume(i), mu_a = mat_[mat].mu_a;
-//
-//			if (E[i] > 0)
-//			{
-//				if (V==0)
-//					cout << "WARNING: Nonzero absorption in an element with zero volume" << endl;
-//				else if (mu_a==0)
-//					cout << "WARNING: Nonzero absorption in an element with zero absorption coefficient" << endl;
-//				else
-//					E[i] *= k / (V * mu_a);
-
 private:
 	virtual ThreadedMCKernelBase::Thread* makeThread() override
 	{

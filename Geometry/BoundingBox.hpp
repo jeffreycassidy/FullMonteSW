@@ -12,10 +12,8 @@
 #include <utility>
 
 #include <limits>
+#include <functional>
 
-//#include <algorithm>
-
-//#include <cmath>
 
 #include <boost/range.hpp>
 #include <boost/range/algorithm.hpp>
@@ -52,7 +50,7 @@ public:
 
 	OrthoBoundingBox(const std::array<T,D>& bbmin_,const std::array<T,D>& bbmax_) : bbmin_(bbmin_),bbmax_(bbmax_){}
 
-	bool point_inside(const array<T,D>& a) const
+	bool point_inside(const std::array<T,D>& a) const
 	{
 		for(unsigned i=0;i<D;++i)
 			if (a[i] < bbmin_[i] || bbmax_[i] < a[i])
@@ -60,10 +58,10 @@ public:
 		return true;
 	}
 
-	std::function<bool(const array<T,D>)> inside_tester() const
+	std::function<bool(const std::array<T,D>)> inside_tester() const
 	{
 		OrthoBoundingBox bbcopy=*this;
-		return [bbcopy](const array<T,D>& a){ return bbcopy->point_inside(a); };
+		return [bbcopy](const std::array<T,D>& a){ return bbcopy->point_inside(a); };
 	}
 
 	void insert(const std::array<T,D>& a)

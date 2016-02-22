@@ -11,7 +11,6 @@
 
 #include <vector>
 
-
 VolumeFluenceMap convertAbsorbedEnergyToFluence(const VolumeAbsorbedEnergyMap& E, const TetraMesh& M, const std::vector<SimpleMaterial>& mat)
 {
 	std::vector<Value> phi(E->dim(), 0.0f);

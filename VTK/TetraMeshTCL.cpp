@@ -1,4 +1,3 @@
-//#include <vtk/vtkTclUtil.h> //for jeff
 #include <vtkTclUtil.h>
 
 // Support code that has some constants needed for creation of VTK TCL references

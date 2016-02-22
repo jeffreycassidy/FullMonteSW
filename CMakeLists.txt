@@ -1,35 +1,44 @@
 PROJECT(FullMonte)
 CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
 
-SET(ANTLR_JAR "/usr/local/antlrv3/antlr-3.5.2-complete-no-st3.jar" CACHE PATH "Jar-file for ANTLR3")
-SET(ANTLR3_LIBRARIES antlr3c)
-SET(ANTLR3_INCLUDE_DIR "/usr/local/antlr3c-3.4/include" CACHE PATH "ANTLR3 include path")
-SET(ANTLR3_LIB_DIR "/usr/local/lib" CACHE PATH "ANTLR3 C runtime path")
+CONFIGURE_FILE(testdata.h.in testdata.h)
+CONFIGURE_FILE(config.h.in   config.h)
+INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR})
 
+## Compiler setup
 SET(CMAKE_CXX_STANDARD 11)
 
-CONFIGURE_FILE(tclmonte.in VTK/_tclmonte)
-FILE(COPY ${CMAKE_BINARY_DIR}/VTK/_tclmonte DESTINATION ${CMAKE_BINARY_DIR} FILE_PERMISSIONS OWNER_EXECUTE OWNER_READ)
-FILE(RENAME ${CMAKE_BINARY_DIR}/_tclmonte ${CMAKE_BINARY_DIR}/tclmonte)
+### Architecture
+SET(ARCH avx2 CACHE STRING "Architecture flag for -m option")
 
-FILE(COPY tlt.tcl DESTINATION ${CMAKE_BINARY_DIR})
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-missing-braces")
 
-## Architecture switches
-SET(ARCH avx CACHE STRING "Architecture flag for -m option")
+MESSAGE("Arch: ${ARCH}")
 
-IF(${ARCH} MATCHES "avx")
+IF(${ARCH} STREQUAL "avx")
     ADD_DEFINITIONS(-DUSE_AVX)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx")
+ELSEIF(${ARCH} STREQUAL "avx2")
+    ADD_DEFINITIONS(-DUSE_AVX2)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
 ENDIF()
 
-
+### Warnings and esoteric settings
 IF(${CMAKE_CXX_COMPILER_ID} MATCHES "GNU")
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fabi-version=6 -Wno-psabi")
+    # Required to avoid an error in colliding mangled names
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fabi-version=6")
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi")
+ELSEIF(${CMAKE_CXX_COMPILER_ID} MATCHES "CLANG")
+    # Required to avoid all kinds of (harmless) warnings due to Boost concept checks
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-local-typedef")
 ENDIF()
 
-## Include and link dirs for FullMonte
+
+
+## Include dirs for FullMonte
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/..)
-LINK_DIRECTORIES(${CMAKE_SOURCE_DIR})
+
+
 
 ## Wrapping options
 OPTION(WRAP_TCL ON)
@@ -46,14 +55,23 @@ IF(WRAP_TCL)
 ENDIF()
 
 
+## Boost required components
 FIND_PACKAGE(Boost REQUIRED COMPONENTS unit_test_framework serialization system program_options)
 
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
 LINK_DIRECTORIES(${Boost_LIBRARY_DIR})
+
+SET(TEST_THREAD_COUNT 8 CACHE STRING "Number of threads for test cases")
+
+
+IF (WRAP_VTK)
+	FIND_PACKAGE(VTK REQUIRED)
+	ADD_SUBDIRECTORY(VTK)
+ENDIF()
 
 ADD_SUBDIRECTORY(SFMT)
 ADD_SUBDIRECTORY(Geometry)
 ADD_SUBDIRECTORY(Storage)
 ADD_SUBDIRECTORY(Kernels)
 ADD_SUBDIRECTORY(OutputTypes)
-ADD_SUBDIRECTORY(VTK)
+
