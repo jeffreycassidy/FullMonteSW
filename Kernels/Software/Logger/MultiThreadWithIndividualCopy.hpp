@@ -17,7 +17,7 @@
  * 		meets requirements of Logger
  * 			clear() clears state
  * 			state() returns a const& to the current state
- * 			default-constructible
+ * 			default-constructible into same state as clear()
  *
  * Parent:
  * 		merge(SingleThreadLogger::State&) adds results in a thread-safe manner
@@ -36,6 +36,8 @@ public:
 		m_mutex()
 	{}
 
+	typedef std::true_type is_logger;
+
 	typedef typename SingleThreadLogger::State					State;
 	typedef MultiThreadWithIndividualCopy<SingleThreadLogger> 	Parent;
 
@@ -47,7 +49,7 @@ public:
 
 		typedef std::true_type is_logger;
 
-		~ThreadWorker(){ /*commit();*/ }
+		~ThreadWorker(){ }
 
 		void commit()
 		{
@@ -61,8 +63,17 @@ public:
 		Parent&		m_parent;
 	};
 
-
 	ThreadWorker get_worker(){ return ThreadWorker(*this); }
+
+	void clear()
+	{
+		m_state = State();
+	}
+
+	void eventClear()
+	{
+		m_state = State();
+	}
 
 	void merge(const State& st)
 	{

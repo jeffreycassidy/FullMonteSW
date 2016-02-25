@@ -15,7 +15,7 @@
 
 #define DEFINE_EVENT(ename,emember) typedef struct {} ename##_tag; \
 	extern ename##_tag ename; \
-	template<class Logger,typename... Args>typename std::enable_if< std::is_same<typename Logger::is_logger,std::true_type>::value,void>::type log_event(Logger& l,Events::ename##_tag,Args... args){ l.event##emember(args...); }
+	template<class Logger,typename... Args>inline typename std::enable_if< std::is_same<typename Logger::is_logger,std::true_type>::value,void>::type log_event(Logger& l,Events::ename##_tag,Args... args){ l.event##emember(args...); }
 
 namespace Events {
 
@@ -32,18 +32,16 @@ DEFINE_EVENT(reflect,ReflectInternal)
 DEFINE_EVENT(refract,Refract)
 DEFINE_EVENT(fresnel,ReflectFresnel)
 DEFINE_EVENT(exit,Exit)
+DEFINE_EVENT(newTetra,NewTetra)
 DEFINE_EVENT(roulettewin,RouletteWin)
 DEFINE_EVENT(roulettedie,Die)
 DEFINE_EVENT(abnormal,Abnormal)
 DEFINE_EVENT(timegate,TimeGate)
 DEFINE_EVENT(nohit,NoHit)
+DEFINE_EVENT(clear,Clear)
 
 DEFINE_EVENT(commit,Commit);				// not actually an event but a request to the logger to sync its results globally
 
 }
-
-typedef __m128 Point3;
-typedef __m128 UVect3;
-typedef pair<__m128,__m128> Ray3;
 
 #endif

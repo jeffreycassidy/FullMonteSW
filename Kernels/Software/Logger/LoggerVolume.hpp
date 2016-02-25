@@ -32,6 +32,8 @@ public:
 	LoggerVolume(LoggerVolume&& lv_) = delete;
 	LoggerVolume(const LoggerVolume& lv_) = delete;
 
+	typedef std::true_type is_logger;
+
 	class ThreadWorker : public LoggerBase {
 		typename Accumulator::ThreadWorker wt;
 	public:
@@ -40,7 +42,7 @@ public:
 		ThreadWorker(Accumulator& parent_,unsigned Nq) : wt(parent_.get_worker(Nq)){};
 		ThreadWorker(const ThreadWorker& wt_) = delete;
 		ThreadWorker(ThreadWorker&& wt_) : wt(std::move(wt_.wt)){}
-		~ThreadWorker(){ /*wt.commit();*/ }
+		~ThreadWorker(){ }
 
 	    inline void eventAbsorb(Point3 p,unsigned IDt,double w0,double dw)
 	    	{ wt[IDt] += dw; }
@@ -49,6 +51,7 @@ public:
 	    	{ wt[IDt] += dw; }
 
 	    inline void eventCommit(){ wt.commit(); }
+	    inline void eventClear(){ wt.clear(); }
 	};
 
 	static std::list<OutputData*> results(const std::vector<double>& values)
@@ -73,6 +76,16 @@ public:
 
 	void resize(unsigned N){ acc.resize(N); }
 	void qSize(unsigned Nq){ m_Nq=Nq; }
+
+	inline void eventClear()
+	{
+		clear();
+	}
+
+	void clear()
+	{
+		acc.clear();
+	}
 
 private:
 	Accumulator acc;

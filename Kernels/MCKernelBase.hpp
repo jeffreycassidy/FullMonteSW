@@ -37,11 +37,11 @@ public:
 
 	// remaining to be implemented by derived classes
 	virtual bool 				done() 					const override=0;
-	virtual void 				awaitFinish()			override=0;
 	virtual unsigned long long 	simulatedPacketCount() 	const=0;
 
 protected:
 	// remaining to be implemented by derived classes
+	virtual void 				awaitFinish()			override=0;
 	virtual void prepare_() override=0;
 	virtual void start_() override=0;
 

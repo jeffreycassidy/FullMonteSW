@@ -125,7 +125,7 @@ FLOAT
     ;
 
 COMMENT
-    :   '//' (~'\n')* '\n' {$channel=HIDDEN;}
+    :   ('//'|'#') (~'\n')* '\n' {$channel=HIDDEN;}
     ;
 
 WS  :   ( ' '

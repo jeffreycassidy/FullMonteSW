@@ -17,11 +17,21 @@ typedef struct {
         bool hit;           // 1B
     } StepResult;
 
+
+
+/** Tetra geometry model, optimized for SSE instructions.
+ * The x,y,z, and C (constant) components of the normal for the four faces are stored together to facilitate matrix multiplication.
+ *
+ * Normals are oriented so that points inside the tetra have a positive altitude h= dot(p,n)-C
+ */
+
 struct Tetra {
-    __m128 nx,ny,nz,C;      // 4 x 16B = 64B
-    TetraByFaceID   IDfs;   // 4 x 4B = 16 B
-    unsigned adjTetras[4];  // 4 x 4B = 16 B
-    unsigned matID;         // 4 B
+    __m128 nx,ny,nz,C;      	/// Normal components (4 x 16B = 64B)
+    TetraByFaceID   IDfs;   	/// Face IDs (4 x 4B = 16 B)
+    unsigned adjTetras[4];  	/// Adjacent tetras for each face (4 x 4B = 16 B)
+    unsigned faceFlags=0;		/// Flags for each face (4B = 32b -> 8b each)
+    unsigned matID;         	/// Material ID for this tetra (4 B)
+
 
     bool pointWithin(std::array<double,3> p) const
     {
@@ -31,10 +41,57 @@ struct Tetra {
 
     bool pointWithin(__m128) const;
 
+    __m128 heights(__m128) const;
+    std::array<float,4> heights(std::array<float,3>) const;
+
+    __m128 dots(__m128) const;
+    std::array<float,4> dots(std::array<float,3>) const;
+
     StepResult getIntersection(__m128,__m128,__m128 s) const;
 } __attribute__ ((aligned(64)));
 
-inline StepResult Tetra::getIntersection(__m128 p,__m128 d,__m128 s) const
+inline __m128 Tetra::dots(const __m128 d) const
+{
+	return _mm_add_ps(
+			_mm_add_ps(
+					_mm_mul_ps(ny,_mm_shuffle_ps(d,d,_MM_SHUFFLE(1,1,1,1))),
+					_mm_mul_ps(nz,_mm_shuffle_ps(d,d,_MM_SHUFFLE(2,2,2,2)))
+			),
+			_mm_mul_ps(nx,_mm_shuffle_ps(d,d,_MM_SHUFFLE(0,0,0,0))));
+}
+
+inline std::array<float,4> Tetra::dots(const std::array<float,3> d) const
+{
+	std::array<float,4> a{ d[0], d[1], d[2], 0.0f};
+	_mm_store_ps(a.data(), dots(_mm_load_ps(a.data())));
+	return a;
+}
+
+inline __m128 Tetra::heights(const __m128 p) const
+{
+
+    // calculate dot = n (dot) d, height = n (dot) p - C
+    __m128 h1 =             _mm_mul_ps(nx,_mm_shuffle_ps(p,p,_MM_SHUFFLE(0,0,0,0)));
+
+    h1 = _mm_add_ps(h1, _mm_mul_ps(ny,_mm_shuffle_ps(p,p,_MM_SHUFFLE(1,1,1,1))));
+
+    h1 = _mm_add_ps(h1, _mm_mul_ps(nz,_mm_shuffle_ps(p,p,_MM_SHUFFLE(2,2,2,2))));
+
+    // height (=C - p dot n) should be negative if inside tetra, may occasionally be (small) positive due to numerical error
+    // dot negative means facing outwards
+    h1 = _mm_sub_ps(C,h1);
+
+	return h1;
+}
+
+inline std::array<float,4> Tetra::heights(std::array<float,3> pa) const
+{
+	std::array<float,4> a{ pa[0], pa[1], pa[2], 0 };
+	_mm_store_ps(a.data(),heights(_mm_load_ps(a.data())));
+	return a;
+}
+
+inline StepResult Tetra::getIntersection(const __m128 p,const __m128 d,__m128 s) const
 {
     StepResult result;
 
@@ -65,10 +122,12 @@ inline StepResult Tetra::getIntersection(__m128 p,__m128 d,__m128 s) const
     // used to be s below instead of infinity - would return at most s; gave wrong nearest-face results though
     // dist = _mm_blendv_ps(a,b,mask)
     //  dist_i = (mask_i & 0x80000000) ? b_i : a_i;
-    dist = _mm_blendv_ps(_mm_set1_ps(std::numeric_limits<float>::infinity()),dist,_mm_and_ps(_mm_cmpgt_ps(dist,_mm_setzero_ps()),dot));
+    dist = _mm_blendv_ps(
+    			_mm_set1_ps(std::numeric_limits<float>::infinity()),
+				dist,
+				dot);
 
     // at most three of the dot products should be negative
-    // ideally none of the heights should be negative (assuming we're in the tetra)
 
     //      height  dot     h/dot   meaning
     //      +       +       +       OK: inside, facing away (no possible intersection)

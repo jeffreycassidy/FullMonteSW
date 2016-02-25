@@ -41,12 +41,15 @@ const string dir(TEST_DATA_PATH "/TIM-OS/mouse");
 #include <vtkUnstructuredGrid.h>
 #include <vtkPoints.h>
 #include <vtkFloatArray.h>
-#include <FullMonte/VTK/SparseVectorVTK.h>
 #include <vtkUnstructuredGridWriter.h>
 #include <vtkDataObjectToDataSetFilter.h>
-#include <FullMonte/VTK/TetraMeshBaseVTK.h>
+#include <FullMonte/VTK/vtkFullMonteTetraMeshWrapper.h>
+#include <FullMonte/VTK/vtkFullMonteSpatialMapWrapper.h>
+#include <vtkMergeDataObjectFilter.h>
 #include <vtkPolyData.h>
 #include <vtkPolyDataWriter.h>
+#include <vtkGeometryFilter.h>
+#include <vtkExtractCells.h>
 #endif
 
 BOOST_AUTO_TEST_CASE(mouse)
@@ -137,31 +140,10 @@ BOOST_AUTO_TEST_CASE(mouse)
 	BOOST_CHECK_CLOSE(double(e->Ndie), double(Npkt)*0.392, 1.0f);
 	BOOST_CHECK_CLOSE(double(e->Nexit), double(Npkt)*0.607959, 1.0f);
 
-#ifdef WRAP_VTK
-	vtkPoints* P = vtkPoints::New();
-	getVTKPoints(M,P);
-
-	vtkCellArray* ca = vtkCellArray::New();
-	getVTKTetraCells(M,ca);
-
-	vtkUnstructuredGrid *ug = vtkUnstructuredGrid::New();
-	ug->SetCells(VTK_TETRA,ca);
-	ug->SetPoints(P);
-
-
-	vtkUnsignedShortArray *rgn = vtkUnsignedShortArray::New();
-	getVTKTetraRegions(M,rgn);
-
 	const VolumeAbsorbedEnergyMap *V = VK.getResultByType<VolumeAbsorbedEnergyMap>();
 
 	if (!V)
 		throw std::logic_error("Failed to get VolumeAbsorbedEnergyMap");
-
-	vtkFloatArray *ve = vtkFloatArray::New();
-	getVTKFloatArray(V->get(),ve);
-
-	//ug->GetCellData()->SetScalars(rgn);
-	//ug->GetCellData()->SetScalars(ve);
 
 	FluenceConverter FC;
 	FC.mesh(&M);
@@ -169,17 +151,8 @@ BOOST_AUTO_TEST_CASE(mouse)
 
 	VolumeFluenceMap phi = FC.convertToFluence(*V);
 
-	vtkFloatArray *vtkPhi = vtkFloatArray::New();
-	getVTKFloatArray(phi.get(),vtkPhi);
 
-	ug->GetCellData()->SetScalars(vtkPhi);
-
-	vtkUnstructuredGridWriter *W = vtkUnstructuredGridWriter::New();
-
-	W->SetInputData(ug);
-	W->SetFileName("mouse.volume.vtk");
-	W->Update();
-	W->Delete();
+#ifdef WRAP_VTK
 #endif
 }
 
@@ -268,13 +241,6 @@ BOOST_AUTO_TEST_CASE(mouseSurf)
 	BOOST_CHECK_CLOSE(double(e->Ndie), double(Npkt)*0.392, 1.0f);
 	BOOST_CHECK_CLOSE(double(e->Nexit), double(Npkt)*0.607959, 1.0f);
 
-#ifdef WRAP_VTK
-	vtkPoints* P = vtkPoints::New();
-	getVTKPoints(M,P);
-
-	vtkCellArray* ca = vtkCellArray::New();
-	vtkIdTypeArray* ids = vtkIdTypeArray::New();
-
 	const SurfaceExitEnergyMap *S = SK.getResultByType<SurfaceExitEnergyMap>();
 
 	if (!S)
@@ -283,42 +249,57 @@ BOOST_AUTO_TEST_CASE(mouseSurf)
 	FluenceConverter FC;
 	FC.mesh(&M);
 
-	SurfaceFluenceMap phi = FC.convertToFluence(*S);
+	SurfaceFluenceMap phiS = FC.convertToFluence(*S);
+
+#ifdef WRAP_VTK
+
+	vtkFullMonteTetraMeshWrapper* vtkM = vtkFullMonteTetraMeshWrapper::New();
+		vtkM->mesh(&M);
+		vtkM->update();
+
+	/// Build surface rep
+
+	vtkFullMonteSpatialMapWrapper<vtkFloatArray,float,unsigned> *vtkSurfPhi = vtkFullMonteSpatialMapWrapper<vtkFloatArray,float,unsigned>::New();
+		vtkSurfPhi->source(phiS.get());
+		vtkSurfPhi->array()->SetName("Surface Fluence J/cm2");
+		vtkSurfPhi->update();
+
+	// Create fields for cell data
+	vtkFieldData* vtkSurfaceField = vtkFieldData::New();
+		vtkSurfaceField->AddArray(vtkSurfPhi->array());
+
+	// Create data object holding only the cell data, no geometry
+	vtkDataObject* vtkSurfDO = vtkDataObject::New();
+		vtkSurfDO->SetFieldData(vtkSurfaceField);
+
+	cout << "VTK faces: " << vtkM->faces()->GetNumberOfCells() << " fluence entries: " << vtkSurfPhi->array()->GetNumberOfTuples() << endl;
+
+	// Merge data object onto geometry
+	vtkMergeDataObjectFilter *vtkMergeSurfaceFluence = vtkMergeDataObjectFilter::New();
+		vtkMergeSurfaceFluence->SetDataObjectInputData(vtkSurfDO);
+		vtkMergeSurfaceFluence->SetInputData(vtkM->faces());
+		vtkMergeSurfaceFluence->SetOutputFieldToCellDataField();
 
 	const unsigned region = 0U;
 
 	std::vector<unsigned> IDfs = M.getRegionBoundaryTris(region);
 
-	vtkFloatArray *vtkPhi = vtkFloatArray::New();
-	vtkPhi->SetNumberOfTuples(IDfs.size());
-	ids->SetNumberOfTuples(4*IDfs.size());
+	vtkIdList* surfaceIDs = vtkIdList::New();
 
-	vtkIdType j=0;
+	boost::for_each(IDfs, [surfaceIDs](unsigned i){ surfaceIDs->InsertNextId(i); });
 
-	for(const auto IDf : IDfs | boost::adaptors::indexed(0U))
-	{
-		FaceByPointID IDps = M.getFacePointIDs(IDf.value());
-		ids->SetValue(j++,3);
+	vtkExtractCells *vtkExtractSurface = vtkExtractCells::New();
+		vtkExtractSurface->SetInputConnection(vtkMergeSurfaceFluence->GetOutputPort());
+		vtkExtractSurface->SetCellList(surfaceIDs);
+		vtkExtractSurface->Update();
 
-		for(unsigned i=0;i<3;++i)
-			ids->SetValue(j++,IDps[i]);
-
-		vtkPhi->SetValue(IDf.index(),phi[IDf.value()]);
-	}
-
-	ca->SetCells(IDfs.size(),ids);
-
-	vtkPolyData *pd = vtkPolyData::New();
-	pd->SetPolys(ca);
-	pd->SetPoints(P);
-
-	pd->GetCellData()->SetScalars(vtkPhi);
+	vtkGeometryFilter* ug2pd = vtkGeometryFilter::New();
+		ug2pd->SetInputConnection(vtkExtractSurface->GetOutputPort());
 
 	vtkPolyDataWriter *W = vtkPolyDataWriter::New();
-
-	W->SetInputData(pd);
-	W->SetFileName("mouse.surface.vtk");
-	W->Update();
-	W->Delete();
+		W->SetInputConnection(ug2pd->GetOutputPort());
+		W->SetFileName("mouse.surface.vtk");
+		W->Update();
+		W->Delete();
 #endif
 }

@@ -78,12 +78,11 @@ protected:
 };
 
 
-
 template<typename Value,typename Index>SpatialMapBase<Value,Index>* SpatialMapBase<Value,Index>::newFromVector(std::vector<Value>&& v)
 {
 	unsigned nnz=0;
 	for(const auto val : v)
-		nnz += val != 0;
+		nnz += nonzero(val);
 
 	unsigned Nbsparse = (sizeof(Value)+sizeof(Index))*nnz;
 	unsigned Nbdense  = sizeof(Value)*v.size();

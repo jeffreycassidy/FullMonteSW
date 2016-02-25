@@ -13,6 +13,8 @@
 
 #include "newgeom.hpp"
 
+template<typename T>class FilterBase;
+
 /** In lexicographical order, gives the point indices of all four faces */
 
 constexpr std::array<std::array<unsigned char,3>,4> tetra_face_indices {
@@ -95,7 +97,6 @@ public:
 
 	// Accessors for various point/face constructs
     Face                    getFace(int id)                 const { Face f = m_faces[abs(id)]; if(id<0){ f.flip(); } return f; }
-    int                     getFaceID(FaceByPointID)        const;
     const FaceByPointID&    getFacePointIDs(unsigned id)    const { assert(id < m_facePoints.size()); return m_facePoints[id]; }
 	const TetraByFaceID&    getTetraByFaceID(unsigned id)   const { return m_tetraFaces[id]; }
     unsigned                getTetraFromFace(int IDf)       const;
@@ -122,18 +123,19 @@ public:
     // checks if a point is within a given tetra by expressing as a linear combination of the corner points
     bool isWithinByPoints(int,const Point<3,double>&) const;
 
-    vector<unsigned> getMaterialMap() const { return m_tetraMaterials; }
-
 	// checks if faces are oriented correctly
 	bool checkFaces() const;
 
 	std::vector<unsigned> tetras_close_to(Point<3,double> p0,float) const;
 
-    bool faceBoundsRegion(unsigned region,int IDf) const {
-        	array<unsigned,2> p = m_faceTetras[abs(IDf)];		// Get the two incident m_tetras
-        	unsigned r0 = m_tetraMaterials[p[0]], r1 = m_tetraMaterials[p[1]];				// check material types
-        	return r0!=r1 && (r1==region || r0==region);
-        }
+	bool faceBoundsRegion(unsigned region,int IDf) const
+	{
+		array<unsigned,2> p = m_faceTetras[abs(IDf)];		// Get the two incident m_tetras
+		unsigned r0 = m_tetraMaterials[p[0]], r1 = m_tetraMaterials[p[1]];				// check material types
+		return r0!=r1 && (r1==region || r0==region);
+	}
+
+	void setFacesForFluenceCounting(const FilterBase<int>* TF);		/// Predicate specifying if a given face should have its fluence counted
 
     std::vector<unsigned> getRegionBoundaryTris(unsigned r) const;
 
@@ -144,6 +146,9 @@ public:
     std::tuple<PointIntersectionResult,int> findNextFaceAlongRay(Point<3,double> p,UnitVector<3,double> dir,int IDf_exclude=0) const;
 
 private:
+
+    void printTetra(unsigned IDt) const;		// Debug method
+
 	vector<TetraByFaceID>	    	m_tetraFaces;       // tetra -> 4 face IDs
     vector<FaceByPointID>       	m_facePoints;       // face ID -> 3 point IDs
 	vector<Face>			    	m_faces;          	// faces (with normals and constants)
@@ -156,7 +161,7 @@ private:
     /// Build tetras and faces from the points and point-index lists
 	void buildTetrasAndFaces();
 
-	vector<Tetra> makeKernelTetras() const;
+	void makeKernelTetras();
 
     template<class Archive>void serialize(Archive& ar,const unsigned ver)
     {

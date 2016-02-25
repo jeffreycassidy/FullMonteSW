@@ -40,6 +40,9 @@ public:
     inline void eventReflectInternal(const Point3,const UVect3){};  //      internal reflection
     inline void eventReflectFresnel(const Point3,UVect3){};         //      fresnel reflection
 
+    inline void eventNewTetra(const Packet& pkt,const Tetra& T0,const unsigned tetraFaceIndex){};
+    	// packet pkt propagating from tetra T0 from face (tetraFaceIndex) 0..3
+
     // termination events
     inline void eventExit(const Ray3,int,double){};            // exited geometry
     inline void eventDie(double){};                                     // lost Russian roulette
@@ -51,6 +54,7 @@ public:
     inline void eventNoHit(const Packet&,const Tetra&){};			// No hit in intersection
 
     inline void eventCommit(){};
+    inline void eventClear(){};
 
     static std::list<OutputData*> results(const State& st)
 	{

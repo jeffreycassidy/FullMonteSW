@@ -22,7 +22,6 @@ protected:
 	SSEBase(__m128 v) : m_v(v){}
 
 public:
-	__m128 m_v;
 
 	SSEBase abs() const
 	{
@@ -30,13 +29,22 @@ public:
 		return _mm_and_ps(__m128(sign),m_v);
 	}
 
-
 	explicit operator __m128() const { return m_v; }
+
+	float operator[](unsigned i) const
+	{
+		float f[4];
+		_mm_store_ps(f,m_v);
+		return f[i];
+	}
 
 	static SSEBase undef()	{ return SSEBase(_mm_set1_ps(std::numeric_limits<float>::quiet_NaN())); 	}
 	static SSEBase zero() 	{ return SSEBase(_mm_setzero_ps()); 										}
 	static SSEBase one()	{ return SSEBase(_mm_set_ss(1.0f)); }
 	static SSEBase ones()	{ return SSEBase(_mm_set1_ps(1.0f)); }
+
+protected:
+	__m128 m_v;
 };
 
 class Scalar : public SSEBase
@@ -101,7 +109,7 @@ public:
 
 	Vector operator*(const Scalar rhs) const
 	{
-		return Vector(_mm_mul_ps(m_v,rhs.m_v));
+		return Vector(_mm_mul_ps(m_v,__m128(rhs)));
 	}
 
 	Vector operator/(const Scalar rhs) const
@@ -146,6 +154,7 @@ public:
 	static Vector zero() { return SSEBase::zero(); 	}
 
 protected:
+	using SSEBase::m_v;
 	explicit Vector(SSEBase v) : SSEBase(v){}
 	static constexpr int 	mask = (1<<D)-1;			// Mask indicating which elements are occupied
 
@@ -221,9 +230,9 @@ public:
 	{
 		Scalar norm2 = dot(v,v);
 
-		__m128 k = _mm_sqrt_ss(norm2.m_v);
+		__m128 k = _mm_sqrt_ss(__m128(norm2));
 
-		return _mm_div_ps(v.m_v,_mm_shuffle_ps(k,k,_MM_SHUFFLE(0,0,0,0)));
+		return _mm_div_ps(__m128(v),_mm_shuffle_ps(k,k,_MM_SHUFFLE(0,0,0,0)));
 	}
 
 	static UnitVector normalize_approx(Vector<D> v)

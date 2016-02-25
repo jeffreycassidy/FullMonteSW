@@ -22,6 +22,31 @@
 
 #define MAX_MATERIALS 32
 
+class AutoStreamBuffer;
+template<class T>AutoStreamBuffer& operator<<(AutoStreamBuffer& sb,const T& v);
+
+class AutoStreamBuffer
+{
+public:
+	AutoStreamBuffer(std::ostream& os) : m_os(os){}
+	~AutoStreamBuffer()
+	{
+		m_os << m_ss.str();
+	}
+
+private:
+	std::ostream&		m_os;
+	std::stringstream	m_ss;
+
+	template<class T>friend AutoStreamBuffer& operator<<(AutoStreamBuffer&,const T&);
+};
+
+template<class T>AutoStreamBuffer& operator<<(AutoStreamBuffer& sb,const T& v)
+{
+	sb.m_ss << v;
+	return sb;
+}
+
 
 template<class RNGType>template<class Logger> class alignas(32) TetraMCKernel<RNGType>::Thread : public ThreadedMCKernelBase::Thread
 {
@@ -161,13 +186,13 @@ template<class RNG>template<class Logger>int TetraMCKernel<RNG>::Thread<Logger>:
     {
         assert(pkt.dir.d.check(SSE::Silent,1e-4) && pkt.dir.a.check(SSE::Silent,1e-4) && pkt.dir.b.check(SSE::Silent,1e-4));
 
-    	assert(0 <= _mm_cvtss_f32(pkt.s));
-    	assert(_mm_cvtss_f32(pkt.s) < 1e3);
-
         // draw a hop length; pkt.s = { physical distance, MFPs to go, time, 0 }
         pkt.s = _mm_mul_ps(
         			_mm_load1_ps(m_rng.floatExp()),
 					currMat.m_init);
+
+    	assert(0 <= _mm_cvtss_f32(pkt.s));
+    	assert(_mm_cvtss_f32(pkt.s) < 1e3);
 
         // attempt hop
         stepResult = currTetra.getIntersection(pkt.p,__m128(pkt.direction()),pkt.s);
@@ -179,8 +204,11 @@ template<class RNG>template<class Logger>int TetraMCKernel<RNG>::Thread<Logger>:
             // extremely rarely, this can be a problem; we get no match in the getIntersection routine
             if(stepResult.idx > 3)
             {
-                cerr << "Abnormal condition: stepResult.idx=" << stepResult.idx << ", IDte=" << stepResult.IDte << endl;
-                cerr << "  Terminating packet" << endl;
+            	{
+            		AutoStreamBuffer b(cerr);
+            		b << "Abnormal condition: stepResult.idx=" << stepResult.idx << ", IDte=" << stepResult.IDte <<
+            			"  Terminating packet\n";
+            	}
                 log_event(logger,Events::nohit,pkt,currTetra);
                 return -1;
             }
@@ -268,31 +296,41 @@ template<class RNG>template<class Logger>int TetraMCKernel<RNG>::Thread<Logger>:
                 } // if: refractive index difference
             } // if: material change
 
-            if (IDt_next == 0)
+
+            // changing tetras
+            if (IDt_next != IDt)
             {
-            	log_event(logger,Events::exit,make_pair(pkt.p,__m128(pkt.direction())),stepResult.IDfe,pkt.w);
-                return 0;
-            }
-            else if (IDt != IDt_next)
-            {
-                IDt = IDt_next;
-                IDm_next = IDm_bound;
-                currTetra = m_parentKernel.m_mesh->getTetra(IDt);
+            	log_event(logger,Events::newTetra,pkt,currTetra,stepResult.idx);
+
+            	if (IDt_next == 0)				// exiting mesh
+            	{
+            		log_event(logger,Events::exit,make_pair(pkt.p,__m128(pkt.direction())),stepResult.IDfe,pkt.w);
+            		return 0;
+            	}
+            	else							// not exiting mesh
+            	{
+            		IDt = IDt_next;
+            		IDm_next = IDm_bound;
+            		currTetra=m_parentKernel.m_mesh->getTetra(IDt);
+            	}
             }
 
+            // if material ID changed, fetch new material and update step length remaining
             if (IDm != IDm_next)
             {
                 IDm = IDm_next;
                 currMat = m_parentKernel.m_mats[IDm];
                 pkt.s = _mm_div_ss(_mm_movehdup_ps(pkt.s), _mm_set_ss(currMat.muT()));
             }
+
+            // get the next intersection
             stepResult=currTetra.getIntersection(pkt.p,__m128(pkt.direction()),pkt.s);
             pkt.p   = stepResult.Pe;
         }
         if (Nhit >= m_parentKernel.Nhit_max_)
         {
-        	cerr << "Terminated due to unusual number of interface hits" << endl;
-        	cerr << "  Nhit=" << Nhit << " dimensionless step remaining=" << as_array(pkt.s)[0] << endl;
+        	cerr << "Terminated due to unusual number of interface hits at tetra " << IDt
+        			<< "  Nhit=" << Nhit << " dimensionless step remaining=" << as_array(pkt.s)[0]  << " w=" << pkt.w << endl;
         	log_event(logger,Events::abnormal,pkt,Nstep,Nhit);
         	return -2;
         }
@@ -335,6 +373,12 @@ template<class RNG>template<class Logger>int TetraMCKernel<RNG>::Thread<Logger>:
 
     	if (scatter(pkt,currMat,currTetra))
     		log_event(logger,Events::scatter,__m128(pkt.direction()),__m128(pkt.direction()),std::numeric_limits<float>::quiet_NaN());
+    }
+
+    {
+    	AutoStreamBuffer b(cerr);
+    	b << "Terminated due to unusual number of steps at tetra " << IDt
+			<< " dimensionless step remaining=" << as_array(pkt.s)[0] << " w=" << pkt.w << '\n';
     }
 
     // should only fall through to here in abnormal circumstances (too many steps)

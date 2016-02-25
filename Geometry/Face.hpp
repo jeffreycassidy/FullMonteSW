@@ -19,7 +19,6 @@ public:
     double getConstant() const { return C; }
 
 	// query points
-	bool   pointAbove(const Point<3,double>&)  const;
 	double pointHeight(const Point<3,double>&) const;
 
 	// Test if a ray intersects the face
@@ -39,8 +38,6 @@ public:
     double ny() const { return normal[1]; }
     double nz() const { return normal[2]; }
     double nC() const { return C; }
-
-	friend ostream& operator<<(ostream&,const Face&);
 
 private:
 	// plane definition

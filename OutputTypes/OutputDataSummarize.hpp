@@ -25,6 +25,8 @@ private:
 	virtual void doVisit(SurfaceExitEnergyMap*) override;
 	virtual void doVisit(SurfaceFluenceMap*) override;
 	virtual void doVisit(VolumeFluenceMap*) override;
+	virtual void doVisit(InternalSurfaceFluenceMap*) override;
+	virtual void doVisit(InternalSurfaceEnergyMap*) override;
 
 	std::ostream& m_os;
 };

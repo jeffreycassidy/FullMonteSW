@@ -41,6 +41,7 @@ private:
 };
 
 #include <string>
+#include <stdexcept>
 
 class OutputData;
 
@@ -50,6 +51,9 @@ class VolumeAbsorbedEnergyMap;
 class SurfaceFluenceMap;
 class VolumeFluenceMap;
 class SurfaceExitEnergyMap;
+class FluenceLineQuery;
+class InternalSurfaceEnergyMap;
+class InternalSurfaceFluenceMap;
 
 class OutputData : public clonable_base<OutputData>
 {
@@ -68,13 +72,35 @@ public:
 	void visit(OutputData* d){ d->acceptVisitor(this); }
 
 	// visitor implementations
-	virtual void doVisit(OutputData* d)=0;
-	virtual void doVisit(MCConservationCountsOutput* cc)=0;
-	virtual void doVisit(MCEventCountsOutput* cc)=0;
-	virtual void doVisit(VolumeAbsorbedEnergyMap* em)=0;
-	virtual void doVisit(SurfaceExitEnergyMap* sm)=0;
-	virtual void doVisit(SurfaceFluenceMap* sm)=0;
-	virtual void doVisit(VolumeFluenceMap* vm)=0;
+	virtual void doVisit(OutputData* d)
+		{ throw std::logic_error("OutputData::Visitor method not implemented: generic case doVisit(OutputData*)"); }
+
+	virtual void doVisit(MCConservationCountsOutput* cc)
+		{ throw std::logic_error("OutputData::Visitor method not implemented: doVisit(MCConservationCountsOutput*)"); }
+
+	virtual void doVisit(MCEventCountsOutput* cc)
+		{ throw std::logic_error("OutputData::Visitor method not implemented: doVisit(MCEventCountsOutput*)"); }
+
+	virtual void doVisit(VolumeAbsorbedEnergyMap* em)
+		{ throw std::logic_error("OutputData::Visitor method not implemented: doVisit(VolumeAbsorbedEnergyMap*)"); }
+
+	virtual void doVisit(SurfaceExitEnergyMap* sm)
+		{ throw std::logic_error("OutputData::Visitor method not implemented: doVisit(SurfaceExitEnergyMap*)"); }
+
+	virtual void doVisit(SurfaceFluenceMap* sm)
+		{ throw std::logic_error("OutputData::Visitor method not implemented: doVisit(SurfaceFluenceMap*)"); }
+
+	virtual void doVisit(VolumeFluenceMap* vm)
+		{ throw std::logic_error("OutputData::Visitor method not implemented: doVisit(VolumeFluenceMap*)"); }
+
+	virtual void doVisit(FluenceLineQuery* flq)
+		{ throw std::logic_error("OutputData::Visitor method not implemented: doVisit(FluenceLineQuery*)"); }
+
+	virtual void doVisit(InternalSurfaceEnergyMap* flq)
+		{ throw std::logic_error("OutputData::Visitor method not implemented: doVisit(InternalSurfaceEnergyMap*)"); }
+
+	virtual void doVisit(InternalSurfaceFluenceMap* flq)
+		{ throw std::logic_error("OutputData::Visitor method not implemented: doVisit(InternalSurfaceFluenceMap*)"); }
 
 protected:
 	Visitor(){}

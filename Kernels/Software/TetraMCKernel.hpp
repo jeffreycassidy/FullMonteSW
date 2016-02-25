@@ -45,17 +45,14 @@ template<class RNG>void TetraMCKernel<RNG>::parentPrepare()
 	if (!m_src)
 	{
 		cerr << "ERROR: No source specified" << endl;
-		throw std::logic_error("TetraMCKernel<RNG>::prepare_ no sources specified");
+		throw std::logic_error("TetraMCKernel<RNG>::parentPrepare no sources specified");
 	}
 
 	if (!m_mesh)
 	{
 		cerr << "ERROR: No mesh specified" << endl;
-		throw std::logic_error("TetraMCKernel<RNG>::prepare_ no mesh specified");
+		throw std::logic_error("TetraMCKernel<RNG>::parentPrepare no mesh specified");
 	}
-
-	// copy sources
-	cout << "Source: " << *m_src << endl;
 
 	Emitter::TetraEmitterFactory<RNG> factory(m_mesh);
 
@@ -70,10 +67,6 @@ template<class RNG>void TetraMCKernel<RNG>::parentPrepare()
 		m_materials,
 		m_mats.begin());
 
-	cout << "Materials: " << endl;
-	for(const Material& m : m_mats)
-		cout << "  " << m << endl;
-
 	std::vector<unsigned> hist;
 	for(unsigned i=0; i<=m_mesh->getNt(); ++i)
 	{
@@ -82,11 +75,6 @@ template<class RNG>void TetraMCKernel<RNG>::parentPrepare()
 			hist.resize(mat+1);
 		hist[mat]++;
 	}
-
-	cout << "Material | Tetra Count" << endl;
-	unsigned i=0;
-	for(auto h : hist)
-		cout << std::setw(2) << i++ << ": " << h << endl;
 }
 
 

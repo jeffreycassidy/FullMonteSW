@@ -101,3 +101,15 @@ void OutputDataSummarize::doVisit(VolumeFluenceMap* vf)
 
 	m_os << "OutputDataSummarize visitor not defined for OutputData of type '" << vf->typeString() << "'" << endl;
 }
+
+void OutputDataSummarize::doVisit(InternalSurfaceFluenceMap* sf)
+{
+
+	m_os << "OutputDataSummarize visitor not defined for OutputData of type '" << sf->typeString() << "'" << endl;
+}
+
+void OutputDataSummarize::doVisit(InternalSurfaceEnergyMap* se)
+{
+
+	m_os << "OutputDataSummarize visitor not defined for OutputData of type '" << se->typeString() << "'" << endl;
+}

@@ -48,6 +48,8 @@ public:
 
     inline void eventAbnormal(const Packet&,unsigned,unsigned)					{ ++m_events.Nabnormal; }
 
+    inline void eventClear(){ clear(); }
+
 private:
     MCEventCounts m_events;
 };

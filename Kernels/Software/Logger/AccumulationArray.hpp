@@ -79,10 +79,17 @@ public:
 					commit();
 					q_curr++;
 				}
-				q_curr->second=0;
+				q_curr->second=T();
 				q_curr->first=i_last=i;
 			}
 			return q_curr->second;
+		}
+
+		void clear()
+		{
+			// reset state
+			q_curr=q_start-1;
+			i_last=-1;
 		}
 
 		/// Commit all buffered updates atomically
@@ -95,12 +102,15 @@ public:
 					master[p->first] += p->second;
 				master.m_mutex.unlock();
 
-				// reset state
-				q_curr=q_start-1;
-				i_last=-1;
+				clear();
 			}
 		}
 	};
+
+	void clear()
+	{
+		boost::fill(v,T());
+	}
 
 	T& operator[](unsigned i){ return v[i]; }
 

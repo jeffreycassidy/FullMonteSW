@@ -23,5 +23,8 @@ void TetraSurfaceKernel::postfinish()
 
 void TetraSurfaceKernel::prestart()
 {
-
+	cout << "TetraSurfaceKernel::prestart!" << endl;
+	get<0>(m_logger).clear();
+	get<1>(m_logger).clear();
+	get<2>(m_logger).clear();
 }

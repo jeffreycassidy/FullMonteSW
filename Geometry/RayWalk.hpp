@@ -5,12 +5,14 @@
  *      Author: jcassidy
  */
 
+#ifndef GEOMETRY_RAYWALK_HPP_
+#define GEOMETRY_RAYWALK_HPP_
 #include <array>
-
-#include "newgeom.hpp"
 
 #include <boost/iterator.hpp>
 #include <boost/iterator/iterator_facade.hpp>
+
+#include <boost/range/any_range.hpp>
 
 class TetraMesh;
 
@@ -28,6 +30,45 @@ struct WalkSegment {
 
 	unsigned IDt=0;				// current tetra (=0 if exterior to mesh)
 	unsigned matID=0;			// current material (=0 if exterior to mesh)
+};
+
+
+class LineQuery
+{
+public:
+	LineQuery();
+
+	/// Get/set associated mesh
+	const TetraMesh*		mesh() 							const;
+	void					mesh(const TetraMesh*);
+
+	/// Get/set origin
+	std::array<float,3>		origin() 						const;
+	void					origin(std::array<float,3> p);
+
+	/// Get/set direction of travel
+	std::array<float,3>		direction()						const;
+	void					direction(std::array<float,3> d);
+
+	/// Set direction and length
+	void 					destination(std::array<float,3> p1);
+
+	/// Get/set length of segment (preserves origin & direction, extends/truncates from destination)
+	float 					length() const;
+	void					length(float l);
+
+	boost::any_range<
+		const WalkSegment,
+		boost::forward_traversal_tag,
+		const WalkSegment&,
+		std::ptrdiff_t
+		> 	result() const;
+
+private:
+	const TetraMesh* 		m_mesh=nullptr;
+	std::array<float,3>		m_origin;
+	std::array<float,3>		m_direction;
+	float					m_length=std::numeric_limits<float>::infinity();
 };
 
 
@@ -55,28 +96,36 @@ class RayWalkIterator : public boost::iterator_facade<
 {
 
 public:
-
 	// default initializer yields end() for all walks
 	RayWalkIterator(){}
 	RayWalkIterator(const RayWalkIterator&) = default;
 
-	static RayWalkIterator init(const TetraMesh& M,const std::array<float,3> p0,const std::array<float,3> dir);
+	/// Initializes
+	static RayWalkIterator init(const TetraMesh& M,const std::array<float,3> p0,const std::array<float,3> dir,float dist=0.0f);
+
+	/// Creates an end iterator at the specified distance from the origin point
+	static RayWalkIterator endAt(float d=std::numeric_limits<float>::infinity());
+
+	/// Copies the iterator, but resets the distance to origin to zero
+	static RayWalkIterator restartFrom(const RayWalkIterator&);
 
 	/// boost::iterator_facade requirements
 	const WalkSegment& dereference() const;
 	bool equal(const RayWalkIterator& rhs) const;
 	void increment();
 
-	/// Calculate a setup when inside a tetra
-	void stepInTetra();
-
-	/// Calculate a step outside a tetra
-	void stepExterior();
 
 private:
+	/// Calculate a setup when inside a tetra
+	void finishStepInTetra();
+
+	/// Calculate a step outside a tetra
+	void finishStepExterior();
+
 	const TetraMesh* 		m_mesh=nullptr;									// the mesh being walked
 	std::array<float,3> 	m_dir=std::array<float,3>{NAN,NAN,NAN};		// the direction of walk
 
 	WalkSegment				m_currSeg;										// current segment (dereference value)
 	unsigned				nextTet_=0;
 };
+#endif

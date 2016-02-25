@@ -9,6 +9,8 @@
 #include <boost/serialization/nvp.hpp>
 #include <boost/serialization/access.hpp>
 
+#include <boost/range/algorithm.hpp>
+
 
 /** TetraMeshBase contains the bare essentials of a tetrahedral mesh: points, tetras (by 4 point indices) and a region code for
  * each tetra. Generally tetra 0 and point 0 are dummy entries, to facilitate conversion between 0-based and 1-based indexing.
@@ -58,9 +60,14 @@ public:
     const std::vector<Point<3,double> >& getPoints() const { return m_points; }
     const std::vector<TetraByPointID>& getTetrasByPointID() const { return m_tetraPoints; }
 
+    unsigned getNumberOfRegions() const
+    {
+    	return *boost::max_element(m_tetraMaterials);
+    }
 
-    unsigned                getMaterial(unsigned IDt) const { return m_tetraMaterials[IDt]; }
-    const std::vector<unsigned>& getMaterials() const { return m_tetraMaterials; }
+
+    unsigned                		getMaterial(unsigned IDt) const { return m_tetraMaterials[IDt]; }
+    const std::vector<unsigned>& 	getMaterials() const { return m_tetraMaterials; }
 
     // adjust units
     float			cmPerLengthUnit() 			const 	{ return m_cmPerLengthUnit; }

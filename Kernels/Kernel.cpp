@@ -58,6 +58,8 @@ void Kernel::startAsync()
 	if (m_status != Idle && m_status != Finished)
 		throw std::logic_error("Kernel::runSync called while status not Idle || Finished");
 
+	m_results.clear();
+
 	// launch a thread that runs the normal synchronous routine
 	m_parentThread = std::thread(std::mem_fn(&Kernel::runSync),this);
 

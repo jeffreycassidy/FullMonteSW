@@ -29,6 +29,8 @@ public:
 
 	void clear() { *this = LoggerConservation(); }
 
+	inline void eventClear(){ clear(); }
+
 	const State& state() const { return m_counts; }
 
 	static std::list<OutputData*> results(const State& st)

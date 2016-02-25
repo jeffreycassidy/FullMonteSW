@@ -31,9 +31,8 @@ public:
 
 	virtual ~TIMOSWriter(){}
 
-//	virtual void write(const TetraMesh&) const override{}
 	void write(Source::Base*);
-//
+
 	virtual void writeSurfFluence(std::string fn,const TetraMesh& mesh,const std::vector<double>& phi_s,std::string) const;
 	virtual void writeVolFluence(std::string fn,const TetraMesh& mesh,const std::vector<double>& phi_s,std::string) const;
 

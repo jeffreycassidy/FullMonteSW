@@ -114,7 +114,7 @@ public:
 			m_idx(0),
 			m_end(itEnd)
 		{
-			while(base_reference() != m_end && *base_reference() == 0)
+			while(base_reference() != m_end && !nonzero(*base_reference()))
 				increment();
 			m_val = std::make_pair(m_idx,*base_reference());
 		}
@@ -131,7 +131,7 @@ public:
 				++base_reference();
 				++m_idx;
 			}
-			while (base_reference() != m_end && *base_reference() == 0);
+			while (base_reference() != m_end && !nonzero(*base_reference()));
 
 			m_val = std::make_pair(m_idx,*base_reference());
 		}
@@ -168,10 +168,10 @@ private:
 	void updateStats()
 	{
 		m_nnz=0;
-		m_sum=0;
+		m_sum=Value();
 		for(const auto v : m_v)
 		{
-			m_nnz += v != 0;
+			m_nnz += nonzero(v);
 			m_sum += v;
 		}
 

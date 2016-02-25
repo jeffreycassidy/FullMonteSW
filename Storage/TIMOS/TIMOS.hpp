@@ -1,10 +1,7 @@
 #ifndef TIMOS_HPP_INCLUDED_
 #define TIMOS_HPP_INCLUDED_
 
-
 #include <FullMonte/Geometry/SimpleMaterial.hpp>
-
-#include <FullMonte/Geometry/Sources/Base.hpp>
 
 #include <string>
 #include <cmath>
@@ -80,8 +77,6 @@ protected:
 		float n_ext=NAN;
 	};
 
-
-
 	static Source::Base* 	convertToSource(SourceDef);
 	static SourceDef 		convertFromSource(const Source::Base*);
 
@@ -89,10 +84,5 @@ protected:
 
 	friend std::ostream& operator<<(std::ostream& os,const TIMOS::SourceDef& s);
 };
-
-inline void ping(float w,std::array<float,3> a,std::array<float,3> b)
-{
-	std::cout << " Hello! w=" << w << " Array is " << a[0] << ' ' << a[1] << ' ' << a[2] << " -- " << b[0] << ' ' << b[1] << ' ' << b[2] << std::endl;
-}
 
 #endif /* TIMOS_HPP_ */

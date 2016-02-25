@@ -12,7 +12,11 @@
 void ThreadedMCKernelBase::awaitFinish()
 {
 	for(auto* t : m_workers)
+	{
 		t->awaitFinish();
+		delete t;			// if std::thread outlives main thread, an exception is raised so make sure it dies when it's done
+	}
+	m_workers.clear();
 }
 
 bool ThreadedMCKernelBase::done() const
@@ -34,6 +38,8 @@ void ThreadedMCKernelBase::start_()
 {
 	unsigned long long N = Npkt_/Nth_;
 
+	prestart();
+
 	for(auto t : m_workers)
 		t->start(N);
 }
@@ -45,6 +51,9 @@ void ThreadedMCKernelBase::prepare_()
 
 	// create individual thread instances but do not start them yet
 	m_workers.resize(Nth_);
+
+	prestart();
+
 	for(auto& w: m_workers)
 		w = makeThread();
 }

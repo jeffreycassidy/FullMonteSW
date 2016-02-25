@@ -21,6 +21,9 @@ struct value_range_t {};
 struct indexed_range_t {};
 struct ordered_indexed_range_t{};
 
+
+template<typename T>bool nonzero(T i){ return i != 0; }
+
 template<typename ValueType,typename IndexType=unsigned> class SparseVector
 {
 public:
@@ -203,7 +206,7 @@ private:
 			std::vector<std::pair<Index,Value>>(m_contents).swap(m_contents);
 
 		// gather sum
-		m_sum=0;
+		m_sum=Value();
 		for(const auto o : m_contents)
 			m_sum += o.second;
 	}
@@ -213,7 +216,7 @@ private:
 
 	std::vector<std::pair<Index,Value>> 	m_contents;
 	Index 									m_dim=0;
-	Value									m_sum=0;
+	Value									m_sum=Value();
 };
 
 template<typename Value,typename Index>Value SparseVector<Value,Index>::operator[](Index i) const
@@ -273,7 +276,7 @@ template<typename Value,typename Index>template<class ValueRange>SparseVector<Va
 	m_contents.reserve(nnzHint);
 
 	for(auto it=begin(R); it != end(R); ++it,++m_dim)
-		if (*it != 0)
+		if (nonzero(*it))
 			m_contents.push_back(std::make_pair(m_dim,*it));
 
 	construct();

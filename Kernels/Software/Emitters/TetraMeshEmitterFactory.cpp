@@ -31,9 +31,6 @@
 
 #include <FullMonte/Geometry/TetraMesh.hpp>
 
-
-
-
 #include "../SSEMath.hpp"
 
 namespace Emitter
@@ -81,14 +78,65 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::PencilBeam* pb)
 
 	if (tetHint != -1U && tetHint != tet)
 		cout << "WARNING: Tetra hint provided (" << tetHint << ") does not match the tetra located by search (" << tet << ")" << endl;
+	else if (tetHint == -1U)
+		cout << "INFO: No tetra hint provided, found " << tet << endl;
+
+//	TetraByPointID IDps=m_mesh->getTetraPointIDs(tet);
+//
+//	cout << "Tetra point IDs: ";
+//	for(unsigned i=0;i<4;++i)
+//		cout << IDps[i] << ' ';
+//	cout << endl;
+//
+//	cout << "Tetra point coords: ";
+//	for(unsigned i=0;i<4;++i)
+//	{
+//		::Point<3,double> p = m_mesh->points()[IDps[i]];
+//		cout << "(" << p[0] << ',' << p[1] << ',' << p[2] << ")" << endl;
+//	}
+
+	cout << "Tetra normals: ";
+
+	::Tetra T = m_mesh->getTetra(tet);
+	std::array<float,4> h=T.heights(pos);
+
+	cout << "Heights: ";
+	for(unsigned i=0;i<4;++i)
+		cout << h[i] << ' ';
+	cout << endl;
+
+	if (!T.pointWithin(std::array<double,3>{ pos[0], pos[1], pos[2]}))
+		cout << "ERROR! Point is not inside the tetra!" << endl;
+
+
+
 
 	SSE::UnitVector3 d = SSE::UnitVector3::normalize(SSE::Vector3((pb->direction())));
-	SSE::UnitVector3 a = SSE::UnitVector3::normalize(cross(d,SSE::UnitVector3::basis<0>()));
+
+	SSE::UnitVector3 a;
+	if (std::abs(a[0]) < std::abs(a[1]))
+	{
+		if (std::abs(a[0]) < std::abs(a[2]))
+			a = SSE::UnitVector3::normalize(cross(d,SSE::UnitVector3::basis<0>()));
+		else
+			a = SSE::UnitVector3::normalize(cross(d,SSE::UnitVector3::basis<2>()));
+	}
+	else if (std::abs(a[1]) < std::abs(a[2]))
+		a = SSE::UnitVector3::normalize(cross(d,SSE::UnitVector3::basis<1>()));
+	else
+		a = SSE::UnitVector3::normalize(cross(d,SSE::UnitVector3::basis<2>()));
 
 	SSE::UnitVector3 b(cross(d,a),SSE::Assert);
 
 	Point P{SSE::Vector3(pos)};
 	Directed D(PacketDirection(d,a,b));
+
+	std::array<float,3> df = d.array();
+	std::array<float,3> af = a.array();
+	std::array<float,3> bf = b.array();
+
+	cout << "w=" << pb->power() << " Position: " << pos[0] << ' ' << pos[1] << ' ' << pos[2] << "  direction: " << df[0] << ' ' << df[1] << ' ' << df[2] << endl;
+	cout << "a=" << af[0] << ' ' << af[1] << ' ' << af[2] << "  b: " << bf[0] << ' ' << bf[1] << ' ' << bf[2] << endl;
 
 	auto pbs = new PositionDirectionEmitter<RNG,Point,Directed>(P,D,tet);
 
@@ -163,31 +211,27 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Surface* s)
 
 template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Base* s)
 {
-	throw std::logic_error("TetraEmitterFactory<RNG>::visit - unsupported (Unknown type - Source::Base variant called)");
+	throw std::logic_error("TetraEmitterFactory<RNG>::visit - unsupported (Source::Base variant called for unknown type)");
 }
 
 
 template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Ball* bs)
 {
-	throw std::logic_error("TetraEmitterFactory<RNG>::visit - unsupported (Ball)");
-//	vector<unsigned> Ts = m_mesh->tetras_close_to(bs->centre(),bs->radius());
-//	vector<float> w(Ts.size(),0.0);
-//
-//	s.reserve(Ts.size());
-//
-//	for(unsigned i=0;i<Ts.size();++i)
-//	{
-//		w[i] = mesh.getTetraVolume(Ts[i]);
-//		wsum += w[i];
-//	}
-//
-//	for(unsigned i=0;i<Ts.size();++i)
-//	{
-//		w[i] = w[i]*bsd->getPower()/wsum;
-//		s.push_back(new VolumeSourceEmitter<RNG>(mesh,Ts[i],w[i]));
-//		s.back()->setPower(w[i]);
-//	}
-//	return new SourceMultiEmitter<RNG>(mesh,s.begin(),s.end());
+	vector<unsigned> Ts = m_mesh->tetras_close_to(bs->centre(),bs->radius());
+	vector<float> w(Ts.size(), 0.0f);
+	float wsum=0.0f;
+
+	for(const auto IDt : Ts)
+	{
+		w.push_back(m_mesh->getTetraVolume(IDt));
+		wsum += w.back();
+	}
+
+	for(unsigned i=0;i<Ts.size();++i)
+	{
+		Source::Volume vs(w[i]/wsum,Ts[i]);
+		visit(&vs);
+	}
 }
 
 template<class RNG>Emitter::EmitterBase<RNG>* TetraEmitterFactory<RNG>::emitter() const

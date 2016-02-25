@@ -2,11 +2,10 @@
 #define SSE_INCLUDED
 
 #include <mmintrin.h>
-
-#include <iostream>
+#include <emmintrin.h>
+#include <smmintrin.h>
 
 inline __m128 reflect(__m128 d,__m128 n,__m128 sincos);
-unsigned getMinIndex4(__m128 v,float* =NULL);
 inline std::pair<unsigned,__m128> getMinIndex4p(__m128 v);
 
 inline __m128 reflect(__m128 d,__m128 n,__m128 sincos)
@@ -25,16 +24,6 @@ inline std::pair<unsigned,__m128> getMinIndex4p(__m128 v)
     __m128 eqmask = _mm_cmpeq_ps(v,allmin);
 	mask = _mm_movemask_ps(eqmask);
     return std::make_pair(mask == 0 ? 4 : __builtin_ctz(mask),allmin);
-}
-
-inline unsigned getMinIndex4(__m128 v,float* ptr)
-{
-    __m128 halfmin = _mm_min_ps(v,_mm_shuffle_ps(v,v,_MM_SHUFFLE(2,3,0,1)));
-    __m128 allmin  = _mm_min_ps(halfmin,_mm_shuffle_ps(halfmin,halfmin,_MM_SHUFFLE(0,0,2,2)));
-    __m128 eqmask = _mm_cmpeq_ps(v,allmin);
-    if (ptr)
-        _mm_store_ss(ptr,allmin);
-    return __builtin_ctzll(_mm_movemask_ps(eqmask));
 }
 
 inline __m128 FresnelSSE(__m128 n1n2,__m128 sincos)

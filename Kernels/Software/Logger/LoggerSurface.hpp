@@ -13,6 +13,8 @@
 template<class Accumulator>class LoggerSurface
 {
 public:
+	typedef std::true_type is_logger;
+
 	class ThreadWorker : public LoggerBase
 	{
 		typename Accumulator::ThreadWorker acc;
@@ -36,6 +38,7 @@ public:
 		inline void eventExit(const Packet& pkt,int IDf){ acc[abs(IDf)] += pkt.w; }
 
 		void eventCommit(){ acc.commit(); }
+		inline void eventClear(){ acc.clear(); }
 	};
 
 	void resize(unsigned N){ acc.resize(N); }
@@ -59,6 +62,16 @@ public:
 	}
 
 	std::list<OutputData*> results() const { return results(acc.values()); }
+
+	inline void eventClear()
+	{
+		clear();
+	}
+
+	void clear()
+	{
+		acc.clear();
+	}
 
 private:
 	Accumulator acc;

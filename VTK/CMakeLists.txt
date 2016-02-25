@@ -3,10 +3,7 @@ IF (WRAP_VTK)
 FIND_PACKAGE(VTK REQUIRED)
 INCLUDE(${VTK_USE_FILE})
 
-#ADD_EXECUTABLE(Test_PacketTrace Test_PacketTrace.cpp PacketPositionTraceVTK.cpp ../Storage/HexFile/HexFileReader.cpp)
-#TARGET_LINK_LIBRARIES(Test_PacketTrace vtkFiltersCore vtkIOLegacy)
-
-ADD_LIBRARY(FullMonteVTK SHARED TetraMeshBaseVTK.cpp SparseVectorVTK.cpp)
+ADD_LIBRARY(FullMonteVTK SHARED vtkFullMonteTetraMeshBaseWrapper.cpp vtkFullMonteSpatialMapWrapper.cpp vtkFullMonteTetraMeshWrapper.cpp vtkFullMonteFluenceLineQueryWrapper.cpp)
 TARGET_LINK_LIBRARIES(FullMonteVTK vtkFiltersCore vtkIOLegacy vtkCommonDataModel)
 # vtkFiltersSources vtkInteractionWidgets)
 
@@ -21,10 +18,5 @@ TARGET_LINK_LIBRARIES(FullMonteVTK vtkFiltersCore vtkIOLegacy vtkCommonDataModel
 #ENDFUNCTION()
 
 #VTK_TCL_WRAP(SparseVectorVTK)
-#VTK_TCL_WRAP(PointSourceRep)
-#VTK_TCL_WRAP(TetraMeshBaseVTK)
-
-#ADD_LIBRARY(FullMonteVTKTCL SHARED TetraMeshBaseVTK_wrap.cxx FullMonteVTKTCLInit.cxx SparseVectorVTK_wrap.cxx PointSourceRep_wrap.cxx)
-#TARGET_LINK_LIBRARIES(FullMonteVTKTCL FullMonteVTK vtkCommonCoreTCL vtkCommonDataModelTCL vtkFiltersSourcesTCL )
 
 ENDIF()

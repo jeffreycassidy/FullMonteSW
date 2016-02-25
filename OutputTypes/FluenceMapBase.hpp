@@ -15,18 +15,16 @@
 #include <vector>
 #include <utility>
 
-class EnergyMapBase
+namespace boost { namespace serialization { class access; }; };
+
+class EnergyUnitsBase
 {
 public:
-	EnergyMapBase(SpatialMapBase<float,unsigned>* m) :
-		m_map(m)
-	{}
+	explicit EnergyUnitsBase(float totalEmitted=0.0f,float joulesPerEnergyUnit=std::numeric_limits<float>::quiet_NaN()) :
+		m_totalEmitted(totalEmitted),
+		m_joulesPerEnergyUnit(joulesPerEnergyUnit){}
 
-	EnergyMapBase(const EnergyMapBase& E) :
-		m_map(E->clone()),
-		m_totalEmitted(E.m_totalEmitted),
-		m_joulesPerEnergyUnit(E.m_joulesPerEnergyUnit)
-		{}
+	EnergyUnitsBase(const EnergyUnitsBase& E) = default;
 
 	void joulesPerEnergyUnit(float j)					{ m_joulesPerEnergyUnit=j; 		}
 	float joulesPerEnergyUnit()					const	{ return m_joulesPerEnergyUnit;	}
@@ -34,8 +32,25 @@ public:
 	void totalEmitted(float E)							{ m_totalEmitted=E;				}
 	float totalEmitted()						const	{ return m_totalEmitted;		}
 
-	const SpatialMapBase<float,unsigned>* operator->() const { return m_map.get();		}
-	const SpatialMapBase<float,unsigned>& get() const { return *m_map.get(); }
+private:
+	float 												m_totalEmitted=0.0f;
+	float 												m_joulesPerEnergyUnit=std::numeric_limits<float>::quiet_NaN();
+};
+
+class EnergyMapBase : public EnergyUnitsBase
+{
+public:
+	EnergyMapBase(SpatialMapBase<float,unsigned>* m=nullptr) :
+		m_map(m)
+	{}
+
+	EnergyMapBase(const EnergyMapBase& E) :
+		EnergyUnitsBase(E),
+		m_map(E->clone())
+		{}
+
+	const SpatialMapBase<float,unsigned>* operator->() 	const { return m_map.get();		}
+	const SpatialMapBase<float,unsigned>* get() 		const { return m_map.get(); }
 
 	void set(SpatialMapBase<float,unsigned>* m){ m_map.reset(m); }
 
@@ -44,31 +59,110 @@ public:
 private:
 	std::unique_ptr<SpatialMapBase<float,unsigned>>		m_map;
 	float 												m_totalEmitted=0.0f;
-	float 												m_joulesPerEnergyUnit=0.0f;
+	float 												m_joulesPerEnergyUnit=std::numeric_limits<float>::quiet_NaN();
+
+	friend class boost::serialization::access;
+	template<class Archive>void serialize(Archive& ar,const unsigned ver)
+		{ ar & boost::serialization::base_object<EnergyUnitsBase>(*this) & m_map; }
 };
 
-class FluenceMapBase : public EnergyMapBase
+class LengthUnitsBase
 {
 public:
-	FluenceMapBase(SpatialMapBase<float,unsigned>* m) :
-		EnergyMapBase(m)
-	{}
+	LengthUnitsBase(){}
+
+	explicit LengthUnitsBase(float cmPerLengthUnit) : m_cmPerLengthUnit(cmPerLengthUnit){}
 
 	void cmPerLengthUnit(float l)						{ m_cmPerLengthUnit=l;			}
 	float cmPerLengthUnit()						const	{ return m_cmPerLengthUnit;		}
 
 private:
-	float 												m_cmPerLengthUnit=0.0f;
+	float 												m_cmPerLengthUnit=std::numeric_limits<float>::quiet_NaN();
+};
+
+class FluenceMapBase : public EnergyMapBase, public LengthUnitsBase
+{
+public:
+	FluenceMapBase(SpatialMapBase<float,unsigned>* m=nullptr) :
+		EnergyMapBase(m)
+	{}
+
+private:
+
+	friend class boost::serialization::access;
+	template<class Archive>void serialize(Archive& ar,const unsigned ver)
+		{ ar & boost::serialization::base_object<EnergyMapBase>(*this) & m_cmPerLengthUnit; }
 };
 
 class SurfaceExitEnergyMap : public EnergyMapBase, public clonable<OutputData,SurfaceExitEnergyMap,OutputData::Visitor>
 {
 public:
-	SurfaceExitEnergyMap(SpatialMapBase<float,unsigned>* m) :
+	SurfaceExitEnergyMap(SpatialMapBase<float,unsigned>* m=nullptr) :
 		EnergyMapBase(m)
 	{
 	}
 
+};
+
+struct InternalSurface
+{
+	InternalSurface(){}
+	InternalSurface(float exit_,float enter_) : exit(exit_),enter(enter_){}
+	float exit=0.0f;
+	float enter=0.0f;
+
+	InternalSurface& operator+=(const InternalSurface rhs){ exit += rhs.exit; enter += rhs.enter; return *this; }
+};
+
+inline bool nonzero(const InternalSurface& S){ return S.exit != 0 || S.enter != 0; }
+
+class InternalSurfaceEnergyMap : public EnergyUnitsBase, public clonable<OutputData,InternalSurfaceEnergyMap,OutputData::Visitor>
+{
+public:
+	InternalSurfaceEnergyMap(SpatialMapBase<InternalSurface,unsigned>* m=nullptr) :
+		m_map(m)
+	{
+	}
+
+	const SpatialMapBase<InternalSurface,unsigned>* operator->() const { return m_map; }
+
+	InternalSurface operator[](unsigned i) const { return (*m_map)[i]; }
+
+private:
+	const SpatialMapBase<InternalSurface,unsigned>* m_map=nullptr;
+
+	friend class boost::serialization::access;
+	template<class Archive>void serialize(Archive& ar,const unsigned ver)
+		{ ar & *m_map; }
+};
+
+class InternalSurfaceFluenceMap : public LengthUnitsBase, public EnergyUnitsBase, public clonable<OutputData,InternalSurfaceFluenceMap,OutputData::Visitor>
+{
+public:
+	InternalSurfaceFluenceMap(SpatialMapBase<InternalSurface,unsigned>* m) :
+		LengthUnitsBase(1.0f),
+		EnergyUnitsBase(0.0f),
+		m_map(m)
+	{
+	}
+
+	boost::any_range<const std::pair<unsigned,InternalSurface>,boost::forward_traversal_tag> 	nonzeros() const { return m_map->nonzeros(); }
+	boost::any_range<const std::pair<unsigned,InternalSurface>,boost::forward_traversal_tag> 	dense() const{ return m_map->dense(); }
+	boost::any_range<const InternalSurface,boost::forward_traversal_tag>						values() const{ return m_map->values(); }
+
+	unsigned dim() const { return m_map->dim(); }
+	unsigned nnz() const { return m_map->nnz(); }
+
+	const SpatialMapBase<InternalSurface,unsigned>* get() const { return m_map; }
+
+	InternalSurface operator[](unsigned i) const { return (*m_map)[i]; }
+
+private:
+	const SpatialMapBase<InternalSurface,unsigned>* m_map=nullptr;
+
+	friend class boost::serialization::access;
+	template<class Archive>void serialize(Archive& ar,const unsigned ver)
+		{ ar & *m_map; }
 };
 
 
@@ -95,9 +189,11 @@ class SurfaceFluenceMap : public FluenceMapBase, public clonable<OutputData,Surf
 {
 public:
 
-	SurfaceFluenceMap(SpatialMapBase<float,unsigned>* m) :
+	SurfaceFluenceMap(SpatialMapBase<float,unsigned>* m=nullptr) :
 		FluenceMapBase(m)
 	{}
+
+	using FluenceMapBase::cmPerLengthUnit;
 
 };
 

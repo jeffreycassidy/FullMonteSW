@@ -21,7 +21,9 @@ void TetraSVKernel::postfinish()
 	res.splice(res.end(), get<3>(m_logger).results());
 	dynamic_cast<SurfaceExitEnergyMap&>(*res.back()).totalEmitted(packetCount());
 
+	res.splice(res.end(), get<4>(m_logger).results());
+	dynamic_cast<InternalSurfaceEnergyMap&>(*res.back()).totalEmitted(packetCount());
+
 	for(auto r : res)
 		addResults(r);
 }
-

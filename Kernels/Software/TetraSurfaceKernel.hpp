@@ -17,6 +17,7 @@
 #include <FullMonte/Kernels/Software/Logger/LoggerEvent.hpp>
 #include <FullMonte/Kernels/Software/Logger/LoggerConservation.hpp>
 #include <FullMonte/Kernels/Software/Logger/LoggerSurface.hpp>
+#include <FullMonte/Kernels/Software/Logger/LoggerInternalSurface.hpp>
 #include <FullMonte/Kernels/Software/Logger/AccumulationArray.hpp>
 
 #include <FullMonte/Kernels/Software/Logger/MultiThreadWithIndividualCopy.hpp>
@@ -40,7 +41,8 @@ private:
 	typedef std::tuple<
 			MultiThreadWithIndividualCopy<LoggerEvent>::ThreadWorker,
 			MultiThreadWithIndividualCopy<LoggerConservation>::ThreadWorker,
-			LoggerSurface<QueuedAccumulatorMT<double>>::ThreadWorker> Worker;
+			LoggerSurface<QueuedAccumulatorMT<double>>::ThreadWorker>
+	Worker;
 
 public:
 	typedef RNG_SFMT_AVX RNG;
@@ -49,6 +51,7 @@ public:
 	{
 		get<2>(m_logger).resize(mesh->getNf()+1);
 		get<2>(m_logger).qSize(1<<14);
+
 	}
 
 	ThreadedMCKernelBase::Thread* makeThread() override

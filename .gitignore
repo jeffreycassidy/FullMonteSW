@@ -68,3 +68,12 @@ humandata
 CMakeCache.txt
 cmake_install.cmake
 CMakeFiles
+
+Storage/Matlab
+Storage/NIRFAST
+Storage/HexFile
+Storage/BinFile
+Storage/STL
+Storage/TetGen
+Storage/Postgres
+

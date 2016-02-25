@@ -19,10 +19,15 @@
 #include <FullMonte/Kernels/Software/Logger/LoggerConservation.hpp>
 #include <FullMonte/Kernels/Software/Logger/LoggerVolume.hpp>
 #include <FullMonte/Kernels/Software/Logger/LoggerSurface.hpp>
+#include <FullMonte/Kernels/Software/Logger/LoggerInternalSurface.hpp>
 
 #include <FullMonte/Kernels/Software/Logger/MultiThreadWithIndividualCopy.hpp>
 
+class TriFilter;
+
+#ifndef SWIG
 extern template class Emitter::TetraEmitterFactory<RNG_SFMT_AVX>;
+#endif
 
 class TetraSVKernel : public TetraMCKernel<RNG_SFMT_AVX> {
 public:
@@ -30,7 +35,8 @@ public:
 				MultiThreadWithIndividualCopy<LoggerEvent>,
 				MultiThreadWithIndividualCopy<LoggerConservation>,
 				LoggerVolume<QueuedAccumulatorMT<double> >,
-				LoggerSurface<QueuedAccumulatorMT<double>>
+				LoggerSurface<QueuedAccumulatorMT<double>>,
+				LoggerInternalSurface<QueuedAccumulatorMT<FaceCrossingAccumulator>>
 				>
 				Logger;
 
@@ -38,7 +44,8 @@ public:
 			MultiThreadWithIndividualCopy<LoggerEvent>::ThreadWorker,
 			MultiThreadWithIndividualCopy<LoggerConservation>::ThreadWorker,
 			LoggerVolume<QueuedAccumulatorMT<double>>::ThreadWorker,
-			LoggerSurface<QueuedAccumulatorMT<double>>::ThreadWorker> Worker;
+			LoggerSurface<QueuedAccumulatorMT<double>>::ThreadWorker,
+			LoggerInternalSurface<QueuedAccumulatorMT<FaceCrossingAccumulator>>::ThreadWorker> Worker;
 
 	TetraSVKernel(const TetraMesh* mesh) :
 		TetraMCKernel<RNG_SFMT_AVX>(mesh)
@@ -48,6 +55,9 @@ public:
 
 		get<3>(m_logger).resize(mesh->getNf()+1);
 		get<3>(m_logger).qSize(1<<14);
+
+		get<4>(m_logger).resize(mesh->getNf()+1);
+		get<4>(m_logger).qSize(1<<14);
 	}
 
 	typedef RNG_SFMT_AVX RNG;
@@ -69,7 +79,10 @@ private:
 		return t;
 	}
 
-	virtual void prestart() override {}
+	virtual void prestart() override
+	{
+		log_event(m_logger,Events::clear);
+	}
 	virtual void postfinish() override;
 
 	Logger m_logger;

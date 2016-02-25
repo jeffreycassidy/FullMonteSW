@@ -13,7 +13,8 @@
 #include <unordered_map>
 
 
-class TIMOSReader : public TIMOS {
+class TIMOSReader : public TIMOS
+{
 public:
 	TIMOSReader() {}
 	TIMOSReader(std::string pfx) : TIMOS(pfx){}

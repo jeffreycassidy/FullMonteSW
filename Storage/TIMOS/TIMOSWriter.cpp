@@ -120,6 +120,7 @@ void TIMOSWriter::SourceVisitor::visit(Source::SurfaceTri* st)
 
 void TIMOSWriter::SourceVisitor::visit(Source::Composite* c)
 {
+	m_os << c->count() << endl;
 	for(Source::Base * s : c->elements())
 		s->acceptVisitor(this);
 }
@@ -147,11 +148,20 @@ void TIMOSWriter::SourceVisitor::visit(Source::Surface* s)
 
 void TIMOSWriter::write(Source::Base* b)
 {
-	std::ostream& os = std::cout;
-	writeUserComments(os,m_comment);
+	ostream* os;
 
-	SourceVisitor SV(os);
+	if (optFn_ == "")
+		os = &cout;
+	else
+		os = new std::ofstream(sourceFn_.c_str());
+
+	writeUserComments(*os,m_comment);
+
+	SourceVisitor SV(*os);
 	SV.startVisit(b);
+
+	if (os != &cout)
+		delete os;
 }
 
 // Writes out the volume fluence given an input vector of volume fluence

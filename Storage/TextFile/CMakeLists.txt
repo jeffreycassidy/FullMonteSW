@@ -1,0 +1,3 @@
+ADD_LIBRARY(FullMonteTextFile TextFileWriter.cpp)
+TARGET_LINK_LIBRARIES(FullMonteTextFile)
+
