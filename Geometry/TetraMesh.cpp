@@ -273,7 +273,6 @@ void TetraMesh::setFacesForFluenceCounting(const FilterBase<int>* TF)
 
 		tet.faceFlags=flag;
 	}
->>>>>>> d8fddea... Added new queries (fluence along internal surface) and new loggers to support
 }
 
 bool TetraMesh::checkFaces() const

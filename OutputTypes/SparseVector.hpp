@@ -12,6 +12,8 @@
 
 #include <boost/range/adaptor/transformed.hpp>
 
+#include "SparseBase.hpp"
+
 /** Read-only sparse vector, with iteration over either all values (including zeros), or indexed nonzeros.
  *
  * @tparam	Index		The index type.
@@ -20,9 +22,6 @@
 struct value_range_t {};
 struct indexed_range_t {};
 struct ordered_indexed_range_t{};
-
-
-template<typename T>bool nonzero(T i){ return i != 0; }
 
 template<typename ValueType,typename IndexType=unsigned> class SparseVector
 {

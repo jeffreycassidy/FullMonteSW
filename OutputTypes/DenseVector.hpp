@@ -16,6 +16,8 @@
 #include <boost/range/adaptor/indexed.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 
+#include "SparseBase.hpp"
+
 #include <iostream>
 
 template<typename ValueType,typename IndexType=unsigned>class DenseVector

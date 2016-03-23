@@ -15,6 +15,9 @@
 #include <vector>
 #include <utility>
 
+#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/base_object.hpp>
+
 namespace boost { namespace serialization { class access; }; };
 
 class EnergyUnitsBase
