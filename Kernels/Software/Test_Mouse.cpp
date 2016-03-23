@@ -151,8 +151,38 @@ BOOST_AUTO_TEST_CASE(mouse)
 
 	VolumeFluenceMap phi = FC.convertToFluence(*V);
 
-
 #ifdef WRAP_VTK
+	vtkFullMonteTetraMeshWrapper* vtkM = vtkFullMonteTetraMeshWrapper::New();
+		vtkM->mesh(&M);
+		vtkM->update();
+
+	/// Build surface rep
+
+	vtkFullMonteSpatialMapWrapper<vtkFloatArray,float,unsigned> *vtkVolPhi = vtkFullMonteSpatialMapWrapper<vtkFloatArray,float,unsigned>::New();
+		vtkVolPhi->source(phi.get());
+		vtkVolPhi->array()->SetName("Volume Fluence J/cm2");
+		vtkVolPhi->update();
+
+	// Create fields for cell data
+	vtkFieldData* vtkVolumeField = vtkFieldData::New();
+		vtkVolumeField->AddArray(vtkVolPhi->array());
+		vtkVolumeField->AddArray(vtkM->regions());
+
+	// Create data object holding only the cell data, no geometry
+	vtkDataObject* vtkVolumeDO = vtkDataObject::New();
+		vtkVolumeDO->SetFieldData(vtkVolumeField);
+
+	// Merge data object onto geometry
+	vtkMergeDataObjectFilter *vtkMergeVolumeFluence = vtkMergeDataObjectFilter::New();
+		vtkMergeVolumeFluence->SetDataObjectInputData(vtkVolumeDO);
+		vtkMergeVolumeFluence->SetInputData(vtkM->blankMesh());
+		vtkMergeVolumeFluence->SetOutputFieldToCellDataField();
+
+	vtkUnstructuredGridWriter *W = vtkUnstructuredGridWriter::New();
+		W->SetInputConnection(vtkMergeVolumeFluence->GetOutputPort());
+		W->SetFileName("mouse.volume.vtk");
+		W->Update();
+		W->Delete();
 #endif
 }
 
