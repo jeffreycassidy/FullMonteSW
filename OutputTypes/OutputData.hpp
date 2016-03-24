@@ -10,6 +10,9 @@
 
 #include <string>
 
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/base_object.hpp>
+
 template<class Base>class clonable_base
 {
 public:
@@ -38,6 +41,10 @@ public:
 private:
 	static const std::string s_typeString;
 
+	template<class Archive>void serialize(Archive& ar,const unsigned ver)
+		{ ar & boost::serialization::base_object<Base>(*this); }
+
+	friend class boost::serialization::access;
 };
 
 #include <string>
@@ -45,31 +52,51 @@ private:
 
 class OutputData;
 
+class VolumeFluenceMapTraits;
+class VolumeAbsorbedEnergyMapTraits;
+class InternalSurfaceFluenceMapTraits;
+class InternalSurfaceEnergyMapTraits;
+class SurfaceFluenceMapTraits;
+class SurfaceExitEnergyMapTraits;
+
+template<typename Traits>class SpatialMapOutputData;
+using VolumeFluenceMap = SpatialMapOutputData<VolumeFluenceMapTraits>;
+using SurfaceExitEnergyMap = SpatialMapOutputData<SurfaceExitEnergyMapTraits>;
+using SurfaceFluenceMap = SpatialMapOutputData<SurfaceFluenceMapTraits>;
+using VolumeAbsorbedEnergyMap = SpatialMapOutputData<VolumeAbsorbedEnergyMapTraits>;
+using InternalSurfaceFluenceMap = SpatialMapOutputData<InternalSurfaceFluenceMapTraits>;
+using InternalSurfaceEnergyMap = SpatialMapOutputData<InternalSurfaceEnergyMapTraits>;
+
 class MCConservationCountsOutput;
 class MCEventCountsOutput;
-class VolumeAbsorbedEnergyMap;
-class SurfaceFluenceMap;
-class VolumeFluenceMap;
-class SurfaceExitEnergyMap;
 class FluenceLineQuery;
-class InternalSurfaceEnergyMap;
-class InternalSurfaceFluenceMap;
+
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/void_cast.hpp>
+
+#include <iostream>
 
 class OutputData : public clonable_base<OutputData>
 {
 public:
 	class Visitor;
+	virtual ~OutputData(){}
 
 private:
 	virtual void acceptVisitor(Visitor* v)=0;
+
+	template<class Archive>void serialize(Archive& ar,const unsigned)
+		{ }
+	friend class boost::serialization::access;
 };
+
 
 class OutputData::Visitor
 {
 public:
 	virtual ~Visitor(){}
 
-	void visit(OutputData* d){ d->acceptVisitor(this); }
+	void visit(OutputData* d){ if(d) d->acceptVisitor(this); }
 
 	// visitor implementations
 	virtual void doVisit(OutputData* d)
@@ -104,6 +131,7 @@ public:
 
 protected:
 	Visitor(){}
+
 };
 
 

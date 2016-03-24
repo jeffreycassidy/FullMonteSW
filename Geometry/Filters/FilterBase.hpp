@@ -14,7 +14,13 @@
 template<typename T>class FilterBase
 {
 public:
-	virtual bool operator()(T x) const=0;
+	virtual bool operator()(T x) const { return false; }
+};
+
+template<typename T>class AlwaysTrue : public FilterBase<T>
+{
+public:
+	virtual bool operator()(T x) const { return true; }
 };
 
 #endif /* GEOMETRY_FILTERS_FILTERBASE_HPP_ */

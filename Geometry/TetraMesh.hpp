@@ -108,10 +108,6 @@ public:
 
     Tetra                   getTetra(unsigned IDt) const { return m_tetras[IDt]; }
 
-    // returns the tetra that the given face points into
-    unsigned                getTetraIDFromFaceID(int IDf) const
-        { return IDf > 0 ? m_faceTetras[IDf][0] : m_faceTetras[-IDf][1]; }
-
     double                  getFaceArea(const FaceByPointID&)   const;
     double                  getFaceArea(int IDf)                const { return getFaceArea(m_facePoints[abs(IDf)]); }
     double                  getFaceArea(unsigned IDf)           const { return getFaceArea(m_facePoints[IDf]); }
@@ -152,15 +148,24 @@ private:
 	vector<TetraByFaceID>	    	m_tetraFaces;       // tetra -> 4 face IDs
     vector<FaceByPointID>       	m_facePoints;       // face ID -> 3 point IDs
 	vector<Face>			    	m_faces;          	// faces (with normals and constants)
-	vector<std::array<unsigned,2>>	m_faceTetras;  		// for each face f, vecFaceID_Tetra[f] gives the m_tetras adjacent to the face
-    vector<Tetra>               	m_tetras;     		// new SSE-friendly data structure
+
+	/** For each positive face ID f, m_faceTetras[f] gives the tetra IDs adjacent to the face.
+	 * The normal of m_face[f] points into tetra m_faceTetras[f][0] and out of m_faceTetras[f][1].
+	 */
+	vector<std::array<unsigned,2>>	m_faceTetras;
+
+	/** Packed and aligned tetra representation for the kernel, holding face normals, constants, adjacent tetras,
+	 * bounding faces, material ID, and face flags (for logging).
+	 */
+    vector<Tetra>               	m_tetras;
 
     std::unordered_map<TetraByPointID,unsigned,boost::hash<std::array<unsigned,4>>> m_pointIDsToTetraMap;
     std::unordered_map<FaceByPointID, unsigned,boost::hash<std::array<unsigned,3>>> m_pointIDsToFaceMap;
 
-    /// Build tetras and faces from the points and point-index lists
+    /// Build tetras and faces from the point & connectivity lists
 	void buildTetrasAndFaces();
 
+	/// Build the kernel tetra representation from the point, connectivity, and face lists
 	void makeKernelTetras();
 
     template<class Archive>void serialize(Archive& ar,const unsigned ver)

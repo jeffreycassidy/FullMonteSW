@@ -116,6 +116,36 @@ VolumeFluenceMap FluenceConverter::convertToFluence(const VolumeAbsorbedEnergyMa
 }
 
 
+VolumeAbsorbedEnergyMap FluenceConverter::rescale(const VolumeAbsorbedEnergyMap& E) const
+{
+	std::vector<float> o(E->dim(),0.0f);
+	float kE = energyScale(E.totalEmitted());
+
+	for(const auto e : E->nonzeros())
+	{
+		if (isnan(e.second) || e.second < 0.0f)
+			throw std::logic_error("FluenceConverter::rescale(const VolumeAbsorbedEnergyMap&) invalid (negative/nan) element in exit vector");
+		else if (e.second > 0.0f)
+			o[e.first] = kE * e.second;
+	}
+
+	SpatialMapBase<float,unsigned>* eMap = SpatialMapBase<float,unsigned>::newFromVector(o);
+
+	// pass units through
+	VolumeAbsorbedEnergyMap OE(eMap);
+
+	OE.joulesPerEnergyUnit(
+			isnan(m_joulesPerOutputEnergyUnit) ?
+					E.joulesPerEnergyUnit() :
+					m_joulesPerOutputEnergyUnit);
+
+	OE.cmPerLengthUnit(E.cmPerLengthUnit());
+
+	OE.totalEmitted(E.totalEmitted()*kE);
+
+	return OE;
+}
+
 SurfaceFluenceMap FluenceConverter::convertToFluence(const SurfaceExitEnergyMap& E) const
 {
 	std::vector<float> phi(E->dim(),0.0f);
@@ -178,7 +208,7 @@ SurfaceFluenceMap FluenceConverter::convertToFluence(const SurfaceExitEnergyMap&
 
 InternalSurfaceFluenceMap FluenceConverter::convertToFluence(const InternalSurfaceEnergyMap& E) const
 {
-	std::vector<InternalSurface> phi(E->dim(),InternalSurface());
+	std::vector<InternalSurface<float>> phi(E->dim(),InternalSurface<float>());
 
 	if (!m_mesh)
 		throw std::logic_error("FluenceConverter::convertToFluence(const InternalSurfaceExitEnergyMap&) m_mesh is NULL");
@@ -208,72 +238,18 @@ InternalSurfaceFluenceMap FluenceConverter::convertToFluence(const InternalSurfa
 		{
 			if (e.second.exit > 0.0f || e.second.enter > 0.0f)
 				throw std::logic_error("FluenceConverter::convertToFluence(const SurfaceExitEnergyMap&) impossible exit: zero area");
-			phi[e.first] = InternalSurface(0.0f,0.0f);
+			phi[e.first] = InternalSurface<float>(0.0f,0.0f);
 		}
 		else
-			phi[e.first] = InternalSurface(
+			phi[e.first] = InternalSurface<float>(
 								kPhi * e.second.exit  / A,
 								kPhi * e.second.enter / A);
 	}
 
-	SpatialMapBase<InternalSurface,unsigned>* phiMap = SpatialMapBase<InternalSurface,unsigned>::newFromVector(phi);
+	SpatialMapBase<InternalSurface<float>,unsigned>* phiMap = SpatialMapBase<InternalSurface<float>,unsigned>::newFromVector(phi);
 
 	// pass units through
 	InternalSurfaceFluenceMap o(phiMap);
 
 	return o;
 }
-
-SurfaceFluenceMap FluenceConverter::convertToFluence(const InternalSurfaceEnergyMap& E,Direction dir) const
-{
-	std::vector<float> phi(E->dim(),0.0f);
-
-	if (!m_mesh)
-		throw std::logic_error("FluenceConverter::convertToFluence(const InternalSurfaceExitEnergyMap&) m_mesh is NULL");
-
-	if (E->dim() != m_mesh->getNf()+1)
-		throw std::logic_error("FluenceConverter::convertToFluence(const InternalSurfaceExitEnergyMap&) dimension mismatch (geometry vs. exit vector)");
-
-
-	float kA = areaScale(m_mesh->cmPerLengthUnit());
-	float kE = energyScale(E.totalEmitted());
-
-	float kPhi = kE/kA;
-
-	cout << "FluenceConverter (E -> internal surface phi) scaling energy by kE=" << kE << " area by kA=" << kA << endl;
-
-	for(const auto e : E->nonzeros())
-	{
-		float A = m_mesh->getFaceArea(e.first);
-
-		if (isnan(e.second.exit) || e.second.exit < 0.0f || isnan(e.second.enter) || e.second.enter < 0.0f)
-			throw std::logic_error("FluenceConverter::convertToFluence(const SurfaceExitEnergyMap&) invalid (negative/nan) element in face-crossing vector");
-
-		if (A < 0.0f)
-			throw std::logic_error("FluenceConverter::convertToFluence(const SurfaceExitEnergyMap&) negative face area");
-
-		if (A == 0.0f)
-		{
-			if (e.second.exit > 0.0f || e.second.enter > 0.0f)
-				throw std::logic_error("FluenceConverter::convertToFluence(const SurfaceExitEnergyMap&) impossible exit: zero area");
-		}
-		else
-		{
-			if (dir != Exit)
-				phi[e.first] += e.second.enter;
-			if (dir != Enter)
-				phi[e.first] += e.second.exit;
-
-			phi[e.first] *= kPhi/A;
-		}
-	}
-
-	SpatialMapBase<float,unsigned>* phiMap = SpatialMapBase<float,unsigned>::newFromVector(phi);
-
-	// pass units through
-	SurfaceFluenceMap o(phiMap);
-
-	return o;
-}
-
-

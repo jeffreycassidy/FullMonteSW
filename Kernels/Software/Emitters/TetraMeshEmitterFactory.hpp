@@ -65,6 +65,8 @@ private:
 	std::vector<Source::Base*> 									m_sources;
 	std::vector<std::pair<float,Emitter::EmitterBase<RNG>*>>	m_emitters;
 	const TetraMesh*											m_mesh=nullptr;
+
+	bool														m_debug=true;
 };
 
 };

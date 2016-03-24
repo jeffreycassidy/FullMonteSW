@@ -8,6 +8,8 @@
 #ifndef OUTPUTTYPES_MCCONSERVATIONCOUNTS_HPP_
 #define OUTPUTTYPES_MCCONSERVATIONCOUNTS_HPP_
 
+#include <boost/serialization/nvp.hpp>
+
 struct MCConservationCounts
 {
 	MCConservationCounts(){}
@@ -24,6 +26,7 @@ struct MCConservationCounts
 
     /// Add another ConservationCounts
     MCConservationCounts& operator+=(const MCConservationCounts&);
+
 };
 
 #include "OutputData.hpp"
@@ -47,6 +50,21 @@ public:
 
 private:
 	void acceptVisitor(OutputData::Visitor* v){ v->doVisit(this); }
+
+private:
+    template<class Archive>void serialize(Archive& ar,const unsigned ver)
+    {
+    	ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(OutputData)
+    		& boost::serialization::make_nvp("launched",w_launch)
+    		& boost::serialization::make_nvp("absorbed",w_absorb)
+    		& boost::serialization::make_nvp("died",w_die)
+    		& boost::serialization::make_nvp("exited",w_exit)
+    		& boost::serialization::make_nvp("won",w_roulette)
+    		& boost::serialization::make_nvp("abnormal",w_abnormal)
+    		& boost::serialization::make_nvp("time",w_time)
+    		& boost::serialization::make_nvp("nohit",w_nohit);
+    }
+    friend class boost::serialization::access;
 };
 
 

@@ -20,5 +20,5 @@ const TetraMeshBase* TetraMeshBaseFilter::mesh() const
 void TetraMeshBaseFilter::mesh(const TetraMeshBase* m)
 {
 	m_mesh=m;
-	this->postMeshUpdate();
+	postMeshUpdate();
 }

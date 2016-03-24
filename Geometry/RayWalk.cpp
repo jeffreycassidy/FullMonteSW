@@ -8,6 +8,8 @@
 #include "TetraMesh.hpp"
 #include "RayWalk.hpp"
 
+//#define VERBOSE
+
 #ifdef VERBOSE
 #include <iostream>
 #include <iomanip>
@@ -290,6 +292,9 @@ void RayWalkIterator::finishStepExterior()
 
 	// find the next face along the ray, excluding the current face from consideration (may see hit due to tolerance errors)
 	std::tie(res,IDf) = m_mesh->findNextFaceAlongRay(m_currSeg.f0.p, m_dir, m_currSeg.f0.IDf);
+
+	if (!IDf)
+		cout << "ERROR: RayWalkIterator did not find a face" << endl;
 
 	boost::copy(res.q,m_currSeg.f1.p.begin());
 	m_currSeg.lSeg = res.t;

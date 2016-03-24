@@ -16,6 +16,9 @@
 #include <boost/range/adaptor/indexed.hpp>
 #include <boost/range/adaptor/transformed.hpp>
 
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/access.hpp>
+
 #include "SparseBase.hpp"
 
 #include <iostream>
@@ -182,6 +185,14 @@ private:
 	std::size_t 		m_nnz=0;
 	std::vector<Value> 	m_v;
 	Value 				m_sum;
+
+	template<class Archive>void serialize(Archive& ar,const unsigned ver)
+		{ ar & boost::serialization::make_nvp("startIndex",m_startIndex)
+			& boost::serialization::make_nvp("values",m_v);
+		if (Archive::is_loading::value)
+			updateStats();
+		}
+	friend class boost::serialization::access;
 };
 
 

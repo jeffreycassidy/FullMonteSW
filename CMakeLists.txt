@@ -58,8 +58,8 @@ ENDIF()
 ## Boost required components
 FIND_PACKAGE(Boost REQUIRED COMPONENTS unit_test_framework serialization system program_options)
 
-INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIRS})
-LINK_DIRECTORIES(${Boost_LIBRARY_DIR})
+INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
+LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
 
 SET(TEST_THREAD_COUNT 8 CACHE STRING "Number of threads for test cases")
 

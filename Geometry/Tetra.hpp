@@ -23,6 +23,7 @@ typedef struct {
  * The x,y,z, and C (constant) components of the normal for the four faces are stored together to facilitate matrix multiplication.
  *
  * Normals are oriented so that points inside the tetra have a positive altitude h= dot(p,n)-C
+ * Face IDs are such that if IDf > 0 then m_faces[IDf] holds the face. If IDf <0 then m_faces[-IDf] holds the inverted face.
  */
 
 struct Tetra {
@@ -33,13 +34,13 @@ struct Tetra {
     unsigned matID;         	/// Material ID for this tetra (4 B)
 
 
-    bool pointWithin(std::array<double,3> p) const
+    bool pointWithin(std::array<double,3> p,float eps=0.0f) const
     {
     	__m128 pv = _mm_set_ps(0.0,p[2],p[1],p[0]);
     	return pointWithin(pv);
     }
 
-    bool pointWithin(__m128) const;
+    bool pointWithin(__m128,float eps=0.0f) const;
 
     __m128 heights(__m128) const;
     std::array<float,4> heights(std::array<float,3>) const;

@@ -99,15 +99,15 @@ public:
 	static std::list<OutputData*> results(const std::vector<FaceCrossingAccumulator>& values)
 	{
 		// convert to float
-		std::vector<InternalSurface> se(values.size());
+		std::vector<InternalSurface<float>> se(values.size());
 
 		cout << "Results for LoggerInternalSurface: values.size()=" << values.size() << endl;
 
 		for(unsigned i=0;i<values.size();++i)
-			se[i] = InternalSurface { float(values[i].exitCount), float(values[i].enterCount) };
+			se[i] = InternalSurface<float> { float(values[i].exitCount), float(values[i].enterCount) };
 
 		// create vector
-		SpatialMapBase<InternalSurface,unsigned> *smap = SpatialMapBase<InternalSurface,unsigned>::newFromVector(std::move(se));
+		SpatialMapBase<InternalSurface<float>,unsigned> *smap = SpatialMapBase<InternalSurface<float>,unsigned>::newFromVector(std::move(se));
 		OutputData* O = new InternalSurfaceEnergyMap(smap);
 		std::list<OutputData*> L;
 		L.push_back(O);

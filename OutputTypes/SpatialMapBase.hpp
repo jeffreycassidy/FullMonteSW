@@ -3,6 +3,8 @@
 #include <boost/range/adaptor/indexed.hpp>
 #include <boost/range/any_range.hpp>
 
+#include <boost/serialization/serialization.hpp>
+
 #include <vector>
 #include "SparseVector.hpp"
 #include "DenseVector.hpp"
@@ -31,6 +33,11 @@ public:
 	virtual Value												operator[](unsigned i) const=0;
 
 	virtual Value												sum() const=0;
+
+private:
+	template<class Archive>void serialize(Archive& ar,const unsigned ver)
+		{ }
+	friend class boost::serialization::access;
 };
 
 
@@ -75,6 +82,21 @@ public:
 
 protected:
 	Container m_container;
+
+	typedef SpatialMapBase<typename Container::Value,typename Container::Index> Base;
+
+	template<class Archive>void serialize(Archive& ar,const unsigned ver)
+		{
+		 	 boost::serialization::void_cast_register(
+						static_cast<SpatialMapContainer*>(nullptr),
+						static_cast<Base*>(nullptr));
+
+		 	 // causes breakage (crash) for unknown reason
+		 	 //ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Base);
+
+			ar & boost::serialization::make_nvp("values",m_container);
+		}
+	friend class boost::serialization::access;
 };
 
 
@@ -89,23 +111,18 @@ template<typename Value,typename Index>SpatialMapBase<Value,Index>* SpatialMapBa
 
 	SpatialMapBase<Value,Index>* m=nullptr;
 
-	cout << "Spatial map with dim=" << v.size() << " nnz=" << nnz << "   Byte sizes: sparse=" << Nbsparse << " dense=" << Nbdense << endl;
-
 	if (Nbsparse < Nbdense)
 	{
-		cout << "Creating sparse vector" << endl;
 		m = new SpatialMapContainer<SparseVector<Value,Index>>(value_range_t(), v, nnz);
 		v.clear();
 	}
 	else
-	{
-		cout << "Creating dense vector" << endl;
 		m = new SpatialMapContainer<DenseVector<Value,Index>>(std::move(v));
-	}
 
-	if (v.size() != 0)
-		cout << "SURPRISE: elements still present in v after attempted move!" << endl;
-
-	cout << "  Confirming dim=" << m->dim() << " nnz=" << m->nnz() << endl;
 	return m;
 }
+
+
+typedef SpatialMapBase<float,unsigned> SpatialMapBaseFU;
+typedef SpatialMapContainer<SparseVector<float,unsigned>> SparseVectorFU;
+typedef SpatialMapContainer<DenseVector<float,unsigned>> DenseVectorFU;

@@ -27,11 +27,15 @@
 #include <FullMonte/Geometry/Sources/PencilBeam.hpp>
 #include <FullMonte/Geometry/Sources/Surface.hpp>
 
+#include <FullMonte/Geometry/RayWalk.hpp>
+
 #include <FullMonte/Geometry/Convenience.hpp>
 
 #include <FullMonte/Geometry/TetraMesh.hpp>
 
 #include "../SSEMath.hpp"
+
+#include <iomanip>
 
 namespace Emitter
 {
@@ -64,51 +68,50 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::PencilBeam* pb)
 	std::array<float,3> pos;				// the position after advancing to the face
 	unsigned tet = -1U, tetHint = pb->elementHint();
 
-	PointIntersectionResult res;
-	int face;
+	RayWalkIterator it=RayWalkIterator::init(*m_mesh,pb->position(),pb->direction()),it_end;
 
-	tie(res,face) = m_mesh->findNextFaceAlongRay(pb->position(), pb->direction());
+	if (m_debug)
+	{
+		array<float,3> pos = pb->position();
+		array<float,3> dir = pb->direction();
 
-	if (!res.intersects)
+		cout << "TetraMeshEmitterFactory: starting at " << pos[0] << ' ' << pos[1] << ' ' << pos[2] << " direction " << dir[0] << ' ' << dir[1] << ' ' << dir[2] << endl;
+	}
+
+	for(; it != it_end && it->matID == 0; ++it)
+	{
+		if (m_debug)
+			cout << "  Stepping through tet " << setw(9) << it->IDt << " (" << it->dToOrigin << " from origin) " << endl;
+		tet=it->IDt;
+	}
+
+	if (it == it_end)
 		throw std::logic_error("ERROR: TetraEmitterFactory<RNG>::visit(Source::PencilBeam) shows no intersection of ray with mesh face");
 
-	tet = m_mesh->getTetraFromFace(face);
-
-	boost::copy(res.q, pos.begin());
+	// assign position to the exit point of the last tet with matID=0
+	pos = it->f0.p;
 
 	if (tetHint != -1U && tetHint != tet)
 		cout << "WARNING: Tetra hint provided (" << tetHint << ") does not match the tetra located by search (" << tet << ")" << endl;
 	else if (tetHint == -1U)
-		cout << "INFO: No tetra hint provided, found " << tet << endl;
+		cout << "INFO: No tetra hint provided, found " << tet << " (material " << m_mesh->getMaterial(tet) << ")" << endl;
 
-//	TetraByPointID IDps=m_mesh->getTetraPointIDs(tet);
-//
-//	cout << "Tetra point IDs: ";
-//	for(unsigned i=0;i<4;++i)
-//		cout << IDps[i] << ' ';
-//	cout << endl;
-//
-//	cout << "Tetra point coords: ";
-//	for(unsigned i=0;i<4;++i)
-//	{
-//		::Point<3,double> p = m_mesh->points()[IDps[i]];
-//		cout << "(" << p[0] << ',' << p[1] << ',' << p[2] << ")" << endl;
-//	}
+	if (m_debug)
+	{
+		cout << "Tetra normals (ID " << tet << ", material " << m_mesh->getMaterial(tet) << ": ";
 
-	cout << "Tetra normals: ";
+		::Tetra T = m_mesh->getTetra(tet);
+		std::array<float,4> h=T.heights(pos);
 
-	::Tetra T = m_mesh->getTetra(tet);
-	std::array<float,4> h=T.heights(pos);
+		cout << "Heights: ";
+		for(unsigned i=0;i<4;++i)
+			cout << h[i] << ' ';
+		cout << endl;
 
-	cout << "Heights: ";
-	for(unsigned i=0;i<4;++i)
-		cout << h[i] << ' ';
-	cout << endl;
+		if (!T.pointWithin(std::array<double,3>{ pos[0], pos[1], pos[2]}))
+			cout << "ERROR! Point is not inside the tetra!" << endl;
 
-	if (!T.pointWithin(std::array<double,3>{ pos[0], pos[1], pos[2]}))
-		cout << "ERROR! Point is not inside the tetra!" << endl;
-
-
+	}
 
 
 	SSE::UnitVector3 d = SSE::UnitVector3::normalize(SSE::Vector3((pb->direction())));
@@ -131,12 +134,15 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::PencilBeam* pb)
 	Point P{SSE::Vector3(pos)};
 	Directed D(PacketDirection(d,a,b));
 
-	std::array<float,3> df = d.array();
-	std::array<float,3> af = a.array();
-	std::array<float,3> bf = b.array();
+	if (m_debug)
+	{
+		std::array<float,3> df = d.array();
+		std::array<float,3> af = a.array();
+		std::array<float,3> bf = b.array();
 
-	cout << "w=" << pb->power() << " Position: " << pos[0] << ' ' << pos[1] << ' ' << pos[2] << "  direction: " << df[0] << ' ' << df[1] << ' ' << df[2] << endl;
-	cout << "a=" << af[0] << ' ' << af[1] << ' ' << af[2] << "  b: " << bf[0] << ' ' << bf[1] << ' ' << bf[2] << endl;
+		cout << "w=" << pb->power() << " Position: " << pos[0] << ' ' << pos[1] << ' ' << pos[2] << "  direction: " << df[0] << ' ' << df[1] << ' ' << df[2] << endl;
+		cout << "a=" << af[0] << ' ' << af[1] << ' ' << af[2] << "  b: " << bf[0] << ' ' << bf[1] << ' ' << bf[2] << endl;
+	}
 
 	auto pbs = new PositionDirectionEmitter<RNG,Point,Directed>(P,D,tet);
 

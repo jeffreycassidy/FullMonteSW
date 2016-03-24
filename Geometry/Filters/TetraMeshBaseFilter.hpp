@@ -13,7 +13,7 @@ class TetraMeshBase;
 class TetraMeshBaseFilter
 {
 public:
-	TetraMeshBaseFilter(const TetraMeshBase* m);
+	explicit TetraMeshBaseFilter(const TetraMeshBase* m=nullptr);
 
 	void mesh(const TetraMeshBase* m);			///< Set associated mesh and set to include-all
 	const TetraMeshBase* mesh() const;			///< Get associated mesh

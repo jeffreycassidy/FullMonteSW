@@ -10,10 +10,9 @@
 
 #include <FullMonte/Geometry/TetraMeshBase.hpp>
 
-TetraFilterByRegion::TetraFilterByRegion(const TetraMeshBase* m) :
-	TetraMeshBaseFilter(m)
+TetraFilterByRegion::TetraFilterByRegion(const TetraMeshBase* m)
 {
-	postMeshUpdate();
+	mesh(m);
 }
 
 void TetraFilterByRegion::include(unsigned region,bool incl)
@@ -38,8 +37,13 @@ void TetraFilterByRegion::excludeAll()
 
 void TetraFilterByRegion::postMeshUpdate()
 {
-	std::cout << "Mesh tetras: " << mesh()->getNt()+1 << " regions: " << mesh()->getNumberOfRegions() << std::endl;
-	m_includeFlags.resize(mesh() ? mesh()->getNumberOfRegions()+1 : 0,true);
+	if (mesh())
+	{
+		std::cout << "Mesh tetras: " << mesh()->getNt()+1 << " regions: " << mesh()->getNumberOfRegions() << std::endl;
+		m_includeFlags.resize(mesh() ? mesh()->getNumberOfRegions()+1 : 0,true);
+	}
+	else
+		m_includeFlags.clear();
 }
 
 bool TetraFilterByRegion::operator()(const unsigned tet) const

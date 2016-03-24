@@ -9,8 +9,12 @@
 #define OUTPUTTYPES_SPARSEVECTOR_HPP_
 
 #include <boost/range/algorithm.hpp>
-
 #include <boost/range/adaptor/transformed.hpp>
+
+#include <boost/serialization/access.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/utility.hpp>
+#include <boost/serialization/nvp.hpp>
 
 #include "SparseBase.hpp"
 
@@ -216,6 +220,15 @@ private:
 	std::vector<std::pair<Index,Value>> 	m_contents;
 	Index 									m_dim=0;
 	Value									m_sum=Value();
+
+	template<class Archive>void serialize(Archive& ar,const unsigned ver)
+	{
+		ar & boost::serialization::make_nvp("dim",m_dim)
+			& boost::serialization::make_nvp("values",m_contents);
+		if (Archive::is_loading::value)
+			construct();
+	}
+	friend class boost::serialization::access;
 };
 
 template<typename Value,typename Index>Value SparseVector<Value,Index>::operator[](Index i) const
