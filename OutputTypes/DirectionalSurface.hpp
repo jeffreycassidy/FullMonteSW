@@ -43,7 +43,10 @@ public:
 	const InternalSurfaceFluenceMap*	data()										const 	{ return m_data; 	}
 
 
-	/// Updates the face indices from the filter
+	/// Return the value at face IDf, swapping if negative (only positive entries are stored; exiting IDf <-> entering -IDf)
+	InternalSurface<float>				valueAtFace(int IDf) const;
+
+	/// Updates the face indices from the tetra filter
 	void 								update();
 
 	/// Pulls the specified fluence direction

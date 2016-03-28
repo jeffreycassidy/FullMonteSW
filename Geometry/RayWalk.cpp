@@ -21,6 +21,16 @@ LineQuery::LineQuery()
 {
 }
 
+bool LineQuery::skipInitialZeros() const
+{
+	return m_skipInitialZeros;
+}
+
+void LineQuery::skipInitialZeros(bool skip)
+{
+	m_skipInitialZeros=skip;
+}
+
 const TetraMesh* LineQuery::mesh() const
 {
 	return m_mesh;
@@ -78,13 +88,13 @@ boost::any_range<const WalkSegment,boost::forward_traversal_tag,const WalkSegmen
 
 	float d0=0.0f;
 
-	// inclusion filter for first elements
+	// inclusion filter for first elements (false -> skip)
 	std::function<bool(const WalkSegment&)> f = std::function<bool(const WalkSegment&)>(
 			[](const WalkSegment& seg){ return seg.matID != 0 && seg.IDt != 0; });
 
-	std::function<bool(const WalkSegment&)>* m_initialFilter = &f;
+	std::function<bool(const WalkSegment&)>* m_initialFilter = m_skipInitialZeros ? &f : nullptr;
 
-	for(; rwi != rwend && (!m_initialFilter || !(*m_initialFilter)(*rwi)); ++rwi)
+	for(; rwi != rwend && m_initialFilter && !(*m_initialFilter)(*rwi); ++rwi)
 	{
 #ifdef VERBOSE
 		cout << "* tetra " << setw(7) << rwi->IDt << " material " << setw(2) << rwi->matID << " depth " << rwi->dToOrigin << endl;
@@ -122,9 +132,8 @@ bool RayWalkIterator::equal(const RayWalkIterator& rhs) const
 
 void RayWalkIterator::increment()
 {
-
-
 	m_currSeg.f0 = m_currSeg.f1;
+	m_currSeg.f0.IDf = -m_currSeg.f0.IDf;
 	m_currSeg.dToOrigin += m_currSeg.lSeg;
 
 	m_currSeg.IDt = nextTet_;
@@ -292,9 +301,6 @@ void RayWalkIterator::finishStepExterior()
 
 	// find the next face along the ray, excluding the current face from consideration (may see hit due to tolerance errors)
 	std::tie(res,IDf) = m_mesh->findNextFaceAlongRay(m_currSeg.f0.p, m_dir, m_currSeg.f0.IDf);
-
-	if (!IDf)
-		cout << "ERROR: RayWalkIterator did not find a face" << endl;
 
 	boost::copy(res.q,m_currSeg.f1.p.begin());
 	m_currSeg.lSeg = res.t;

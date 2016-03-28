@@ -37,5 +37,12 @@ inline bool nonzero(float i){ return i != 0.0; }
 template<typename T>inline bool nonzero(const InternalSurface<T>& S)
 	{ return nonzero(S.exit) || nonzero(S.enter); }
 
+inline InternalSurface<float> flip(const InternalSurface<float> i)
+{
+	InternalSurface<float> o = i;
+	std::swap(o.enter,o.exit);
+	return o;
+}
+
 
 #endif /* OUTPUTTYPES_INTERNALSURFACE_HPP_ */

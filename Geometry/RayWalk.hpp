@@ -19,7 +19,8 @@ class TetraMesh;
 struct WalkFaceInfo
 {
 	std::array<float,3> p{{NAN,NAN,NAN}};	// the point of intersection
-	int IDf=0;								// face at which intersection happens (0 = no-face)
+	int IDf=0;								// face at which intersection happens (0 = no-face) - points into current walk segment
+											// ie. points on current walk segment have positive height over face
 };
 
 struct WalkSegment {
@@ -50,6 +51,10 @@ public:
 	std::array<float,3>		direction()						const;
 	void					direction(std::array<float,3> d);
 
+	/// If true, advance until material and tetra ID are both nonzero before returning results (counter starts at 0 where enters mesh)
+	bool					skipInitialZeros()				const;
+	void					skipInitialZeros(bool skip);
+
 	/// Set direction and length
 	void 					destination(std::array<float,3> p1);
 
@@ -57,18 +62,24 @@ public:
 	float 					length() const;
 	void					length(float l);
 
-	boost::any_range<
-		const WalkSegment,
-		boost::forward_traversal_tag,
-		const WalkSegment&,
-		std::ptrdiff_t
-		> 	result() const;
+	typedef boost::any_range<
+			const WalkSegment,
+			boost::forward_traversal_tag,
+			const WalkSegment&,
+			std::ptrdiff_t
+			> const_range;
+
+	typedef boost::range_iterator<const_range> const_iterator;
+
+	const_range result() const;
 
 private:
 	const TetraMesh* 		m_mesh=nullptr;
 	std::array<float,3>		m_origin;
 	std::array<float,3>		m_direction;
 	float					m_length=std::numeric_limits<float>::infinity();
+
+	bool					m_skipInitialZeros=true;
 };
 
 

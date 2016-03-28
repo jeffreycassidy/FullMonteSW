@@ -16,7 +16,7 @@ class AbsorptionSum
 public:
 	AbsorptionSum();
 
-	void tetraFilter(const FilterBase<unsigned>* F)									{ m_filter=F;	}
+	void tetraFilter(const FilterBase<unsigned>* F)									{ m_filter= F ? F : &s_alwaysTrue;	}
 
 	void 							data(const VolumeAbsorbedEnergyMap* E)			{ m_E=E;		}
 	const VolumeAbsorbedEnergyMap*	data() 									const 	{ return m_E; 	}

@@ -89,5 +89,10 @@ InternalSurfaceFluenceMap DirectionalSurface::result() const
 	return InternalSurfaceFluenceMap(SpatialMapBase<InternalSurface<float>,unsigned>::newFromVector(std::move(o)));
 }
 
+InternalSurface<float> DirectionalSurface::valueAtFace(int IDf) const
+{
+	InternalSurface<float> o = (*m_data)[std::abs(IDf)];
+	return IDf < 0 ? flip(o) : o;
+}
 
 
