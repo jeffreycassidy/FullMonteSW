@@ -119,10 +119,6 @@ inline StepResult Tetra::getIntersection(const __m128 p,const __m128 d,__m128 s)
     __m128 dist = _mm_div_ps(h1,dot);
 
 //  selects dist where dist>0 and dot<0 (facing outwards), s otherwise
-    // very, very rarely ( < 1e-8? ) gives an error where no intersection is found
-    // used to be s below instead of infinity - would return at most s; gave wrong nearest-face results though
-    // dist = _mm_blendv_ps(a,b,mask)
-    //  dist_i = (mask_i & 0x80000000) ? b_i : a_i;
     dist = _mm_blendv_ps(
     			_mm_set1_ps(std::numeric_limits<float>::infinity()),
 				dist,
@@ -147,6 +143,7 @@ inline StepResult Tetra::getIntersection(const __m128 p,const __m128 d,__m128 s)
     result.IDte = adjTetras[min_idx_val.first&3];
     result.idx = min_idx_val.first;					// will be 4 if no min found
     result.distance=_mm_min_ps(min_idx_val.second,s);
+    result.distance=_mm_max_ps(_mm_setzero_ps(),result.distance);
     result.Pe = _mm_add_ps(p,_mm_mul_ps(d,result.distance));
 
     return result;

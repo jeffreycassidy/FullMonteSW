@@ -242,8 +242,6 @@ void RayWalkIterator::finishStepInTetra()
 
 
 //  selects dist where dist>0 and dot<0 (facing outwards), s otherwise
-    // very, very rarely ( < 1e-8? ) gives an error where no intersection is found
-    // used to be s below instead of infinity - would return at most s; gave wrong nearest-face results though
     // dist = _mm_blendv_ps(a,b,mask)
     //  dist_i = (mask_i & 0x80000000) ? b_i : a_i;
     __m128 dist = _mm_blendv_ps(

@@ -119,10 +119,21 @@ void TetraMesh::buildTetrasAndFaces()
 					if ((h=m_faces[p.first->second].pointHeight(m_points[IDp_opposite])) > 2e-5)
 					{
 						cout << "WARNING: buildTetrasAndFaces() added second face but opposite-point altitude unexpectedly positive (h=" <<
-							h << ") with flipside altitude h'=" << m_faceAltitudes[p.first->second] << endl;
+							h << ") with flipside altitude h'=" << m_faceAltitudes[p.first->second] << " in tetra " << T.index() << " bordering tetra " << m_faceTetras[p.first->second][0] << endl;
 
-						if (std::abs(h) > std::abs(m_faceAltitudes[p.first->second]))
-							m_faces[p.first->second].flip();
+						// previous production code
+//						if (std::abs(h) > std::abs(m_faceAltitudes[p.first->second]))
+//						{
+//							cout << "  flipping face to correct" << endl;
+//							m_faces[p.first->second].flip();
+//						}
+
+						// one possible reason for an ill-oriented face is a degenerate tetra with bad numerical behavior
+						// (eg. the cross product is very nearly zero)
+						//
+						// if that is the case, then construct the face from the other tetra which is (we hope) better behaved
+
+						m_faces[p.first->second] = Face(m_points[Ft[0]],m_points[Ft[1]],m_points[Ft[2]],m_points[IDp_opposite]);
 					}
 				}
 			}
