@@ -52,12 +52,12 @@ private:
 
 class OutputData;
 
-class VolumeFluenceMapTraits;
-class VolumeAbsorbedEnergyMapTraits;
-class InternalSurfaceFluenceMapTraits;
-class InternalSurfaceEnergyMapTraits;
-class SurfaceFluenceMapTraits;
-class SurfaceExitEnergyMapTraits;
+struct VolumeFluenceMapTraits;
+struct VolumeAbsorbedEnergyMapTraits;
+struct InternalSurfaceFluenceMapTraits;
+struct InternalSurfaceEnergyMapTraits;
+struct SurfaceFluenceMapTraits;
+struct SurfaceExitEnergyMapTraits;
 
 template<typename Traits>class SpatialMapOutputData;
 using VolumeFluenceMap = SpatialMapOutputData<VolumeFluenceMapTraits>;

@@ -20,7 +20,8 @@ public:
 template<typename T>class AlwaysTrue : public FilterBase<T>
 {
 public:
-	virtual bool operator()(T x) const { return true; }
+	AlwaysTrue(){}
+	virtual bool operator()(T x) const override { return true; }
 };
 
 #endif /* GEOMETRY_FILTERS_FILTERBASE_HPP_ */

@@ -49,7 +49,27 @@ struct Tetra {
     std::array<float,4> dots(std::array<float,3>) const;
 
     StepResult getIntersection(__m128,__m128,__m128 s) const;
+
+    std::array<float,3> face_normal(unsigned i) const;
+    float face_constant(unsigned i) const;
+
 } __attribute__ ((aligned(64)));
+
+float Tetra::face_constant(unsigned i) const
+{
+	float f[4];
+	_mm_store_ps(f,C);
+	return f[i];
+}
+
+std::array<float,3> Tetra::face_normal(unsigned i) const
+{
+	float x[4],y[4],z[4];
+	_mm_store_ps(x,nx);
+	_mm_store_ps(y,ny);
+	_mm_store_ps(z,nz);
+	return std::array<float,3>{ x[i], y[i], z[i] };
+}
 
 inline __m128 Tetra::dots(const __m128 d) const
 {
@@ -70,7 +90,6 @@ inline std::array<float,4> Tetra::dots(const std::array<float,3> d) const
 
 inline __m128 Tetra::heights(const __m128 p) const
 {
-
     // calculate dot = n (dot) d, height = n (dot) p - C
     __m128 h1 =             _mm_mul_ps(nx,_mm_shuffle_ps(p,p,_MM_SHUFFLE(0,0,0,0)));
 

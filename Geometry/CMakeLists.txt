@@ -1,7 +1,10 @@
 ADD_SUBDIRECTORY(Placement)
 ADD_SUBDIRECTORY(Modifiers)
 
-ADD_LIBRARY(FullMonteGeometry SHARED TetraMeshBase.cpp TetraMesh.cpp Face.cpp newgeom.cpp Sources/Print.cpp Filters/TetraFilterByRegion.cpp Filters/TetraMeshBaseFilter.cpp Filters/TetraMeshFilter.cpp RayWalk.cpp Filters/TriFilterRegionBounds.cpp Basis.cpp)
+ADD_LIBRARY(FullMonteGeometry SHARED TetraMeshBase.cpp TetraMesh.cpp Face.cpp newgeom.cpp Sources/Print.cpp Filters/TetraFilterByRegion.cpp Filters/TetraMeshBaseFilter.cpp Filters/TetraMeshFilter.cpp RayWalk.cpp Filters/TriFilterRegionBounds.cpp Basis.cpp MeshChecker.cpp)
+
+ADD_EXECUTABLE(CheckMesh CheckMesh.cpp)
+TARGET_LINK_LIBRARIES(CheckMesh FullMonteGeometry FullMonteVTKFile)
 
 IF (WRAP_TCL)
     SET_SOURCE_FILES_PROPERTIES(FullMonteGeometry.i PROPERTIES CPLUSPLUS ON)

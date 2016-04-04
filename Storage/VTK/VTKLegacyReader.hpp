@@ -22,7 +22,9 @@ public:
 
 	virtual ~VTKLegacyReader();
 
-	class NotImplemented : public std::exception { virtual const char* what(){ return "Not supported"; } };
+	class NotImplemented : public std::exception {
+		virtual const char* what() const noexcept override { return "Not supported"; }
+	};
 
 	virtual TetraMeshBase mesh() const;
 	//virtual std::vector<Material> materials() const;
