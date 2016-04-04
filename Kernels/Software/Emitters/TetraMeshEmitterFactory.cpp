@@ -93,25 +93,30 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::PencilBeam* pb)
 
 	if (tetHint != -1U && tetHint != tet)
 		cout << "WARNING: Tetra hint provided (" << tetHint << ") does not match the tetra located by search (" << tet << ")" << endl;
-	else if (tetHint == -1U)
+	else if (tetHint == -1U && m_debug)
 		cout << "INFO: No tetra hint provided, found " << tet << " (material " << m_mesh->getMaterial(tet) << ")" << endl;
 
-	if (m_debug)
+
+	::Tetra T = m_mesh->getTetra(tet);
+	bool showTetStats=m_debug;
+
+	if (!T.pointWithin(std::array<double,3>{ pos[0], pos[1], pos[2]},m_tetraInteriorEpsilon))
 	{
-		cout << "Tetra normals (ID " << tet << ", material " << m_mesh->getMaterial(tet) << ": ";
-
-		::Tetra T = m_mesh->getTetra(tet);
-		std::array<float,4> h=T.heights(pos);
-
-		cout << "Heights: ";
-		for(unsigned i=0;i<4;++i)
-			cout << h[i] << ' ';
-		cout << endl;
-
-		if (!T.pointWithin(std::array<double,3>{ pos[0], pos[1], pos[2]}))
-			cout << "ERROR! Point is not inside the tetra!" << endl;
-
+		showTetStats=true;
+		cout << "ERROR! Point is not inside the tetra!" << endl;
 	}
+
+	if (showTetStats)
+		{
+			cout << "Tetra normals (ID " << tet << ", material " << m_mesh->getMaterial(tet) << ": ";
+
+			std::array<float,4> h=T.heights(pos);
+
+			cout << "Heights: ";
+			for(unsigned i=0;i<4;++i)
+				cout << h[i] << ' ';
+			cout << endl;
+		}
 
 
 	SSE::UnitVector3 d = SSE::UnitVector3::normalize(SSE::Vector3((pb->direction())));

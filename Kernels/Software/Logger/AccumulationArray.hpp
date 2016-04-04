@@ -68,7 +68,7 @@ public:
 		}
 
 		/// Flushes the buffer and deletes it
-		~ThreadWorker(){ commit(); delete q_start; }
+		~ThreadWorker(){ commit(); delete[] q_start; }
 
 		/// Returns a reference to an accumulation buffer for the given index i
 		T& operator[](unsigned i){

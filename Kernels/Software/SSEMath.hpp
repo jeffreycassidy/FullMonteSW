@@ -114,7 +114,7 @@ public:
 
 	Vector operator/(const Scalar rhs) const
 	{
-		return Vector(_mm_div_ps(m_v,rhs.m_v));
+		return Vector(_mm_div_ps(m_v,static_cast<const Vector<D>&>(rhs).m_v));
 	}
 
 	static Scalar dot(Vector lhs,Vector rhs)

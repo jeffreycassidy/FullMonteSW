@@ -89,6 +89,7 @@ static const __m256 _ps_sign_mask = _mm256_castsi256_ps(_mm256_set1_epi32(0x8000
 static const __m256 _ps_inv_sign_mask = _mm256_castsi256_ps(_mm256_set1_epi32(~0x80000000));
 //_PS_CONST_TYPE(inv_sign_mask, int, ~0x80000000);
 
+#ifndef HAVE_AVX2
 
 inline __m256 _mm256_set_m128(__m128 hi,__m128 lo)
 {
@@ -105,6 +106,8 @@ inline __m256i _mm256_set_m128i(__m128i hi,__m128i lo)
 			hi,
 			1);
 }
+
+#endif
 
 inline __m256 _mm256_abs_ps(__m256 x)
 {
@@ -137,7 +140,8 @@ inline __m256 _mm256_abs_ps(__m256 x)
 }
 
 #ifdef HAVE_AVX2
-#elseif HAVE_AVX
+#else
+#ifdef HAVE_AVX
 
 #warning "AVX2 integer (epi8/16/32/64) instructions are emulated using SSE instructions, starting here"
 M256I_EQUIV2(add_epi32)
@@ -151,7 +155,7 @@ M256I_EQUIV1IMM(srli_epi32)
 #define _mm256_srli_epi32 _emu_mm256_srli_epi32
 
 #warning "  and ending here"
-
+#endif
 #endif
 
 

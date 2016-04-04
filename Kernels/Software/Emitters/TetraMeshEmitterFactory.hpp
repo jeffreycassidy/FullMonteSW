@@ -66,7 +66,9 @@ private:
 	std::vector<std::pair<float,Emitter::EmitterBase<RNG>*>>	m_emitters;
 	const TetraMesh*											m_mesh=nullptr;
 
-	bool														m_debug=true;
+	bool														m_debug=false;
+
+	float														m_tetraInteriorEpsilon=2e-5f;
 };
 
 };

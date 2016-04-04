@@ -66,7 +66,6 @@ TetraMeshBase VTKLegacyReader::convertToMesh(vtkUnstructuredGrid* ug) const
 		ug->GetCellPoints(i,Npc,p);
 		assert(Npc==4);
 
-		// destination is always i'th element
 		for(unsigned j=0;j<4;++j)
 			T[i+m_addZeroCell][j] = p[j]+m_addZeroPoint;
 
@@ -91,7 +90,7 @@ TetraMeshBase VTKLegacyReader::mesh() const
 
 	TetraMeshBase M = convertToMesh(g);
 
-	cout << "  Converted to mesh" << endl;
+	cout << "  Converted to mesh with " << M.getNp() << " points and " << M.getNt() << " tetras" << endl;
 	g->Delete();
 	return M;
 }

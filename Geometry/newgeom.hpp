@@ -93,6 +93,13 @@ public:
 	Point operator+(const Vector<D,T>& v) const { Point t; for(unsigned i=0;i<D;++i){ t[i]=(*this)[i]+v[i]; } return t; }
 	Point operator-(const Vector<D,T>& v) const { Point t; for(unsigned i=0;i<D;++i){ t[i]=(*this)[i]-v[i]; } return t; }
 
+	template<typename FT=float>std::array<FT,D> as_array_of() const
+		{
+			std::array<FT,D> o;
+			std::copy(std::array<T,D>::begin(), std::array<T,D>::end(), o.begin());
+			return o;
+		}
+
 	template<class Archive>void serialize(Archive& ar,const unsigned ver)
 		{ ar & boost::serialization::base_object<std::array<T,D>>(*this); }
 	friend boost::serialization::access;
