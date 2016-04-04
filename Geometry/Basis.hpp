@@ -26,7 +26,7 @@ typedef std::array<float,3> UnitVector3;
 typedef std::array<std::array<float,3>,3> Matrix3;			// 3x3 transformation matrix
 typedef std::array<std::array<float,4>,3> AffineMatrix3;	// 3x4, but last vector entry is implicitly 1 when multiplying
 
-template<typename FT,std::size_t R,std::size_t C>void clear(std::array<std::array<FT,R>,C>& M)
+template<typename FT,std::size_t R,std::size_t C>void clear(std::array<std::array<FT,C>,R>& M)
 {
 	for(unsigned i=0;i<R;++i)
 		for(unsigned j=0;j<C;++j)

@@ -367,21 +367,6 @@ unsigned TetraMesh::findEnclosingTetra(const Point<3,double>& p) const
 	return IDt;
 }
 
-/** Verifies that a point is within the specified tetrahedron, using tolerance eps.
- */
-bool Tetra::pointWithin(__m128 p,float eps) const
-{
-    // compute p (dot) n_i minus C_i for i in [0,3]
-    __m128 dot =         _mm_mul_ps(nx,_mm_shuffle_ps(p,p,_MM_SHUFFLE(0,0,0,0)));
-    dot = _mm_add_ps(dot,_mm_mul_ps(ny,_mm_shuffle_ps(p,p,_MM_SHUFFLE(1,1,1,1))));
-    dot = _mm_add_ps(dot,_mm_mul_ps(nz,_mm_shuffle_ps(p,p,_MM_SHUFFLE(2,2,2,2))));
-    dot = _mm_sub_ps(dot,C);
-
-    dot = _mm_sub_ps(dot,_mm_set1_ps(eps));
-
-    return _mm_movemask_ps(dot) == 0;
-}
-
 
 // check linear combination of points to verify we're within tetra
 //   used only for testing, very slow

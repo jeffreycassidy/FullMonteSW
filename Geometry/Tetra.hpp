@@ -40,7 +40,7 @@ struct Tetra {
     	return pointWithin(pv);
     }
 
-    bool pointWithin(__m128,float eps=0.0f) const;
+    inline bool pointWithin(__m128,float eps=0.0f) const;
 
     __m128 heights(__m128) const;
     std::array<float,4> heights(std::array<float,3>) const;
@@ -55,14 +55,14 @@ struct Tetra {
 
 } __attribute__ ((aligned(64)));
 
-float Tetra::face_constant(unsigned i) const
+inline float Tetra::face_constant(unsigned i) const
 {
 	float f[4];
 	_mm_store_ps(f,C);
 	return f[i];
 }
 
-std::array<float,3> Tetra::face_normal(unsigned i) const
+inline std::array<float,3> Tetra::face_normal(unsigned i) const
 {
 	float x[4],y[4],z[4];
 	_mm_store_ps(x,nx);
@@ -167,3 +167,20 @@ inline StepResult Tetra::getIntersection(const __m128 p,const __m128 d,__m128 s)
 
     return result;
 }
+
+
+/** Verifies that a point is within the specified tetrahedron, using tolerance eps.
+ */
+inline bool Tetra::pointWithin(__m128 p,float eps) const
+{
+    // compute p (dot) n_i minus C_i for i in [0,3]
+    __m128 dot =         _mm_mul_ps(nx,_mm_shuffle_ps(p,p,_MM_SHUFFLE(0,0,0,0)));
+    dot = _mm_add_ps(dot,_mm_mul_ps(ny,_mm_shuffle_ps(p,p,_MM_SHUFFLE(1,1,1,1))));
+    dot = _mm_add_ps(dot,_mm_mul_ps(nz,_mm_shuffle_ps(p,p,_MM_SHUFFLE(2,2,2,2))));
+    dot = _mm_sub_ps(dot,C);
+
+    dot = _mm_add_ps(dot,_mm_set1_ps(eps));
+
+    return _mm_movemask_ps(dot) == 0;			// movemask shows if top (sign) bit is set. 0 means all positive.
+}
+
