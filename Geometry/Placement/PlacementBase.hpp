@@ -31,7 +31,11 @@ public:
 	void addSource(PlacementMediatorBase* pmb);
 	void removeSource(PlacementMediatorBase* pmb);
 
-	/// Update all underlying source reps by calling their update() method
+	/// Add/remove detectors from the placement
+	void addDetector(PlacementMediatorBase* pmb);
+	void removeDetector(PlacementMediatorBase* pmb);
+
+	/// Update all underlying source & detector reps by calling their update() method
 	void update();
 
 	boost::iterator_range<std::vector<PlacementMediatorBase*>::const_iterator> sources()
@@ -41,6 +45,7 @@ public:
 
 private:
 	std::vector<PlacementMediatorBase*>		m_sources;
+	std::vector<PlacementMediatorBase*>		m_detectors;
 };
 
 #endif /* GEOMETRY_PLACEMENT_PLACEMENTBASE_HPP_ */

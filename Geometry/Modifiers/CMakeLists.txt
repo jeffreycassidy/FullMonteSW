@@ -1,0 +1,2 @@
+ADD_EXECUTABLE(Test_AffineTransform Test_AffineTransform.cpp)
+TARGET_LINK_LIBRARIES(Test_AffineTransform ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})

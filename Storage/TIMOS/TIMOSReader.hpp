@@ -21,7 +21,12 @@ public:
 
 	virtual ~TIMOSReader(){}
 
-	virtual TetraMesh						mesh() const;
+	/// Load the basic mesh (points, tetra connectivity, and region assignments) and create full data structure
+	TetraMesh								mesh() const;
+
+	/// Just load the basic mesh
+	virtual TetraMeshBase					mesh_base() const;
+
 	virtual Source::Base*					sources() const;
 
 	virtual std::vector<SimpleMaterial>		materials_simple() const;

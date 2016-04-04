@@ -18,6 +18,8 @@
  *
  */
 
+template<typename FT,std::size_t D>class AffineTransform;
+
 class TetraMeshBase
 {
 public:
@@ -64,6 +66,8 @@ public:
     {
     	return *boost::max_element(m_tetraMaterials);
     }
+
+    void apply(const AffineTransform<float,3>& T);
 
 
     unsigned                		getMaterial(unsigned IDt) const { return m_tetraMaterials[IDt]; }

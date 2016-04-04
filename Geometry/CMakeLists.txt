@@ -1,4 +1,5 @@
 ADD_SUBDIRECTORY(Placement)
+ADD_SUBDIRECTORY(Modifiers)
 
 ADD_LIBRARY(FullMonteGeometry SHARED TetraMeshBase.cpp TetraMesh.cpp Face.cpp newgeom.cpp Sources/Print.cpp Filters/TetraFilterByRegion.cpp Filters/TetraMeshBaseFilter.cpp Filters/TetraMeshFilter.cpp RayWalk.cpp Filters/TriFilterRegionBounds.cpp Basis.cpp)
 

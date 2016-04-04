@@ -43,9 +43,8 @@ public:
 	using PlacementMediatorBase::placement;
 	using PlacementMediatorBase::source;
 
-	PlacementT*	placement()						const	{ return static_cast<PlacementT*>(PlacementMediatorBase::placement()); }
-
-	SourceT*			source() 						const	{ return static_cast<SourceT*>(PlacementMediatorBase::source());			}
+	PlacementT*	placement()						const	{ return static_cast<PlacementT*>(PlacementMediatorBase::placement()); 		}
+	SourceT*	source() 						const	{ return static_cast<SourceT*>(PlacementMediatorBase::source());			}
 };
 
 

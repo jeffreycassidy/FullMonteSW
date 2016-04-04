@@ -1,5 +1,4 @@
-#include <boost/serialization/access.hpp>
-#include <boost/serialization/vector.hpp>
+#include <FullMonte/Geometry/Modifiers/AffineTransform.hpp>
 
 #include "TetraMeshBase.hpp"
 
@@ -132,6 +131,15 @@ void TetraMeshBase::remapMaterial(unsigned from,unsigned to)
 	for(unsigned& m : m_tetraMaterials)
 		if (m == from)
 			m = to;
+}
+
+void TetraMeshBase::apply(const AffineTransform<float,3>& T)
+{
+	for(auto& p : m_points)
+	{
+		std::array<float,3> y = T(std::array<float,3>{ float(p[0]), float(p[1]), float(p[2])});
+		p = Point<3,double>{ y[0],y[1],y[2] };
+	}
 }
 
 vector<unsigned> TetraMeshBase::tetraMaterialCount() const

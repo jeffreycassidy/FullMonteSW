@@ -21,15 +21,21 @@ using namespace std;
 
 TetraMesh TIMOSReader::mesh() const
 {
+	TetraMeshBase tmb = mesh_base();
+	return TetraMesh(tmb);
+}
+
+TetraMeshBase TIMOSReader::mesh_base() const
+{
 	TIMOS::Mesh tm = parse_mesh(meshFn_);
 
 	std::vector<TetraByPointID> T(tm.T.size()+1);
 	std::vector<unsigned> T_m(tm.T.size()+1);
-	std::vector<array<float,3>> P(tm.P.size()+1);
+	std::vector<Point<3,double>> P(tm.P.size()+1);
 
-	P[0] = std::array<float,3>{.0f,.0f,.0f};
+	P[0] = Point<3,double>{.0,.0,.0};
 	for(unsigned i=0; i<tm.P.size(); ++i)
-		P[i+1] = std::array<float,3>{tm.P[i][0], tm.P[i][1], tm.P[i][2]};
+		P[i+1] = Point<3,double>{tm.P[i][0], tm.P[i][1], tm.P[i][2]};
 
 	T[0] = TetraByPointID(0,0,0,0);
 	for(unsigned i=0; i<tm.T.size(); ++i)
@@ -38,7 +44,7 @@ TetraMesh TIMOSReader::mesh() const
 		T_m[i+1] = tm.T[i].region;
 	}
 
-	TetraMesh M(P,T,T_m);
+	TetraMeshBase M(P,T,T_m);
 	return M;
 }
 

@@ -30,6 +30,11 @@ void PlacementBase::addSource(PlacementMediatorBase* pmb)
 	m_sources.push_back(pmb);
 }
 
+void PlacementBase::addDetector(PlacementMediatorBase* pmb)
+{
+	m_detectors.push_back(pmb);
+}
+
 void PlacementBase::removeSource(PlacementMediatorBase* pmb)
 {
 	auto it = std::find(m_sources.begin(), m_sources.end(), pmb);
@@ -39,9 +44,20 @@ void PlacementBase::removeSource(PlacementMediatorBase* pmb)
 		throw std::logic_error("PlacementBase::removeSource() source does not exist in this placement");
 }
 
+void PlacementBase::removeDetector(PlacementMediatorBase* pmb)
+{
+	auto it = std::find(m_detectors.begin(), m_detectors.end(), pmb);
+	if (it != m_detectors.end())
+		m_detectors.erase(it);
+	else
+		throw std::logic_error("PlacementBase::removeDetector() detector does not exist in this placement");
+}
+
 void PlacementBase::update()
 {
 	for (PlacementMediatorBase* pmb : m_sources)
+		pmb->update();
+	for (PlacementMediatorBase* pmb : m_detectors)
 		pmb->update();
 }
 
@@ -60,5 +76,4 @@ Source::Base* PlacementBase::source()
 
 		return new Source::Composite(1.0f,std::move(s));
 	}
-
 }
