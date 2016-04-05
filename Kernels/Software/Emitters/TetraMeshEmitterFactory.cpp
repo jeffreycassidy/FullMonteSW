@@ -72,7 +72,7 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::PencilBeam* pb)
 
 	if (m_debug)
 	{
-		array<float,3> pos = pb->position();
+		pos = pb->position();
 		array<float,3> dir = pb->direction();
 
 		cout << "TetraMeshEmitterFactory: starting at " << pos[0] << ' ' << pos[1] << ' ' << pos[2] << " direction " << dir[0] << ' ' << dir[1] << ' ' << dir[2] << endl;
@@ -100,7 +100,7 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::PencilBeam* pb)
 	::Tetra T = m_mesh->getTetra(tet);
 	bool showTetStats=m_debug;
 
-	if (!T.pointWithin(std::array<double,3>{ pos[0], pos[1], pos[2]},m_tetraInteriorEpsilon))
+	if (!T.pointWithin(to_m128(pos),m_tetraInteriorEpsilon))
 	{
 		showTetStats=true;
 		cout << "ERROR! Point is not inside the tetra!" << endl;
@@ -110,7 +110,7 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::PencilBeam* pb)
 		{
 			cout << "Tetra normals (ID " << tet << ", material " << m_mesh->getMaterial(tet) << ": ";
 
-			std::array<float,4> h=T.heights(pos);
+			std::array<float,4> h = to_array<float,4>(T.heights(to_m128(pos)));
 
 			cout << "Heights: ";
 			for(unsigned i=0;i<4;++i)

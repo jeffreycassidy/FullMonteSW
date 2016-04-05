@@ -62,7 +62,7 @@ VolumeFluenceMap FluenceConverter::convertToFluence(const VolumeAbsorbedEnergyMa
 
 	float kPhi = kE/kA;
 
-	cout << "FluenceConverter (E -> vol phi) scaling energy by kE=" << kE << " area by kA=" << kA << endl;
+	//cout << "FluenceConverter (E -> vol phi) scaling energy by kE=" << kE << " area by kA=" << kA << endl;
 
 	if (!m_mesh)
 		throw std::logic_error("FluenceConverter::convertToFluence(const VolumeAbsorbedEnergyMap&) m_mesh is NULL");
@@ -162,7 +162,7 @@ SurfaceFluenceMap FluenceConverter::convertToFluence(const SurfaceExitEnergyMap&
 
 	float kPhi = kE/kA;
 
-	cout << "FluenceConverter (E -> surface phi) scaling energy by kE=" << kE << " area by kA=" << kA << endl;
+	//cout << "FluenceConverter (E -> surface phi) scaling energy by kE=" << kE << " area by kA=" << kA << endl;
 
 
 	for(const auto e : E->nonzeros())
@@ -222,7 +222,7 @@ InternalSurfaceFluenceMap FluenceConverter::convertToFluence(const InternalSurfa
 
 	float kPhi = kE/kA;
 
-	cout << "FluenceConverter (E -> internal surface phi) scaling energy by kE=" << kE << " area by kA=" << kA << endl;
+	//cout << "FluenceConverter (E -> internal surface phi) scaling energy by kE=" << kE << " area by kA=" << kA << endl;
 
 	for(const auto e : E->nonzeros())
 	{

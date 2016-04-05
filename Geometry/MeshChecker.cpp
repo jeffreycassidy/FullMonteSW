@@ -49,13 +49,13 @@ bool MeshChecker::pointHeights(unsigned IDt) const
 	for(int f=0;f<4;++f)
 	{
 		// negative height -> inside tetra
-		array<float,4> h = T.heights(tetraPointCoords[f]);
+		array<float,4> h = to_array<float,4>(T.heights(to_m128(tetraPointCoords[f])));
 
 		for(unsigned i=0;i<4;++i)
-			if (h[i] > m_pointHeightTolerance)
+			if (h[i] < -m_pointHeightTolerance)
 			{
 				tet_ok=false;
-				cout << "Error: incorrect height of " << f << "'th tetra point (ID " << IDps[f] << ") over " << i << "'th face (ID" << T.IDfs[i] << "): " << h[i] << endl;
+				cout << "ERROR MeshChecker()::pointHeights incorrect height of " << f << "'th tetra point (ID " << IDps[f] << ") over " << i << "'th face (ID" << T.IDfs[i] << "): " << h[i] << endl;
 			}
 
 		if (!tet_ok)

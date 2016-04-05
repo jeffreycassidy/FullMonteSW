@@ -44,7 +44,7 @@ public:
 
 		m_sourceDistribution = boost::random::discrete_distribution<unsigned>(power);
 
-		std::cout << "  New Emitter::Composite with " << m_emitters.size() << " elements" << std::endl;
+		// std::cout << "  New Emitter::Composite with " << m_emitters.size() << " elements" << std::endl;
 	}
 
 	LaunchPacket emit(RNG& rng) const

@@ -118,22 +118,20 @@ void TetraMesh::buildTetrasAndFaces()
 
 					if ((h=m_faces[p.first->second].pointHeight(m_points[IDp_opposite])) > 2e-5)
 					{
-						cout << "WARNING: buildTetrasAndFaces() added second face but opposite-point altitude unexpectedly positive (h=" <<
+						cout << "WARNING: buildTetrasAndFaces() added second face (ID " << p.first->second << ") but opposite-point altitude unexpectedly positive (h=" <<
 							h << ") with flipside altitude h'=" << m_faceAltitudes[p.first->second] << " in tetra " << T.index() << " bordering tetra " << m_faceTetras[p.first->second][0] << endl;
-
-						// previous production code
-//						if (std::abs(h) > std::abs(m_faceAltitudes[p.first->second]))
-//						{
-//							cout << "  flipping face to correct" << endl;
-//							m_faces[p.first->second].flip();
-//						}
 
 						// one possible reason for an ill-oriented face is a degenerate tetra with bad numerical behavior
 						// (eg. the cross product is very nearly zero)
 						//
 						// if that is the case, then construct the face from the other tetra which is (we hope) better behaved
-
-						m_faces[p.first->second] = Face(m_points[Ft[0]],m_points[Ft[1]],m_points[Ft[2]],m_points[IDp_opposite]);
+						if (h > m_faceAltitudes[p.first->second])
+						{
+							std::cout << "  Constructing the face from the better-formed second definition" << std::endl;
+							m_faces[p.first->second] = -Face(m_points[Ft[0]],m_points[Ft[1]],m_points[Ft[2]],m_points[IDp_opposite]);
+						}
+						else
+							std::cout << "  Leaving as-is" << std::endl;
 					}
 				}
 			}
@@ -214,6 +212,12 @@ void TetraMesh::makeKernelTetras()
 				{
 					cout << "ERROR! TetraMesh::makeKernelTetras reports point height less than zero (" << h[f][p] << ") for " << p << "'th point of tetra " << IDt << " over face " << IDf << endl;
 					tetOK=false;
+				}
+
+				if (h[f][p] < -1e-4)
+				{
+					cout << "  NOTE: Flipping face" << endl;
+					F[f].flip();
 				}
 			}
 		}
@@ -310,10 +314,10 @@ bool TetraMesh::checkFaces() const
 		bool tet_ok=true;
 		for(int f=0;f<4;++f)
 		{
-			std::array<float,4> h = m_tetras[IDt].heights(tetraPointCoords[f]);
+			std::array<float,4> h = to_array<float,4>(m_tetras[IDt].heights(to_m128(tetraPointCoords[f])));
 
 			for(unsigned i=0;i<4;++i)
-				if (h[i] > 2e-5)
+				if (h[i] < -4e-5)
 				{
 					tet_ok=status_ok=false;
 					cout << "Error: incorrect height of " << f << "'th tetra point (ID " << IDps[f] << ") over " << i << "'th face (ID" << m_tetras[IDt].IDfs[i] << "): " << h[i] << endl;

@@ -6,6 +6,25 @@
 
 using namespace std;
 
+template<typename FT,std::size_t D>__m128 to_m128(std::array<FT,D> a)
+{
+	float f[4];
+	for(unsigned i=0;i<D;++i)
+		f[i]=a[i];
+	return _mm_load_ps(f);
+}
+
+template<typename FT,std::size_t D>std::array<FT,D> to_array(__m128 v)
+{
+	float f[4];
+	_mm_store_ps(f,v);
+
+	std::array<FT,D> o;
+	for(unsigned i=0;i<4;++i)
+		o[i] = f[i];
+	return o;
+}
+
 // TODO: Move this to Kernels/Software since it's really SSE-specific
 
 typedef struct { 
@@ -33,20 +52,14 @@ struct Tetra {
     unsigned faceFlags=0;		/// Flags for each face (4B = 32b -> 8b each)
     unsigned matID;         	/// Material ID for this tetra (4 B)
 
+    /// Computes the dot product of the provided vector with each of the four face normals
+    inline __m128 dots(__m128) const;
 
-    bool pointWithin(std::array<double,3> p,float eps=0.0f) const
-    {
-    	__m128 pv = _mm_set_ps(0.0,p[2],p[1],p[0]);
-    	return pointWithin(pv);
-    }
+    /// Computes the height of the provided point over each of the four faces (h > 0 -> inside tetra)
+    inline __m128 heights(__m128) const;
 
+    /// Checks if a point is within the tetra, with optional tolerance
     inline bool pointWithin(__m128,float eps=0.0f) const;
-
-    __m128 heights(__m128) const;
-    std::array<float,4> heights(std::array<float,3>) const;
-
-    __m128 dots(__m128) const;
-    std::array<float,4> dots(std::array<float,3>) const;
 
     StepResult getIntersection(__m128,__m128,__m128 s) const;
 
@@ -81,34 +94,9 @@ inline __m128 Tetra::dots(const __m128 d) const
 			_mm_mul_ps(nx,_mm_shuffle_ps(d,d,_MM_SHUFFLE(0,0,0,0))));
 }
 
-inline std::array<float,4> Tetra::dots(const std::array<float,3> d) const
-{
-	std::array<float,4> a{ d[0], d[1], d[2], 0.0f};
-	_mm_store_ps(a.data(), dots(_mm_load_ps(a.data())));
-	return a;
-}
-
 inline __m128 Tetra::heights(const __m128 p) const
 {
-    // calculate dot = n (dot) d, height = n (dot) p - C
-    __m128 h1 =             _mm_mul_ps(nx,_mm_shuffle_ps(p,p,_MM_SHUFFLE(0,0,0,0)));
-
-    h1 = _mm_add_ps(h1, _mm_mul_ps(ny,_mm_shuffle_ps(p,p,_MM_SHUFFLE(1,1,1,1))));
-
-    h1 = _mm_add_ps(h1, _mm_mul_ps(nz,_mm_shuffle_ps(p,p,_MM_SHUFFLE(2,2,2,2))));
-
-    // height (=C - p dot n) should be negative if inside tetra, may occasionally be (small) positive due to numerical error
-    // dot negative means facing outwards
-    h1 = _mm_sub_ps(C,h1);
-
-	return h1;
-}
-
-inline std::array<float,4> Tetra::heights(std::array<float,3> pa) const
-{
-	std::array<float,4> a{ pa[0], pa[1], pa[2], 0 };
-	_mm_store_ps(a.data(),heights(_mm_load_ps(a.data())));
-	return a;
+	return _mm_sub_ps(dots(p),C);
 }
 
 inline StepResult Tetra::getIntersection(const __m128 p,const __m128 d,__m128 s) const
@@ -173,14 +161,25 @@ inline StepResult Tetra::getIntersection(const __m128 p,const __m128 d,__m128 s)
  */
 inline bool Tetra::pointWithin(__m128 p,float eps) const
 {
-    // compute p (dot) n_i minus C_i for i in [0,3]
-    __m128 dot =         _mm_mul_ps(nx,_mm_shuffle_ps(p,p,_MM_SHUFFLE(0,0,0,0)));
-    dot = _mm_add_ps(dot,_mm_mul_ps(ny,_mm_shuffle_ps(p,p,_MM_SHUFFLE(1,1,1,1))));
-    dot = _mm_add_ps(dot,_mm_mul_ps(nz,_mm_shuffle_ps(p,p,_MM_SHUFFLE(2,2,2,2))));
-    dot = _mm_sub_ps(dot,C);
+	__m128 h = heights(p);
+    __m128 cmpWithTolerance = _mm_add_ps(h,_mm_set1_ps(eps));
 
-    dot = _mm_add_ps(dot,_mm_set1_ps(eps));
-
-    return _mm_movemask_ps(dot) == 0;			// movemask shows if top (sign) bit is set. 0 means all positive.
+    return _mm_movemask_ps(cmpWithTolerance) == 0;			// movemask shows if top (sign) bit is set. 0 means all positive.
 }
+
+//
+//if (_mm_movemask_ps(cmpWithTolerance))
+//{
+//	cout << "NOTE: Point is not within tetra" << endl;
+//	float f[4];
+//	_mm_store_ps(f,dot);
+//	cout << "  Dot: ";
+//	for(unsigned i=0;i<4;++i)
+//		cout << f[i] << ' ';
+//	_mm_store_ps(f,cmpWithTolerance);
+//	cout << endl << "  With tolerance: ";
+//	for(unsigned i=0;i<4;++i)
+//		cout << "  " << f[i] << ' ';
+//	cout << endl;
+//}
 

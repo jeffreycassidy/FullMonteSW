@@ -68,7 +68,7 @@ private:
 
 	bool														m_debug=false;
 
-	float														m_tetraInteriorEpsilon=2e-5f;
+	float														m_tetraInteriorEpsilon=1e-5f;
 };
 
 };

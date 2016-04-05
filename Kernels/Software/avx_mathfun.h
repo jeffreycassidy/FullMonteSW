@@ -43,6 +43,7 @@
 
 #ifndef AVX_MATHFUN_INCLUDED
 #define AVX_MATHFUN_INCLUDED
+
 #include <xmmintrin.h>
 
 #include <utility>
@@ -89,7 +90,7 @@ static const __m256 _ps_sign_mask = _mm256_castsi256_ps(_mm256_set1_epi32(0x8000
 static const __m256 _ps_inv_sign_mask = _mm256_castsi256_ps(_mm256_set1_epi32(~0x80000000));
 //_PS_CONST_TYPE(inv_sign_mask, int, ~0x80000000);
 
-#ifndef HAVE_AVX2
+
 
 inline __m256 _mm256_set_m128(__m128 hi,__m128 lo)
 {
@@ -107,7 +108,7 @@ inline __m256i _mm256_set_m128i(__m128i hi,__m128i lo)
 			1);
 }
 
-#endif
+#ifndef HAVE_AVX2
 
 inline __m256 _mm256_abs_ps(__m256 x)
 {
@@ -139,8 +140,11 @@ inline __m256 _mm256_abs_ps(__m256 x)
 	return _mm256_set_m128i( _mm_##Cmd(ahi,imm), _mm_##Cmd(alo,imm));		\
 }
 
+#endif
+
 #ifdef HAVE_AVX2
 #else
+
 #ifdef HAVE_AVX
 
 #warning "AVX2 integer (epi8/16/32/64) instructions are emulated using SSE instructions, starting here"
@@ -149,13 +153,16 @@ M256I_EQUIV1IMM(slli_epi32)
 M256I_EQUIV2(sub_epi32)
 M256I_EQUIV1IMM(srli_epi32)
 
-#define _mm256_add_epi32 _emu_mm256_epi32
+#define _mm256_add_epi32 _emu_mm256_add_epi32
 #define _mm256_slli_epi32 _emu_mm256_slli_epi32
 #define _mm256_sub_epi32 _emu_mm256_sub_epi32
 #define _mm256_srli_epi32 _emu_mm256_srli_epi32
 
 #warning "  and ending here"
+#else
+#error "Must enable either HAVE_AVX or HAVE_AVX2"
 #endif
+
 #endif
 
 

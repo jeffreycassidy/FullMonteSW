@@ -1,5 +1,6 @@
 #ifndef KERNELS_SOFTWARE_LOGGERS_INTERNALSURFACE_HPP_
 #define KERNELS_SOFTWARE_LOGGERS_INTERNALSURFACE_HPP_
+
 #include "Logger.hpp"
 #include <FullMonte/Kernels/Software/Packet.hpp>
 #include <FullMonte/OutputTypes/FluenceMapBase.hpp>
@@ -100,8 +101,6 @@ public:
 	{
 		// convert to float
 		std::vector<InternalSurface<float>> se(values.size());
-
-		cout << "Results for LoggerInternalSurface: values.size()=" << values.size() << endl;
 
 		for(unsigned i=0;i<values.size();++i)
 			se[i] = InternalSurface<float> { float(values[i].exitCount), float(values[i].enterCount) };
