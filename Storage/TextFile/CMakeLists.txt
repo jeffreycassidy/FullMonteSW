@@ -1,3 +1,2 @@
-ADD_LIBRARY(FullMonteTextFile TextFileWriter.cpp)
-TARGET_LINK_LIBRARIES(FullMonteTextFile)
+ADD_LIBRARY(FullMonteTextFile SHARED TextFileWriter.cpp)
 
