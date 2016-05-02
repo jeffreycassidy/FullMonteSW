@@ -34,7 +34,7 @@ public:
 
 		__m128 cpcpspsp = _mm_shuffle_ps(cosphi,sinphi,_MM_SHUFFLE(0,0,0,0));		// [cos(phi) cos(phi) sin(phi) sin(phi)]
 
-		azuv = _mm_mul_ps(azuv,cpcpspsp);
+		azuv = _mm_mul_ps(azuv,cpcpspsp);											// [ct*cp st*cp ct*sp st*sp]
 
 		__m128 d = _mm_shuffle_ps(azuv,sinphi,_MM_SHUFFLE(1,0,1,0));
 		__m128 a = _mm_shuffle_ps(azuv,_mm_sub_ps(zero,cosphi),_MM_SHUFFLE(1,0,3,2));

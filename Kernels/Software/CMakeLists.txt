@@ -13,6 +13,9 @@ if (ANTLR3_INCLUDE_DIR)
 	IF (WRAP_VTK)
 		INCLUDE(${VTK_USE_FILE})
 		TARGET_LINK_LIBRARIES(Test_Mouse FullMonteVTK ${VTK_LIBRARIES})
+
+        ## Paraview visualization file
+        FILE(COPY Mouse.pvsm ${CMAKE_CURRENT_BINARY_DIR})
 	ENDIF()
 	
 	IF(WRAP_TCL)
