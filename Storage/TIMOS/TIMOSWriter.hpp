@@ -48,6 +48,8 @@ private:
 	std::string m_comment;
 };
 
+#ifndef SWIG
+
 class TIMOSWriter::SourceVisitor : public Source::Visitor
 {
 public:
@@ -73,5 +75,7 @@ public:
 private:
 	std::ostream& m_os;
 };
+
+#endif
 
 #endif /* TIMOSWRITER_HPP_ */

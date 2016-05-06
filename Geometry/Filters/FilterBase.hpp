@@ -14,7 +14,10 @@
 template<typename T>class FilterBase
 {
 public:
-	virtual bool operator()(T x) const { return false; }
+	virtual bool operator()(T x) const 	{ return false; }
+	FilterBase* 	base() 				{ return this; }
+
+	virtual const char* typeStr() const { return "FilterBase<T>"; }
 };
 
 template<typename T>class AlwaysTrue : public FilterBase<T>

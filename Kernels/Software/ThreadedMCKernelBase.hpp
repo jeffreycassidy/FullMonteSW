@@ -56,7 +56,7 @@ private:
 	std::vector<ThreadedMCKernelBase::Thread*> 	m_workers;
 };
 
-
+#ifndef SWIG
 
 class ThreadedMCKernelBase::Thread
 {
@@ -82,5 +82,7 @@ private:
 
 	friend class ThreadedMCKernelBase;
 };
+
+#endif
 
 #endif /* KERNELS_SOFTWARE_THREADEDMCKERNELBASE_HPP_ */

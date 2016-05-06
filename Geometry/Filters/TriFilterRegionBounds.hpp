@@ -18,7 +18,7 @@ class TetraMesh;
  * also captures entering.
  */
 
-class TriFilterRegionBounds : public FilterBase<int>, public TetraMeshFilter
+class TriFilterRegionBounds : public FilterBase<int>,public TetraMeshFilter
 {
 public:
 	/// Default-construct including all materials
@@ -30,9 +30,11 @@ public:
 	void includeRegion(unsigned r,bool incl);
 
 	void bidirectional(bool bidir);
-	bool bidirectional() const { return m_bidirectional; }
+	bool bidirectional() const;
 
 	virtual bool operator()(const int x) const override;
+
+	virtual const char* typeStr() const override { return "TriFilterRegionBounds"; }
 
 private:
 	bool m_bidirectional=true;

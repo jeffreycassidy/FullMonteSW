@@ -10,8 +10,16 @@ IF (WRAP_TCL)
     SET_SOURCE_FILES_PROPERTIES(FullMonteGeometry.i PROPERTIES CPLUSPLUS ON)
     SWIG_ADD_MODULE(FullMonteGeometryTCL tcl FullMonteGeometry.i)
     SWIG_LINK_LIBRARIES(FullMonteGeometryTCL ${TCL_STUB_LIBRARY} FullMonteGeometry)
+    
+    INSTALL(TARGETS FullMonteGeometryTCL
+    	LIBRARY
+    	DESTINATION lib)
 ENDIF()
 
+
+INSTALL(TARGETS FullMonteGeometry
+	LIBRARY
+	DESTINATION lib)
 
 
 #### TESTS

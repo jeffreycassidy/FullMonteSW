@@ -55,8 +55,19 @@ namespace Source { namespace detail { template<class Base,class Derived>class cl
 #include <vector>
 #include <FullMonte/Geometry/TetraMesh.hpp>
 #include <sstream>
+#include <FullMonte/Geometry/Filters/TetraMeshBaseFilter.hpp>
+#include <FullMonte/Geometry/Filters/TriFilterRegionBounds.hpp>
 %}
+
 %include "TetraMeshBase.hpp"
 %include "TetraMesh.hpp"
+
+%include "Filters/FilterBase.hpp"
+%template(FilterBaseI) FilterBase<int>;
+%template(FilterBaseU) FilterBase<unsigned>;
+%include "Filters/TetraMeshBaseFilter.hpp"
+%include "Filters/TetraMeshFilter.hpp"
+%include "Filters/TriFilterRegionBounds.hpp"
+
 
 

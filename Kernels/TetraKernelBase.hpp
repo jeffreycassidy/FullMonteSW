@@ -35,6 +35,8 @@ protected:
  *
  */
 
+#ifndef SWIG
+
 class TetraKernelBase::Material
 {
 public:
@@ -62,6 +64,6 @@ private:
 	friend std::ostream& operator<<(std::ostream&,const Material& mat);
 };
 
-
+#endif
 
 #endif /* KERNELS_TETRAKERNELBASE_HPP_ */

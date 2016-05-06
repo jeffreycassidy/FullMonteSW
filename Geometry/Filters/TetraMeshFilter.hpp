@@ -10,7 +10,9 @@
 
 class TetraMesh;
 
-class TetraMeshFilter
+#include <FullMonte/Geometry/Filters/FilterBase.hpp>
+
+class TetraMeshFilter : public FilterBase<unsigned>
 {
 public:
 	TetraMeshFilter(const TetraMesh* m);

@@ -13,10 +13,13 @@
 #include <vtkIdTypeArray.h>
 #include <vtkObjectFactory.h>
 
-#include <FullMonte/Geometry/TetraMeshBase.hpp>
-#include <FullMonte/Geometry/BoundingBox.hpp>
 
 #include "vtkFullMonteTetraMeshBaseWrapper.h"
+
+#include <FullMonte/Geometry/TetraMeshBase.hpp>
+#include <FullMonte/Geometry/Filters/FilterBase.hpp>
+#include <FullMonte/Geometry/BoundingBox.hpp>
+
 
 using namespace std;
 
@@ -46,6 +49,12 @@ void vtkFullMonteTetraMeshBaseWrapper::mesh(const TetraMeshBase* m)
 	update();
 }
 
+void vtkFullMonteTetraMeshBaseWrapper::tetraFilter(FilterBase<unsigned>* f)
+{
+	m_tetraFilter=f;
+	update();
+}
+
 const TetraMeshBase* vtkFullMonteTetraMeshBaseWrapper::mesh() const
 {
 	return m_mesh;
@@ -69,8 +78,8 @@ void vtkFullMonteTetraMeshBaseWrapper::update()
 	assert(m_mesh);
 
 	getVTKPoints(*m_mesh,m_points);
-	getVTKTetraCells(*m_mesh,m_tetras);
-	getVTKTetraRegions(*m_mesh,m_regions);
+	getVTKTetraCells(*m_mesh,m_tetras,m_tetraFilter);
+	getVTKTetraRegions(*m_mesh,m_regions,m_tetraFilter);
 
 	Modified();
 }
@@ -123,40 +132,32 @@ void getVTKPoints(const TetraMeshBase& M,vtkPoints* P)
  *
  */
 
-void getVTKTetraCells(const TetraMeshBase& M,vtkCellArray* ca)
+void getVTKTetraCells(const TetraMeshBase& M,vtkCellArray* ca,const FilterBase<unsigned> *F)
 {
 	assert(ca);
 
-	size_t Nt=M.getNt()+1;
+	size_t Nt=0;
 
 	// Create tetra ID array
 	vtkIdTypeArray *ids = vtkIdTypeArray::New();
 	ids->SetNumberOfComponents(1);
-	ids->SetNumberOfTuples(5*Nt);
 
-	vtkIdType j=0;
-	for(TetraByPointID IDps : M.getTetrasByPointID())
+	for(unsigned i=0;i<=M.getNt();++i)
 	{
-		if (j != 0)
+		if (!F || (*F)(i))
 		{
+			TetraByPointID IDps = M.getTetraPointIDs(i);
+
 			// copy regular elements 1..Nt to tetras 1..Nt
-			ids->SetTuple1(j++,4);
+			ids->InsertNextTuple1(4);
 			for(unsigned k=0;k<4;++k)
 			{
-				ids->SetValue(j++,(vtkIdType)(IDps[k]));
+				ids->InsertNextTuple1((vtkIdType)(IDps[k]));
 				assert(IDps[k] < M.getNp()+1);
 			}
-		}
-		else
-		{
-			// copy dummy element (0,0,0,0) to tetra 0
-			ids->SetTuple1(0,4);
-			for(unsigned k=1;k<5;++k)
-				ids->SetTuple1(k,0);
-			j += 5;
+			++Nt;
 		}
 	}
-	assert(j == 5*Nt);
 
 	ca->SetCells(Nt, ids);
 	ids->Delete();
@@ -168,16 +169,27 @@ void getVTKTetraCells(const TetraMeshBase& M,vtkCellArray* ca)
  * @param	R		vtkUnsignedShortArray to hold region codes (will be overwritten)
  */
 
-void getVTKTetraRegions(const TetraMeshBase& M,vtkUnsignedShortArray* R)
+void getVTKTetraRegions(const TetraMeshBase& M,vtkUnsignedShortArray* R,const FilterBase<unsigned>* F)
 {
 	assert(R);
 
 	R->SetNumberOfComponents(1);
-	R->SetNumberOfTuples(M.getNt()+1);
 
-	for(unsigned i=1; i <= M.getNt(); ++i)
-		R->SetTuple1(i,M.getMaterial(i));
-	R->SetTuple1(0,0);
+	if (F)
+	{
+		R->SetNumberOfTuples(0);
+		for(unsigned i=1; i <= M.getNt(); ++i)
+			if ((*F)(i))
+				R->InsertNextTuple1(M.getMaterial(i));
+	}
+	else
+	{
+		R->SetNumberOfTuples(M.getNt()+1);
+		for(unsigned i=1; i <= M.getNt(); ++i)
+			R->SetTuple1(i,M.getMaterial(i));
+		R->SetTuple1(0,0);
+	}
+
 }
 
 

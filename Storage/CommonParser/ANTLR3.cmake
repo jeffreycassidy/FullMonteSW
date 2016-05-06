@@ -4,7 +4,6 @@ SET(ANTLR3_LIBRARY antlr3c)
 SET(ANTLR3_INCLUDE_DIR "/usr/local/antlr3c-3.4/include" CACHE PATH "ANTLR3 include path")
 SET(ANTLR3_LIB_DIR "/usr/local/lib" CACHE PATH "ANTLR3 C runtime path")
 SET(ANTLR3_FOUND ON)
-SET(ANTLR3_DIR "/Users/jcassidy/src/FullMonteSW/FullMonte/Storage/CommonParser" CACHE PATH "Path to ANTLR3.cmake and related files")
 
 SET(ANTLR3_COMPILE_FLAGS "")
 
@@ -43,8 +42,8 @@ FUNCTION (ADD_ANTLR3_PARSER GRAMMAR)
 
     ADD_CUSTOM_COMMAND(
         OUTPUT ${GRAMMAR}_tokens.h
-        COMMAND ${PERL_EXECUTABLE} ${ANTLR3_DIR}/mktok.pl ${GRAMMAR}.tokens > ${GRAMMAR}_tokens.h
-        DEPENDS ${ANTLR3_DIR}/mktok.pl ${GRAMMAR}.tokens
+        COMMAND ${PERL_EXECUTABLE} ${CMAKE_SOURCE_DIR}/Storage/CommonParser/mktok.pl ${GRAMMAR}.tokens > ${GRAMMAR}_tokens.h
+        DEPENDS ${CMAKE_SOURCE_DIR}/Storage/CommonParser/mktok.pl ${GRAMMAR}.tokens
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
         )
 

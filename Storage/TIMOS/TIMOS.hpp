@@ -27,12 +27,15 @@ public:
 	void setSourceFileName(std::string fn){ sourceFn_=fn; }
 	void setLegendFileName(std::string fn){ legendFn_=fn; }
 
+#ifndef SWIG
+
 	struct LegendEntry {
 		std::string 		label;
 		std::array<float,3> colour;
 	};
 
 protected:
+
 	struct SourceDef {
 		unsigned type=0;
 		unsigned w=0;
@@ -83,6 +86,7 @@ protected:
 	std::string sourceFn_,optFn_,meshFn_,legendFn_;
 
 	friend std::ostream& operator<<(std::ostream& os,const TIMOS::SourceDef& s);
+#endif
 };
 
 #endif /* TIMOS_HPP_ */

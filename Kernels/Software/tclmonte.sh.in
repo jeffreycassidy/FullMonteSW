@@ -1,1 +1,1 @@
-env LD_LIBRARY_PATH=@CMAKE_BINARY_DIR@/Kernels/Software:@CMAKE_BINARY_DIR@/Kernels:@CMAKE_BINARY_DIR@/Geometry:@CMAKE_BINARY_DIR@/Storage/TIMOS rlwrap tclsh $1
+env LD_LIBRARY_PATH=@CMAKE_BINARY_DIR@/lib rlwrap tclsh $1

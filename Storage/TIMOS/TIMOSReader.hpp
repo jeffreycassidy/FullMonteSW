@@ -29,9 +29,12 @@ public:
 
 	virtual Source::Base*					sources() const;
 
+#ifndef SWIG
+
 	virtual std::vector<SimpleMaterial>		materials_simple() const;
 
 	virtual std::vector<LegendEntry> 		legend() const;
+#endif
 
 	virtual void clear() {};
 

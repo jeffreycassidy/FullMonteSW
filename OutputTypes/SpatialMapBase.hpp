@@ -24,9 +24,9 @@ public:
 
 	virtual SpatialMapBase* clone() const=0;
 
-	virtual boost::any_range<const std::pair<Index,Value>,boost::forward_traversal_tag> 	nonzeros() const=0;
-	virtual boost::any_range<const std::pair<Index,Value>,boost::forward_traversal_tag> 	dense() const=0;
-	virtual boost::any_range<const Value,boost::forward_traversal_tag>						values() const=0;
+	virtual boost::any_range<const std::pair<Index,Value>,boost::forward_traversal_tag,const std::pair<Index,Value>,std::ptrdiff_t> 	nonzeros() const=0;
+	virtual boost::any_range<const std::pair<Index,Value>,boost::forward_traversal_tag,const std::pair<Index,Value>,std::ptrdiff_t> 	dense() const=0;
+	virtual boost::any_range<const Value,boost::forward_traversal_tag,const Value,std::ptrdiff_t>						values() const=0;
 
 	virtual unsigned											nnz() const=0;
 	virtual unsigned											dim() const=0;
@@ -59,13 +59,13 @@ public:
 
 	virtual SpatialMapBase<Value,Index>* clone() const override { return new SpatialMapContainer(m_container); }
 
-	virtual boost::any_range<const std::pair<Index,Value>,boost::forward_traversal_tag> 	nonzeros() const final override
+	virtual boost::any_range<const std::pair<Index,Value>,boost::forward_traversal_tag,const std::pair<Index,Value>,std::ptrdiff_t> 	nonzeros() const final override
 		{ return m_container.nonzeros(); 	}
 
-	virtual boost::any_range<const std::pair<Index,Value>,boost::forward_traversal_tag> 	dense() const final override
+	virtual boost::any_range<const std::pair<Index,Value>,boost::forward_traversal_tag,const std::pair<Index,Value>,std::ptrdiff_t> 	dense() const final override
 		{ return m_container.dense(); 		}
 
-	virtual boost::any_range<const Value,boost::forward_traversal_tag>						values() const final override
+	virtual boost::any_range<const Value,boost::forward_traversal_tag,const Value,std::ptrdiff_t>						values() const final override
 		{ return m_container.values(); 		}
 
 	virtual unsigned														nnz() const final override

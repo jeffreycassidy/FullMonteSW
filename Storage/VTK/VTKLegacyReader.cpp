@@ -62,7 +62,7 @@ TetraMeshBase VTKLegacyReader::convertToMesh(vtkUnstructuredGrid* ug) const
 		vtkIdType* p;
 		vtkIdType Npc=0;
 
-		assert(((vtkUnstructuredGrid*)ug)->GetCellType()==VTK_TETRA);
+		assert(((vtkUnstructuredGrid*)ug)->GetCellType(i)==VTK_TETRA);
 		ug->GetCellPoints(i,Npc,p);
 		assert(Npc==4);
 

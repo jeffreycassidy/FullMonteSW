@@ -24,6 +24,16 @@ bool TriFilterRegionBounds::operator()(int IDf) const
 			);
 }
 
+bool TriFilterRegionBounds::bidirectional() const
+{
+	return m_bidirectional;
+}
+
+void TriFilterRegionBounds::bidirectional(bool bidir)
+{
+	m_bidirectional=bidir;
+}
+
 void TriFilterRegionBounds::includeRegion(unsigned r,bool incl)
 {
 	if (r >= m_regions.size())

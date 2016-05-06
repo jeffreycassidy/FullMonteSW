@@ -15,7 +15,7 @@ if (ANTLR3_INCLUDE_DIR)
 		TARGET_LINK_LIBRARIES(Test_Mouse FullMonteVTK ${VTK_LIBRARIES})
 
         ## Paraview visualization file
-        FILE(COPY Mouse.pvsm ${CMAKE_CURRENT_BINARY_DIR})
+        FILE(COPY VisualizeMouse.pvsm DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 	ENDIF()
 	
 	IF(WRAP_TCL)
@@ -27,8 +27,8 @@ if (ANTLR3_INCLUDE_DIR)
     	SWIG_ADD_MODULE(FullMonteSWKernelTCL tcl FullMonteSWKernel.i)
     	SWIG_LINK_LIBRARIES(FullMonteSWKernelTCL ${TCL_STUB_LIBRARY} FullMonteGeometry FullMonteSWKernel)
 		
-		FILE(COPY test_mouse.tcl
-			DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+#		FILE(COPY test_mouse.tcl
+#			DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 	ENDIF()
 ENDIF()
 

@@ -13,14 +13,16 @@
 
 class TetraMeshBase;
 
+template<class T>class FilterBase;
+
 class vtkPoints;
 class vtkCellArray;
 class vtkUnstructuredGrid;
 class vtkUnsignedShortArray;
 
 void getVTKPoints(const TetraMeshBase& M,vtkPoints* P);
-void getVTKTetraCells(const TetraMeshBase& M,vtkCellArray* ca);
-void getVTKTetraRegions(const TetraMeshBase& M,vtkUnsignedShortArray* R);
+void getVTKTetraCells(const TetraMeshBase& M,vtkCellArray* ca,const FilterBase<unsigned>* F=nullptr);
+void getVTKTetraRegions(const TetraMeshBase& M,vtkUnsignedShortArray* R,const FilterBase<unsigned>* F=nullptr);
 
 
 /** Non-owning wrapper for a FullMonte TetraMeshBase object.
@@ -29,6 +31,7 @@ void getVTKTetraRegions(const TetraMeshBase& M,vtkUnsignedShortArray* R);
 class vtkFullMonteTetraMeshBaseWrapper : public vtkObject
 {
 public:
+	vtkTypeMacro(vtkFullMonteTetraMeshBaseWrapper,vtkObject)
 	static vtkFullMonteTetraMeshBaseWrapper* New();
 	virtual ~vtkFullMonteTetraMeshBaseWrapper();
 
@@ -45,6 +48,8 @@ public:
 	vtkPoints*				points() const;
 	vtkUnsignedShortArray* regions() const;
 
+	void tetraFilter(FilterBase<unsigned>* F);
+
 protected:
 	vtkFullMonteTetraMeshBaseWrapper();
 
@@ -52,6 +57,8 @@ protected:
 
 private:
 	const TetraMeshBase* 	m_mesh=nullptr;
+
+	FilterBase<unsigned>*	m_tetraFilter=nullptr;
 
 	vtkPoints*				m_points=nullptr;
 	vtkUnsignedShortArray*	m_regions=nullptr;
