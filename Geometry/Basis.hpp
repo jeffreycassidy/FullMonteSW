@@ -14,6 +14,8 @@
 #include <boost/range/algorithm.hpp>
 #include <functional>
 
+#include "StandardArrayKernel.hpp"
+
 typedef std::array<float,3> Point3;
 typedef std::array<float,2> Point2;
 
@@ -84,38 +86,6 @@ inline Vector3 operator*(AffineMatrix3 A,Vector3 x)
 
 
 
-template<typename FT>std::array<FT,3> cross(const std::array<FT,3> lhs,const std::array<FT,3> rhs)
-{
-	return std::array<FT,3>{
-		lhs[1]*rhs[2] - lhs[2]*rhs[1],
-		lhs[2]*rhs[0] - lhs[0]*rhs[2],
-		lhs[0]*rhs[1] - lhs[1]*rhs[0]
-	};
-}
-
-template<typename FT,std::size_t D>FT dot(const std::array<FT,D> lhs,const std::array<FT,D> rhs)
-{
-	FT o(0);
-	for(unsigned i=0;i<D;++i)
-		o += lhs[i]*rhs[i];
-	return o;
-}
-
-template<typename FT>FT scalartriple(const std::array<FT,3> a,const std::array<FT,3> b,const std::array<FT,3> c)
-{
-	return dot(a,cross(b,c));
-}
-
-template<typename FT,std::size_t D>FT norm2(const std::array<FT,D> v)
-{
-	return dot(v,v);
-}
-
-template<typename FT,std::size_t D>FT norm(const std::array<FT,D> v)
-{
-	return std::sqrt(norm2(v));
-}
-
 #define ARRAY_COMPARE(name,op)template<typename T,std::size_t D>																\
 	unsigned elementwise_##name(const std::array<T,D> lhs,const std::array<T,D> rhs){											\
 		unsigned mask=0;																										\
@@ -162,53 +132,6 @@ template<typename T,std::size_t D>std::array<T,D> elementwise_max(std::array<T,D
 
 
 
-template<typename FT,std::size_t D>std::array<FT,D> operator-(const std::array<FT,D> v)
-{
-	std::array<FT,D> o;
-	for(unsigned i=0;i<D;++i)
-		o[i]=-v[i];
-	return o;
-}
-
-template<typename FT,std::size_t D>std::array<FT,D> operator-(const std::array<FT,D> lhs,const std::array<FT,D> rhs)
-{
-	std::array<FT,D> o;
-	for(unsigned i=0;i<D;++i)
-		o[i]=lhs[i]-rhs[i];
-	return o;
-}
-
-template<typename FT,std::size_t D>std::array<FT,D> operator+(const std::array<FT,D> lhs,const std::array<FT,D> rhs)
-{
-	std::array<FT,D> o;
-	for(unsigned i=0;i<D;++i)
-		o[i]=lhs[i]+rhs[i];
-	return o;
-}
-
-template<typename FT,std::size_t D>std::array<FT,D> operator*(const std::array<FT,D> v,FT k)
-{
-	std::array<FT,D> o;
-	for(unsigned i=0;i<D;++i)
-		o[i]=k*v[i];
-	return o;
-}
-
-template<typename FT,std::size_t D>std::array<FT,D> operator*(FT k,const std::array<FT,D> v)
-{
-	return v*k;
-}
-
-template<typename FT,std::size_t D>std::array<FT,D> operator/(const std::array<FT,D> v,float k)
-{
-	return v*(FT(1)/k);
-}
-
-
-template<typename FT,std::size_t D>std::array<FT,D> normalize(const std::array<FT,D> v)
-{
-	return (FT(1)/norm(v))*v;
-}
 
 
 class Basis
