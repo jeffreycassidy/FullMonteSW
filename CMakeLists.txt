@@ -64,7 +64,7 @@ ENDIF()
 
 
 ## Boost required components
-FIND_PACKAGE(Boost REQUIRED COMPONENTS unit_test_framework serialization system program_options)
+FIND_PACKAGE(Boost 1.58.0 REQUIRED COMPONENTS unit_test_framework serialization system program_options)
 
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})

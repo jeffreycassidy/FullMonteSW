@@ -1,0 +1,1 @@
+env LD_LIBRARY_PATH=@CMAKE_INSTALL_PREFIX@/lib:@ANTLR3_LIB_DIR@ rlwrap tclsh $1

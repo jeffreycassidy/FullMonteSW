@@ -3,6 +3,9 @@ ADD_SUBDIRECTORY(Emitters)
 ADD_LIBRARY(FullMonteSWKernel SHARED TetraVolumeKernel.cpp TetraSurfaceKernel.cpp TetraSVKernel.cpp SSEMath.cpp ThreadedMCKernelBase.cpp PacketDirection.cpp HenyeyGreenstein.cpp)
 TARGET_LINK_LIBRARIES(FullMonteSWKernel SFMT FullMonteKernelBase FullMonteData ${Boost_LIBRARIES})
 
+INSTALL(TARGETS FullMonteSWKernel
+    DESTINATION lib)
+
 ## Require ANTLR3 parser if using TIM-OS file format
 
 if (ANTLR3_INCLUDE_DIR)
@@ -21,14 +24,20 @@ if (ANTLR3_INCLUDE_DIR)
 	IF(WRAP_TCL)
 		# Set up file with data path hardwired
 		CONFIGURE_FILE(test_config.tcl.in test_config.tcl)
-		CONFIGURE_FILE(tclmonte.sh.in tclmonte.sh)
+		CONFIGURE_FILE(tclmonte.sh.in ${CMAKE_CURRENT_BINARY_DIR}/tclmonte.sh)
+		CONFIGURE_FILE(tclmonte_install.sh.in ${CMAKE_CURRENT_BINARY_DIR}/tclmonte_install.sh)
 		
 		SET_SOURCE_FILES_PROPERTIES(FullMonteSWKernel.i PROPERTIES CPLUSPLUS ON)
     	SWIG_ADD_MODULE(FullMonteSWKernelTCL tcl FullMonteSWKernel.i)
     	SWIG_LINK_LIBRARIES(FullMonteSWKernelTCL ${TCL_STUB_LIBRARY} FullMonteGeometry FullMonteSWKernel)
+
+        INSTALL(TARGETS FullMonteSWKernelTCL
+            DESTINATION lib)
+
+        INSTALL(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/tclmonte_install.sh
+            RENAME tclmonte.sh
+            DESTINATION bin)
 		
-#		FILE(COPY test_mouse.tcl
-#			DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 	ENDIF()
 ENDIF()
 
