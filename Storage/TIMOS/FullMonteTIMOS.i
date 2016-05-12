@@ -22,4 +22,3 @@
 %include "TIMOSReader.hpp"
 %include "TIMOSAntlrParser.hpp"
 %include "TIMOSWriter.hpp"
-

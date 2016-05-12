@@ -29,7 +29,7 @@ if (ANTLR3_INCLUDE_DIR)
 		
 		SET_SOURCE_FILES_PROPERTIES(FullMonteSWKernel.i PROPERTIES CPLUSPLUS ON)
     	SWIG_ADD_MODULE(FullMonteSWKernelTCL tcl FullMonteSWKernel.i)
-    	SWIG_LINK_LIBRARIES(FullMonteSWKernelTCL ${TCL_STUB_LIBRARY} FullMonteGeometry FullMonteSWKernel)
+    	SWIG_LINK_LIBRARIES(FullMonteSWKernelTCL ${TCL_LIBRARY} FullMonteGeometry FullMonteSWKernel)
 
         INSTALL(TARGETS FullMonteSWKernelTCL
             DESTINATION lib)
@@ -37,7 +37,6 @@ if (ANTLR3_INCLUDE_DIR)
         INSTALL(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/tclmonte_install.sh
             RENAME tclmonte.sh
             DESTINATION bin)
-		
 	ENDIF()
 ENDIF()
 

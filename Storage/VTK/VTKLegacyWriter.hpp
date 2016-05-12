@@ -11,12 +11,15 @@
 #include <FullMonte/Geometry/TetraMesh.hpp>
 #include <string>
 
-#include <vtkUnstructuredGrid.h> 
+#include <vtkUnstructuredGrid.h>
 
-class VTKLegacyWriter {
+/** Write a TetraMesh
+ *
+ */
 
+class VTKLegacyWriter
+{
 public:
-
 	class NotImplemented : public std::exception { virtual const char* what(){ return "Not supported"; } };
 
 	//virtual TetraMeshBase mesh() const;

@@ -1,0 +1,19 @@
+ADD_LIBRARY(FullMonteMatlab SHARED MatlabWriter.cpp)
+TARGET_LINK_LIBRARIES(FullMonteMatlab FullMonteGeometry)
+
+IF (WRAP_TCL)	
+    SET_SOURCE_FILES_PROPERTIES(Matlab.i PROPERTIES CPLUSPLUS ON)
+    
+    INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+    
+    SWIG_ADD_MODULE(FullMonteMatlabTCL tcl Matlab.i)
+    SWIG_LINK_LIBRARIES(FullMonteMatlabTCL ${TCL_STUB_LIBRARY} FullMonteGeometry ${TCL_LIBRARY} FullMonteMatlab)
+    
+    INSTALL(TARGETS FullMonteMatlabTCL
+    	LIBRARY
+    	DESTINATION lib)
+ENDIF()
+
+INSTALL(TARGETS FullMonteMatlab
+	LIBRARY
+	DESTINATION lib)

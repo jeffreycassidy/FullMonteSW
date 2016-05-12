@@ -14,6 +14,7 @@ class TetraMeshBaseFilter
 {
 public:
 	explicit TetraMeshBaseFilter(const TetraMeshBase* m=nullptr);
+    virtual ~TetraMeshBaseFilter(){}
 
 	void mesh(const TetraMeshBase* m);			///< Set associated mesh and set to include-all
 	const TetraMeshBase* mesh() const;			///< Get associated mesh

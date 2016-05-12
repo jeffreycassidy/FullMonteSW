@@ -70,6 +70,9 @@ public:
 		return t;
 	}
 
+	/// Convenience function
+	std::vector<double> getSurfaceFluence() const;
+
 private:
 	virtual void postfinish() override;
 	virtual void prestart() override;

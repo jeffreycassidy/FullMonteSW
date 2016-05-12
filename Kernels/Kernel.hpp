@@ -39,7 +39,7 @@ public:
 	void finishAsync();
 
 
-	virtual bool 	done() 				const=0;
+	bool 	done() const { return m_status == Finished; }
 	virtual float 	progressFraction() 	const=0;
 
 	// get/set source (multiple sources accommodated by Source::Composite)
@@ -81,9 +81,10 @@ protected:
 	void addResults(OutputData*);
 	void clearResults();
 	void awaitStatus(Status st);
+	void updateStatus(Status st);
 
 private:
-	void updateStatus(Status st);
+
 	virtual void 	awaitFinish()		=0;
 
 	std::vector<KernelObserver*> m_observers;

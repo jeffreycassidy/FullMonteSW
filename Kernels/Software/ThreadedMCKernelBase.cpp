@@ -19,12 +19,6 @@ void ThreadedMCKernelBase::awaitFinish()
 	m_workers.clear();
 }
 
-bool ThreadedMCKernelBase::done() const
-{
-	return boost::algorithm::all_of(
-			m_workers,
-			std::mem_fn(&ThreadedMCKernelBase::Thread::done));
-}
 
 unsigned long long ThreadedMCKernelBase::simulatedPacketCount() const
 {

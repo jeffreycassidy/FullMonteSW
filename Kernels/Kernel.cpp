@@ -82,7 +82,7 @@ void Kernel::updateStatus(Status status)
 void Kernel::awaitStatus(Status status)
 {
 	std::unique_lock<std::mutex> lk(m_statusMutex);
-	m_statusCV.wait(lk, [this]{ return m_status==Running; });
+	m_statusCV.wait(lk, [this,status]{ return m_status==status; });
 }
 
 const OutputData* Kernel::getResultByTypeString(const std::string typeStr) const

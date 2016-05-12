@@ -16,6 +16,7 @@ class TetraMeshFilter : public FilterBase<unsigned>
 {
 public:
 	TetraMeshFilter(const TetraMesh* m);
+    virtual ~TetraMeshFilter(){}
 
 	void mesh(const TetraMesh* m);			///< Set associated mesh and set to include-all
 	const TetraMesh* mesh() const;			///< Get associated mesh

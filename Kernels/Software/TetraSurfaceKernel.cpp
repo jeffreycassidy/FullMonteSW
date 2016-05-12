@@ -9,6 +9,8 @@
 #include <FullMonte/Kernels/Software/Logger/LoggerTuple.hpp>
 #include "TetraMCKernelThread.hpp"
 
+#include <FullMonte/OutputTypes/FluenceConverter.hpp>
+
 void TetraSurfaceKernel::postfinish()
 {
 	std::list<OutputData*> res = get<0>(m_logger).results();
@@ -23,8 +25,25 @@ void TetraSurfaceKernel::postfinish()
 
 void TetraSurfaceKernel::prestart()
 {
-	cout << "TetraSurfaceKernel::prestart!" << endl;
 	get<0>(m_logger).clear();
 	get<1>(m_logger).clear();
 	get<2>(m_logger).clear();
+}
+
+std::vector<double> TetraSurfaceKernel::getSurfaceFluence() const
+{
+	const SurfaceExitEnergyMap *E = getResultByType<SurfaceExitEnergyMap>();
+
+	FluenceConverter FC;
+	FC.mesh(mesh());
+	FC.cmPerOutputLengthUnit(1.0f);
+	FC.scaleTotalEmittedTo(energy());
+	SurfaceFluenceMap phi = FC.convertToFluence(*E);
+
+	std::vector<double> o(phi->dim(),0.0);
+
+	for(const auto t : phi->nonzeros())
+		o[t.first] = t.second;
+
+	return o;
 }

@@ -22,7 +22,6 @@ public:
 	unsigned			threadCount()						const	{ return Nth_;					}
 
 	// Final overrides: distribute the requests to the underlying threads
-	virtual bool 				done() 					const 	final override;
 	virtual unsigned long long 	simulatedPacketCount() 	const 	final override;
 
 	// Final override: do parent prep and then create thread structures

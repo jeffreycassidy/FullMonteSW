@@ -14,6 +14,7 @@
 template<typename T>class FilterBase
 {
 public:
+    virtual ~FilterBase(){}
 	virtual bool operator()(T x) const 	{ return false; }
 	FilterBase* 	base() 				{ return this; }
 

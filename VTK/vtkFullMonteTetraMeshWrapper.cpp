@@ -107,8 +107,7 @@ void getVTKTriangleCells(const TetraMesh& M,vtkCellArray* ca,const FilterBase<in
 	vtkIdTypeArray *ids = vtkIdTypeArray::New();
 	ids->SetNumberOfComponents(1);
 
-	vtkIdType j=0;
-	for(int i=0;i<=M.getNf();++i)
+	for(unsigned i=0;i<=M.getNf();++i)
 	{
 		if (!F || (*F)(i))
 		{

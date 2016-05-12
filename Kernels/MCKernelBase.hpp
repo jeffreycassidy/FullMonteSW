@@ -36,7 +36,6 @@ public:
 			{ return float(simulatedPacketCount())/float(Npkt_); }
 
 	// remaining to be implemented by derived classes
-	virtual bool 				done() 					const override=0;
 	virtual unsigned long long 	simulatedPacketCount() 	const=0;
 
 protected:
