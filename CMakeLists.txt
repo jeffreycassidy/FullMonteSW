@@ -38,7 +38,7 @@ ENDIF()
 ## Include dirs for FullMonte
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/..)
 
-
+OPTION(USE_VTK OFF)
 
 ## Wrapping options
 OPTION(WRAP_TCL ON)
