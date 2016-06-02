@@ -7,15 +7,15 @@
 
 %{
 
-#include <FullMonte/Geometry/Sources/Base.hpp>
-#include <FullMonte/Geometry/Sources/Volume.hpp>
-#include <FullMonte/Geometry/Sources/Composite.hpp>
-#include <FullMonte/Geometry/Sources/Surface.hpp>
-#include <FullMonte/Geometry/Sources/PointSource.hpp>
-#include <FullMonte/Geometry/Sources/SurfaceTri.hpp>
-#include <FullMonte/Geometry/Sources/PencilBeam.hpp>
+#include <FullMonteSW/Geometry/Sources/Base.hpp>
+#include <FullMonteSW/Geometry/Sources/Volume.hpp>
+#include <FullMonteSW/Geometry/Sources/Composite.hpp>
+#include <FullMonteSW/Geometry/Sources/Surface.hpp>
+#include <FullMonteSW/Geometry/Sources/PointSource.hpp>
+#include <FullMonteSW/Geometry/Sources/SurfaceTri.hpp>
+#include <FullMonteSW/Geometry/Sources/PencilBeam.hpp>
 
-#include <FullMonte/Geometry/Sources/Visitor.hpp>
+#include <FullMonteSW/Geometry/Sources/Visitor.hpp>
 
 using namespace Source;
 using namespace Source::detail;
@@ -42,7 +42,7 @@ namespace Source { namespace detail { template<class Base,class Derived>class cl
 
 %{
 #include <vector>
-#include <FullMonte/Geometry/TetraMesh.hpp>
+#include <FullMonteSW/Geometry/TetraMesh.hpp>
 #include <sstream>
 %}
 %include "TetraMeshBase.hpp"

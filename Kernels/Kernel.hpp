@@ -9,7 +9,7 @@
 #define KERNELS_KERNEL_HPP_
 
 #include <vector>
-#include <FullMonte/Geometry/SimpleMaterial.hpp>
+#include <FullMonteSW/Geometry/SimpleMaterial.hpp>
 
 #include <memory>
 

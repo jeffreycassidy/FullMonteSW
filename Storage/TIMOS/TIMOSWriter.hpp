@@ -10,14 +10,14 @@
 
 #include "TIMOS.hpp"
 
-#include <FullMonte/Geometry/TetraMesh.hpp>
-#include <FullMonte/Geometry/newgeom.hpp>
-#include <FullMonte/Geometry/Sources/Visitor.hpp>
-#include <FullMonte/Geometry/Sources/SurfaceTri.hpp>
-#include <FullMonte/Geometry/Sources/Volume.hpp>
-#include <FullMonte/Geometry/Sources/PencilBeam.hpp>
-#include <FullMonte/Geometry/Sources/PointSource.hpp>
-#include <FullMonte/Geometry/Sources/Composite.hpp>
+#include <FullMonteSW/Geometry/TetraMesh.hpp>
+#include <FullMonteSW/Geometry/newgeom.hpp>
+#include <FullMonteSW/Geometry/Sources/Visitor.hpp>
+#include <FullMonteSW/Geometry/Sources/SurfaceTri.hpp>
+#include <FullMonteSW/Geometry/Sources/Volume.hpp>
+#include <FullMonteSW/Geometry/Sources/PencilBeam.hpp>
+#include <FullMonteSW/Geometry/Sources/PointSource.hpp>
+#include <FullMonteSW/Geometry/Sources/Composite.hpp>
 
 #include <string>
 #include <vector>

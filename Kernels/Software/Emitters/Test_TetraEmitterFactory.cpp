@@ -10,11 +10,11 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include <FullMonte/Storage/TIMOS/TIMOSAntlrParser.hpp>
+#include <FullMonteSW/Storage/TIMOS/TIMOSAntlrParser.hpp>
 
-#include <FullMonte/Kernels/Software/RNG_SFMT_AVX.hpp>
+#include <FullMonteSW/Kernels/Software/RNG_SFMT_AVX.hpp>
 
-#include <FullMonte/Kernels/Software/Emitters/TetraMeshEmitterFactory.hpp>
+#include <FullMonteSW/Kernels/Software/Emitters/TetraMeshEmitterFactory.hpp>
 
 #include <iostream>
 #include <iomanip>
@@ -24,7 +24,7 @@
 
 #include "Base.hpp"
 
-#include <FullMonte/Storage/TIMOS/TIMOSWriter.hpp>
+#include <FullMonteSW/Storage/TIMOS/TIMOSWriter.hpp>
 
 using namespace std;
 
@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE(mouse)
 #include "Test/PointFixture.hpp"
 #include "Test/DirectedFixture.hpp"
 
-#include <FullMonte/Kernels/Software/Emitters/TetraMeshEmitterFactory.hpp>
+#include <FullMonteSW/Kernels/Software/Emitters/TetraMeshEmitterFactory.hpp>
 
 typedef SourceFixture<PointFixture,DirectedFixture> Pencil;
 

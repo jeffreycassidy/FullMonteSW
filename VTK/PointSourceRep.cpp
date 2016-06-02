@@ -10,14 +10,14 @@
 
 #include <boost/range/algorithm.hpp>
 
-#include <FullMonte/VTK/PointSourceRep.h>
+#include <FullMonteSW/VTK/PointSourceRep.h>
 #include <array>
 
 #include <vtkCellArray.h>
 #include <vtkPolyData.h>
 #include <vtkCellType.h>
 
-#include <FullMonte/Geometry/Sources/PointSource.hpp>
+#include <FullMonteSW/Geometry/Sources/PointSource.hpp>
 
 using namespace std;
 

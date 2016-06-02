@@ -12,8 +12,8 @@
 
 using namespace std;
 
-#include <FullMonte/VTK/SparseVectorVTK.h>
-#include <FullMonte/OutputTypes/SpatialMapBase.hpp>
+#include <FullMonteSW/VTK/SparseVectorVTK.h>
+#include <FullMonteSW/OutputTypes/SpatialMapBase.hpp>
 //
 //vtkCxxRevisionMacro(SparseVectorVTK,"Rev 0.0");
 //vtkStandardNewMacro(SparseVectorVTK);

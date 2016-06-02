@@ -11,13 +11,13 @@
 #include "TetraMCKernel.hpp"
 #include "RNG_SFMT_AVX.hpp"
 
-#include <FullMonte/Kernels/Software/Logger/LoggerTuple.hpp>
-#include <FullMonte/Kernels/Software/Logger/LoggerEvent.hpp>
-#include <FullMonte/Kernels/Software/Logger/LoggerConservation.hpp>
-#include <FullMonte/Kernels/Software/Logger/LoggerSurface.hpp>
-#include <FullMonte/Kernels/Software/Logger/AccumulationArray.hpp>
+#include <FullMonteSW/Kernels/Software/Logger/LoggerTuple.hpp>
+#include <FullMonteSW/Kernels/Software/Logger/LoggerEvent.hpp>
+#include <FullMonteSW/Kernels/Software/Logger/LoggerConservation.hpp>
+#include <FullMonteSW/Kernels/Software/Logger/LoggerSurface.hpp>
+#include <FullMonteSW/Kernels/Software/Logger/AccumulationArray.hpp>
 
-#include <FullMonte/Kernels/Software/Logger/MultiThreadWithIndividualCopy.hpp>
+#include <FullMonteSW/Kernels/Software/Logger/MultiThreadWithIndividualCopy.hpp>
 
 #include "TetraMCKernelThread.hpp"
 

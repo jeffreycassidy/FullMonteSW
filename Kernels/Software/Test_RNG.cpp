@@ -11,7 +11,7 @@
 #include <boost/test/unit_test.hpp>
 
 #define SFMT_MEXP 19937
-#include <FullMonte/SFMT/SFMT.h>
+#include <FullMonteSW/SFMT/SFMT.h>
 
 #include "BlockRNGAdaptor.hpp"
 #include "SFMTWrapper.hpp"

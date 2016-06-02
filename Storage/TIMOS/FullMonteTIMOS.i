@@ -9,13 +9,13 @@
 
 %{
 #include "TIMOS.hpp"
-#include <FullMonte/Geometry/Sources/Base.hpp>
-#include <FullMonte/Geometry/TetraMesh.hpp>
-#include <FullMonte/Geometry/SimpleMaterial.hpp>
-#include <FullMonte/Storage/TIMOS/TIMOS.hpp>
-#include <FullMonte/Storage/TIMOS/TIMOSReader.hpp>
-#include <FullMonte/Storage/TIMOS/TIMOSWriter.hpp>
-#include <FullMonte/Storage/TIMOS/TIMOSAntlrParser.hpp>
+#include <FullMonteSW/Geometry/Sources/Base.hpp>
+#include <FullMonteSW/Geometry/TetraMesh.hpp>
+#include <FullMonteSW/Geometry/SimpleMaterial.hpp>
+#include <FullMonteSW/Storage/TIMOS/TIMOS.hpp>
+#include <FullMonteSW/Storage/TIMOS/TIMOSReader.hpp>
+#include <FullMonteSW/Storage/TIMOS/TIMOSWriter.hpp>
+#include <FullMonteSW/Storage/TIMOS/TIMOSAntlrParser.hpp>
 
 %}
 

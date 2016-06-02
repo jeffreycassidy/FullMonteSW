@@ -16,7 +16,7 @@
 //%include "std_vector.i"
 //
 //%{
-//#include <FullMonte/Geometry/SourceDescription.hpp>
+//#include <FullMonteSW/Geometry/SourceDescription.hpp>
 //%}
 //
 //%template(sourcedescriptionvector) std::vector<SourceDescription*>;
@@ -119,7 +119,7 @@
 //#include <vtkDiscretizableColorTransferFunction.h>
 //#include <vtkCallbackCommand.h>
 //
-//#include <FullMonte/Geometry/TetraMeshBase.hpp>
+//#include <FullMonteSW/Geometry/TetraMeshBase.hpp>
 //
 //#endif // SWIG
 

@@ -3,7 +3,7 @@
 #include <fstream>
 #include <iostream>
 
-#include <FullMonte/OutputTypes/TracerStep.hpp>
+#include <FullMonteSW/OutputTypes/TracerStep.hpp>
 
 using namespace std;
 

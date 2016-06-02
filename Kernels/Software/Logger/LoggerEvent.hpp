@@ -3,7 +3,7 @@
 #include "Logger.hpp"
 #include <mutex>
 
-#include <FullMonte/OutputTypes/MCEventCounts.hpp>
+#include <FullMonteSW/OutputTypes/MCEventCounts.hpp>
 
 /** LoggerEvent counts events as they happen.
  *

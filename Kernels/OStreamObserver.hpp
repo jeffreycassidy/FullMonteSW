@@ -1,7 +1,7 @@
 #ifndef OSTREAMOBSERVER_HPP_INCLUDED_
 #define OSTREAMOBSERVER_HPP_INCLUDED_
 
-#include <FullMonte/Kernels/KernelObserver.hpp>
+#include <FullMonteSW/Kernels/KernelObserver.hpp>
 
 class OStreamObserver : public KernelObserver {
 	ostream& os;

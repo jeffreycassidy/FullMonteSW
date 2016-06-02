@@ -8,7 +8,7 @@
 #ifndef STORAGE_VTK_VTKLEGACYREADER_HPP_
 #define STORAGE_VTK_VTKLEGACYREADER_HPP_
 
-#include <FullMonte/Geometry/TetraMesh.hpp>
+#include <FullMonteSW/Geometry/TetraMesh.hpp>
 #include <string>
 
 class vtkUnstructuredGrid;

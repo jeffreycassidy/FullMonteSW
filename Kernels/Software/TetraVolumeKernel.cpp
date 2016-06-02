@@ -8,7 +8,7 @@
 #include "TetraVolumeKernel.hpp"
 #include "TetraMCKernelThread.hpp"
 
-#include <FullMonte/OutputTypes/OutputDataSummarize.hpp>
+#include <FullMonteSW/OutputTypes/OutputDataSummarize.hpp>
 #include <boost/range/adaptor/indexed.hpp>
 
 #include <list>

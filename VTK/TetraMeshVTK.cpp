@@ -12,10 +12,10 @@
 #include <vtkUnstructuredGrid.h>
 #include <vtkCellData.h>
 
-#include <FullMonte/Geometry/TetraMesh.hpp>
-#include <FullMonte/Geometry/BoundingBox.hpp>
+#include <FullMonteSW/Geometry/TetraMesh.hpp>
+#include <FullMonteSW/Geometry/BoundingBox.hpp>
 
-#include <FullMonte/VTK/TetraMeshVTK.h>
+#include <FullMonteSW/VTK/TetraMeshVTK.h>
 
 vtkCxxRevisionMacro(TetraMeshVTK,"Rev 0.0");
 vtkStandardNewMacro(TetraMeshVTK);

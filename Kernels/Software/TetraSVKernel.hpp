@@ -11,14 +11,14 @@
 #include "TetraMCKernel.hpp"
 #include "TetraMCKernelThread.hpp"
 
-#include <FullMonte/Kernels/Software/Logger/Logger.hpp>
-#include <FullMonte/Kernels/Software/Logger/LoggerTuple.hpp>
-#include <FullMonte/Kernels/Software/Logger/LoggerEvent.hpp>
-#include <FullMonte/Kernels/Software/Logger/LoggerConservation.hpp>
-#include <FullMonte/Kernels/Software/Logger/LoggerVolume.hpp>
-#include <FullMonte/Kernels/Software/Logger/LoggerSurface.hpp>
+#include <FullMonteSW/Kernels/Software/Logger/Logger.hpp>
+#include <FullMonteSW/Kernels/Software/Logger/LoggerTuple.hpp>
+#include <FullMonteSW/Kernels/Software/Logger/LoggerEvent.hpp>
+#include <FullMonteSW/Kernels/Software/Logger/LoggerConservation.hpp>
+#include <FullMonteSW/Kernels/Software/Logger/LoggerVolume.hpp>
+#include <FullMonteSW/Kernels/Software/Logger/LoggerSurface.hpp>
 
-#include <FullMonte/Kernels/Software/Logger/MultiThreadWithIndividualCopy.hpp>
+#include <FullMonteSW/Kernels/Software/Logger/MultiThreadWithIndividualCopy.hpp>
 
 extern template class Emitter::TetraEmitterFactory<RNG_SFMT_AVX>;
 

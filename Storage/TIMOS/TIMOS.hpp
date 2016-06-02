@@ -2,9 +2,9 @@
 #define TIMOS_HPP_INCLUDED_
 
 
-#include <FullMonte/Geometry/SimpleMaterial.hpp>
+#include <FullMonteSW/Geometry/SimpleMaterial.hpp>
 
-#include <FullMonte/Geometry/Sources/Base.hpp>
+#include <FullMonteSW/Geometry/Sources/Base.hpp>
 
 #include <string>
 #include <cmath>

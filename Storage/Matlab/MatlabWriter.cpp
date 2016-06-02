@@ -12,7 +12,7 @@
 #include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/adaptor/indexed.hpp>
 
-#include <FullMonte/Geometry/TetraMesh.hpp>
+#include <FullMonteSW/Geometry/TetraMesh.hpp>
 #include <tuple>
 
 #include "take_drop.hpp"

@@ -5,8 +5,8 @@
  *      Author: jcassidy
  */
 
-#include <FullMonte/Kernels/Software/TetraSurfaceKernel.hpp>
-#include <FullMonte/Kernels/Software/Logger/LoggerTuple.hpp>
+#include <FullMonteSW/Kernels/Software/TetraSurfaceKernel.hpp>
+#include <FullMonteSW/Kernels/Software/Logger/LoggerTuple.hpp>
 #include "TetraMCKernelThread.hpp"
 
 void TetraSurfaceKernel::postfinish()

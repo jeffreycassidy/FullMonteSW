@@ -5,7 +5,7 @@
  *      Author: jcassidy
  */
 
-#include <FullMonte/VTK/TetraMeshVTK.h>
+#include <FullMonteSW/VTK/TetraMeshVTK.h>
 #include <vtkObject.h>
 #include <vtkDataObject.h>
 #include <vtkPolyData.h>

@@ -1,7 +1,7 @@
 #include "OStreamObserver.hpp"
-#include <FullMonte/Kernels/Software/Logger/Logger.hpp>
+#include <FullMonteSW/Kernels/Software/Logger/Logger.hpp>
 
-#include <FullMonte/OutputTypes/OutputData.hpp>
+#include <FullMonteSW/OutputTypes/OutputData.hpp>
 
 void OStreamObserver::notify_create(const Kernel& k)
 {

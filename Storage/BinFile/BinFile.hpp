@@ -9,9 +9,9 @@
 #include <vector>
 #include <iostream>
 
-#include <FullMonte/Geometry/TetraMesh.hpp>
+#include <FullMonteSW/Geometry/TetraMesh.hpp>
 #include <FullMonteSW/FullMonte/Kernels/Software/Material.hpp>
-#include <FullMonte/Geometry/SourceDescription.hpp>
+#include <FullMonteSW/Geometry/SourceDescription.hpp>
 
 #include "../TIMOS/TIMOS.hpp"
 

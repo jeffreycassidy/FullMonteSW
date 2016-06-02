@@ -10,9 +10,9 @@
 #include <vtkCellArray.h>
 #include <vtkUnsignedShortArray.h>
 
-#include <FullMonte/Geometry/TetraMeshBase.hpp>
+#include <FullMonteSW/Geometry/TetraMeshBase.hpp>
 
-#include <FullMonte/Geometry/BoundingBox.hpp>
+#include <FullMonteSW/Geometry/BoundingBox.hpp>
 
 #include <limits>
 

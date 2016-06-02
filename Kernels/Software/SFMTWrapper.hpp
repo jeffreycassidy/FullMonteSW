@@ -11,7 +11,7 @@
 #include <cassert>
 
 #define SFMT_MEXP 19937
-#include <FullMonte/SFMT/SFMT.h>
+#include <FullMonteSW/SFMT/SFMT.h>
 
 namespace URNG
 {

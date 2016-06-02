@@ -17,7 +17,7 @@
 %include "std_vector.i"
 
 %{
-#include <FullMonte/Geometry/SourceDescription.hpp>
+#include <FullMonteSW/Geometry/SourceDescription.hpp>
 %}
 
 %template(sourcedescriptionvector) std::vector<SourceDescription*>;
@@ -120,8 +120,8 @@ struct LegendEntry {
 #include <vtkDiscretizableColorTransferFunction.h>
 #include <vtkCallbackCommand.h>
 
-#include <FullMonte/Geometry/TetraMesh.hpp>
-#include <FullMonte/Geometry/SourceDescription.hpp>
+#include <FullMonteSW/Geometry/TetraMesh.hpp>
+#include <FullMonteSW/Geometry/SourceDescription.hpp>
 
 #endif // SWIG
 //

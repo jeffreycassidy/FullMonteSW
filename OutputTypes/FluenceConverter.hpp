@@ -8,7 +8,7 @@
 #ifndef OUTPUTTYPES_FLUENCECONVERTER_HPP_
 #define OUTPUTTYPES_FLUENCECONVERTER_HPP_
 
-#include <FullMonte/OutputTypes/FluenceMapBase.hpp>
+#include <FullMonteSW/OutputTypes/FluenceMapBase.hpp>
 
 class FluenceConverter
 {

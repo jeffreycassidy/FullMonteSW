@@ -1,8 +1,8 @@
 #ifndef KERNELS_SOFTWARE_LOGGERS_ACCUMULATIONARRAY_HPP_
 #define KERNELS_SOFTWARE_LOGGERS_ACCUMULATIONARRAY_HPP_
 #include "Logger.hpp"
-#include <FullMonte/Kernels/Software/Packet.hpp>
-#include <FullMonte/OutputTypes/FluenceMapBase.hpp>
+#include <FullMonteSW/Kernels/Software/Packet.hpp>
+#include <FullMonteSW/OutputTypes/FluenceMapBase.hpp>
 #include <type_traits>
 
 /** Handles logging of surface exit events.
