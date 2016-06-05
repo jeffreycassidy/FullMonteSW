@@ -22,6 +22,3 @@ void TetraMeshFilter::mesh(const TetraMesh* m)
 	m_mesh=m;
 	this->postMeshUpdate();
 }
-
-
-

@@ -1,12 +1,9 @@
-#package require vtk
-
 load libFullMonteTIMOSTCL.so
 load libFullMonteGeometryTCL.so
 load libFullMonteMatlabTCL.so
 
 load libFullMonteSWKernelTCL.so
 load libFullMonteKernelsTCL.so
-#load libFullMonteVTKTCL.dylib
 
 #default file prefix
 set pfx "/Users/jcassidy/src/FullMonteSW/data/TIM-OS/mouse/mouse"
@@ -67,13 +64,12 @@ proc progresstimer {} {
 }
 
 set N 9
-#VTKSurfaceFluenceRep fluencerep V
-#vtkPolyDataWriter W
 
 MatlabWriter W
-#TextFileWriter W
 W mesh $mesh
+
 set surf [$mesh getRegionBoundaryTris 0]
+
 W threshold 0
 W faceSubset $surf
 W writeFaces "faces.txt"
@@ -95,9 +91,6 @@ for { set i 0 } { $i < $N } { incr i } {
     progresstimer
 
 	k finishAsync
-
-    # get results
- #   fluencerep Update [k getSurfaceFluenceVector] 1
 
     # write the file out
     W comment "Experiment run $i with blah blah blah"

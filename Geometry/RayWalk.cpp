@@ -214,13 +214,15 @@ void RayWalkIterator::finishStepInTetra()
 	////// DISPLAY ONLY
 	cout << "RayWalkIterator::finishStepInTetra() pre-check: tetra " << m_currSeg.IDt << " heights: ";
 
-	std::array<float,4> h = m_mesh->getTetra(m_currSeg.IDt).heights(m_currSeg.f0.p);
+	std::array<float,4> h;
+	_mm_store_ps(h.data(), m_mesh->getTetra(m_currSeg.IDt).heights(to_m128(m_currSeg.f0.p)));
 	for(unsigned i=0;i<4;++i)
 		cout << h[i] << ' ';
 	cout << endl;
 
 	cout << "    dots: ";
-	std::array<float,4> dotf = m_mesh->getTetra(m_currSeg.IDt).dots(m_dir);
+	std::array<float,4> dotf;
+	_mm_store_ps(dotf.data(),m_mesh->getTetra(m_currSeg.IDt).dots(to_m128(m_dir)));
 
 
 	for(unsigned i=0;i<4;++i)

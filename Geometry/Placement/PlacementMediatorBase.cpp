@@ -20,5 +20,6 @@ void PlacementMediatorBase::placement(PlacementBase* p)
 		m_placement->removeSource(this);
 
 	m_placement=p;
-	p->addSource(this);
+	if (p)
+		p->addSource(this);
 }

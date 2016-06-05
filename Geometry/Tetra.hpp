@@ -4,6 +4,8 @@
 #include "newgeom.hpp"
 #include "../Kernels/Software/sse.hpp"
 
+#include <boost/serialization/access.hpp>
+
 using namespace std;
 
 template<typename FT,std::size_t D>__m128 to_m128(std::array<FT,D> a)
@@ -65,6 +67,13 @@ struct Tetra {
 
     std::array<float,3> face_normal(unsigned i) const;
     float face_constant(unsigned i) const;
+
+private:
+    friend class boost::serialization::access;
+    template<class Archive>void serialize(Archive& ar,const unsigned ver)
+    {
+    	ar & nx & ny & nz & C & IDfs & adjTetras & faceFlags & matID;
+    }
 
 } __attribute__ ((aligned(64)));
 
@@ -166,20 +175,3 @@ inline bool Tetra::pointWithin(__m128 p,float eps) const
 
     return _mm_movemask_ps(cmpWithTolerance) == 0;			// movemask shows if top (sign) bit is set. 0 means all positive.
 }
-
-//
-//if (_mm_movemask_ps(cmpWithTolerance))
-//{
-//	cout << "NOTE: Point is not within tetra" << endl;
-//	float f[4];
-//	_mm_store_ps(f,dot);
-//	cout << "  Dot: ";
-//	for(unsigned i=0;i<4;++i)
-//		cout << f[i] << ' ';
-//	_mm_store_ps(f,cmpWithTolerance);
-//	cout << endl << "  With tolerance: ";
-//	for(unsigned i=0;i<4;++i)
-//		cout << "  " << f[i] << ' ';
-//	cout << endl;
-//}
-

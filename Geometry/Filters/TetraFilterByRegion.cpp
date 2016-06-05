@@ -13,6 +13,7 @@
 TetraFilterByRegion::TetraFilterByRegion(const TetraMeshBase* m)
 {
 	mesh(m);
+	postMeshUpdate();
 }
 
 void TetraFilterByRegion::include(unsigned region,bool incl)

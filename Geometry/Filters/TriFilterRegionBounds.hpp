@@ -18,12 +18,11 @@ class TetraMesh;
  * also captures entering.
  */
 
-class TriFilterRegionBounds : public FilterBase<int>,public TetraMeshFilter
+class TriFilterRegionBounds : public TetraMeshFilter, public FilterBase<int>
 {
 public:
 	/// Default-construct including all materials
-	explicit TriFilterRegionBounds(const TetraMesh* m=nullptr) :
-		TetraMeshFilter(m)
+	explicit TriFilterRegionBounds(const TetraMesh* m=nullptr) : TetraMeshFilter(m)
 	{
 	}
 

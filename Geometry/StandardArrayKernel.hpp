@@ -68,6 +68,15 @@ template<typename FT,std::size_t D>FT StandardArrayKernel<FT,D>::dot(const std::
 	return o;
 }
 
+
+template<typename FT,std::size_t D>FT dot(const std::array<FT,D> lhs,const std::array<FT,D> rhs)
+{
+	FT o(0);
+	for(unsigned i=0;i<D;++i)
+		o += lhs[i]*rhs[i];
+	return o;
+}
+
 template<typename FT>FT scalartriple(const std::array<FT,3> a,const std::array<FT,3> b,const std::array<FT,3> c)
 {
 	return dot(a,cross(b,c));
