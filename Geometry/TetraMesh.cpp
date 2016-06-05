@@ -366,9 +366,13 @@ unsigned TetraMesh::findEnclosingTetra(const Point<3,double>& p) const
 			++N;
 		}
 
-	if (N > 1)
-		cerr << "Warning: enclosed by " << N << " tetras" << endl;
-	return IDt;
+	if (N < 1)
+		cout << "ERROR: Could not find enclosing tetra" << endl;
+	else if (N > 1)
+		cout << "WARNING: enclosed by " << N << " tetras" << endl;
+	//return IDt;
+	cout << "WARNING: Returning tet0 always from findEnclosingTetra" << endl;
+	return 0;
 }
 
 
