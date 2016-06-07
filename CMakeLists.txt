@@ -1,8 +1,9 @@
 PROJECT(FullMonte)
 CMAKE_MINIMUM_REQUIRED(VERSION 3.1)
 
-CONFIGURE_FILE(testdata.h.in testdata.h)
-CONFIGURE_FILE(config.h.in   config.h)
+CONFIGURE_FILE(testdata.h.in               testdata.h)
+CONFIGURE_FILE(config.h.in                 config.h)
+CONFIGURE_FILE(FullMonteSWConfig.cmake.in  FullMonteSWConfig.cmake)
 INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR})
 
 ## Compiler setup
