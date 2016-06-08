@@ -23,6 +23,7 @@ float AbsorptionSum::compute() const
 {
 	float sum=0.0f;
 	unsigned N=0;
+
 	for(unsigned i : boost::counting_range<unsigned>(0U, (*m_E)->dim())
 			| boost::adaptors::filtered([this](unsigned i){ return (*m_filter)(i); }))
 	{

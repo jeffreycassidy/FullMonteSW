@@ -13,7 +13,7 @@
 template<typename FT>std::array<FT,3> cross(const std::array<FT,3> lhs,const std::array<FT,3> rhs);
 template<typename FT>FT scalartriple(const std::array<FT,3> a,const std::array<FT,3> b,const std::array<FT,3> c);
 
-template<typename FT,std::size_t D>FT dot(const std::array<FT,D> lhs,const std::array<FT,D> rhs);
+template<typename FT,std::size_t D>FT dot(std::array<FT,D> lhs,std::array<FT,D> rhs);
 
 template<typename FT,std::size_t D>FT norm2(const std::array<FT,D> v);
 template<typename FT,std::size_t D>FT norm(const std::array<FT,D> v);
@@ -40,7 +40,7 @@ template<typename T,std::size_t D>struct StandardArrayKernel
 	static std::array<T,D> zeroVector()
 		{
 			std::array<T,D> a;
-			boost::fill(a, 0);
+			std::fill(a.data(), a.data()+D, 0);
 			return a;
 		}
 
