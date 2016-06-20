@@ -1,8 +1,8 @@
 #### ANTLR config
-SET(ANTLR_JAR "/usr/local/antlrv3/antlr-3.5.2-complete-no-st3.jar" CACHE PATH "Jar-file for ANTLR3")
+SET(ANTLR_JAR "" CACHE PATH "Jar-file for ANTLR3 (e.g. antlr-3.5.2-complete.jar")
 SET(ANTLR3_LIBRARIES antlr3c)
-SET(ANTLR3_INCLUDE_DIR "/usr/local/antlr3c-3.4/include" CACHE PATH "ANTLR3 include path")
-SET(ANTLR3_LIB_DIR "/usr/local/lib" CACHE PATH "ANTLR3 C runtime path")
+SET(ANTLR3_INCLUDE_DIR "" CACHE PATH "ANTLR3 include path (e.g. libantlr3c-3.4/include)")
+SET(ANTLR3_LIB_DIR "" CACHE PATH "ANTLR3 C runtime path (e.g. libantlr3c-3.4/.libs)")
 SET(ANTLR3_FOUND ON)
 
 #### ANTLR3 Parser targets
