@@ -9,6 +9,7 @@
 #define GEOMETRY_STANDARDARRAYKERNEL_HPP_
 
 #include <array>
+#include <boost/range/algorithm/fill.hpp>
 
 template<typename FT>std::array<FT,3> cross(const std::array<FT,3> lhs,const std::array<FT,3> rhs);
 template<typename FT>FT scalartriple(const std::array<FT,3> a,const std::array<FT,3> b,const std::array<FT,3> c);
