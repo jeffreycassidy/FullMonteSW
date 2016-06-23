@@ -8,8 +8,8 @@
 #ifndef OUTPUTTYPES_ABSORPTIONSUM_HPP_
 #define OUTPUTTYPES_ABSORPTIONSUM_HPP_
 
-#include <FullMonteHW/Geometry/Filters/FilterBase.hpp>
-#include <FullMonteHW/OutputTypes/FluenceMapBase.hpp>
+#include <FullMonteSW/Geometry/Filters/FilterBase.hpp>
+#include <FullMonteSW/OutputTypes/FluenceMapBase.hpp>
 
 class AbsorptionSum
 {

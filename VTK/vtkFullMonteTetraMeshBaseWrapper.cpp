@@ -16,9 +16,9 @@
 
 #include "vtkFullMonteTetraMeshBaseWrapper.h"
 
-#include <FullMonteHW/Geometry/TetraMeshBase.hpp>
-#include <FullMonteHW/Geometry/Filters/FilterBase.hpp>
-#include <FullMonteHW/Geometry/BoundingBox.hpp>
+#include <FullMonteSW/Geometry/TetraMeshBase.hpp>
+#include <FullMonteSW/Geometry/Filters/FilterBase.hpp>
+#include <FullMonteSW/Geometry/BoundingBox.hpp>
 
 
 using namespace std;

@@ -14,7 +14,7 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
-#include <FullMonteHW/Geometry/Basis.hpp>
+#include <FullMonteSW/Geometry/Basis.hpp>
 
 typedef AffineTransform<float,3> AffineTransform3f;
 

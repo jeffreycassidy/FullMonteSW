@@ -53,10 +53,10 @@ namespace Source { namespace detail { template<class Base,class Derived>class cl
 
 %{
 #include <vector>
-#include <FullMonteHW/Geometry/TetraMesh.hpp>
+#include <FullMonteSW/Geometry/TetraMesh.hpp>
 #include <sstream>
-#include <FullMonteHW/Geometry/Filters/TetraMeshBaseFilter.hpp>
-#include <FullMonteHW/Geometry/Filters/TriFilterRegionBounds.hpp>
+#include <FullMonteSW/Geometry/Filters/TetraMeshBaseFilter.hpp>
+#include <FullMonteSW/Geometry/Filters/TriFilterRegionBounds.hpp>
 %}
 
 %include "TetraMeshBase.hpp"

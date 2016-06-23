@@ -5,7 +5,7 @@
  *      Author: jcassidy
  */
 
-#include <FullMonteHW/Geometry/Filters/TetraMeshBaseFilter.hpp>
+#include <FullMonteSW/Geometry/Filters/TetraMeshBaseFilter.hpp>
 
 TetraMeshBaseFilter::TetraMeshBaseFilter(const TetraMeshBase* m)
 {

@@ -7,7 +7,7 @@
 
 #include "TetraMesh.hpp"
 
-#include <FullMonteHW/Storage/VTK/VTKLegacyReader.hpp>
+#include <FullMonteSW/Storage/VTK/VTKLegacyReader.hpp>
 
 #include <string>
 #include <iostream>

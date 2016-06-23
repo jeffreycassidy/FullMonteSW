@@ -3,18 +3,18 @@
 %include "std_vector.i"
 %include "std_string.i"
 
-%include <FullMonteHW/Geometry/FullMonteGeometry_types.i>
+%include <FullMonteSW/Geometry/FullMonteGeometry_types.i>
 
 %{
-#include <FullMonteHW/Kernels/Kernel.hpp>
-#include <FullMonteHW/Kernels/KernelObserver.hpp>
-#include <FullMonteHW/Kernels/OStreamObserver.hpp>
-#include <FullMonteHW/Kernels/MCKernelBase.hpp>
-#include <FullMonteHW/Kernels/TetraKernelBase.hpp>
-#include <FullMonteHW/Kernels/Software/TetraMCKernel.hpp>
-#include <FullMonteHW/Kernels/Software/TetraSVKernel.hpp>
-#include <FullMonteHW/Kernels/Software/TetraVolumeKernel.hpp>
-#include <FullMonteHW/Kernels/Software/TetraSurfaceKernel.hpp>
+#include <FullMonteSW/Kernels/Kernel.hpp>
+#include <FullMonteSW/Kernels/KernelObserver.hpp>
+#include <FullMonteSW/Kernels/OStreamObserver.hpp>
+#include <FullMonteSW/Kernels/MCKernelBase.hpp>
+#include <FullMonteSW/Kernels/TetraKernelBase.hpp>
+#include <FullMonteSW/Kernels/Software/TetraMCKernel.hpp>
+#include <FullMonteSW/Kernels/Software/TetraSVKernel.hpp>
+#include <FullMonteSW/Kernels/Software/TetraVolumeKernel.hpp>
+#include <FullMonteSW/Kernels/Software/TetraSurfaceKernel.hpp>
 %}
 
 %include "../Kernel.hpp"

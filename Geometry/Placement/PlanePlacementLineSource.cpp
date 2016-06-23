@@ -5,8 +5,8 @@
  *      Author: jcassidy
  */
 
-#include <FullMonteHW/Geometry/Sources/Line.hpp>
-#include <FullMonteHW/Geometry/Placement/PlanePlacementLineSource.hpp>
+#include <FullMonteSW/Geometry/Sources/Line.hpp>
+#include <FullMonteSW/Geometry/Placement/PlanePlacementLineSource.hpp>
 
 void PlanePlacementLineSource::planePosition(Point2 p)
 {

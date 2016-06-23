@@ -14,8 +14,8 @@
 
 #include "VectorTest.hpp"
 
-#include <FullMonteHW/Geometry/Sources/PencilBeam.hpp>
-#include <FullMonteHW/Geometry/Sources/Print.hpp>
+#include <FullMonteSW/Geometry/Sources/PencilBeam.hpp>
+#include <FullMonteSW/Geometry/Sources/Print.hpp>
 
 using namespace std;
 
@@ -76,7 +76,7 @@ BOOST_AUTO_TEST_CASE(pb)
 #include <vtkPolyData.h>
 #include <vtkPolyDataWriter.h>
 
-#include <FullMonteHW/Storage/TIMOS/TIMOSWriter.hpp>
+#include <FullMonteSW/Storage/TIMOS/TIMOSWriter.hpp>
 
 BOOST_AUTO_TEST_CASE(knee905)
 {

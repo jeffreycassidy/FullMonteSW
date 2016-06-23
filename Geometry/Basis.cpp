@@ -5,7 +5,7 @@
  *      Author: jcassidy
  */
 
-#include <FullMonteHW/Geometry/Basis.hpp>
+#include <FullMonteSW/Geometry/Basis.hpp>
 
 Basis::Basis()
 {

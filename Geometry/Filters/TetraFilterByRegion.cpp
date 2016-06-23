@@ -8,7 +8,7 @@
 #include "TetraFilterByRegion.hpp"
 #include <boost/range/algorithm.hpp>
 
-#include <FullMonteHW/Geometry/TetraMeshBase.hpp>
+#include <FullMonteSW/Geometry/TetraMeshBase.hpp>
 
 TetraFilterByRegion::TetraFilterByRegion(const TetraMeshBase* m)
 {
