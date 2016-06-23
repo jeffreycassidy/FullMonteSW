@@ -1,2 +1,2 @@
-SET(FULLMONTESW_LIBRARY_DIR @CMAKE_BINARY_DIR@/OutputTypes;@CMAKE_BINARY_DIR@/Storage/TIMOS;@CMAKE_BINARY_DIR@/Kernels/Software;@CMAKE_BINARY_DIR@/Kernels;@CMAKE_BINARY_DIR@/Geometry CACHE PATH "Where FullMonteSW's libraries are located")
+SET(FULLMONTESW_LIBRARY_DIR @CMAKE_BINARY_DIR@/lib CACHE PATH "Where FullMonteSW's libraries are located")
 SET(FULLMONTESW_INCLUDE_DIR @CMAKE_BINARY_DIR@/../.. CACHE PATH "Where FullMonteSW's headers are located")
