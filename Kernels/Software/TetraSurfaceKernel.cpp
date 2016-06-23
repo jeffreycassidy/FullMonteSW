@@ -5,11 +5,11 @@
  *      Author: jcassidy
  */
 
-#include <FullMonte/Kernels/Software/TetraSurfaceKernel.hpp>
-#include <FullMonte/Kernels/Software/Logger/LoggerTuple.hpp>
+#include <FullMonteSW/Kernels/Software/TetraSurfaceKernel.hpp>
+#include <FullMonteSW/Kernels/Software/Logger/LoggerTuple.hpp>
 #include "TetraMCKernelThread.hpp"
 
-#include <FullMonte/OutputTypes/FluenceConverter.hpp>
+#include <FullMonteSW/OutputTypes/FluenceConverter.hpp>
 
 void TetraSurfaceKernel::postfinish()
 {
@@ -47,3 +47,4 @@ std::vector<double> TetraSurfaceKernel::getSurfaceFluence() const
 
 	return o;
 }
+

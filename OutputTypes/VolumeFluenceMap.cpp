@@ -6,8 +6,8 @@
  */
 
 #include "FluenceMapBase.hpp"
-#include <FullMonte/Geometry/TetraMesh.hpp>
-#include <FullMonte/Geometry/SimpleMaterial.hpp>
+#include <FullMonteSW/Geometry/TetraMesh.hpp>
+#include <FullMonteSW/Geometry/SimpleMaterial.hpp>
 
 #include <vector>
 

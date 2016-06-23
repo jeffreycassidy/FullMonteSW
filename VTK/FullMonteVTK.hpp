@@ -56,8 +56,8 @@ VTK_TYPEMAP(vtkScalarsToColors)
 #include <vtkDiscretizableColorTransferFunction.h>
 #include <vtkCallbackCommand.h>
 
-#include <FullMonte/Geometry/TetraMesh.hpp>
-#include <FullMonte/Geometry/SourceDescription.hpp>
+#include <FullMonteSW/Geometry/TetraMesh.hpp>
+#include <FullMonteSW/Geometry/SourceDescription.hpp>
 
 #endif // SWIG
 //
@@ -396,3 +396,4 @@ public:
 
 
 #endif /* FULLMONTEVTK_HPP_ */
+

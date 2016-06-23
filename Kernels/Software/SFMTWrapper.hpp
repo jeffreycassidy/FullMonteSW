@@ -11,7 +11,7 @@
 #include <cassert>
 
 #define SFMT_MEXP 19937
-#include <FullMonte/SFMT/SFMT.h>
+#include <FullMonteSW/SFMT/SFMT.h>
 
 namespace URNG
 {
@@ -34,3 +34,4 @@ namespace URNG
 
 
 #endif /* KERNELS_SOFTWARE_SFMTWRAPPER_HPP_ */
+

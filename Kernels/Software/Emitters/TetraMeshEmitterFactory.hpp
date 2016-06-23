@@ -8,7 +8,7 @@
 #ifndef KERNELS_SOFTWARE_EMITTERS_TETRAMESHEMITTERFACTORY_HPP_
 #define KERNELS_SOFTWARE_EMITTERS_TETRAMESHEMITTERFACTORY_HPP_
 
-#include <FullMonte/Geometry/Sources/Visitor.hpp>
+#include <FullMonteSW/Geometry/Sources/Visitor.hpp>
 
 #include <boost/range.hpp>
 #include <boost/range/any_range.hpp>
@@ -75,3 +75,4 @@ private:
 
 
 #endif /* KERNELS_SOFTWARE_EMITTERS_TETRAMESHEMITTERFACTORY_HPP_ */
+

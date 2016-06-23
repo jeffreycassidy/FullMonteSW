@@ -10,11 +10,11 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include <FullMonte/Storage/TIMOS/TIMOSAntlrParser.hpp>
+#include <FullMonteSW/Storage/TIMOS/TIMOSAntlrParser.hpp>
 
-#include <FullMonte/Kernels/Software/RNG_SFMT_AVX.hpp>
+#include <FullMonteSW/Kernels/Software/RNG_SFMT_AVX.hpp>
 
-#include <FullMonte/Kernels/Software/Emitters/TetraMeshEmitterFactory.hpp>
+#include <FullMonteSW/Kernels/Software/Emitters/TetraMeshEmitterFactory.hpp>
 
 #include <iostream>
 #include <iomanip>
@@ -24,7 +24,7 @@
 
 #include "Base.hpp"
 
-#include <FullMonte/Storage/TIMOS/TIMOSWriter.hpp>
+#include <FullMonteSW/Storage/TIMOS/TIMOSWriter.hpp>
 
 using namespace std;
 
@@ -74,22 +74,22 @@ BOOST_AUTO_TEST_CASE(mouse)
 }
 
 
-#include <FullMonte/Storage/TIMOS/TIMOSAntlrParser.hpp>
-#include <FullMonte/Storage/TIMOS/TIMOSWriter.hpp>
-#include <FullMonte/Storage/VTK/VTKLegacyReader.hpp>
+#include <FullMonteSW/Storage/TIMOS/TIMOSAntlrParser.hpp>
+#include <FullMonteSW/Storage/TIMOS/TIMOSWriter.hpp>
+#include <FullMonteSW/Storage/VTK/VTKLegacyReader.hpp>
 
-#include <FullMonte/Geometry/Placement/PlanePlacement.hpp>
+#include <FullMonteSW/Geometry/Placement/PlanePlacement.hpp>
 
-#include <FullMonte/Geometry/Sources/Base.hpp>
+#include <FullMonteSW/Geometry/Sources/Base.hpp>
 
-#include <FullMonte/Geometry/Filters/TetraFilterByRegion.hpp>
-#include <FullMonte/Geometry/Filters/TriFilterRegionBounds.hpp>
+#include <FullMonteSW/Geometry/Filters/TetraFilterByRegion.hpp>
+#include <FullMonteSW/Geometry/Filters/TriFilterRegionBounds.hpp>
 
-#include <FullMonte/Geometry/Placement/PlanePlacement.hpp>
-#include <FullMonte/Geometry/Placement/PlanePlacementPencilBeam.hpp>
+#include <FullMonteSW/Geometry/Placement/PlanePlacement.hpp>
+#include <FullMonteSW/Geometry/Placement/PlanePlacementPencilBeam.hpp>
 
-#include <FullMonte/Kernels/Software/RNG_SFMT_AVX.hpp>
-#include <FullMonte/Kernels/Software/Emitters/TetraMeshEmitterFactory.hpp>
+#include <FullMonteSW/Kernels/Software/RNG_SFMT_AVX.hpp>
+#include <FullMonteSW/Kernels/Software/Emitters/TetraMeshEmitterFactory.hpp>
 
 #include <string>
 
@@ -237,3 +237,4 @@ BOOST_AUTO_TEST_CASE(knee)
 		}
 	}
 }
+

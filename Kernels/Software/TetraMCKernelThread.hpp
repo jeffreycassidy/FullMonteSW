@@ -6,12 +6,12 @@
 #include <utility>
 #include <string>
 #include <iomanip>
-#include <FullMonte/Kernels/Software/Emitters/Base.hpp>
-#include <FullMonte/Kernels/Software/Logger/Logger.hpp>
+#include <FullMonteSW/Kernels/Software/Emitters/Base.hpp>
+#include <FullMonteSW/Kernels/Software/Logger/Logger.hpp>
 
-#include <FullMonte/Geometry/Tetra.hpp>
+#include <FullMonteSW/Geometry/Tetra.hpp>
 
-#include <FullMonte/Kernels/Software/TetraMCKernel.hpp>
+#include <FullMonteSW/Kernels/Software/TetraMCKernel.hpp>
 
 #include "BlockRandomDistribution.hpp"
 #include "HenyeyGreenstein.hpp"
@@ -392,3 +392,4 @@ template<class RNG>template<class Logger>int TetraMCKernel<RNG>::Thread<Logger>:
 
 
 #endif
+

@@ -8,11 +8,11 @@
 #ifndef OUTPUTTYPES_FLUENCECONVERTER_HPP_
 #define OUTPUTTYPES_FLUENCECONVERTER_HPP_
 
-#include <FullMonte/OutputTypes/FluenceMapBase.hpp>
+#include <FullMonteSW/OutputTypes/FluenceMapBase.hpp>
 
 class TetraMesh;
 
-#include <FullMonte/Geometry/SimpleMaterial.hpp>
+#include <FullMonteSW/Geometry/SimpleMaterial.hpp>
 
 class FluenceConverter
 {
@@ -61,3 +61,4 @@ private:
 };
 
 #endif /* OUTPUTTYPES_FLUENCECONVERTER_HPP_ */
+

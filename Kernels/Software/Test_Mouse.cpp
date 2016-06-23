@@ -11,19 +11,19 @@
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
-#include <FullMonte/Storage/TIMOS/TIMOSAntlrParser.hpp>
-#include <FullMonte/Storage/TIMOS/TIMOSWriter.hpp>
+#include <FullMonteSW/Storage/TIMOS/TIMOSAntlrParser.hpp>
+#include <FullMonteSW/Storage/TIMOS/TIMOSWriter.hpp>
 
-#include <FullMonte/Geometry/Sources/Base.hpp>
+#include <FullMonteSW/Geometry/Sources/Base.hpp>
 
-#include <FullMonte/Kernels/Software/TetraVolumeKernel.hpp>
-#include <FullMonte/Kernels/Software/TetraSurfaceKernel.hpp>
+#include <FullMonteSW/Kernels/Software/TetraVolumeKernel.hpp>
+#include <FullMonteSW/Kernels/Software/TetraSurfaceKernel.hpp>
 
-#include <FullMonte/OutputTypes/OutputDataSummarize.hpp>
-#include <FullMonte/OutputTypes/FluenceConverter.hpp>
+#include <FullMonteSW/OutputTypes/OutputDataSummarize.hpp>
+#include <FullMonteSW/OutputTypes/FluenceConverter.hpp>
 
-#include <FullMonte/Geometry/Filters/TetraFilterByRegion.hpp>
-#include <FullMonte/OutputTypes/AbsorptionSum.hpp>
+#include <FullMonteSW/Geometry/Filters/TetraFilterByRegion.hpp>
+#include <FullMonteSW/OutputTypes/AbsorptionSum.hpp>
 
 #include <string>
 
@@ -475,4 +475,5 @@ BOOST_AUTO_TEST_CASE(mouseSurf)
 		W->Delete();
 #endif
 }
+
 

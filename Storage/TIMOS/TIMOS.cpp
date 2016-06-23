@@ -5,10 +5,10 @@
  *      Author: jcassidy
  */
 
-#include <FullMonte/Geometry/Sources/PointSource.hpp>
-#include <FullMonte/Geometry/Sources/Volume.hpp>
-#include <FullMonte/Geometry/Sources/SurfaceTri.hpp>
-#include <FullMonte/Geometry/Sources/PencilBeam.hpp>
+#include <FullMonteSW/Geometry/Sources/PointSource.hpp>
+#include <FullMonteSW/Geometry/Sources/Volume.hpp>
+#include <FullMonteSW/Geometry/Sources/SurfaceTri.hpp>
+#include <FullMonteSW/Geometry/Sources/PencilBeam.hpp>
 #include "TIMOS.hpp"
 
 Source::Base*	TIMOS::convertToSource(const TIMOS::SourceDef tSrc)

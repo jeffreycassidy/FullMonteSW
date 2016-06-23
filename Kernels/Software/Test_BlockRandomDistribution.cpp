@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE(extremes_exprnd)
 
 #include "FloatUVect2Distribution.hpp"
 
-BOOST_AUTO_TEST_CASE(sinCos)
+BOOST_AUTO_TEST_CASE(sincos_test)
 {
 	uint32_t rngbuf[8];
 	float sincosrnd[16];

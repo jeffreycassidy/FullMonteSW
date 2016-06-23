@@ -8,7 +8,7 @@
 #ifndef VTK_PACKETPOSITIONTRACEVTK_HPP_
 #define VTK_PACKETPOSITIONTRACEVTK_HPP_
 
-#include <FullMonte/OutputTypes/PacketPositionTrace.hpp>
+#include <FullMonteSW/OutputTypes/PacketPositionTrace.hpp>
 
 #include <vtkObject.h>
 #include <vtkPoints.h>

@@ -18,20 +18,20 @@
 #include "TetraMeshEmitterFactory.hpp"
 
 // Source descriptions
-#include <FullMonte/Geometry/Sources/Composite.hpp>
-#include <FullMonte/Geometry/Sources/PointSource.hpp>
-#include <FullMonte/Geometry/Sources/Line.hpp>
-#include <FullMonte/Geometry/Sources/Ball.hpp>
-#include <FullMonte/Geometry/Sources/Volume.hpp>
-#include <FullMonte/Geometry/Sources/SurfaceTri.hpp>
-#include <FullMonte/Geometry/Sources/PencilBeam.hpp>
-#include <FullMonte/Geometry/Sources/Surface.hpp>
+#include <FullMonteSW/Geometry/Sources/Composite.hpp>
+#include <FullMonteSW/Geometry/Sources/PointSource.hpp>
+#include <FullMonteSW/Geometry/Sources/Line.hpp>
+#include <FullMonteSW/Geometry/Sources/Ball.hpp>
+#include <FullMonteSW/Geometry/Sources/Volume.hpp>
+#include <FullMonteSW/Geometry/Sources/SurfaceTri.hpp>
+#include <FullMonteSW/Geometry/Sources/PencilBeam.hpp>
+#include <FullMonteSW/Geometry/Sources/Surface.hpp>
 
-#include <FullMonte/Geometry/RayWalk.hpp>
+#include <FullMonteSW/Geometry/RayWalk.hpp>
 
-#include <FullMonte/Geometry/Convenience.hpp>
+#include <FullMonteSW/Geometry/Convenience.hpp>
 
-#include <FullMonte/Geometry/TetraMesh.hpp>
+#include <FullMonteSW/Geometry/TetraMesh.hpp>
 
 #include "../SSEMath.hpp"
 
@@ -261,5 +261,6 @@ template<class RNG>Emitter::EmitterBase<RNG>* TetraEmitterFactory<RNG>::emitter(
 
 
 };
+
 
 

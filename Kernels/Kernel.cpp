@@ -7,12 +7,12 @@
 
 #include "Kernel.hpp"
 
-#include <FullMonte/Kernels/KernelObserver.hpp>
+#include <FullMonteSW/Kernels/KernelObserver.hpp>
 
 #include <boost/range/algorithm.hpp>
 #include <memory>
 
-#include <FullMonte/OutputTypes/OutputData.hpp>
+#include <FullMonteSW/OutputTypes/OutputData.hpp>
 #include <iostream>
 
 using namespace std;
@@ -110,3 +110,4 @@ void Kernel::addResults(OutputData* r)
 	for(auto o : m_observers)
 		o->notify_result(*this,r);
 }
+

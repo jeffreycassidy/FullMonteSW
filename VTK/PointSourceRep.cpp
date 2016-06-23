@@ -10,7 +10,7 @@
 
 #include <boost/range/algorithm.hpp>
 
-#include <FullMonte/VTK/PointSourceRep.h>
+#include <FullMonteSW/VTK/PointSourceRep.h>
 #include <array>
 
 #include <vtkCellArray.h>

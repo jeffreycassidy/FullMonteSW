@@ -11,8 +11,8 @@
 #include "OStreamObserver.hpp"
 #include "MCKernelBase.hpp"
 #include "TetraKernelBase.hpp"
-#include <FullMonte/Geometry/TetraMeshBase.hpp>
-#include <FullMonte/Geometry/TetraMesh.hpp>
+#include <FullMonteSW/Geometry/TetraMeshBase.hpp>
+#include <FullMonteSW/Geometry/TetraMesh.hpp>
 %}
 
 %include "Kernel.hpp"

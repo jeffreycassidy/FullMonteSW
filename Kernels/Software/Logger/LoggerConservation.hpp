@@ -1,8 +1,8 @@
 #ifndef KERNELS_SOFTWARE_LOGGERS_LOGGERCONSERVATION_HPP_
 #define KERNELS_SOFTWARE_LOGGERS_LOGGERCONSERVATION_HPP_
 #include "LoggerBase.hpp"
-#include <FullMonte/Kernels/Software/Packet.hpp>
-#include <FullMonte/OutputTypes/MCConservationCounts.hpp>
+#include <FullMonteSW/Kernels/Software/Packet.hpp>
+#include <FullMonteSW/OutputTypes/MCConservationCounts.hpp>
 
 /** Single-threaded conservation tracker.
  *
@@ -46,3 +46,4 @@ private:
 };
 
 #endif
+

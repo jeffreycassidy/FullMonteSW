@@ -1,7 +1,7 @@
 #ifndef TIMOS_HPP_INCLUDED_
 #define TIMOS_HPP_INCLUDED_
 
-#include <FullMonte/Geometry/SimpleMaterial.hpp>
+#include <FullMonteSW/Geometry/SimpleMaterial.hpp>
 
 #include <string>
 #include <cmath>
@@ -90,3 +90,4 @@ protected:
 };
 
 #endif /* TIMOS_HPP_ */
+

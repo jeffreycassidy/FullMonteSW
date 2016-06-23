@@ -4,7 +4,7 @@
 #include "LoggerBase.hpp"
 #include "AccumulationArray.hpp"
 
-#include <FullMonte/OutputTypes/FluenceMapBase.hpp>
+#include <FullMonteSW/OutputTypes/FluenceMapBase.hpp>
 
 /*! Basic volume logger.
  *
@@ -93,3 +93,4 @@ private:
 };
 
 #endif
+
