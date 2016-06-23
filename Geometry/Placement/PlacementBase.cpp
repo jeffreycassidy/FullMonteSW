@@ -7,10 +7,10 @@
 
 #include <stdexcept>
 
-#include <FullMonte/Geometry/Sources/Base.hpp>
-#include <FullMonte/Geometry/Sources/Composite.hpp>
-#include <FullMonte/Geometry/Placement/PlacementBase.hpp>
-#include <FullMonte/Geometry/Placement/PlacementMediatorBase.hpp>
+#include <FullMonteHW/Geometry/Sources/Base.hpp>
+#include <FullMonteHW/Geometry/Sources/Composite.hpp>
+#include <FullMonteHW/Geometry/Placement/PlacementBase.hpp>
+#include <FullMonteHW/Geometry/Placement/PlacementMediatorBase.hpp>
 
 using namespace std;
 

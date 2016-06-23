@@ -17,7 +17,7 @@
 #include <vtkPolyData.h>
 #include <vtkCellType.h>
 
-#include <FullMonte/Geometry/Sources/PointSource.hpp>
+#include <FullMonteHW/Geometry/Sources/PointSource.hpp>
 
 using namespace std;
 

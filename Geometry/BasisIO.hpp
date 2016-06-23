@@ -8,7 +8,7 @@
 #ifndef GEOMETRY_BASISIO_HPP_
 #define GEOMETRY_BASISIO_HPP_
 
-#include <FullMonteSW/FullMonte/Geometry/Basis.hpp>
+#include <FullMonteSW/Geometry/Basis.hpp>
 #include <iostream>
 #include <iomanip>
 

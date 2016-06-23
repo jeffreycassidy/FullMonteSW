@@ -5,8 +5,8 @@
  *      Author: jcassidy
  */
 
-#include <FullMonte/Geometry/Sources/PencilBeam.hpp>
-#include <FullMonte/Geometry/Placement/PlanePlacementPencilBeam.hpp>
+#include <FullMonteHW/Geometry/Sources/PencilBeam.hpp>
+#include <FullMonteHW/Geometry/Placement/PlanePlacementPencilBeam.hpp>
 
 void PlanePlacementPencilBeam::planePosition(Point2 p)
 {

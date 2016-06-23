@@ -10,7 +10,7 @@
 
 class TetraMesh;
 
-#include <FullMonte/Geometry/Filters/FilterBase.hpp>
+#include <FullMonteHW/Geometry/Filters/FilterBase.hpp>
 
 class TetraMeshFilter : public FilterBase<unsigned>
 {

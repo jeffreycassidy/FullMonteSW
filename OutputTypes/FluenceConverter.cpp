@@ -10,7 +10,7 @@
 
 #include "FluenceMapBase.hpp"
 
-#include <FullMonte/Geometry/TetraMesh.hpp>
+#include <FullMonteHW/Geometry/TetraMesh.hpp>
 
 FluenceConverter::FluenceConverter()
 {

@@ -11,9 +11,9 @@
 template<class Index>class FilterBase;
 
 #include <vtkObject.h>
-#include <FullMonte/OutputTypes/SpatialMapBase.hpp>
+#include <FullMonteHW/OutputTypes/SpatialMapBase.hpp>
 
-#include <FullMonte/Geometry/Filters/FilterBase.hpp>
+#include <FullMonteHW/Geometry/Filters/FilterBase.hpp>
 
 /** Convert a SpatialMapBase<V,I> into a VTK array of the corresponding type */
 

@@ -5,8 +5,8 @@
  *      Author: jcassidy
  */
 
-#include <FullMonte/OutputTypes/FluenceLineQuery.hpp>
-#include <FullMonte/Storage/TextFile/TextFileWriter.hpp>
+#include <FullMonteHW/OutputTypes/FluenceLineQuery.hpp>
+#include <FullMonteHW/Storage/TextFile/TextFileWriter.hpp>
 
 #include <vector>
 
