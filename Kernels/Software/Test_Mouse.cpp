@@ -53,7 +53,7 @@ const string dir(TEST_DATA_PATH "/TIM-OS/mouse");
 #include <vtkUnstructuredGridWriter.h>
 #include <vtkDataObjectToDataSetFilter.h>
 #include <FullMonte/VTK/vtkFullMonteTetraMeshWrapper.h>
-#include <FullMonte/VTK/vtkFullMonteSpatialMapWrapper.h>
+#include "../../VTK/vtkFullMonteSpatialMapWrapperFU.h"
 #include <vtkMergeDataObjectFilter.h>
 #include <vtkPolyData.h>
 #include <vtkPolyDataWriter.h>

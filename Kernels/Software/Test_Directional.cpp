@@ -53,7 +53,7 @@ const string dir("../../");
 #include <vtkPolyDataWriter.h>
 
 #include <FullMonte/VTK/vtkFullMonteTetraMeshBaseWrapper.h>
-#include <FullMonte/VTK/vtkFullMonteSpatialMapWrapper.h>
+#include "../../VTK/vtkFullMonteSpatialMapWrapperFU.h"
 #include <FullMonte/VTK/vtkFullMonteTetraMeshWrapper.h>
 
 #include <FullMonte/VTK/vtkFullMonteFluenceLineQueryWrapper.h>

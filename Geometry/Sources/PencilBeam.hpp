@@ -30,8 +30,13 @@ public:
 		Directed(dir)
 		{ }
 
+	/// Nonzero radius means a top-hat beam
+	float 		radius() 			const	{ return m_radius; 	}
+	void 		radius(float r)				{ m_radius=r; 		}
+
 private:
-	unsigned m_faceHint=-1U;
+	unsigned 	m_faceHint=-1U;
+	float 		m_radius=0.0f;
 };
 
 };

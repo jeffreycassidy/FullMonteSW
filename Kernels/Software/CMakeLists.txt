@@ -1,6 +1,6 @@
 ADD_SUBDIRECTORY(Emitters)
 
-ADD_LIBRARY(FullMonteSWKernel SHARED TetraVolumeKernel.cpp TetraSurfaceKernel.cpp TetraSVKernel.cpp SSEMath.cpp ThreadedMCKernelBase.cpp PacketDirection.cpp HenyeyGreenstein.cpp)
+ADD_LIBRARY(FullMonteSWKernel SHARED TetraVolumeKernel.cpp TetraSurfaceKernel.cpp TetraSVKernel.cpp SSEMath.cpp ThreadedMCKernelBase.cpp PacketDirection.cpp HenyeyGreenstein.cpp TetraMCKernel.cpp)
 TARGET_LINK_LIBRARIES(FullMonteSWKernel SFMT FullMonteKernelBase FullMonteData ${Boost_LIBRARIES})
 
 INSTALL(TARGETS FullMonteSWKernel

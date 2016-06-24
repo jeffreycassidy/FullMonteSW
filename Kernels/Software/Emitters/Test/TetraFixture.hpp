@@ -22,7 +22,7 @@ struct TetraFixture
 
 	TetraFixture(Point3 A,Point3 B,Point3 C,Point3 D) : T(A,B,C,D){}
 
-	Tetra<float> T;
+	Test::Tetra<float> T;
 
 	void testPosition(Point3 p)
 	{

@@ -19,15 +19,46 @@
 #include "OrthogonalFixture.hpp"
 #include "PacketDirectionFixture.hpp"
 
+#include "../../../../Geometry/Sources/Line.hpp"
+
+#include <FullMonte/Geometry/TetraMesh.hpp>
+
+#include "../TetraMeshEmitterFactory.hpp"
+
+
+#include "../Base.hpp"
+
 #include "../../RNG_SFMT_AVX.hpp"
 
-#include <boost/range/algorithm.hpp>
-
-
+#include <boost/range/adaptor/indexed.hpp>
+#include <boost/algorithm/cxx11/any_of.hpp>
 
 #include <boost/math/constants/constants.hpp>
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_01.hpp>
+
+#include <FullMonte/Storage/TIMOS/TIMOSAntlrParser.hpp>
+
+
+const TetraMesh mouse;
+
+struct GlobalMouseFixture
+{
+	GlobalMouseFixture()
+	{
+		TIMOSAntlrParser R;
+		R.setMeshFileName("/Users/jcassidy/src/FullMonteSW/data/TIM-OS/mouse/mouse.mesh");
+
+		const_cast<TetraMesh&>(mouse) = R.mesh();
+	}
+
+	~GlobalMouseFixture()
+	{
+	}
+
+};
+
+BOOST_GLOBAL_FIXTURE(GlobalMouseFixture);
 
 boost::random::mt19937_64 			rng;
 boost::random::uniform_01<float>	 u01;
@@ -83,7 +114,7 @@ BOOST_FIXTURE_TEST_CASE(isops,IsoPS)
 	positionFixture.m_p = std::array<float,3>{ p[0], p[1], p[2] };
 
 	Emitter::Isotropic<RNG_SFMT_AVX> is;
-	Emitter::Point ps = Emitter::Point(SSE::Vector3(p));
+	Emitter::Point ps = Emitter::Point(1,SSE::Vector3(p));
 
 	Emitter::PositionDirectionEmitter<RNG_SFMT_AVX,Emitter::Point,Emitter::Isotropic<RNG_SFMT_AVX>> ips(ps,is);
 
@@ -125,7 +156,7 @@ BOOST_FIXTURE_TEST_CASE(tetra, IsoTet)
 
 	positionFixture = TetraFixture(A,B,C,D);
 
-	Emitter::Tetra<RNG> T{SSE::Vector3(A),SSE::Vector3(B),SSE::Vector3(C),SSE::Vector3(D)};
+	Emitter::Tetra<RNG> T{1,SSE::Vector3(A),SSE::Vector3(B),SSE::Vector3(C),SSE::Vector3(D)};
 	Emitter::Isotropic<RNG> iso;
 
 	Emitter::PositionDirectionEmitter<RNG,Emitter::Tetra<RNG>,Emitter::Isotropic<RNG>> tet(T,iso);
@@ -161,7 +192,7 @@ BOOST_FIXTURE_TEST_CASE(triangle,NormTri)
 	positionFixture = TriangleFixture(A,B,C);
 	directionFixture.m_dir = dir.array();
 
-	Emitter::Triangle<RNG> 	T{SSE::Vector3(A), SSE::Vector3(B), SSE::Vector3(C)};
+	Emitter::Triangle<RNG> 	T{4, SSE::Vector3(A), SSE::Vector3(B), SSE::Vector3(C)};
 	Emitter::Directed		d{dir};
 
 	Emitter::PositionDirectionEmitter<RNG,Emitter::Triangle<RNG>,Emitter::Directed> tri(T,d);
@@ -194,7 +225,7 @@ BOOST_FIXTURE_TEST_CASE(pencil,Pencil)
 	positionFixture = PointFixture(p);
 	directionFixture = DirectedFixture(dir.array());
 
-	Emitter::Point P{SSE::Vector3(p)};
+	Emitter::Point P{1,SSE::Vector3(p)};
 	Emitter::Directed D{dir};
 
 	Emitter::PositionDirectionEmitter<RNG,Emitter::Point,Emitter::Directed> pb(P,D);
@@ -215,23 +246,166 @@ typedef SourceFixture<LineFixture,DiskFixture> Line;
 
 BOOST_FIXTURE_TEST_CASE(line,Line)
 {
-	std::array<float,3> p0{ 0.5f, 1.0f, -0.2f };
-	std::array<float,3> p1{ 1.2f, 0.8f, 0.6f  };
+	// random line within the Digimouse
+	std::array<float,3> p0{ 23.5f, 14.8f, 11.8f };
+	std::array<float,3> p1{ 16.6f, 21.6f, 14.8f  };
 
-	std::array<float,3> n { p1[0]-p0[0], p1[1]-p0[1], p1[2]-p0[2] };
+	std::array<float,3> n = p1-p0;
 
 	positionFixture = LineFixture(p0,p1);
 	directionFixture = DiskFixture(n);
 
-	Emitter::Line<RNG> L{SSE::Vector3(p0),SSE::Vector3(p1)};
-	Emitter::Disk<RNG> D{SSE::normalize(SSE::Vector3(p1)-SSE::Vector3(p0))};
+	Source::Line L(1.0f,p0,p1);
+	L.pattern(Source::Line::Normal);
 
-	Emitter::PositionDirectionEmitter<RNG,Emitter::Line<RNG>,Emitter::Disk<RNG>> ls(L,D);
+	Emitter::TetraEmitterFactory<RNG> F(&mouse);
+
+	F.visit(&L);
+
+	Emitter::EmitterBase<RNG>* e = F.cemitters()[0];
 
 	std::cout << "Line source" << std::endl;
-	for(unsigned i=0;i<100000;++i)
-		testPacket(ls.emit(rng));
+	for(unsigned i=0;i<10000;++i)
+	{
+		LaunchPacket lp = e->emit(rng);
+		cout << lp.pos[0] << ' ' << lp.pos[1] << ' ' << lp.pos[2] << " tet " << lp.element << endl;
+		testPacket(lp);
+
+		BOOST_CHECK(lp.element != 0);
+
+		std::array<float,4> vf;
+		_mm_store_ps(vf.data(),mouse.getTetra(lp.element).heights(to_m128(lp.pos.array())));
+
+		bool inside_tetra = !boost::algorithm::any_of(vf, [](float i){ return i < 0; });
+		if (!inside_tetra)
+			{
+			cout << "ERROR: Point not inside tetra" << endl;
+			for(unsigned i=0;i<4;++i)
+				cout << ' ' << vf[i];
+			cout << endl;
+			}
+		BOOST_CHECK(inside_tetra);
+	}
 
 	write("line");
+}
+
+#include <vtkCellArray.h>
+#include <vtkPolyDataWriter.h>
+#include <vtkPolyData.h>
+#include <vtkPoints.h>
+#include <vtkUnsignedIntArray.h>
+#include <vtkUnstructuredGrid.h>
+#include <vtkUnstructuredGridWriter.h>
+#include <vtkCellData.h>
+
+#include <FullMonte/Geometry/Filters/TriFilterRegionBounds.hpp>
+
+BOOST_AUTO_TEST_CASE( mouseSurfaceFaces )
+{
+	vector<pair<array<float,3>,array<float,3>>> P{
+		make_pair(array<float,3>{37.7, 44.8, 30.1}, array<float,3>{16.3, 36.9,  14.7}),		// outside in
+		make_pair(array<float,3>{16.2, 60.8,  7.9}, array<float,3>{11.6, 61.2, -16.2})		// inside out
+	};
+
+
+	// set up to check external surface of the mouse
+	TriFilterRegionBounds TF(&mouse);
+	TF.includeRegion(0,true);
+	TF.includeRegion(18,false);
+	TF.bidirectional(true);
+
+	// vis: the specification (start/end point without surface intersection)
+	vtkPoints *specP = vtkPoints::New();
+	vtkCellArray *specCA = vtkCellArray::New();
+	vtkUnsignedIntArray *specNum = vtkUnsignedIntArray::New();
+
+
+	// vis: the realized probe (line truncated at surface, surface tri, and incoming tet)
+	vtkUnstructuredGrid* probe = vtkUnstructuredGrid::New();
+	vtkPoints *probeP = vtkPoints::New();
+
+	probe->SetPoints(probeP);
+
+	vtkUnsignedIntArray *probeNum = vtkUnsignedIntArray::New();
+
+	probe->GetCellData()->SetScalars(probeNum);
+
+	for(const auto p : P | boost::adaptors::indexed(0U))
+	{
+		array<float,3> dir = normalize(p.value().second-p.value().first);
+
+		// insert probe specifier
+		specNum->InsertNextValue(p.index());
+
+		specCA->InsertNextCell(2);
+		specCA->InsertCellPoint(specP->InsertNextPoint(p.value().first.data()));
+		specCA->InsertCellPoint(specP->InsertNextPoint(p.value().second.data()));
+
+		RTIntersection res = mouse.findSurfaceFace(p.value().first,dir,&TF);
+
+		// insert probe realization
+		vtkIdType lineIDs[2]{ probeP->InsertNextPoint(p.value().first.data()), probeP->InsertNextPoint(res.q.data()) };
+
+		FaceByPointID IDps = mouse.getFacePointIDs(abs(res.IDf));
+
+		vtkIdType triIDs[3]{
+			probeP->InsertNextPoint(mouse.getPoint(IDps[0]).data()), probeP->InsertNextPoint(mouse.getPoint(IDps[1]).data()), probeP->InsertNextPoint(mouse.getPoint(IDps[2]).data()) };
+
+		TetraByPointID tetIDps = mouse.getTetraPointIDs(res.IDt);
+		vtkIdType tetIDs[4];
+		for(unsigned i=0;i<4;++i)
+			tetIDs[i] = probeP->InsertNextPoint(mouse.getPoint(tetIDps[i]).data());
+
+		probe->InsertNextCell(VTK_LINE,2,lineIDs);
+		probe->InsertNextCell(VTK_POLYGON,3,triIDs);
+
+		probe->InsertNextCell(VTK_TETRA,4,tetIDs);
+
+		probeNum->InsertNextValue(p.index());
+		probeNum->InsertNextValue(p.index());
+		probeNum->InsertNextValue(p.index());
+	}
+
+	vtkPolyData *spec = vtkPolyData::New();
+
+	spec->SetPoints(specP);
+	spec->SetLines(specCA);
+	spec->GetCellData()->SetScalars(specNum);
+
+	vtkPolyDataWriter *W = vtkPolyDataWriter::New();
+	W->SetFileName("line.spec.vtk");
+	W->SetInputData(spec);
+	W->Update();
+
+
+	vtkUnstructuredGridWriter *UGW = vtkUnstructuredGridWriter::New();
+	UGW->SetInputData(probe);
+	UGW->SetFileName("line.probe.vtk");
+	UGW->Update();
+
+//
+//	vtkPoints *probeP=vtkPoints::New();
+//	vtkCellArray *probeCA=vtkCellArray::New();
+//	vtkCellArray *probeTri=vtkCellArray::New();
+//
+//	vtkPolyData *probe=vtkPolyData::New();
+//	vtkUnsignedArray *probeNum=vtkUnsignedArray::New();
+//
+//	for(const auto p : P | boost::adaptors::indexed(0U))
+//	{
+
+//
+//		probeTri->InsertNextCell(3);
+//		probeTri->InsertCellPoint(probeP->InsertNextPoint());
+//		probeTri->InsertCellPoint(probeP->InsertNextPoint());
+//		probeTri->InsertCellPoint(probeP->InsertNextPoint());
+//
+//		probeNum->InsertNextTuple(p.index());
+//	}
+//
+//	probe->SetPoints(probeP);
+//	probe->SetLines(probeCA);
+//	probe->GetCellData()->SetScalars(probeNum);
 }
 

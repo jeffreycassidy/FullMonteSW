@@ -9,6 +9,7 @@
 #define GEOMETRY_STANDARDARRAYKERNEL_HPP_
 
 #include <array>
+#include <cmath>
 
 template<typename FT>std::array<FT,3> cross(const std::array<FT,3> lhs,const std::array<FT,3> rhs);
 template<typename FT>FT scalartriple(const std::array<FT,3> a,const std::array<FT,3> b,const std::array<FT,3> c);
@@ -89,7 +90,7 @@ template<typename FT,std::size_t D>FT norm2(const std::array<FT,D> v)
 
 template<typename FT,std::size_t D>FT norm(const std::array<FT,D> v)
 {
-	return std::sqrt(norm2(v));
+	return sqrt(norm2(v));
 }
 
 template<typename FT,std::size_t D>std::array<FT,D> operator-(const std::array<FT,D> v)

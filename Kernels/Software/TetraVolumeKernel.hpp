@@ -19,9 +19,9 @@
 #include <FullMonte/Kernels/Software/Logger/LoggerConservation.hpp>
 #include <FullMonte/Kernels/Software/Logger/LoggerVolume.hpp>
 
-#include <FullMonte/Kernels/Software/Logger/MultiThreadWithIndividualCopy.hpp>
+#include <FullMonte/OutputTypes/SpatialMapBase.hpp>
 
-extern template class Emitter::TetraEmitterFactory<RNG_SFMT_AVX>;
+#include <FullMonte/Kernels/Software/Logger/MultiThreadWithIndividualCopy.hpp>
 
 class TetraVolumeKernel : public TetraMCKernel<RNG_SFMT_AVX> {
 public:
@@ -43,6 +43,10 @@ public:
 		get<2>(m_logger).resize(mesh->getNt()+1);
 		get<2>(m_logger).qSize(1<<14);
 	}
+
+
+	/// Convenience function
+	VolumeFluenceMap getVolumeFluence() const;
 
 private:
 	virtual ThreadedMCKernelBase::Thread* makeThread() override

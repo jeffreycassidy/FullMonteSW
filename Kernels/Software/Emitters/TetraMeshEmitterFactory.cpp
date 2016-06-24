@@ -12,6 +12,8 @@
 #include "Directed.hpp"
 #include "Isotropic.hpp"
 #include "Triangle.hpp"
+#include "Line.hpp"
+#include "Disk.hpp"
 #include "Tetra.hpp"
 #include "Composite.hpp"
 
@@ -27,6 +29,8 @@
 #include <FullMonte/Geometry/Sources/PencilBeam.hpp>
 #include <FullMonte/Geometry/Sources/Surface.hpp>
 
+#include <FullMonte/Geometry/Filters/TriFilterRegionBounds.hpp>
+
 #include <FullMonte/Geometry/RayWalk.hpp>
 
 #include <FullMonte/Geometry/Convenience.hpp>
@@ -36,6 +40,8 @@
 #include "../SSEMath.hpp"
 
 #include <iomanip>
+
+#include <FullMonte/Kernels/Software/RNG_SFMT_AVX.hpp>
 
 namespace Emitter
 {
@@ -51,7 +57,7 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::PointSource* ps)
 	if (elHint != -1u && el != elHint)
 		cout << "WARNING: Element hint provided (" << elHint << ") does not match enclosing tetra found (" << el << ")" << endl;
 
-	Point P(SSE::Vector3(ps->position()));
+	Point P(el,SSE::Point3(ps->position()));
 
 	auto ips = new PositionDirectionEmitter<RNG,Point,Isotropic<RNG>>(P,Isotropic<RNG>(),el);
 
@@ -68,33 +74,57 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::PencilBeam* pb)
 	std::array<float,3> pos;				// the position after advancing to the face
 	unsigned tet = -1U, tetHint = pb->elementHint();
 
-	RayWalkIterator it=RayWalkIterator::init(*m_mesh,pb->position(),pb->direction()),it_end;
+//	RayWalkIterator it=RayWalkIterator::init(*m_mesh,pb->position(),pb->direction()),it_end;
+//
+//	if (m_debug)
+//	{
+//		pos = pb->position();
+//		array<float,3> dir = pb->direction();
+//
+//		cout << "TetraMeshEmitterFactory: starting at " << pos[0] << ' ' << pos[1] << ' ' << pos[2] << " direction " << dir[0] << ' ' << dir[1] << ' ' << dir[2] << endl;
+//	}
+//
+//	for(; it != it_end && it->matID == 0; ++it)
+//	{
+//		if (m_debug)
+//			cout << "  Stepping through tet " << setw(9) << it->IDt << " (" << it->dToOrigin << " from origin) " << endl;
+//		tet=it->IDt;
+//	}
+//
+//	if (it == it_end)
+//		throw std::logic_error("ERROR: TetraEmitterFactory<RNG>::visit(Source::PencilBeam) shows no intersection of ray with mesh face");
+//
+//	// assign position to the exit point of the last tet with matID=0
+//	pos = it->f0.p;
 
-	if (m_debug)
-	{
-		pos = pb->position();
-		array<float,3> dir = pb->direction();
+	TriFilterRegionBounds TF(m_mesh);
+	TF.includeRegion(0,true);			// TODO: remove hard-coded value here
+	TF.includeRegion(18,false);			// TODO: remove hard-coded value here
+	TF.bidirectional(false);			// include face only if going from mat 0 into mat !0
 
-		cout << "TetraMeshEmitterFactory: starting at " << pos[0] << ' ' << pos[1] << ' ' << pos[2] << " direction " << dir[0] << ' ' << dir[1] << ' ' << dir[2] << endl;
-	}
+#warning "Hard-coded region bounds for face-intersection calculation in TetraMeshEmitterFactory for PencilBeam"
 
-	for(; it != it_end && it->matID == 0; ++it)
-	{
-		if (m_debug)
-			cout << "  Stepping through tet " << setw(9) << it->IDt << " (" << it->dToOrigin << " from origin) " << endl;
-		tet=it->IDt;
-	}
+	RTIntersection res = m_mesh->findSurfaceFace(pb->position(), pb->direction(), &TF);
 
-	if (it == it_end)
-		throw std::logic_error("ERROR: TetraEmitterFactory<RNG>::visit(Source::PencilBeam) shows no intersection of ray with mesh face");
-
-	// assign position to the exit point of the last tet with matID=0
-	pos = it->f0.p;
+	tet = res.IDt;
+	pos = res.q;
+	m_debug=true;
 
 	if (tetHint != -1U && tetHint != tet)
 		cout << "WARNING: Tetra hint provided (" << tetHint << ") does not match the tetra located by search (" << tet << ")" << endl;
 	else if (tetHint == -1U && m_debug)
 		cout << "INFO: No tetra hint provided, found " << tet << " (material " << m_mesh->getMaterial(tet) << ")" << endl;
+
+	if (m_debug)
+	{
+		cout << "INFO: Created pencil beam emitter impinging on face " << res.IDf << " into tetra " << res.IDt << " with material " <<
+			m_mesh->getMaterial(res.IDt) << " at position " << res.q[0] << ',' << res.q[1] << ',' << res.q[2] << endl;
+
+		unsigned IDt_opposite = m_mesh->getTetraFromFace(-res.IDf);
+
+		cout << "INFO:   Opposite face " << -res.IDf << " impinges tet " << IDt_opposite << " material " << m_mesh->getMaterial(IDt_opposite) << endl;
+
+	}
 
 
 	::Tetra T = m_mesh->getTetra(tet);
@@ -105,20 +135,22 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::PencilBeam* pb)
 		showTetStats=true;
 		cout << "ERROR! Point is not inside the tetra!" << endl;
 	}
+//
+//	if (showTetStats)
+//		{
+//			cout << "Tetra normals (ID " << tet << ", material " << m_mesh->getMaterial(tet) << ": ";
+//
+//			std::array<float,4> h = to_array<float,4>(T.heights(to_m128(pos)));
+//
+//			cout << "Heights: ";
+//			for(unsigned i=0;i<4;++i)
+//				cout << h[i] << ' ';
+//			cout << endl;
+//		}
 
-	if (showTetStats)
-		{
-			cout << "Tetra normals (ID " << tet << ", material " << m_mesh->getMaterial(tet) << ": ";
-
-			std::array<float,4> h = to_array<float,4>(T.heights(to_m128(pos)));
-
-			cout << "Heights: ";
-			for(unsigned i=0;i<4;++i)
-				cout << h[i] << ' ';
-			cout << endl;
-		}
 
 
+	// compute normals a,b for d
 	SSE::UnitVector3 d = SSE::UnitVector3::normalize(SSE::Vector3((pb->direction())));
 
 	SSE::UnitVector3 a;
@@ -136,7 +168,7 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::PencilBeam* pb)
 
 	SSE::UnitVector3 b(cross(d,a),SSE::Assert);
 
-	Point P{SSE::Vector3(pos)};
+	Point P{tet,SSE::Vector3(pos)};
 	Directed D(PacketDirection(d,a,b));
 
 	if (m_debug)
@@ -150,7 +182,6 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::PencilBeam* pb)
 	}
 
 	auto pbs = new PositionDirectionEmitter<RNG,Point,Directed>(P,D,tet);
-
 	m_emitters.push_back(make_pair(pb->power(),pbs));
 }
 
@@ -191,13 +222,14 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Volume* vs)
 	unsigned IDt=vs->elementID();
 
 	Tetra<RNG> 		T(
+			IDt,
 			SSE::Vector3(convertArrayTo<float>(m_mesh->getTetraPoint(IDt,0))),
 			SSE::Vector3(convertArrayTo<float>(m_mesh->getTetraPoint(IDt,1))),
 			SSE::Vector3(convertArrayTo<float>(m_mesh->getTetraPoint(IDt,2))),
 			SSE::Vector3(convertArrayTo<float>(m_mesh->getTetraPoint(IDt,3))));
 
 	Isotropic<RNG> 	I;
-	auto vss = new PositionDirectionEmitter<RNG,Tetra<RNG>,Isotropic<RNG>>(T,I,vs->elementID());
+	auto vss = new PositionDirectionEmitter<RNG,Tetra<RNG>,Isotropic<RNG>>(T,I);
 
 	m_emitters.push_back(make_pair(vs->power(),vss));
 }
@@ -206,7 +238,44 @@ using namespace std;
 
 template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Line* l)
 {
-	throw std::logic_error("TetraEmitterFactory<RNG>::visit - unsupported (Line)");
+	Emitter::EmitterBase<RNG>* ls=nullptr;
+
+	// each segment is a (length, IDt) pair specifying the tetras that make up the line source
+	std::vector<std::pair<float,unsigned>> segments;
+
+	RayWalkIterator it=RayWalkIterator::init(
+			*m_mesh,
+			l->endpoint(0),
+			normalize(l->endpoint(1)-l->endpoint(0)));
+
+	RayWalkIterator itEnd = RayWalkIterator::endAt(l->length());
+
+	for(; it != itEnd; ++it)
+		segments.emplace_back(it->dToOrigin+it->lSeg,it->IDt);
+
+	cout << "Created a line source with " << segments.size() << " segments" << endl;
+
+	for(const auto& s : segments)
+		cout << "  tet " << s.second << " l up to " << s.first << endl;
+
+	Emitter::Line<RNG> P(
+			SSE::Point3(l->endpoint(0)),
+			SSE::Point3(l->endpoint(1)),
+			segments);
+
+	switch(l->pattern())
+	{
+	case Source::Line::Isotropic:
+		ls = new PositionDirectionEmitter<RNG,Line<RNG>,Isotropic<RNG>>(P,Isotropic<RNG>());
+		break;
+	case Source::Line::Normal:
+		ls = new PositionDirectionEmitter<RNG,Line<RNG>,Disk<RNG>>(P,Disk<RNG>(P.displacement()));
+		break;
+	default:
+		throw std::logic_error("TetraEmitterFactory<RNG>::visit(Source::Line*) unsupported emission pattern");
+	}
+
+	m_emitters.push_back(make_pair(l->power(),ls));
 }
 
 template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Composite* c)
@@ -258,7 +327,6 @@ template<class RNG>Emitter::EmitterBase<RNG>* TetraEmitterFactory<RNG>::emitter(
 
 	return e;
 }
-
 
 };
 

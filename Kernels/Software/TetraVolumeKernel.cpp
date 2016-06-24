@@ -9,12 +9,10 @@
 #include "TetraMCKernelThread.hpp"
 
 #include <FullMonte/OutputTypes/OutputDataSummarize.hpp>
+#include <FullMonte/OutputTypes/FluenceConverter.hpp>
 #include <boost/range/adaptor/indexed.hpp>
 
 #include <list>
-
-// TODO: This doesn't belong here
-template class Emitter::TetraEmitterFactory<RNG_SFMT_AVX>;
 
 void TetraVolumeKernel::postfinish()
 {
@@ -26,4 +24,18 @@ void TetraVolumeKernel::postfinish()
 
 	for(auto r : res)
 		addResults(r);
+}
+
+VolumeFluenceMap TetraVolumeKernel::getVolumeFluence() const
+{
+	const VolumeAbsorbedEnergyMap *E = getResultByType<VolumeAbsorbedEnergyMap>();
+
+	FluenceConverter FC;
+	FC.mesh(mesh());
+	FC.cmPerOutputLengthUnit(1.0f);
+	FC.scaleTotalEmittedTo(energy());
+	FC.materials(&m_materials);
+	VolumeFluenceMap phi = FC.convertToFluence(*E);
+
+	return phi;
 }

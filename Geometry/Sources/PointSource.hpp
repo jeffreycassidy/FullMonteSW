@@ -22,6 +22,8 @@ public:
 		m_pos(p),
 		m_elementHint(elementHint){}
 
+	static PointSource* New(){ return new PointSource(); }
+
 	std::array<float,3> position() 						const	{ return m_pos; }
 	void 				position(std::array<float,3> p)			{ m_pos=p; }
 

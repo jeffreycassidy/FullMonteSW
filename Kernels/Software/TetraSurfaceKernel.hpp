@@ -26,7 +26,7 @@
 
 #include <utility>
 
-extern template class Emitter::TetraEmitterFactory<RNG_SFMT_AVX>;
+//extern template class Emitter::TetraEmitterFactory<RNG_SFMT_AVX>;
 
 class TetraSurfaceKernel : public TetraMCKernel<RNG_SFMT_AVX>
 {

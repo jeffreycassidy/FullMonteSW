@@ -8,6 +8,8 @@
 #ifndef KERNELS_SOFTWARE_EMITTERS_DISK_HPP_
 #define KERNELS_SOFTWARE_EMITTERS_DISK_HPP_
 
+#include <tuple>
+
 namespace Emitter {
 
 /** Provides a direction randomly oriented within a planar disk described by the plane's normal */

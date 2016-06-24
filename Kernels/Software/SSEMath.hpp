@@ -191,7 +191,7 @@ template<std::size_t D>inline Scalar norm2(Vector<D> v)
 
 template<std::size_t D>inline Scalar norm(Vector<D> v)
 {
-	return sqrt(dot(v,v));
+	return Scalar(sqrt(float(dot(v,v))));
 }
 
 template<std::size_t D>inline Scalar dot(Vector<D> lhs,Vector<D> rhs)

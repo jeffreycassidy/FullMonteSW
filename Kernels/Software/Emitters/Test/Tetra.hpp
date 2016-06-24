@@ -13,6 +13,8 @@
 
 /** Geometric description of a tetrahedron (maximum simplicity, no hardware acceleration) */
 
+namespace Test {
+
 template<typename FT>struct Tetra
 {
 	typedef std::array<FT,3> Point3;
@@ -63,6 +65,6 @@ template<typename FT>struct Tetra
 	ImplicitPlane<FT,3> m_fABC, m_fABD, m_fACD, m_fBCD;
 };
 
-
+};
 
 #endif /* KERNELS_SOFTWARE_EMITTERS_TEST_TETRA_HPP_ */

@@ -10,6 +10,8 @@
 #include <boost/range/adaptor/indexed.hpp>
 #include <boost/range/adaptor/filtered.hpp>
 
+#include "StandardArrayKernel.hpp"
+
 #include <iomanip>
 
 #include "TetraMesh.hpp"
@@ -370,9 +372,86 @@ unsigned TetraMesh::findEnclosingTetra(const Point<3,double>& p) const
 		cout << "ERROR: Could not find enclosing tetra" << endl;
 	else if (N > 1)
 		cout << "WARNING: enclosed by " << N << " tetras" << endl;
-	//return IDt;
-	cout << "WARNING: Returning tet0 always from findEnclosingTetra" << endl;
-	return 0;
+	return IDt;
+}
+
+
+/** Finds the surface face closest to the ray (p,d)
+ * If predicate F is provided, only faces matching the predicate F are considered
+ *
+ * Returns the intersection point, distance to intersection, the tetra just after the interface,
+ * and the face oriented to point along the ray
+ */
+
+
+RTIntersection TetraMesh::findSurfaceFace(array<float,3> p,array<float,3> d,const FilterBase<int>* F) const
+{
+	float dMin = numeric_limits<float>::infinity();
+	int fMin = 0;
+
+	if (!F)
+		throw std::logic_error("TetraMesh::findSurfaceFace(p,d,F) given null filter (not supported)");
+
+	for(int i=1;i<m_faces.size(); ++i)
+	{
+		int IDf;
+
+		if ((*F)(i))
+			IDf = i;
+		else if ((*F)(-i))
+			IDf = -i;
+		else
+			continue;
+
+		Face f = m_faces[i];
+
+		const auto nd = f.getNormal();
+		array<float,3> n{float(nd[0]),float(nd[1]),float(nd[2])};
+		float c = f.getConstant();
+
+		Point<3,double> T[3] = {
+				Point<3,double>(m_points[m_facePoints[i][0]]),
+				Point<3,double>(m_points[m_facePoints[i][1]]),
+				Point<3,double>(m_points[m_facePoints[i][2]])
+		};
+
+		unsigned IDt_from 	= m_faceTetras[i][0];
+		unsigned IDt_to 	= m_faceTetras[i][1];
+
+		if (IDf < 0)
+		{
+			c=-c;
+			n=-n;
+
+			std::swap(IDt_from,IDt_to);
+		}
+		else
+			std::swap(T[1],T[2]);
+
+		float costheta = dot(d,n);
+
+		float h = dot(p,n) - c;
+		float dist = std::abs(h/costheta);
+
+		//cout << "    Face " << IDf << " distance " << dist << " from tet " << IDt_from << " (mat " << m_tetraMaterials[IDt_from] << ") into tet " << IDt_to << " (material " << m_tetraMaterials[IDt_to] << ")" << endl;
+
+		PointIntersectionResult res = RayTriangleIntersection(Point<3,double>(p), UnitVector<3,double>(d), T);
+//		if (res.intersects)
+//			cout << "      has intersection with ray, distance " << dist << endl;
+
+		if (h >= 0 && dist >= 0 && dist < dMin && res.intersects)
+		{
+			dMin = dist;
+			fMin = IDf;
+		}
+	}
+
+	return RTIntersection {
+		p + dMin*d,
+		dMin,
+		fMin,
+		fMin < 0 ? m_faceTetras[-fMin][1] : m_faceTetras[fMin][0]			// return the tetra from which ray enters
+	};
 }
 
 

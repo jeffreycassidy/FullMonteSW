@@ -4,7 +4,7 @@ SET(VTK_TCL_WRAP_EXECUTABLE "" CACHE PATH "Path to vtkWrapTcl")
 SET(VTK_TCL_WRAP_INIT_EXECUTABLE "" CACHE PATH "Path to vtkWrapTclInit")
 
 ## TODO: Remove SwigWrapping from here, move to SWIG-specific location
-ADD_LIBRARY(FullMonteVTK SHARED vtkFullMonteTetraMeshBaseWrapper.cpp vtkFullMonteSpatialMapWrapper.cpp vtkFullMonteTetraMeshWrapper.cpp vtkFullMonteFluenceLineQueryWrapper.cpp SwigWrapping.cpp)
+ADD_LIBRARY(FullMonteVTK SHARED vtkFullMonteTetraMeshBaseWrapper.cpp vtkFullMonteSpatialMapWrapperFU.cpp vtkFullMonteTetraMeshWrapper.cpp vtkFullMonteFluenceLineQueryWrapper.cpp SwigWrapping.cpp)
 TARGET_LINK_LIBRARIES(FullMonteVTK ${VTK_LIBRARIES})
 
 IF(WRAP_TCL)
@@ -20,7 +20,7 @@ IF(WRAP_TCL)
 	ENDFUNCTION()
 	
 	
-		SET(MODULES vtkFullMonteTetraMeshWrapper;vtkFullMonteTetraMeshBaseWrapper)
+		SET(MODULES vtkFullMonteTetraMeshWrapper;vtkFullMonteTetraMeshBaseWrapper;vtkFullMonteSpatialMapWrapperFU)
 		
 		### (begin generic code to move elsewhere)
 		
@@ -39,7 +39,7 @@ IF(WRAP_TCL)
 		STRING(REPLACE ";" "\\n" ARGNLIST "${ARGN}")
 		ADD_CUSTOM_COMMAND(
 			OUTPUT vtkTCLModuleList.txt
-			COMMAND echo "FullMonteVTK ${ARGNLIST}" > vtkTCLModuleList.txt
+			COMMAND echo "FullMonteVTKTCL ${ARGNLIST}" > vtkTCLModuleList.txt
 			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 			VERBATIM)
 
@@ -53,8 +53,6 @@ IF(WRAP_TCL)
 
 
 		### (end generic code to move)
-		
-	SET(MODULES vtkFullMonteTetraMeshWrapper;vtkFullMonteTetraMeshBaseWrapper)
 
 	FOREACH(MOD ${MODULES})
 		LIST(APPEND CXXFILES ${MOD}_wrap.cxx)

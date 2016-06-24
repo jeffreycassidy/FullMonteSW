@@ -3,9 +3,9 @@ IF(WRAP_VTK)
 	INCLUDE_DIRECTORIES(${VTK_INCLUDE_DIRS})
     ADD_DEFINITIONS(-DVTK_OUTPUT)
 
-    SET(EXTRA_SOURCES VTKPointCloud.cpp)
+    SET(EXTRA_SOURCES VTKPointCloud.cpp VTKLineCluster.cpp)
     SET(EXTRA_LIBS vtkIOLegacy vtkCommonDataModel)
 ENDIF()
 
-ADD_EXECUTABLE(Test_Emitters Test_Emitters.cpp ${EXTRA_SOURCES} ../../PacketDirection.cpp ../../SSEMath.cpp)
-TARGET_LINK_LIBRARIES(Test_Emitters ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} ${EXTRA_LIBS} SFMT)
+ADD_EXECUTABLE(Test_Emitters Test_Emitters.cpp ${EXTRA_SOURCES} ../../PacketDirection.cpp ../../SSEMath.cpp ../TetraMeshEmitterFactory.cpp)
+TARGET_LINK_LIBRARIES(Test_Emitters ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} ${EXTRA_LIBS} SFMT FullMonteGeometry FullMonteTIMOS)

@@ -1,4 +1,4 @@
-#package require vtk
+package require vtk
 
 load libFullMonteTIMOSTCL.so
 load libFullMonteGeometryTCL.so
@@ -6,7 +6,7 @@ load libFullMonteMatlabTCL.so
 
 load libFullMonteSWKernelTCL.so
 load libFullMonteKernelsTCL.so
-#load libFullMonteVTKTCL.dylib
+load libFullMonteVTKTCL.dylib
 
 #default file prefix
 set pfx "/Users/jcassidy/src/FullMonteSW/data/TIM-OS/mouse/mouse"
@@ -32,17 +32,16 @@ R setLegendFileName $legendfn
 set mesh [R mesh]
 set opt [R materials_simple]
 
-set B [Ball_New]
-$B centre "10 40 11"
-$B radius 2
+set P [PointSource_New]
+$P position "10 40 11"
 
 ## Create sim kernel
 
-TetraSurfaceKernel k $mesh
+TetraVolumeKernel k $mesh
 
 
 # Kernel properties
-k source $B
+k source $P
 k energy             50
 k materials          $opt
 k setUnitsToMM
@@ -70,13 +69,43 @@ set N 9
 #VTKSurfaceFluenceRep fluencerep V
 #vtkPolyDataWriter W
 
-MatlabWriter W
-#TextFileWriter W
-W mesh $mesh
+# Choose the surface to be output
 set surf [$mesh getRegionBoundaryTris 0]
-W threshold 0
-W faceSubset $surf
-W writeFaces "faces.txt"
+
+
+
+#MatlabWriter W
+##TextFileWriter W
+#W mesh $mesh
+#W threshold 0
+#W faceSubset $surf
+#W writeFaces "faces.txt"
+
+## Wrap the TetraMesh into VTK unstructured grid
+
+vtkFullMonteTetraMeshWrapper VTKM
+    VTKM mesh $mesh
+
+## Create a filter to wrap the fluence data into a vtkFloatArray
+vtkFullMonteSpatialMapWrapperFU VTKPhi
+
+set volumeFluenceArray [VTKPhi array]
+    $volumeFluenceArray SetName "Volume Fluence (au)"
+
+vtkFieldData volumeFieldData
+    volumeFieldData AddArray $volumeFluenceArray
+
+vtkDataObject volumeData
+    volumeData SetFieldData volumeFieldData
+ 
+vtkMergeDataObjectFilter mergeFluence
+    mergeFluence SetDataObjectInputData volumeData
+    mergeFluence SetInputData [VTKM blankMesh]
+    mergeFluence SetOutputFieldToCellDataField
+
+vtkUnstructuredGridWriter VTKW
+    VTKW SetInputConnection [mergeFluence GetOutputPort]
+
 
 for { set i 0 } { $i < 1 } { incr i } {
 
@@ -86,9 +115,8 @@ for { set i 0 } { $i < 1 } { incr i } {
 	k randSeed           $i
 
     # could equally well play with other stuff
-    $B radius [expr $i * 0.1 + 2.0]
-    $B centre "[expr $i * 1.0 + 10.0] 42 10"
-	k source $B
+    $P position "[expr $i * 1.0 + 10.0] 42 10"
+	k source $P
 
 	k startAsync
 
@@ -99,7 +127,15 @@ for { set i 0 } { $i < 1 } { incr i } {
     # get results
  #   fluencerep Update [k getSurfaceFluenceVector] 1
 
-    # write the file out
-    W comment "Experiment run $i with blah blah blah"
-	W writeSurfaceFluence "fluence.expt$i.txt" [k getSurfaceFluence]
+    # write as Matlab file
+#    W comment "Experiment run $i with blah blah blah"
+#	W writeSurfaceFluence "fluence.expt$i.txt" [k getSurfaceFluence]
+
+    VTKPhi source [k getVolumeFluence]
+    VTKPhi update
+    mergeFluence Update
+
+    # write as .vtk unstructured grid
+    VTKW SetFileName "fluence.$i.vtk"
+    VTKW Update
 }

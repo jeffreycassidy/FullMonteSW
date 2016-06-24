@@ -58,6 +58,13 @@ using namespace std;
 #endif // SWIG
 
 
+struct RTIntersection
+{
+	std::array<float,3>		q;
+	float					d;
+	int						IDf;
+	unsigned				IDt;
+};
 
 /** Holds a tetrahedral mesh including face and tetra information.
  *
@@ -98,6 +105,7 @@ public:
 	// Accessors for various point/face constructs
     Face                    getFace(int id)                 const { Face f = m_faces[abs(id)]; if(id<0){ f.flip(); } return f; }
     const FaceByPointID&    getFacePointIDs(unsigned id)    const { assert(id < m_facePoints.size()); return m_facePoints[id]; }
+
 	const TetraByFaceID&    getTetraByFaceID(unsigned id)   const { return m_tetraFaces[id]; }
     unsigned                getTetraFromFace(int IDf)       const;
 
@@ -115,6 +123,9 @@ public:
 	// find nearest point or enclosing tetra
 	unsigned findEnclosingTetra(const Point<3,double>&) const;
 	unsigned findNearestPoint  (const Point<3,double>&) const;
+
+	/// Find the nearest surface face along a ray, with optional filtering
+	RTIntersection findSurfaceFace(std::array<float,3> p,std::array<float,3> d,const FilterBase<int>* F=nullptr) const;
 
     // checks if a point is within a given tetra by expressing as a linear combination of the corner points
     bool isWithinByPoints(int,const Point<3,double>&) const;

@@ -21,18 +21,20 @@ template<class RNG>class Tetra
 {
 public:
 	/// Defines the tetra by the four vertices
-	Tetra(SSE::Vector3 A,SSE::Vector3 B,SSE::Vector3 C,SSE::Vector3 D);
+	Tetra(unsigned IDt,SSE::Vector3 A,SSE::Vector3 B,SSE::Vector3 C,SSE::Vector3 D);
 
 	/// Calculates the position given random numbers from the generator
-	SSE::Vector3 position(RNG& rng) const;
+	std::pair<unsigned,SSE::Vector3> position(RNG& rng) const;
 
 private:
 	std::array<SSE::Vector3,3>	m_matrix;				///< Matrix to shear unit tetra into direction
 	SSE::Vector3				m_origin;				///< Offset (point A of tetra)
+	unsigned					m_IDt=-1U;				///< Tetra ID
 };
 
 
-template<class RNG>Tetra<RNG>::Tetra(SSE::Vector3 A,SSE::Vector3 B,SSE::Vector3 C,SSE::Vector3 D)
+template<class RNG>Tetra<RNG>::Tetra(unsigned IDt,SSE::Vector3 A,SSE::Vector3 B,SSE::Vector3 C,SSE::Vector3 D) :
+		m_IDt(IDt)
 {
 	// copy first point
 	m_origin = A;
@@ -48,7 +50,7 @@ template<class RNG>Tetra<RNG>::Tetra(SSE::Vector3 A,SSE::Vector3 B,SSE::Vector3 
 	m_origin = A;
 }
 
-template<class RNG>SSE::Vector3 Tetra<RNG>::position(RNG& rng) const
+template<class RNG>std::pair<unsigned,SSE::Point3> Tetra<RNG>::position(RNG& rng) const
 {
     std::array<float,3> p;
 
@@ -84,7 +86,7 @@ template<class RNG>SSE::Vector3 Tetra<RNG>::position(RNG& rng) const
     assert(p[0] >= 0.0 && p[1] >= 0.0 && p[2] >= 0.0 && p[0]+p[1]+p[2] <= 1.0);
 
     // TODO: Better matrix multiply code?
-    return m_origin + m_matrix[0]*SSE::Scalar(p[0]) + m_matrix[1]*SSE::Scalar(p[1]) + m_matrix[2]*SSE::Scalar(p[2]);
+    return std::make_pair(m_IDt,m_origin + m_matrix[0]*SSE::Scalar(p[0]) + m_matrix[1]*SSE::Scalar(p[1]) + m_matrix[2]*SSE::Scalar(p[2]));
 }
 
 

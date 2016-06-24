@@ -9,6 +9,7 @@
 #define KERNELS_SOFTWARE_EMITTERS_BASE_HPP_
 
 #include "../Packet.hpp"
+#include <tuple>
 
 namespace Emitter
 {
@@ -45,16 +46,14 @@ public:
 	/// Create from a Position&, Direction&, and element
 	PositionDirectionEmitter(const Position& P,const Direction& D,unsigned element=-1U) :
 		m_pos(P),
-		m_dir(D),
-		m_element(element){}
+		m_dir(D){}
 
 	/// Dispatch the position and direction requests to the component elements (note these can be inlined due to template)
 	virtual LaunchPacket emit(RNG& rng) const override
 	{
 		LaunchPacket lpkt;
-		lpkt.pos = m_pos.position(rng);
+		std::tie(lpkt.element,lpkt.pos) = m_pos.position(rng);
 		lpkt.dir = m_dir.direction(rng);
-		lpkt.element = m_element;
 
 		return lpkt;
 	}
@@ -65,15 +64,9 @@ public:
 	/// Access the direction distribution
 	Direction& 	directionDef()	{ return m_dir; }
 
-	/// Get/set the geometry element ID
-	unsigned	element()			const	{ return m_element; }
-	void		element(unsigned e)			{ m_element=e; }
-
-
 private:
 	Position		m_pos;				///< Position distribution
 	Direction		m_dir;				///< Direction distribution
-	unsigned		m_element=-1U;		///< Element ID for emission
 };
 
 };

@@ -12,6 +12,7 @@
 
 #ifdef VTK_OUTPUT
 #include "VTKPointCloud.hpp"
+#include "VTKLineCluster.hpp"
 #endif
 
 #include "PacketDirectionFixture.hpp"
@@ -22,6 +23,7 @@ template<class PositionFixture,class DirectionFixture>struct SourceFixture : pub
 {
 	SourceFixture()
 	{
+		rng.seed(1);
 	}
 
 	void testPacket(LaunchPacket lpkt,unsigned element=-1U)
@@ -45,14 +47,20 @@ template<class PositionFixture,class DirectionFixture>struct SourceFixture : pub
 		VTKPointCloud pcdir;
 		VTKPointCloud pcpos;
 
+		VTKLineCluster lc;
+
 		for(const auto& lpkt : history)
 		{
 			pcdir.add(lpkt.dir.d.array());
 			pcpos.add(lpkt.pos.array());
+
+			lc.add(lpkt.pos.array(), lpkt.dir.d.array());
 		}
 
 		pcdir.write(fn+".dir.vtk");
 		pcpos.write(fn+".pos.vtk");
+
+		lc.write(fn+".lc.vtk");
 #endif
 	}
 
