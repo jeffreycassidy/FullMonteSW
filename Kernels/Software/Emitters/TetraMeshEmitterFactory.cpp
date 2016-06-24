@@ -40,7 +40,7 @@
 
 #include <iomanip>
 
-#include <FullMonte/Kernels/Software/RNG_SFMT_AVX.hpp>
+#include <FullMonteSW/Kernels/Software/RNG_SFMT_AVX.hpp>
 
 namespace Emitter
 {

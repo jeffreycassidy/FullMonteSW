@@ -8,7 +8,7 @@
 #ifndef KERNELS_SOFTWARE_EMITTERS_LINE_HPP_
 #define KERNELS_SOFTWARE_EMITTERS_LINE_HPP_
 
-#include <FullMonte/Geometry/StandardArrayKernel.hpp>
+#include <FullMonteSW/Geometry/StandardArrayKernel.hpp>
 
 #include <iostream>
 

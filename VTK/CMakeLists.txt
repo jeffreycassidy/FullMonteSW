@@ -1,13 +1,23 @@
 INCLUDE(${VTK_USE_FILE})
 
-SET(VTK_TCL_WRAP_EXECUTABLE "" CACHE PATH "Path to vtkWrapTcl")
-SET(VTK_TCL_WRAP_INIT_EXECUTABLE "" CACHE PATH "Path to vtkWrapTclInit")
+
 
 ## TODO: Remove SwigWrapping from here, move to SWIG-specific location
 ADD_LIBRARY(FullMonteVTK SHARED vtkFullMonteTetraMeshBaseWrapper.cpp vtkFullMonteSpatialMapWrapperFU.cpp vtkFullMonteTetraMeshWrapper.cpp vtkFullMonteFluenceLineQueryWrapper.cpp SwigWrapping.cpp)
 TARGET_LINK_LIBRARIES(FullMonteVTK ${VTK_LIBRARIES})
 
 IF(WRAP_TCL)
+    SET(VTK_TCL_WRAP_EXECUTABLE "" CACHE PATH "Path to vtkWrapTcl")
+    SET(VTK_TCL_WRAP_INIT_EXECUTABLE "" CACHE PATH "Path to vtkWrapTclInit")
+
+    IF (NOT VTK_TCL_WRAP_EXECUTABLE)
+        ERROR("VTK_TCL_WRAP_EXECUTABLE is not set. Please set before proceeding")
+    ENDIF()
+
+    IF (NOT VTK_TCL_WRAP_INIT_EXECUTABLE)
+        ERROR("VTK_TCL_WRAP_INIT_EXECUTABLE is not set. Please set before proceeding")
+    ENDIF()
+
 	FUNCTION(VTK_TCL_WRAP fn)
 	
 		FILE(COPY ${CMAKE_CURRENT_SOURCE_DIR}/${fn}.h DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

@@ -6,3 +6,6 @@
 *_wrap.cxx
 *.bin
 
+# generated files
+tclmonte.sh
+tclvtk.sh

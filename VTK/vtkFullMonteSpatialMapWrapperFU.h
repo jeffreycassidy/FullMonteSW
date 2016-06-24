@@ -12,14 +12,14 @@ template<class Index>class FilterBase;
 
 class vtkFloatArray;
 
-#include <FullMonte/VTK/SwigWrapping.hpp>
+#include <FullMonteSW/VTK/SwigWrapping.hpp>
 
 
 #include <vtkObject.h>
-#include <FullMonte/OutputTypes/SpatialMapBase.hpp>
-#include <FullMonte/OutputTypes/FluenceMapBase.hpp>
+#include <FullMonteSW/OutputTypes/SpatialMapBase.hpp>
+#include <FullMonteSW/OutputTypes/FluenceMapBase.hpp>
 
-#include <FullMonte/Geometry/Filters/FilterBase.hpp>
+#include <FullMonteSW/Geometry/Filters/FilterBase.hpp>
 
 /** Convert a SpatialMapBase<V,I> into a VTK array of the corresponding type */
 

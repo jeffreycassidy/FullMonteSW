@@ -10,7 +10,7 @@
 
 #include "Base.hpp"
 
-#include <FullMonte/Geometry/StandardArrayKernel.hpp>
+#include <FullMonteSW/Geometry/StandardArrayKernel.hpp>
 
 #include <array>
 #include <cmath>
