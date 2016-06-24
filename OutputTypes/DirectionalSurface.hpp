@@ -8,7 +8,7 @@
 #ifndef OUTPUTTYPES_DIRECTIONALSURFACE_HPP_
 #define OUTPUTTYPES_DIRECTIONALSURFACE_HPP_
 
-#include <FullMonte/Geometry/TetraMesh.hpp>
+#include <FullMonteSW/Geometry/TetraMesh.hpp>
 
 #include "InternalSurface.hpp"
 #include "SpatialMapBase.hpp"

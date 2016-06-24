@@ -13,14 +13,14 @@
 
 #include <boost/align/aligned_alloc.hpp>
 
-#include <FullMonte/Kernels/Software/Logger/LoggerTuple.hpp>
-#include <FullMonte/Kernels/Software/Logger/LoggerEvent.hpp>
-#include <FullMonte/Kernels/Software/Logger/LoggerConservation.hpp>
-#include <FullMonte/Kernels/Software/Logger/LoggerSurface.hpp>
-#include <FullMonte/Kernels/Software/Logger/LoggerInternalSurface.hpp>
-#include <FullMonte/Kernels/Software/Logger/AccumulationArray.hpp>
+#include <FullMonteSW/Kernels/Software/Logger/LoggerTuple.hpp>
+#include <FullMonteSW/Kernels/Software/Logger/LoggerEvent.hpp>
+#include <FullMonteSW/Kernels/Software/Logger/LoggerConservation.hpp>
+#include <FullMonteSW/Kernels/Software/Logger/LoggerSurface.hpp>
+#include <FullMonteSW/Kernels/Software/Logger/LoggerInternalSurface.hpp>
+#include <FullMonteSW/Kernels/Software/Logger/AccumulationArray.hpp>
 
-#include <FullMonte/Kernels/Software/Logger/MultiThreadWithIndividualCopy.hpp>
+#include <FullMonteSW/Kernels/Software/Logger/MultiThreadWithIndividualCopy.hpp>
 
 #include "TetraMCKernelThread.hpp"
 
@@ -83,3 +83,4 @@ private:
 
 
 #endif /* KERNELS_SOFTWARE_TETRASURFACEKERNEL_HPP_ */
+

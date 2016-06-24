@@ -8,7 +8,7 @@
 #ifndef GEOMETRY_FILTERS_TETRAFILTERBYREGION_HPP_
 #define GEOMETRY_FILTERS_TETRAFILTERBYREGION_HPP_
 
-#include <FullMonte/Geometry/Filters/TetraMeshBaseFilter.hpp>
+#include <FullMonteSW/Geometry/Filters/TetraMeshBaseFilter.hpp>
 #include "FilterBase.hpp"
 #include <vector>
 

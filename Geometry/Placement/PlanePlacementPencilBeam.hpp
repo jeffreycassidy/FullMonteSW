@@ -8,8 +8,8 @@
 #ifndef GEOMETRY_PLACEMENT_PLANEPLACEMENTPENCILBEAM_HPP_
 #define GEOMETRY_PLACEMENT_PLANEPLACEMENTPENCILBEAM_HPP_
 
-#include <FullMonte/Geometry/Placement/PlacementMediatorBase.hpp>
-#include <FullMonte/Geometry/Placement/PlanePlacement.hpp>
+#include <FullMonteSW/Geometry/Placement/PlacementMediatorBase.hpp>
+#include <FullMonteSW/Geometry/Placement/PlanePlacement.hpp>
 
 namespace Source { class PencilBeam; }
 

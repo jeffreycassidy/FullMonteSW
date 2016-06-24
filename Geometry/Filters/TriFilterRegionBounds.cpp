@@ -7,7 +7,7 @@
 
 #include "TriFilterRegionBounds.hpp"
 
-#include <FullMonte/Geometry/TetraMesh.hpp>
+#include <FullMonteSW/Geometry/TetraMesh.hpp>
 
 bool TriFilterRegionBounds::operator()(int IDf) const
 {

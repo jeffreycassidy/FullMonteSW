@@ -6,7 +6,7 @@
  */
 
 #include "DirectionalSurface.hpp"
-#include <FullMonte/Geometry/Filters/FilterBase.hpp>
+#include <FullMonteSW/Geometry/Filters/FilterBase.hpp>
 
 #include <boost/range/algorithm.hpp>
 

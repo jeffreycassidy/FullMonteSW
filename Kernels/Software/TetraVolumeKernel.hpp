@@ -13,15 +13,16 @@
 
 #include <boost/align/aligned_alloc.hpp>
 
-#include <FullMonte/Kernels/Software/Logger/Logger.hpp>
-#include <FullMonte/Kernels/Software/Logger/LoggerTuple.hpp>
-#include <FullMonte/Kernels/Software/Logger/LoggerEvent.hpp>
-#include <FullMonte/Kernels/Software/Logger/LoggerConservation.hpp>
-#include <FullMonte/Kernels/Software/Logger/LoggerVolume.hpp>
+#include <FullMonteSW/Kernels/Software/Logger/Logger.hpp>
+#include <FullMonteSW/Kernels/Software/Logger/LoggerTuple.hpp>
+#include <FullMonteSW/Kernels/Software/Logger/LoggerEvent.hpp>
+#include <FullMonteSW/Kernels/Software/Logger/LoggerConservation.hpp>
+#include <FullMonteSW/Kernels/Software/Logger/LoggerVolume.hpp>
 
-#include <FullMonte/OutputTypes/SpatialMapBase.hpp>
 
-#include <FullMonte/Kernels/Software/Logger/MultiThreadWithIndividualCopy.hpp>
+#include <FullMonteSW/OutputTypes/SpatialMapBase.hpp>
+#include <FullMonteSW/Kernels/Software/Logger/MultiThreadWithIndividualCopy.hpp>
+
 
 class TetraVolumeKernel : public TetraMCKernel<RNG_SFMT_AVX> {
 public:
@@ -74,3 +75,4 @@ private:
 
 
 #endif /* KERNELS_SOFTWARE_TETRAVOLUMEKERNEL_HPP_ */
+

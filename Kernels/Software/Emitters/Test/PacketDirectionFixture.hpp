@@ -8,7 +8,7 @@
 #ifndef KERNELS_SOFTWARE_EMITTERS_TEST_PACKETDIRECTIONFIXTURE_HPP_
 #define KERNELS_SOFTWARE_EMITTERS_TEST_PACKETDIRECTIONFIXTURE_HPP_
 
-#include <FullMonte/Kernels/Software/Packet.hpp>
+#include <FullMonteSW/Kernels/Software/Packet.hpp>
 
 #include <boost/test/floating_point_comparison.hpp>
 

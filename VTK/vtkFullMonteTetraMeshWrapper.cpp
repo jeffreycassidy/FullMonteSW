@@ -11,9 +11,9 @@
 #include <vtkIdTypeArray.h>
 #include <vtkObjectFactory.h>
 
-#include <FullMonte/Geometry/TetraMesh.hpp>
-#include <FullMonte/Geometry/BoundingBox.hpp>
-#include <FullMonte/Geometry/Filters/FilterBase.hpp>
+#include <FullMonteSW/Geometry/TetraMesh.hpp>
+#include <FullMonteSW/Geometry/BoundingBox.hpp>
+#include <FullMonteSW/Geometry/Filters/FilterBase.hpp>
 
 #include "vtkFullMonteTetraMeshWrapper.h"
 

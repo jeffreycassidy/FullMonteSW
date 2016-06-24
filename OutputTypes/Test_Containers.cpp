@@ -16,7 +16,7 @@
 #include <vector>
 #include <iostream>
 
-#include <FullMonte/OutputTypes/SpatialMapBase.hpp>
+#include <FullMonteSW/OutputTypes/SpatialMapBase.hpp>
 
 #include "FluenceMapBase.hpp"
 

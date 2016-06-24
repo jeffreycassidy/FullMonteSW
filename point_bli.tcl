@@ -107,7 +107,7 @@ vtkUnstructuredGridWriter VTKW
     VTKW SetInputConnection [mergeFluence GetOutputPort]
 
 
-for { set i 0 } { $i < 1 } { incr i } {
+for { set i 0 } { $i < $N } { incr i } {
 
     puts "Trial $i of $N"
     

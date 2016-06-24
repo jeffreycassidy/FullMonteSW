@@ -9,7 +9,8 @@
 #include "TetraMCKernelThread.hpp"
 
 #include <FullMonte/OutputTypes/OutputDataSummarize.hpp>
-#include <FullMonte/OutputTypes/FluenceConverter.hpp>
+#include <FullMonteSW/OutputTypes/FluenceConverter.hpp>
+#include <FullMonteSW/OutputTypes/OutputDataSummarize.hpp>
 #include <boost/range/adaptor/indexed.hpp>
 
 #include <list>

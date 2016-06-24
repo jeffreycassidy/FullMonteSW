@@ -2,8 +2,8 @@
 #define KERNELS_SOFTWARE_LOGGERS_INTERNALSURFACE_HPP_
 
 #include "Logger.hpp"
-#include <FullMonte/Kernels/Software/Packet.hpp>
-#include <FullMonte/OutputTypes/FluenceMapBase.hpp>
+#include <FullMonteSW/Kernels/Software/Packet.hpp>
+#include <FullMonteSW/OutputTypes/FluenceMapBase.hpp>
 #include <type_traits>
 
 /** Accumulator type that tracks which side of the face the packet crossed to/from.

@@ -3,7 +3,7 @@
 #include <fstream>
 #include <iostream>
 
-#include <FullMonte/OutputTypes/TracerStep.hpp>
+#include <FullMonteSW/OutputTypes/TracerStep.hpp>
 
 using namespace std;
 
@@ -95,3 +95,4 @@ public:
 
     result_type getResults() const { return LoggerResults(); }
 };
+

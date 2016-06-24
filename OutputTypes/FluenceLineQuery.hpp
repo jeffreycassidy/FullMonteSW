@@ -11,10 +11,10 @@
 #include <array>
 #include <boost/iterator/iterator_categories.hpp>
 #include <boost/range/any_range.hpp>
-#include <FullMonte/Geometry/RayWalk.hpp>
-#include <FullMonte/Geometry/TetraMesh.hpp>
+#include <FullMonteSW/Geometry/RayWalk.hpp>
+#include <FullMonteSW/Geometry/TetraMesh.hpp>
 
-#include <FullMonte/OutputTypes/FluenceMapBase.hpp>
+#include <FullMonteSW/OutputTypes/FluenceMapBase.hpp>
 
 #include "OutputData.hpp"
 

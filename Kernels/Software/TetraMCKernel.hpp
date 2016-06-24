@@ -8,13 +8,13 @@
 #ifndef KERNELS_SOFTWARE_TETRAMCKERNEL_HPP_
 #define KERNELS_SOFTWARE_TETRAMCKERNEL_HPP_
 
-#include <FullMonte/Geometry/Sources/Print.hpp>
+#include <FullMonteSW/Geometry/Sources/Print.hpp>
 
 #include <boost/range/adaptor/transformed.hpp>
 
-#include <FullMonte/Kernels/TetraKernelBase.hpp>
-#include <FullMonte/Kernels/Software/ThreadedMCKernelBase.hpp>
-#include <FullMonte/Kernels/Software/Emitters/TetraMeshEmitterFactory.cpp>
+#include <FullMonteSW/Kernels/TetraKernelBase.hpp>
+#include <FullMonteSW/Kernels/Software/ThreadedMCKernelBase.hpp>
+#include <FullMonteSW/Kernels/Software/Emitters/TetraMeshEmitterFactory.cpp>
 
 #include "RNG_SFMT_AVX.hpp"
 
@@ -79,3 +79,5 @@ template<class RNG>void TetraMCKernel<RNG>::parentPrepare()
 
 
 #endif /* KERNELS_SOFTWARE_TETRAMCKERNEL_HPP_ */
+
+

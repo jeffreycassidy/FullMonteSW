@@ -11,8 +11,8 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include <FullMonteSW/FullMonte/Geometry/Basis.hpp>
-#include <FullMonteSW/FullMonte/Geometry/BasisIO.hpp>
+#include <FullMonteSW/Geometry/Basis.hpp>
+#include <FullMonteSW/Geometry/BasisIO.hpp>
 
 #include <iostream>
 #include <iomanip>

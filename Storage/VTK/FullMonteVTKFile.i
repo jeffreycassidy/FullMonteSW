@@ -6,8 +6,8 @@
 %include "VTKLegacyWriter.hpp"
 
 %{
-	#include <FullMonte/Storage/VTK/VTKLegacyReader.hpp>
-	#include <FullMonte/Storage/VTK/VTKLegacyWriter.hpp>
+	#include <FullMonteSW/Storage/VTK/VTKLegacyReader.hpp>
+	#include <FullMonteSW/Storage/VTK/VTKLegacyWriter.hpp>
 %}
 
 class TetraMeshBase {};

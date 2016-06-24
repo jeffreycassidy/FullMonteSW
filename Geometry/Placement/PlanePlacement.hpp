@@ -8,8 +8,8 @@
 #ifndef GEOMETRY_PLACEMENT_PLANEPLACEMENT_HPP_
 #define GEOMETRY_PLACEMENT_PLANEPLACEMENT_HPP_
 
-#include <FullMonte/Geometry/Basis.hpp>
-#include <FullMonte/Geometry/Placement/PlacementBase.hpp>
+#include <FullMonteSW/Geometry/Basis.hpp>
+#include <FullMonteSW/Geometry/Placement/PlacementBase.hpp>
 
 /** Provides placement of sources relative to a plane.
  *

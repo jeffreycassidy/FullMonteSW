@@ -6,7 +6,7 @@
  */
 
 #include "TetraKernelBase.hpp"
-#include <FullMonte/Geometry/SimpleMaterial.hpp>
+#include <FullMonteSW/Geometry/SimpleMaterial.hpp>
 
 #include <iomanip>
 

@@ -5,25 +5,25 @@
  *      Author: jcassidy
  */
 
-#include <FullMonte/Storage/TIMOS/TIMOSAntlrParser.hpp>
-#include <FullMonte/Storage/TIMOS/TIMOSWriter.hpp>
-#include <FullMonte/Storage/VTK/VTKLegacyReader.hpp>
+#include <FullMonteSW/Storage/TIMOS/TIMOSAntlrParser.hpp>
+#include <FullMonteSW/Storage/TIMOS/TIMOSWriter.hpp>
+#include <FullMonteSW/Storage/VTK/VTKLegacyReader.hpp>
 
-#include <FullMonte/Geometry/Placement/PlanePlacement.hpp>
+#include <FullMonteSW/Geometry/Placement/PlanePlacement.hpp>
 
-#include <FullMonte/Geometry/Sources/Base.hpp>
+#include <FullMonteSW/Geometry/Sources/Base.hpp>
 
-#include <FullMonte/Kernels/Software/TetraSVKernel.hpp>
+#include <FullMonteSW/Kernels/Software/TetraSVKernel.hpp>
 
-#include <FullMonte/OutputTypes/OutputDataSummarize.hpp>
-#include <FullMonte/OutputTypes/FluenceConverter.hpp>
-#include <FullMonte/OutputTypes/DirectionalSurface.hpp>
+#include <FullMonteSW/OutputTypes/OutputDataSummarize.hpp>
+#include <FullMonteSW/OutputTypes/FluenceConverter.hpp>
+#include <FullMonteSW/OutputTypes/DirectionalSurface.hpp>
 
-#include <FullMonte/Geometry/Filters/TetraFilterByRegion.hpp>
-#include <FullMonte/Geometry/Filters/TriFilterRegionBounds.hpp>
+#include <FullMonteSW/Geometry/Filters/TetraFilterByRegion.hpp>
+#include <FullMonteSW/Geometry/Filters/TriFilterRegionBounds.hpp>
 
-#include <FullMonte/Geometry/Placement/PlanePlacement.hpp>
-#include <FullMonte/Geometry/Placement/PlanePlacementPencilBeam.hpp>
+#include <FullMonteSW/Geometry/Placement/PlanePlacement.hpp>
+#include <FullMonteSW/Geometry/Placement/PlanePlacementPencilBeam.hpp>
 
 
 #include <string>
@@ -52,17 +52,17 @@ const string dir("../../");
 #include <vtkPolyData.h>
 #include <vtkPolyDataWriter.h>
 
-#include <FullMonte/VTK/vtkFullMonteTetraMeshBaseWrapper.h>
-#include "../../VTK/vtkFullMonteSpatialMapWrapperFU.h"
-#include <FullMonte/VTK/vtkFullMonteTetraMeshWrapper.h>
+#include <FullMonteSW/VTK/vtkFullMonteTetraMeshBaseWrapper.h>
+#include <FullMonteSW/VTK/vtkFullMonteSpatialMapWrapperFU.h>
+#include <FullMonteSW/VTK/vtkFullMonteTetraMeshWrapper.h>
 
-#include <FullMonte/VTK/vtkFullMonteFluenceLineQueryWrapper.h>
+#include <FullMonteSW/VTK/vtkFullMonteFluenceLineQueryWrapper.h>
 
 #include <vtkGeometryFilter.h>
 
-#include <FullMonte/OutputTypes/FluenceLineQuery.hpp>
+#include <FullMonteSW/OutputTypes/FluenceLineQuery.hpp>
 
-#include <FullMonte/Storage/TextFile/TextFileWriter.hpp>
+#include <FullMonteSW/Storage/TextFile/TextFileWriter.hpp>
 
 #include <boost/range/counting_range.hpp>
 #include <boost/range/adaptor/filtered.hpp>
