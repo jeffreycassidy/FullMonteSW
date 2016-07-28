@@ -9,7 +9,7 @@
 #define KERNELS_SOFTWARE_EMITTERS_TEST_IMPLICITPLANE_HPP_
 
 #include <array>
-#include <FullMonte/Geometry/StandardArrayKernel.hpp>
+#include <FullMonteSW/Geometry/StandardArrayKernel.hpp>
 
 /** Support code providing an implicit plane (for disk/triangle) */
 

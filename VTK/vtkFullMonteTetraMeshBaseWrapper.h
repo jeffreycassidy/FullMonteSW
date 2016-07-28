@@ -48,7 +48,9 @@ public:
 	vtkPoints*				points() const;
 	vtkUnsignedShortArray* regions() const;
 
-	void tetraFilter(FilterBase<unsigned>* F);
+	vtkIdList* getTetraIDsFromFilter(const FilterBase<unsigned>* F);
+
+
 
 protected:
 	vtkFullMonteTetraMeshBaseWrapper();
@@ -57,8 +59,6 @@ protected:
 
 private:
 	const TetraMeshBase* 	m_mesh=nullptr;
-
-	FilterBase<unsigned>*	m_tetraFilter=nullptr;
 
 	vtkPoints*				m_points=nullptr;
 	vtkUnsignedShortArray*	m_regions=nullptr;

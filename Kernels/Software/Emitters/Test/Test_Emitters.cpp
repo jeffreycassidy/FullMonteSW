@@ -21,7 +21,7 @@
 
 #include "../../../../Geometry/Sources/Line.hpp"
 
-#include <FullMonte/Geometry/TetraMesh.hpp>
+#include <FullMonteSW/Geometry/TetraMesh.hpp>
 
 #include "../TetraMeshEmitterFactory.hpp"
 
@@ -37,7 +37,7 @@
 #include <boost/random/mersenne_twister.hpp>
 #include <boost/random/uniform_01.hpp>
 
-#include <FullMonte/Storage/TIMOS/TIMOSAntlrParser.hpp>
+#include <FullMonteSW/Storage/TIMOS/TIMOSAntlrParser.hpp>
 
 
 const TetraMesh mouse;
@@ -299,7 +299,7 @@ BOOST_FIXTURE_TEST_CASE(line,Line)
 #include <vtkUnstructuredGridWriter.h>
 #include <vtkCellData.h>
 
-#include <FullMonte/Geometry/Filters/TriFilterRegionBounds.hpp>
+#include <FullMonteSW/Geometry/Filters/TriFilterRegionBounds.hpp>
 
 BOOST_AUTO_TEST_CASE( mouseSurfaceFaces )
 {

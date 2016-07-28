@@ -1,4 +1,4 @@
-#package require vtk
+package require vtk
 
 load libFullMonteTIMOSTCL.so
 load libFullMonteGeometryTCL.so
@@ -6,7 +6,7 @@ load libFullMonteMatlabTCL.so
 
 load libFullMonteSWKernelTCL.so
 load libFullMonteKernelsTCL.so
-#load libFullMonteVTKTCL.dylib
+load libFullMonteVTKTCL.dylib
 
 #default file prefix
 set pfx "/Users/jcassidy/src/FullMonteSW/data/TIM-OS/mouse/mouse"
@@ -32,13 +32,95 @@ R setLegendFileName $legendfn
 set mesh [R mesh]
 set opt [R materials_simple]
 
+
+## Wrap the TetraMesh into VTK unstructured grid
+
+vtkFullMonteTetraMeshWrapper VTKM
+    VTKM mesh $mesh
+
+## Create a filter to wrap the fluence data into a vtkFloatArray
+vtkFullMonteSpatialMapWrapperFU VTKPhi
+
+set surfaceFluenceArray [VTKPhi array]
+    $surfaceFluenceArray SetName "Surface Fluence (au)"
+
+vtkFieldData surfaceFieldData
+    surfaceFieldData AddArray $surfaceFluenceArray
+
+vtkDataObject surfaceData
+    surfaceData SetFieldData surfaceFieldData
+ 
+vtkMergeDataObjectFilter mergeFluence
+    mergeFluence SetDataObjectInputData surfaceData
+    mergeFluence SetInputData [VTKM faces]
+    mergeFluence SetOutputFieldToCellDataField
+
+
+## Create a filter to wrap the _internal_ fluence data into a vtkFloatArray
+vtkFullMonteSpatialMapWrapperFU VTKPhiInt
+
+set intSurfaceFluenceArray [VTKPhi array]
+    $intSurfaceFluenceArray SetName "Surface Fluence (au)"
+
+vtkFieldData surfaceFieldData
+    surfaceFieldData AddArray $intSurfaceFluenceArray
+
+vtkDataObject surfaceData
+    surfaceData SetFieldData surfaceFieldData
+ 
+vtkMergeDataObjectFilter mergeFluence
+    mergeFluence SetDataObjectInputData surfaceData
+    mergeFluence SetInputData [VTKM faces]
+    mergeFluence SetOutputFieldToCellDataField
+
+
+### Set up internal fluence vis
+
+set intFp [TriFilterRegionBounds F]
+    F mesh $mesh
+    F bidirectional 1
+    F includeRegion  9 1
+    F includeRegion 10 1
+    F includeRegion 12 1
+
+vtkExtractCells internalSubset
+    internalSubset SetCellList [VTKM getTriangleIDsFromFilter $intFp]
+    internalSubset SetInputConnection [mergeFluence GetOutputPort]
+
+vtkGeometryFilter geomInt
+    geomInt SetInputConnection [internalSubset GetOutputPort]
+
+
+vtkPolyDataWriter VTKWInt
+    VTKWInt SetInputConnection [geomInt GetOutputPort]
+
+
+### Set up surface fluence vis
+
+set surfFp [TriFilterRegionBounds surfF]
+    surfF mesh $mesh
+    surfF bidirectional 1
+    surfF includeRegion 0 1
+
+vtkExtractCells surfaceSubset
+    surfaceSubset SetCellList [VTKM getTriangleIDsFromFilter $surfFp]
+    surfaceSubset SetInputConnection [mergeFluence GetOutputPort]
+
+vtkGeometryFilter geomSurf
+    geomSurf SetInputConnection [surfaceSubset GetOutputPort]
+
+vtkPolyDataWriter VTKWSurf
+    VTKWSurf SetInputConnection [geomSurf GetOutputPort]
+
+
 set B [Ball_New]
 $B centre "10 40 11"
 $B radius 2
 
 ## Create sim kernel
 
-TetraSurfaceKernel k $mesh
+TetraSVKernel k $mesh
+    $mesh setFacesForFluenceCounting $intFp
 
 
 # Kernel properties
@@ -67,16 +149,14 @@ proc progresstimer {} {
 }
 
 set N 9
-#VTKSurfaceFluenceRep fluencerep V
-#vtkPolyDataWriter W
 
-MatlabWriter W
+#MatlabWriter W
 #TextFileWriter W
-W mesh $mesh
-set surf [$mesh getRegionBoundaryTris 0]
-W threshold 0
-W faceSubset $surf
-W writeFaces "faces.txt"
+#W mesh $mesh
+#set surf [$mesh getRegionBoundaryTris 0]
+#W threshold 0
+#W faceSubset $surf
+#W writeFaces "faces.txt"
 
 for { set i 0 } { $i < 1 } { incr i } {
 
@@ -100,6 +180,15 @@ for { set i 0 } { $i < 1 } { incr i } {
  #   fluencerep Update [k getSurfaceFluenceVector] 1
 
     # write the file out
-    W comment "Experiment run $i with blah blah blah"
-	W writeSurfaceFluence "fluence.expt$i.txt" [k getSurfaceFluence]
+#    W comment "Experiment run $i with blah blah blah"
+#	W writeSurfaceFluence "fluence.expt$i.txt" [k getSurfaceFluence]
+    VTKPhi source [k getSurfaceFluenceMap]
+    VTKPhi update
+
+
+    VTKWInt SetFileName "fluence.int.$i.vtk"
+    VTKWInt Update
+
+    VTKWSurf SetFileName "fluence.surf.$i.vtk"
+    VTKWSurf Update
 }

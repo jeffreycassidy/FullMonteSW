@@ -51,9 +51,24 @@ public:
 	void 									source(const SpatialMapBase<float,unsigned>* m);
 	const SpatialMapBase<float,unsigned>*	source()										const;
 
-	void source(const char* str){ source(static_cast<VolumeFluenceMap*>(readSwigPointer(str).p)); }
+	void source(const char* str)
+	{
+		const auto ptrInfo = readSwigPointer(str);
 
-	void source(const VolumeFluenceMap* phi){ source(phi->get()); }
+		const std::string type(ptrInfo.type.first,ptrInfo.type.second-ptrInfo.type.first);
+
+		std::cout << "SWIG pointer type conversion for type '" << type << "'" << std::endl;
+
+		if (type == "SurfaceFluenceMap")
+			source(static_cast<SurfaceFluenceMap*>(readSwigPointer(str).p));
+		else if (type == "VolumeFluenceMap")
+			source(static_cast<VolumeFluenceMap*>(readSwigPointer(str).p));
+		else
+			std::cout << " *** ERROR: type conversion failed" << std::endl;
+	}
+
+	void source(const VolumeFluenceMap* phi)	{ std::cout << "vtkFullMonteSpatialMapWrapperFU::source(const VolumeFluenceMap*)"  << std::endl; source(phi->get()); }
+	void source(const SurfaceFluenceMap* phi)	{ std::cout << "vtkFullMonteSpatialMapWrapperFU::source(const SurfaceFluenceMap*)" << std::endl; source(phi->get()); }
 
 	///< Get/set the filter (null -> no filter)
 	void							filter(FilterBase<unsigned>* pred);

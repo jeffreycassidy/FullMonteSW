@@ -44,15 +44,14 @@ public:
 
 	vtkPolyData*			faces() const;
 
-	void faceFilter(FilterBase<int>* f);
-	void faceFilter(const char* fptr);
+	vtkIdList* getTriangleIDsFromFilter(const char* s);
+	vtkIdList* getTriangleIDsFromFilter(const FilterBase<int>* F);
 
 protected:
 	vtkFullMonteTetraMeshWrapper();
 
 private:
 	vtkCellArray*		m_faces=nullptr;
-	FilterBase<int>*	m_faceFilter=nullptr;
 };
 
 #endif /* VTK_TETRAMESHVTK_HPP_ */

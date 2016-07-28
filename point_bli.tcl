@@ -92,8 +92,12 @@ vtkFullMonteSpatialMapWrapperFU VTKPhi
 set volumeFluenceArray [VTKPhi array]
     $volumeFluenceArray SetName "Volume Fluence (au)"
 
+set regionArray [VTKM regions]
+    $regionArray SetName "Tissue type"
+
 vtkFieldData volumeFieldData
     volumeFieldData AddArray $volumeFluenceArray
+    volumeFieldData AddArray $regionArray
 
 vtkDataObject volumeData
     volumeData SetFieldData volumeFieldData
@@ -131,7 +135,11 @@ for { set i 0 } { $i < $N } { incr i } {
 #    W comment "Experiment run $i with blah blah blah"
 #	W writeSurfaceFluence "fluence.expt$i.txt" [k getSurfaceFluence]
 
-    VTKPhi source [k getVolumeFluence]
+    set foo [k getVolumeFluence]
+
+    puts "result of getVolumeFluence is $foo"
+
+    VTKPhi source $foo
     VTKPhi update
     mergeFluence Update
 

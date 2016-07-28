@@ -30,7 +30,7 @@ void TetraSurfaceKernel::prestart()
 	get<2>(m_logger).clear();
 }
 
-std::vector<double> TetraSurfaceKernel::getSurfaceFluence() const
+SurfaceFluenceMap TetraSurfaceKernel::getSurfaceFluenceMap() const
 {
 	const SurfaceExitEnergyMap *E = getResultByType<SurfaceExitEnergyMap>();
 
@@ -40,11 +40,6 @@ std::vector<double> TetraSurfaceKernel::getSurfaceFluence() const
 	FC.scaleTotalEmittedTo(energy());
 	SurfaceFluenceMap phi = FC.convertToFluence(*E);
 
-	std::vector<double> o(phi->dim(),0.0);
-
-	for(const auto t : phi->nonzeros())
-		o[t.first] = t.second;
-
-	return o;
+	return phi;
 }
 

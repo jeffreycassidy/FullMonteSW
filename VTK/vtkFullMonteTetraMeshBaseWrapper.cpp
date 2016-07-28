@@ -11,6 +11,7 @@
 #include <vtkUnsignedShortArray.h>
 #include <vtkCellData.h>
 #include <vtkIdTypeArray.h>
+#include <vtkIdList.h>
 #include <vtkObjectFactory.h>
 
 
@@ -49,12 +50,6 @@ void vtkFullMonteTetraMeshBaseWrapper::mesh(const TetraMeshBase* m)
 	update();
 }
 
-void vtkFullMonteTetraMeshBaseWrapper::tetraFilter(FilterBase<unsigned>* f)
-{
-	m_tetraFilter=f;
-	update();
-}
-
 const TetraMeshBase* vtkFullMonteTetraMeshBaseWrapper::mesh() const
 {
 	return m_mesh;
@@ -78,8 +73,8 @@ void vtkFullMonteTetraMeshBaseWrapper::update()
 	assert(m_mesh);
 
 	getVTKPoints(*m_mesh,m_points);
-	getVTKTetraCells(*m_mesh,m_tetras,m_tetraFilter);
-	getVTKTetraRegions(*m_mesh,m_regions,m_tetraFilter);
+	getVTKTetraCells(*m_mesh,m_tetras);
+	getVTKTetraRegions(*m_mesh,m_regions);
 
 	Modified();
 }
@@ -190,6 +185,26 @@ void getVTKTetraRegions(const TetraMeshBase& M,vtkUnsignedShortArray* R,const Fi
 		R->SetTuple1(0,0);
 	}
 
+}
+
+vtkIdList* vtkFullMonteTetraMeshBaseWrapper::getTetraIDsFromFilter(const FilterBase<unsigned int>* F)
+{
+	if (!F)
+	{
+		return nullptr;
+	}
+	else if (!m_mesh)
+	{
+		return nullptr;
+	}
+
+	vtkIdList* L = vtkIdList::New();
+
+	for(int i=1;i<m_mesh->getNt()+1;++i)
+		if ((*F)(i))
+			L->InsertNextId(i);
+
+	return L;
 }
 
 

@@ -8,14 +8,14 @@ INSTALL(TARGETS FullMonteSWKernel
 
 ## Require ANTLR3 parser if using TIM-OS file format
 
-if (ANTLR3_INCLUDE_DIR)
+if (ANTLR3C_INCLUDE_DIR)
 	LINK_DIRECTORIES(${ANTLR3_LIB_DIR})
 	
-	ADD_EXECUTABLE(Test_Mouse Test_Mouse.cpp)
-	TARGET_LINK_LIBRARIES(Test_Mouse FullMonteSWKernel ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} SFMT FullMonteGeometry FullMonteTIMOS)
+	#ADD_EXECUTABLE(Test_Mouse Test_Mouse.cpp)
+	#TARGET_LINK_LIBRARIES(Test_Mouse FullMonteSWKernel ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} SFMT FullMonteGeometry FullMonteTIMOS)
 	IF (WRAP_VTK)
 		INCLUDE(${VTK_USE_FILE})
-		TARGET_LINK_LIBRARIES(Test_Mouse FullMonteVTK ${VTK_LIBRARIES})
+		#TARGET_LINK_LIBRARIES(Test_Mouse FullMonteVTK ${VTK_LIBRARIES})
 
         ## Paraview visualization file
         FILE(COPY VisualizeMouse.pvsm DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

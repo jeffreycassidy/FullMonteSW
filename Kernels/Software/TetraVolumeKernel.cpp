@@ -27,7 +27,7 @@ void TetraVolumeKernel::postfinish()
 		addResults(r);
 }
 
-VolumeFluenceMap TetraVolumeKernel::getVolumeFluence() const
+VolumeFluenceMap TetraVolumeKernel::getVolumeFluenceMap() const
 {
 	const VolumeAbsorbedEnergyMap *E = getResultByType<VolumeAbsorbedEnergyMap>();
 

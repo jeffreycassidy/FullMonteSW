@@ -11,7 +11,7 @@
 #include "TIMOSLexer.h"
 #include "TIMOSParser.h"
 
-#include <FullMonteSW/Storage/CommonParser/ANTLRParser.hpp>
+#include <FullMonteSW/ANTLR3/ANTLRParser.hpp>
 
 #include <unordered_map>
 

@@ -70,8 +70,8 @@ public:
 		return t;
 	}
 
-	/// Convenience function
-	std::vector<double> getSurfaceFluence() const;
+	/// Convenience function for retrieving the surface fluence
+	SurfaceFluenceMap getSurfaceFluenceMap() const;
 
 private:
 	virtual void postfinish() override;

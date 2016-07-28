@@ -1,81 +1,26 @@
 INCLUDE(${VTK_USE_FILE})
 
-
-
-## TODO: Remove SwigWrapping from here, move to SWIG-specific location
 ADD_LIBRARY(FullMonteVTK SHARED vtkFullMonteTetraMeshBaseWrapper.cpp vtkFullMonteSpatialMapWrapperFU.cpp vtkFullMonteTetraMeshWrapper.cpp vtkFullMonteFluenceLineQueryWrapper.cpp SwigWrapping.cpp)
 TARGET_LINK_LIBRARIES(FullMonteVTK ${VTK_LIBRARIES})
 
 IF(WRAP_TCL)
-    SET(VTK_TCL_WRAP_EXECUTABLE "" CACHE PATH "Path to vtkWrapTcl")
-    SET(VTK_TCL_WRAP_INIT_EXECUTABLE "" CACHE PATH "Path to vtkWrapTclInit")
-
-    IF (NOT VTK_TCL_WRAP_EXECUTABLE)
-        ERROR("VTK_TCL_WRAP_EXECUTABLE is not set. Please set before proceeding")
-    ENDIF()
-
-    IF (NOT VTK_TCL_WRAP_INIT_EXECUTABLE)
-        ERROR("VTK_TCL_WRAP_INIT_EXECUTABLE is not set. Please set before proceeding")
-    ENDIF()
-
-	FUNCTION(VTK_TCL_WRAP fn)
+    FIND_PACKAGE(VTKWrapTcl REQUIRED)
+	INCLUDE(UseVTKWrapTcl.cmake)
 	
-		FILE(COPY ${CMAKE_CURRENT_SOURCE_DIR}/${fn}.h DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-			
-		ADD_CUSTOM_COMMAND(
-			OUTPUT ${fn}_wrap.cxx
-			COMMAND /usr/local/bin/vtkWrapTcl-6.3 -o ${CMAKE_CURRENT_BINARY_DIR}/${fn}_wrap.cxx ${CMAKE_CURRENT_SOURCE_DIR}/${fn}.h
-			DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${fn}.h
-			)
-	ENDFUNCTION()
+	SET(MODULES vtkFullMonteTetraMeshWrapper;vtkFullMonteTetraMeshBaseWrapper;vtkFullMonteSpatialMapWrapperFU)
 	
-	
-		SET(MODULES vtkFullMonteTetraMeshWrapper;vtkFullMonteTetraMeshBaseWrapper;vtkFullMonteSpatialMapWrapperFU)
-		
-		### (begin generic code to move elsewhere)
-		
-		FUNCTION(VTK_TCL_WRAP fn)
-		
-			FILE(COPY ${CMAKE_CURRENT_SOURCE_DIR}/${fn}.h DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-			
-			ADD_CUSTOM_COMMAND(
-				OUTPUT ${fn}_wrap.cxx
-				COMMAND ${VTK_TCL_WRAP_EXECUTABLE} -o ${CMAKE_CURRENT_BINARY_DIR}/${fn}_wrap.cxx ${CMAKE_CURRENT_SOURCE_DIR}/${fn}.h
-				DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${fn}.h
-				)
-		ENDFUNCTION()
-		
-	FUNCTION(VTK_TCL_WRAP_INIT)
-		STRING(REPLACE ";" "\\n" ARGNLIST "${ARGN}")
-		ADD_CUSTOM_COMMAND(
-			OUTPUT vtkTCLModuleList.txt
-			COMMAND echo "FullMonteVTKTCL ${ARGNLIST}" > vtkTCLModuleList.txt
-			WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-			VERBATIM)
-
-
-	    ADD_CUSTOM_COMMAND(
-				OUTPUT vtkTCLInit.cxx
-				DEPENDS vtkTCLModuleList.txt
-				COMMAND ${VTK_TCL_WRAP_INIT_EXECUTABLE} vtkTCLModuleList.txt vtkTCLInit.cxx
-				WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-		ENDFUNCTION()
-
-
-		### (end generic code to move)
-
 	FOREACH(MOD ${MODULES})
 		LIST(APPEND CXXFILES ${MOD}_wrap.cxx)
-	ENDFOREACH()
-
-	FOREACH(MOD ${MODULES})
 		VTK_TCL_WRAP(${MOD})
 	ENDFOREACH()
-		
+	
+	# Create the initialization wrapper		
 	VTK_TCL_WRAP_INIT(${MODULES})
-		
+	
+	# Add generated files to include path		
 	INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
-		
+	
+	# Compile it all		
 	ADD_LIBRARY(FullMonteVTKTCL SHARED ${CXXFILES} vtkTCLInit.cxx)
 	TARGET_LINK_LIBRARIES(FullMonteVTKTCL FullMonteVTK  ${VTK_LIBRARIES} ${TCL_LIBRARY} vtkCommonCoreTCL)
 

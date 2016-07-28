@@ -47,7 +47,7 @@ public:
 
 
 	/// Convenience function
-	VolumeFluenceMap getVolumeFluence() const;
+	VolumeFluenceMap getVolumeFluenceMap() const;
 
 private:
 	virtual ThreadedMCKernelBase::Thread* makeThread() override

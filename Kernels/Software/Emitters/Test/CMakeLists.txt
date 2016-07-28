@@ -7,5 +7,5 @@ IF(WRAP_VTK)
     SET(EXTRA_LIBS vtkIOLegacy vtkCommonDataModel)
 ENDIF()
 
-ADD_EXECUTABLE(Test_Emitters Test_Emitters.cpp ${EXTRA_SOURCES} ../../PacketDirection.cpp ../../SSEMath.cpp ../TetraMeshEmitterFactory.cpp)
-TARGET_LINK_LIBRARIES(Test_Emitters ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} ${EXTRA_LIBS} SFMT FullMonteGeometry FullMonteTIMOS)
+#ADD_EXECUTABLE(Test_Emitters Test_Emitters.cpp ${EXTRA_SOURCES} ../../PacketDirection.cpp ../../SSEMath.cpp ../TetraMeshEmitterFactory.cpp)
+#TARGET_LINK_LIBRARIES(Test_Emitters ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY} ${EXTRA_LIBS} SFMT FullMonteGeometry FullMonteTIMOS)

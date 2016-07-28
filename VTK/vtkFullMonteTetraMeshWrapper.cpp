@@ -58,7 +58,7 @@ const TetraMesh* vtkFullMonteTetraMeshWrapper::mesh() const
 void vtkFullMonteTetraMeshWrapper::update()
 {
 	assert(m_faces);
-	getVTKTriangleCells(*mesh(),m_faces,m_faceFilter);
+	getVTKTriangleCells(*mesh(),m_faces);
 	Modified();
 }
 
@@ -68,28 +68,6 @@ vtkPolyData* vtkFullMonteTetraMeshWrapper::faces() const
 	pd->SetPoints(points());
 	pd->SetPolys(m_faces);
 	return pd;
-}
-
-void vtkFullMonteTetraMeshWrapper::faceFilter(FilterBase<int>* f)
-{
-	m_faceFilter=f;
-	update();
-}
-
-void vtkFullMonteTetraMeshWrapper::faceFilter(const char* fptr)
-{
-	SwigPointerInfo pi = readSwigPointer(fptr);
-	if (pi.p)
-	{
-		cout << "Used string " << fptr << " to set SWIG faceFilter" << endl;
-		m_faceFilter = static_cast<FilterBase<int>*>(pi.p);
-	}
-	else
-	{
-		cout << "Need to look up vtk TCL wrapped object " << fptr << endl;
-		cout << "  value: " << endl;
-		//m_faceFilter = static_cast<FilterBase<int>*>
-	}
 }
 
 
@@ -126,3 +104,67 @@ void getVTKTriangleCells(const TetraMesh& M,vtkCellArray* ca,const FilterBase<in
 	ca->SetCells(Nf, ids);
 	ids->Delete();
 }
+
+
+#include "SwigWrapping.hpp"
+
+template<typename T>struct SwigConversionTraits;
+
+template<>struct SwigConversionTraits<FilterBase<int>>{ static const std::string name; };
+
+const std::string SwigConversionTraits<FilterBase<int>>::name = "FilterBase<int>";
+
+#include <FullMonteSW/Geometry/Filters/TriFilterRegionBounds.hpp>
+
+template<typename T,typename U>U* castFromTo(void* p)
+{
+	return static_cast<U*>(static_cast<T*>(p));
+}
+
+class TriFilterRegionBounds;
+
+template<typename T>T* swigCast(const char* fromType)
+{
+	// grab value and type from SWIG text string, check validity (non-null)
+	SwigPointerInfo i = readSwigPointer(fromType);
+	const std::string t(i.type.first, i.type.second-i.type.first);
+
+	const std::string toType = SwigConversionTraits<typename std::remove_cv<T>::type>::name;
+
+	T* o=nullptr;
+
+	if (t == "TriFilterRegionBounds")
+		o = dynamic_cast<T*>(static_cast<TriFilterRegionBounds*>(i.p));
+
+	std::cout << "INFO: swigCast('" << fromType << "') -> " << i.p << " [" << t << "] -> " << o << " [" << toType << "]" << std::endl;
+
+	return o;
+}
+
+vtkIdList* vtkFullMonteTetraMeshWrapper::getTriangleIDsFromFilter(const char* s)
+{
+	return getTriangleIDsFromFilter(swigCast<FilterBase<int>>(s));
+}
+
+vtkIdList* vtkFullMonteTetraMeshWrapper::getTriangleIDsFromFilter(const FilterBase<int>* F)
+{
+	std::cout << "getTriangleIDsFromFilter(" << F << " [" << F->typeStr() << "])" << std::endl;
+	if (!F)
+	{
+		std::cout << "ERROR: null filter passed to getTriangleIDsFromFilter" << std::endl;
+		return nullptr;
+	}
+	else if (!mesh())
+	{
+		return nullptr;
+	}
+
+	vtkIdList* L = vtkIdList::New();
+
+	for(int i=1;i<mesh()->getNf()+1;++i)
+		if ((*F)(i))
+			L->InsertNextId(i);
+
+	return L;
+}
+

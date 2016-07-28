@@ -62,6 +62,12 @@ public:
 
 	typedef RNG_SFMT_AVX RNG;
 
+	/// Convenience functions
+	// TODO: Move out of here (duplicated from VolumeKernel/SurfaceKernel
+	VolumeFluenceMap 	getVolumeFluenceMap() const;
+	SurfaceFluenceMap 	getSurfaceFluenceMap() const;
+	InternalSurfaceFluenceMap getInternalSurfaceFluenceMap() const;
+
 private:
 	virtual ThreadedMCKernelBase::Thread* makeThread() override
 	{
