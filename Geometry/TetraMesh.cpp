@@ -11,6 +11,7 @@
 #include <boost/range/adaptor/filtered.hpp>
 
 #include "StandardArrayKernel.hpp"
+#include "BoundingBox.hpp"
 
 #include <iomanip>
 
@@ -190,7 +191,9 @@ void TetraMesh::makeKernelTetras()
 	assert(m_faces.size() == m_facePoints.size());
 	assert(m_faceTetras.size() == m_facePoints.size());
 
-	cout << "INFO TetraMesh::makeKernelTetras() checking " << m_tetraPoints.size() << " tetras' faces for correct orientation" << endl;
+	if (m_enableVerboseConstruction)
+		cout << "INFO TetraMesh::makeKernelTetras() checking " << m_tetraPoints.size() << " tetras' faces for correct orientation" << endl;
+
 	for(unsigned IDt=1;IDt < m_tetraPoints.size();++IDt)
 	{
 		TetraByPointID IDps = m_tetraPoints[IDt];
@@ -210,25 +213,25 @@ void TetraMesh::makeKernelTetras()
 
 			for(unsigned p=0;p<4;++p)
 			{
-				if ((h[f][p] = F[f].pointHeight(m_points[IDps[p]])) < -2e-12)
+				if ((h[f][p] = F[f].pointHeight(m_points[IDps[p]])) < -m_pointHeightTolerance)
 				{
-					cout << "ERROR! TetraMesh::makeKernelTetras reports point height less than zero (" << h[f][p] << ") for " << p << "'th point of tetra " << IDt << " over face " << IDf << endl;
+					if (m_enableVerboseConstruction)
+						cout << "ERROR! TetraMesh::makeKernelTetras reports point height less than zero (" << h[f][p] << ") for " << p << "'th point of tetra " << IDt << " over face " << IDf << endl;
 					tetOK=false;
 				}
 
 				if (h[f][p] < -1e-4)
 				{
-					cout << "  NOTE: Flipping face" << endl;
+					if (m_enableVerboseConstruction)
+						cout << "  NOTE: Flipping face" << endl;
 					F[f].flip();
 				}
 			}
 		}
 
-		if (!tetOK)
+		if (m_enableVerboseConstruction && !tetOK)
 			printTetra(IDt);
 	}
-
-	cout << "INFO TetraMesh::makeKernelTetras() creating " << T.size() << " kernel tetras" << endl;
 
 	for(auto tet : T | boost::adaptors::indexed(0U))
 	{
@@ -270,8 +273,9 @@ void TetraMesh::makeKernelTetras()
 
 	m_tetras=T;
 
-	if (!checkFaces())
-		cerr << "WARNING: Failure in TetraMesh::checkFaces" << endl;
+	if (m_enableFaceChecks)
+		if (!checkFaces())
+			cerr << "WARNING: Failure in TetraMesh::checkFaces" << endl;
 }
 
 void TetraMesh::setFacesForFluenceCounting(const FilterBase<int>* TF)
@@ -361,12 +365,51 @@ unsigned TetraMesh::findEnclosingTetra(const Point<3,double>& p) const
 	__m128 pv = _mm_load_ps(f);
 	unsigned N=0,IDt=0;
 
+
+	OrthoBoundingBox<float,3> bb;
+
+	array<float,3> pf;
+
+	cout << "There are " << m_points.size() << " points" << endl;
+
+	for(unsigned i=0;i<m_points.size();++i)
+	{
+		pf[0] = m_points[i][0];
+		pf[1] = m_points[i][1];
+		pf[2] = m_points[i][2];
+		bb.insert(pf);
+	}
+
+	const auto lims = bb.corners();
+
+	cout << "Bounding box is [" << lims.first[0] << ',' << lims.second[0] << "] [" << lims.first[1] << ',' << lims.second[1] << "] [" << lims.first[2] << ',' << lims.second[2] << ']' << endl;
+
 	for(unsigned i=1;i<m_tetras.size(); ++i)
-		if (m_tetras[i].pointWithin(pv))
+//		if (m_tetras[i].pointWithin(pv))
+//		{
+//			IDt=i;
+//			++N;
+//		}
+	{
+		array<float,4> h;
+		_mm_store_ps(h.data(), m_tetras[i].heights(pv));
+
+		bool in=true;
+
+		for(unsigned j=0;j<4;++j)
+			in &= h[j] > -2e-5;
+
+		if (in)
 		{
-			IDt=i;
+			cout << "  Tetra " << i << " encloses with heights ";
+			for(unsigned j=0;j<4;++j)
+				cout << h[j] << ' ';
+			cout << endl;
+
 			++N;
+			IDt=i;
 		}
+	}
 
 	if (N < 1)
 		cout << "ERROR: Could not find enclosing tetra" << endl;

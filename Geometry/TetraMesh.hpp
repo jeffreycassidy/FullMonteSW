@@ -70,15 +70,20 @@ struct RTIntersection
  *
  */
 
+#ifdef SWIG
+%nodefaultctor TetraMesh;
+#endif
+
 class TetraMesh : public TetraMeshBase
 {
 public:
-	TetraMesh(){};
 	TetraMesh(const TetraMeshBase& Mb) : TetraMeshBase(Mb)
 		{ buildTetrasAndFaces(); }
 
+#ifndef SWIG
 	TetraMesh(TetraMeshBase&& Mb) : TetraMeshBase(Mb)
 		{ buildTetrasAndFaces(); }
+#endif
 
 	TetraMesh(const vector<Point<3,double> >& P_,const vector<TetraByPointID>& T_p_,const vector<unsigned>& T_m_)
 	: TetraMeshBase(P_,T_p_,T_m_) { buildTetrasAndFaces(); }
@@ -120,6 +125,9 @@ public:
     double                  getFaceArea(int IDf)                const { return getFaceArea(m_facePoints[abs(IDf)]); }
     double                  getFaceArea(unsigned IDf)           const { return getFaceArea(m_facePoints[IDf]); }
 
+    bool faceChecksEnabled() const 	{ return m_enableFaceChecks; }
+    void enableFaceChecks(bool st)	{ m_enableFaceChecks=st; }
+
 	// find nearest point or enclosing tetra
 	unsigned findEnclosingTetra(const Point<3,double>&) const;
 	unsigned findNearestPoint  (const Point<3,double>&) const;
@@ -152,6 +160,14 @@ public:
     // returns the intersection result and face ID entered (res, IDf) for the next face crossed by ray (p,dir)
     std::tuple<PointIntersectionResult,int> findNextFaceAlongRay(Point<3,double> p,UnitVector<3,double> dir,int IDf_exclude=0) const;
 
+    TetraMesh* self() { return this; }
+
+
+protected:
+//#ifndef SWIG
+//    TetraMesh(){}
+//#endif
+
 private:
 
     void printTetra(unsigned IDt) const;		// Debug method
@@ -169,6 +185,16 @@ private:
 	 * bounding faces, material ID, and face flags (for logging).
 	 */
     vector<Tetra>               	m_tetras;
+
+
+    /// Enable checking of the face construct after creation
+    bool m_enableFaceChecks=false;
+
+    /// If true, output lots of extra information as the kernel tetras are being constructed
+    bool m_enableVerboseConstruction=false;
+
+    /// Tolerance to allow when checking for correct face orientation; if dot(p,n)-C < -m_pointHeightTolerance then flag an issue
+    double m_pointHeightTolerance=2e-5;
 
     std::unordered_map<TetraByPointID,unsigned,boost::hash<std::array<unsigned,4>>> m_pointIDsToTetraMap;
     std::unordered_map<FaceByPointID, unsigned,boost::hash<std::array<unsigned,3>>> m_pointIDsToFaceMap;

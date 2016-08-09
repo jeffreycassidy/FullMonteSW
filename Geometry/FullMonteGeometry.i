@@ -59,6 +59,8 @@ namespace Source { namespace detail { template<class Base,class Derived>class cl
 #include <FullMonteSW/Geometry/Filters/TriFilterRegionBounds.hpp>
 %}
 
+%nodefaultctor TetraMesh;
+%nodefaultctor TetraMeshBase;
 %include "TetraMeshBase.hpp"
 %include "TetraMesh.hpp"
 

@@ -56,6 +56,10 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::PointSource* ps)
 	if (elHint != -1u && el != elHint)
 		cout << "WARNING: Element hint provided (" << elHint << ") does not match enclosing tetra found (" << el << ")" << endl;
 
+	array<float,3> pos = ps->position();
+
+	cout << "  INFO: Point source at " << pos[0] << ',' << pos[1] << ',' << pos[2] << endl << " in tetra " << el << endl;
+
 	Point P(el,SSE::Point3(ps->position()));
 
 	auto ips = new PositionDirectionEmitter<RNG,Point,Isotropic<RNG>>(P,Isotropic<RNG>(),el);

@@ -10,6 +10,4 @@
 	#include <FullMonteSW/Storage/VTK/VTKLegacyWriter.hpp>
 %}
 
-class TetraMeshBase {};
-
-class TetraMesh : public TetraMeshBase {};
+%nodefaultctor TetraMesh;

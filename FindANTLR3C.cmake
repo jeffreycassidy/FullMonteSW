@@ -6,14 +6,21 @@ FIND_LIBRARY(
     ANTLR3C_LIBRARY
     antlr3c
     HINTS
-    PATHS
+    PATHS /usr/local /usr/local/lib /usr/local/antlr3c/lib /usr/local/antlr3c-3.4
+    PATH_SUFFIXES lib
     DOC "ANTLR3 C runtime, typically libantlr3c.so"
     )
+
+GET_FILENAME_COMPONENT(ANTLR3C_LIBRARY_DIR ${ANTLR3C_LIBRARY} DIRECTORY)
+
+MESSAGE("Found antlr3c runtime at ${ANTLR3C_LIBRARY}, path ${ANTLR3C_LIBRARY_DIR}")
 
 FIND_PATH(
     ANTLR3C_INCLUDE_DIR
     antlr3.h
-    HINTS ${ANTLR3C_DIR} /usr/include /usr/local/include
+    HINTS ${ANTLR3C_DIR} ${ANTLR3C_LIBRARY_DIR} ${ANTLR3C_LIBRARY_DIR}/../include
+    PATHS /usr/local
+    PATH_SUFFIXES include
     DOC "ANTLR3 C runtime, folder containing antlr3.h"
     )
 
