@@ -33,6 +33,7 @@ SurfaceFluenceMap BidirectionalFluence::result() const
 
 	SurfaceFluenceMap S(SpatialMapBase<float,unsigned>::newFromVector(phi));
 
+	return S;
 }
 
 const InternalSurfaceFluenceMap* BidirectionalFluence::source() const

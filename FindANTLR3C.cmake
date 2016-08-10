@@ -1,7 +1,5 @@
 MESSAGE("Searching for ANTLR3 C runtime")
 
-FIND_PACKAGE(ANTLR3 REQUIRED)
-
 FIND_LIBRARY(
     ANTLR3C_LIBRARY
     antlr3c

@@ -9,7 +9,7 @@ FIND_FILE(
     DOC "ANTLR3 jarfile"
     )
 
-IF(ANTLR3_JAR-NOTFOUND)
+IF(NOT ANTLR3_JAR)
     MESSAGE("Failed to find ANTLR3 jarfile - please set ANTLR3_JAR")
 ELSE()
     SET(ANTLR3_FOUND ON)
