@@ -8,6 +8,8 @@ IF (WRAP_TCL)
 
     SWIG_ADD_MODULE(FullMonteDataTCL tcl FullMonteData.i)
     SWIG_LINK_LIBRARIES(FullMonteDataTCL FullMonteData tcl)
+
+    INSTALL(TARGETS FullMonteDataTCL LIBRARY DESTINATION lib)
 ENDIF()
 
 #ADD_EXECUTABLE(Test_OutputTypes Test_OutputTypes.cpp)

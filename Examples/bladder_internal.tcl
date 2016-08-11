@@ -94,11 +94,6 @@ set surfaceFluenceArray [vtkPhi array]
 vtkFieldData surfaceFieldData
     surfaceFieldData AddArray $surfaceFluenceArray
 
-puts "Mesh has been set up"
-
-#puts "surfaceFieldData size: [surfaceFieldData GetNumberOfTuples]"
-#puts "number of faces:       [[VTKM faces] GetNumberOfCells]"
-
 vtkDataObject surfaceData
     surfaceData SetFieldData surfaceFieldData
  
@@ -107,8 +102,16 @@ vtkMergeDataObjectFilter mergeFluence
     mergeFluence SetInputData [VTKM faces]
     mergeFluence SetOutputFieldToCellDataField
 
+vtkFullMonteFilterTovtkIdList surfaceTriIDs 
+    surfaceTriIDs mesh $mesh
+    surfaceTriIDs filter [TF self]
+
+vtkExtractCells extractSurface
+    extractSurface SetInputConnection [mergeFluence GetOutputPort]
+    extractSurface SetCellList [surfaceTriIDs idList]
+
 vtkGeometryFilter geom
-    geom SetInputConnection [mergeFluence GetOutputPort]
+    geom SetInputConnection [extractSurface GetOutputPort]
 
 vtkPolyDataWriter VTKW
     VTKW SetInputConnection [geom GetOutputPort]

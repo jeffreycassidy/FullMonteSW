@@ -105,8 +105,17 @@ vtkMergeDataObjectFilter mergeFluence
     mergeFluence SetInputData [VTKM faces]
     mergeFluence SetOutputFieldToCellDataField
 
+vtkFullMonteFilterTovtkIdList surfaceTriIDs 
+    surfaceTriIDs mesh $mesh
+    surfaceTriIDs filter [TF self]
+
+
+vtkExtractCells extractSurface
+    extractSurface SetInputConnection [mergeFluence GetOutputPort]
+    extractSurface SetCellList [surfaceTriIDs idList]
+
 vtkGeometryFilter geom
-    geom SetInputConnection [mergeFluence GetOutputPort]
+    geom SetInputConnection [extractSurface GetOutputPort]
 
 vtkPolyDataWriter VTKW
     VTKW SetInputConnection [geom GetOutputPort]

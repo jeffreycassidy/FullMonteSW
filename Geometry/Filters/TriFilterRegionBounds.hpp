@@ -33,6 +33,8 @@ public:
 
 	virtual bool operator()(const int x) const override;
 
+	TriFilterRegionBounds* self(){ return this; }
+
 	virtual const char* typeStr() const override { return "TriFilterRegionBounds"; }
 
 private:
