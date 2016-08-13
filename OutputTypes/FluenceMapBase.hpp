@@ -73,6 +73,12 @@ struct InternalSurfaceFluenceMapTraits
 	static constexpr bool				summable=false;
 };
 
+struct VolumeAbsorbedEnergyDensityMapTraits
+{
+	typedef float						Value;
+	typedef unsigned					Index;
+	static constexpr bool				summable=false;
+};
 
 
 template<class Traits>class SpatialMapOutputData : public UnitsBase, public clonable<OutputData,SpatialMapOutputData<Traits>,OutputData::Visitor>

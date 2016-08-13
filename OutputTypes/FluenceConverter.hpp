@@ -25,6 +25,7 @@ public:
 	const std::vector<SimpleMaterial>*	materials()										const	{ return m_materials;	}
 	void 								materials(const std::vector<SimpleMaterial>* m)			{ m_materials=m;		}
 
+
 	/// Rescale input such that a total of E units of energy were emitted
 	void scaleTotalEmittedTo(float E)					{ m_scaleToTotalE=E;					}
 
@@ -44,6 +45,10 @@ public:
 
 	/// Convert energy transiting a boundary to a per-unit-area fluence map
 	InternalSurfaceFluenceMap			convertToFluence(const InternalSurfaceEnergyMap& E) const;
+
+
+	/// Convert absorbed energy in an element to an energy density
+	VolumeAbsorbedEnergyDensityMap		convertToEnergyDensity(const VolumeAbsorbedEnergyMap& E) const;
 
 private:
 	float energyScale(float) const;		///< E_output / E_input

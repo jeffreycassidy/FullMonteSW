@@ -58,6 +58,7 @@ struct InternalSurfaceFluenceMapTraits;
 struct InternalSurfaceEnergyMapTraits;
 struct SurfaceFluenceMapTraits;
 struct SurfaceExitEnergyMapTraits;
+struct VolumeAbsorbedEnergyDensityMapTraits;
 
 template<typename Traits>class SpatialMapOutputData;
 using VolumeFluenceMap = SpatialMapOutputData<VolumeFluenceMapTraits>;
@@ -65,6 +66,7 @@ using SurfaceExitEnergyMap = SpatialMapOutputData<SurfaceExitEnergyMapTraits>;
 using SurfaceFluenceMap = SpatialMapOutputData<SurfaceFluenceMapTraits>;
 using VolumeAbsorbedEnergyMap = SpatialMapOutputData<VolumeAbsorbedEnergyMapTraits>;
 using InternalSurfaceFluenceMap = SpatialMapOutputData<InternalSurfaceFluenceMapTraits>;
+using VolumeAbsorbedEnergyDensityMap = SpatialMapOutputData<VolumeAbsorbedEnergyDensityMapTraits>;
 using InternalSurfaceEnergyMap = SpatialMapOutputData<InternalSurfaceEnergyMapTraits>;
 
 class MCConservationCountsOutput;

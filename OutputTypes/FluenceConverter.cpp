@@ -116,6 +116,63 @@ VolumeFluenceMap FluenceConverter::convertToFluence(const VolumeAbsorbedEnergyMa
 }
 
 
+VolumeAbsorbedEnergyDensityMap FluenceConverter::convertToEnergyDensity(const VolumeAbsorbedEnergyMap& E) const
+{
+	std::vector<float> ef(E->dim(),0.0f);
+
+	float kE = energyScale(E.totalEmitted());
+	float kV = volumeScale(E.cmPerLengthUnit());
+
+	float k = kE/kV;
+
+	if (!m_mesh)
+		throw std::logic_error("FluenceConverter::convertToEnergyDensity(const VolumeAbsorbedEnergyMap&) m_mesh is NULL");
+
+	if (E->dim() != m_mesh->getNt()+1)
+		throw std::logic_error("FluenceConverter::convertToEnergyDensity(const VolumeAbsorbedEnergyMap&) dimension mismatch (geometry vs. absorption vector)");
+
+	for(const auto e : E->nonzeros())
+	{
+		float V = m_mesh->getTetraVolume(e.first);
+
+		if (isnan(e.second) || e.second < 0.0f)
+			throw std::logic_error("FluenceConverter::convertToEnergyDensity(const VolumeAbsorbedEnergyMap&) invalid (negative/nan) element in absorption vector");
+
+		if (V < 0.0f)
+			throw std::logic_error("FluenceConverter::convertToEnergyDensity(const VolumeAbsorbedEnergyMap&) negative tetra volume");
+
+		if (V == 0.0f)
+		{
+			if (e.second > 0.0f)
+				throw std::logic_error("FluenceConverter::::convertToEnergyDensity(const VolumeAbsorbedEnergyMap&) impossible absorption: zero volume");
+			ef[e.first] = 0.0f;
+		}
+		else
+			ef[e.first] = k*e.second / V;		// V [cm3] * muA [cm-1] => cm2
+	}
+
+	SpatialMapBase<float,unsigned>* EDMap = SpatialMapBase<float,unsigned>::newFromVector(ef);
+
+	VolumeAbsorbedEnergyDensityMap o(EDMap);
+
+	// set units: if we don't have a unit specifier (it's NAN) then pass through original units
+
+	o.joulesPerEnergyUnit(
+			isnan(m_joulesPerOutputEnergyUnit) ?
+					E.joulesPerEnergyUnit() :
+					m_joulesPerOutputEnergyUnit);
+
+	o.cmPerLengthUnit(
+			isnan(m_cmPerOutputLengthUnit) ?
+					E.cmPerLengthUnit() :
+					m_cmPerOutputLengthUnit);
+
+	o.totalEmitted(E.totalEmitted()*kE);
+
+	return o;
+}
+
+
 VolumeAbsorbedEnergyMap FluenceConverter::rescale(const VolumeAbsorbedEnergyMap& E) const
 {
 	std::vector<float> o(E->dim(),0.0f);

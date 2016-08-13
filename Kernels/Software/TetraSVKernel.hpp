@@ -64,9 +64,11 @@ public:
 
 	/// Convenience functions
 	// TODO: Move out of here (duplicated from VolumeKernel/SurfaceKernel
-	VolumeFluenceMap 	getVolumeFluenceMap() const;
-	SurfaceFluenceMap 	getSurfaceFluenceMap() const;
-	InternalSurfaceFluenceMap getInternalSurfaceFluenceMap() const;
+	VolumeFluenceMap 			getVolumeFluenceMap() const;
+	SurfaceFluenceMap 			getSurfaceFluenceMap() const;
+	InternalSurfaceFluenceMap 	getInternalSurfaceFluenceMap() const;
+
+	VolumeAbsorbedEnergyMap		getVolumeAbsorbedEnergyMap() const;
 
 private:
 	virtual ThreadedMCKernelBase::Thread* makeThread() override

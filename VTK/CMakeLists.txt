@@ -1,6 +1,6 @@
 INCLUDE(${VTK_USE_FILE})
 
-SET(MODULES vtkFullMonteTetraMeshWrapper;vtkFullMonteTetraMeshBaseWrapper;vtkFullMonteSpatialMapWrapperFU;vtkFullMonteFilterTovtkIdList;vtkFullMonteFluenceLineQueryWrapper)
+SET(MODULES vtkFullMonteTetraMeshWrapper;vtkFullMonteTetraMeshBaseWrapper;vtkFullMonteSpatialMapWrapperFU;vtkFullMonteFilterTovtkIdList;vtkFullMonteFluenceLineQueryWrapper;vtkFullMonteArrayAdaptor)
 
 FOREACH(MOD ${MODULES})
 	LIST(APPEND MODULECPP "${MOD}.cpp")

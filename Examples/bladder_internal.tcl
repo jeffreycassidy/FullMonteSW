@@ -86,6 +86,27 @@ $mesh setFacesForFluenceCounting TF
 vtkFullMonteTetraMeshWrapper VTKM
     VTKM mesh $mesh
 
+
+
+## Writer pipeline for volume field data (regions & vol fluence)
+
+vtkFieldData volumeFieldData
+    volumeFieldData AddArray [VTKM regions]
+
+vtkDataObject volumeDataObject
+    volumeDataObject SetFieldData volumeFieldData
+
+vtkMergeDataObjectFilter mergeVolume
+    mergeVolume SetDataObjectInputData volumeDataObject
+    mergeVolume SetInputData [VTKM blankMesh]
+    mergeVolume SetOutputFieldToCellDataField
+
+vtkUnstructuredGridWriter VW
+    VW SetInputConnection [mergeVolume GetOutputPort]
+    VW SetFileName "bladder.volume.vtk"
+
+
+
 vtkFullMonteSpatialMapWrapperFU vtkPhi
 
 set surfaceFluenceArray [vtkPhi array]
@@ -116,7 +137,14 @@ vtkGeometryFilter geom
 vtkPolyDataWriter VTKW
     VTKW SetInputConnection [geom GetOutputPort]
 
+#DoseSurfaceHistogramGenerator DSHG
+#    DSHG mesh $mesh
+#    DSHG filter TF
+
 BidirectionalFluence BF
+
+FluenceConverter FC
+    FC mesh $mesh
 
 for { set i 0 } { $i < $N } { incr i } {
 
@@ -133,15 +161,30 @@ for { set i 0 } { $i < $N } { incr i } {
 
 	k finishAsync
 
+    set Emap [FC convertToEnergyDensity [k getVolumeAbsorbedEnergyMap]]
+
+    vtkFullMonteArrayAdaptor EmapAdaptor
+        EmapAdaptor source $Emap
+
+    vtkFullMonteArrayAdaptor PhiAdaptor
+        PhiAdaptor source [k getVolumeFluenceMap]
+
     puts "Simulation finished"
 
     BF source [k getInternalSurfaceFluenceMap]
-    vtkPhi source [BF result]
+
+    set phi [BF result]
+    vtkPhi source $phi
     vtkPhi update
 
     puts "vtkPhi update done"
 
     geom Update
+
+#    DSHG fluence $phi
+#    set dsh [DSHG result]
+
+#    $dsh print
 
     puts "Geom update done"
 
@@ -149,4 +192,9 @@ for { set i 0 } { $i < $N } { incr i } {
     VTKW SetFileTypeToBinary
     VTKW Update
 
+
+    volumeFieldData AddArray [EmapAdaptor result]
+    volumeFieldData AddArray [PhiAdaptor result]
+
+    VW Update
 }

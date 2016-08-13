@@ -45,6 +45,17 @@ VolumeFluenceMap TetraSVKernel::getVolumeFluenceMap() const
 	return phi;
 }
 
+VolumeAbsorbedEnergyMap TetraSVKernel::getVolumeAbsorbedEnergyMap() const
+{
+	const VolumeAbsorbedEnergyMap *E = getResultByType<VolumeAbsorbedEnergyMap>();
+
+	FluenceConverter FC;
+	FC.cmPerOutputLengthUnit(1.0f);
+	FC.scaleTotalEmittedTo(energy());
+
+	return FC.rescale(*E);
+}
+
 // TODO: Deduplicate this from TetraSurfaceKernel
 SurfaceFluenceMap TetraSVKernel::getSurfaceFluenceMap() const
 {

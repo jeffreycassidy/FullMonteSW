@@ -17,3 +17,4 @@ template<>const std::string clonable<OutputData,VolumeFluenceMap,OutputData::Vis
 template<>const std::string clonable<OutputData,FluenceLineQuery,OutputData::Visitor>::s_typeString="line_fluence";
 template<>const std::string clonable<OutputData,InternalSurfaceFluenceMap,OutputData::Visitor>::s_typeString="internal_surface_fluence";
 template<>const std::string clonable<OutputData,InternalSurfaceEnergyMap,OutputData::Visitor>::s_typeString="internal_surface_energy";
+template<>const std::string clonable<OutputData,VolumeAbsorbedEnergyDensityMap,OutputData::Visitor>::s_typeString="volume_energy_density";

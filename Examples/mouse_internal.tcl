@@ -19,7 +19,6 @@ if { $argc >= 1 } { set pfx [lindex $argv 0] }
 set optfn "$pfx.opt"
 set meshfn "$pfx.mesh"
 set legendfn "$pfx.legend"
-set ofn "fluence.out"
 
 # create and set up the reader
 
@@ -86,6 +85,32 @@ $mesh setFacesForFluenceCounting TF
 vtkFullMonteTetraMeshWrapper VTKM
     VTKM mesh $mesh
 
+
+## Writer pipeline for volume field data (regions & vol fluence)
+
+vtkFieldData volumeFieldData
+    volumeFieldData AddArray [VTKM regions]
+
+vtkDataObject volumeDataObject
+    volumeDataObject SetFieldData volumeFieldData
+
+vtkMergeDataObjectFilter mergeVolume
+    mergeVolume SetDataObjectInputData volumeDataObject
+    mergeVolume SetInputData [VTKM blankMesh]
+    mergeVolume SetOutputFieldToCellDataField
+
+vtkUnstructuredGridWriter VW
+    VW SetInputConnection [mergeVolume GetOutputPort]
+    VW SetFileName "mouse.volume.vtk"
+
+
+FluenceConverter FC
+    FC mesh $mesh
+
+
+
+## Writer pipeline for surface field data (organ-surface fluence)
+
 vtkFullMonteSpatialMapWrapperFU vtkPhi
 
 set surfaceFluenceArray [vtkPhi array]
@@ -120,8 +145,14 @@ vtkGeometryFilter geom
 vtkPolyDataWriter VTKW
     VTKW SetInputConnection [geom GetOutputPort]
 
+#DoseSurfaceHistogramGenerator DSHG
+#    DSHG mesh $mesh
+#    DSHG filter TF
 
 BidirectionalFluence BF
+
+FluenceConverter FC
+    FC mesh $mesh
 
 for { set i 0 } { $i < $N } { incr i } {
 
@@ -141,14 +172,37 @@ for { set i 0 } { $i < $N } { incr i } {
 
 	k finishAsync
 
+
     BF source [k getInternalSurfaceFluenceMap]
-    vtkPhi source [BF result]
+
+    set Emap [FC convertToEnergyDensity [k getVolumeAbsorbedEnergyMap]]
+
+    vtkFullMonteArrayAdaptor EmapAdaptor
+        EmapAdaptor source $Emap
+
+    vtkFullMonteArrayAdaptor PhiAdaptor
+        PhiAdaptor source [k getVolumeFluenceMap]
+
+    puts "Emap = $Emap"
+
+    set phi [BF result]
+
+    vtkPhi source $phi
     vtkPhi update
 
-    geom Update
 
+#    DSHG fluence $phi
+#    set dsh [DSHG result]
+
+#    puts "DSH generated"
+
+    volumeFieldData AddArray [EmapAdaptor result]
+    volumeFieldData AddArray [PhiAdaptor result]
+
+#    $dsh print
 
     VTKW SetFileName "internalsurface.vtk"
     VTKW Update
 
+    VW Update
 }
