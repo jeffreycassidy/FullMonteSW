@@ -137,9 +137,9 @@ vtkGeometryFilter geom
 vtkPolyDataWriter VTKW
     VTKW SetInputConnection [geom GetOutputPort]
 
-#DoseSurfaceHistogramGenerator DSHG
-#    DSHG mesh $mesh
-#    DSHG filter TF
+DoseSurfaceHistogramGenerator DSHG
+    DSHG mesh $mesh
+    DSHG filter TF
 
 BidirectionalFluence BF
 
@@ -181,10 +181,10 @@ for { set i 0 } { $i < $N } { incr i } {
 
     geom Update
 
-#    DSHG fluence $phi
-#    set dsh [DSHG result]
+    DSHG fluence $phi
+    set dsh [DSHG result]
 
-#    $dsh print
+    $dsh print
 
     puts "Geom update done"
 

@@ -145,9 +145,9 @@ vtkGeometryFilter geom
 vtkPolyDataWriter VTKW
     VTKW SetInputConnection [geom GetOutputPort]
 
-#DoseSurfaceHistogramGenerator DSHG
-#    DSHG mesh $mesh
-#    DSHG filter TF
+DoseSurfaceHistogramGenerator DSHG
+    DSHG mesh $mesh
+    DSHG filter TF
 
 BidirectionalFluence BF
 
@@ -191,15 +191,15 @@ for { set i 0 } { $i < $N } { incr i } {
     vtkPhi update
 
 
-#    DSHG fluence $phi
-#    set dsh [DSHG result]
+    DSHG fluence $phi
+    set dsh [DSHG result]
 
-#    puts "DSH generated"
+    puts "DSH generated"
 
     volumeFieldData AddArray [EmapAdaptor result]
     volumeFieldData AddArray [PhiAdaptor result]
 
-#    $dsh print
+    $dsh print
 
     VTKW SetFileName "internalsurface.vtk"
     VTKW Update

@@ -7,16 +7,16 @@
 #include <sstream>
 #include "FluenceConverter.hpp"
 #include "CrossingFluence.hpp"
-//#include "DoseSurfaceHistogramGenerator.hpp"
+#include "DoseSurfaceHistogramGenerator.hpp"
 %}
 
 
 
 %include "std_string.i"
 %include "CrossingFluence.hpp"
-//%include "DoseSurfaceHistogramGenerator.hpp"
+%include "DoseSurfaceHistogramGenerator.hpp"
 %include "FluenceConverter.hpp"
-//%include "EmpiricalCDF.hpp"
+%include "EmpiricalCDF.hpp"
 
-//template<typename Value,typename Weight,typename Comp> class EmpiricalCDF;
-//%template(DoseSurfaceHistogramF) EmpiricalCDF<float,float,std::less<float>>;
+template<typename Value,typename Weight,typename Comp> class EmpiricalCDF;
+%template(DoseSurfaceHistogramF) EmpiricalCDF<float,float,std::less<float>>;
