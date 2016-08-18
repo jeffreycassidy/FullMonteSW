@@ -11,6 +11,7 @@
 #include <FullMonteSW/Geometry/StandardArrayKernel.hpp>
 
 #include <iostream>
+#include <vector>
 
 namespace Emitter
 {
@@ -27,7 +28,7 @@ public:
 		m_elements(elements)
 	{
 		// normalize element distances by length to put into [0,1)
-		float l = norm(m_displacement);
+		float l = float(norm(m_displacement));
 		for(auto& e : m_elements)
 			e.first /= l;
 	}
@@ -35,7 +36,7 @@ public:
 	/// Generate the position
 	std::pair<unsigned,SSE::Point3> position(RNG& rng) const
 	{
-		float d=SSE::Scalar(*rng.floatU01());
+		float d = *rng.floatU01();
 		return std::make_pair(tetra(d),m_origin + m_displacement*SSE::Scalar(d));
 	}
 

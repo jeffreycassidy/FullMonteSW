@@ -507,9 +507,9 @@ bool TetraMesh::isWithinByPoints(int tID,const Point<3,double>& p) const
     Vector<3,double> e[3];
 
     // calculate edge vectors
-    e[0]=B-A;
-    e[1]=C-A;
-    e[2]=D-A;
+    e[0]=(Vector<3,double>)(B)-(Vector<3,double>)(A);
+    e[1]=(Vector<3,double>)(C)-(Vector<3,double>)(A);
+    e[2]=(Vector<3,double>)(D)-(Vector<3,double>)(A);
 
     // build basis matrix for tetra
     M[0][0] = e[0][0];

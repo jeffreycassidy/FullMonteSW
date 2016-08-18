@@ -10,6 +10,8 @@
 
 #include <vector>
 #include <functional>
+#include <utility>
+#include <cmath>
 
 #include <boost/range/algorithm.hpp>
 
@@ -29,8 +31,13 @@
 template<typename Value=float,typename Weight=float,class Comp=std::less<Value>>class EmpiricalCDF
 {
 public:
-	/// Create empirical CDF from unsorted pairs (v,w) value and weight
+	EmpiricalCDF(const EmpiricalCDF&)=default;
+
+	/// Create empirical CDF from unsorted pairs (x,w)
 	EmpiricalCDF(const std::vector<std::pair<Value,Weight>>& v,const Comp& comp=Comp());
+
+	/// Load EmpiricalCDF from pre-processed values (already sorted and accumulated: values are sorted (x,F(x))
+	static EmpiricalCDF<Value,Weight,Comp> load(const std::vector<std::pair<Value,Weight>>& v,const Comp& comp=Comp());
 
 	/// Return the percentile (0-100%) for a given value
 	float percentileOfValue(Value v) const;
@@ -51,6 +58,8 @@ public:
 
 
 private:
+	/// Create a blank CDF including only the comparison criterion
+	EmpiricalCDF(const Comp& c) : m_compare(c){}
 
 	/// Sort the vector according to the provided criterion
 	void sort();
@@ -116,6 +125,9 @@ template<typename Value,typename Weight,class Comp>void EmpiricalCDF<Value,Weigh
 
 	for(auto& e : m_elements)
 		e.cumulativeWeight = (cw += e.weight);
+
+	for(auto& e : m_elements)
+		e.cumulativeWeight /= cw;
 }
 
 #include <iostream>
@@ -131,7 +143,7 @@ template<typename Value,typename Weight,class Comp>void EmpiricalCDF<Value,Weigh
 	cout << "x         |  F(x) %" << endl;
 
 	for(const auto& e : m_elements)
-		cout << setprecision(4) << scientific << setw(10) << e.value << "  " << fixed << setprecision(3) << 100.0f*e.cumulativeWeight/cw << "% " << endl;
+		cout << setprecision(4) << scientific << setw(10) << e.value << "  " << fixed << setprecision(3) << 100.0f*e.cumulativeWeight << "% " << endl;
 
 }
 

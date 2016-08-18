@@ -50,7 +50,6 @@ EmpiricalCDF<float,float> DoseSurfaceHistogramGenerator::result() const
 			v.emplace_back((*m_phi)[i],m_mesh->getFaceArea(i));
 	}
 
-
 	return EmpiricalCDF<float,float>(v);
 }
 

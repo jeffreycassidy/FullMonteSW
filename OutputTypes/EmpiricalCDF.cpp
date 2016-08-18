@@ -11,12 +11,18 @@
 
 #include <vtkTable.h>
 #include <vtkFloatArray.h>
+#include <vtkPlotLine.h>
 #include <vtkAxis.h>
 
 #include <iostream>
 #include <iomanip>
 
 using namespace std;
+
+/** Loads a CDF from triples (x, w, F(x))
+ * Where x is the value, w is the sample weight (eg. area, volume, etc), and F(x) is Pr(X < x) in %
+ * Sorted ascending
+ **/
 
 EmpiricalCDF<float,float> loadFromTextFile(const std::string& fn)
 {
@@ -31,11 +37,11 @@ EmpiricalCDF<float,float> loadFromTextFile(const std::string& fn)
 
 	while(!is.fail() && !is.eof())
 	{
-		float d, w;
-		is >> d >> w;
+		float d, w, cw;
+		is >> d >> w >> cw;
 		is.ignore(1,'%');
 
-		w *= 0.01f;
+		cw *= 0.01f;
 
 		if (!is.fail())
 			v.emplace_back(d,w);
@@ -89,18 +95,18 @@ vtkChartXY* drawDVH(vtkContextView* view,vtkTable* DVH)
 
 	view->GetScene()->AddItem(chart);
 
-	vtkPlot* line = chart->AddPlot(vtkChart::LINE);
+	vtkPlotLine* line = vtkPlotLine::SafeDownCast(chart->AddPlot(vtkChart::LINE));
 
 	line->SetInputData(DVH,0,1);
 	line->SetColor(255,0,0,255);
-	line->SetWidth(10.0);
+	line->SetWidth(1.0);
 
 	vtkAxis* x = chart->GetAxis(vtkAxis::BOTTOM);
 	vtkAxis* y = chart->GetAxis(vtkAxis::LEFT);
 
 	x->SetBehavior(vtkAxis::FIXED);
-	x->LogScaleOff();
-	x->SetRange(0.0f,2e-2f);
+	x->SetUnscaledRange(1e-5f,2e-2f);
+	x->LogScaleOn();
 	x->SetGridVisible(true);
 	x->SetTitle("Dose (J/cm2)");
 
@@ -130,6 +136,8 @@ int main(int argc,char **argv)
 	cout << "Loading DVH from " << fn << endl;
 
 	EmpiricalCDF<float,float> CDF = loadFromTextFile(fn);
+
+	CDF.print();
 
 	vtkTable* vtkT = convertToVTKTable(CDF);
 

@@ -92,6 +92,10 @@ static const __m256 _ps_inv_sign_mask = _mm256_castsi256_ps(_mm256_set1_epi32(~0
 
 
 
+
+#ifndef HAVE_AVX2
+
+
 inline __m256 _mm256_set_m128(__m128 hi,__m128 lo)
 {
 	return _mm256_insertf128_ps(
@@ -107,8 +111,6 @@ inline __m256i _mm256_set_m128i(__m128i hi,__m128i lo)
 			hi,
 			1);
 }
-
-#ifndef HAVE_AVX2
 
 inline __m256 _mm256_abs_ps(__m256 x)
 {
