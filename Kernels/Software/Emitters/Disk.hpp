@@ -1,47 +1,61 @@
 /*
  * Disk.hpp
  *
- *  Created on: Jan 31, 2016
+ *  Created on: Aug 19, 2016
  *      Author: jcassidy
  */
 
 #ifndef KERNELS_SOFTWARE_EMITTERS_DISK_HPP_
 #define KERNELS_SOFTWARE_EMITTERS_DISK_HPP_
 
-#include <tuple>
+/** Gives a packet position randomly distributed within a disk of specified centre, radius, and orientation.
+ *
+ */
 
 namespace Emitter {
-
-/** Provides a direction randomly oriented within a planar disk described by the plane's normal */
 
 template<class RNG>class Disk
 {
 public:
-	Disk(SSE::Vector3 n) :
-		m_normal(n,SSE::Normalize)
-	{
-		std::tie(m_inPlane[0],m_inPlane[1]) = SSE::normalsTo(m_normal);
-	}
 
-	PacketDirection direction(RNG& rng) const
-	{
-		SSE::Vector2 azuv(rng.uvect2D());
+	Disk();
+	Disk(std::array<float,3> centre,std::array<float,3> normal,float radius);
 
-		SSE::Scalar sinpsi = azuv.component<0>();
-		SSE::Scalar cospsi = azuv.component<1>();
+	~Disk();
 
-		return PacketDirection(
-				SSE::UnitVector3(m_inPlane[0]*sinpsi + m_inPlane[1]*cospsi,SSE::NoCheck),
-				SSE::UnitVector3(m_inPlane[0]*cospsi - m_inPlane[1]*sinpsi,SSE::NoCheck),
-				m_normal);
-	}
+	std::array<float,3> position(RNG& rng);
 
 private:
-	SSE::UnitVector3				m_normal;		///< Normal to plane
-	std::array<SSE::UnitVector3,2>	m_inPlane;		///< In-plane components used to construct vector
-
+	SSE::Point3 						m_centre;
+	std::array<SSE::UnitVector3,2> 		m_normalVectors;
+	float								m_radius;
 };
 
+template<class RNG>Disk<RNG>::Disk()
+{
+
+}
+
+template<class RNG>Disk<RNG>::~Disk()
+{
+}
+
+template<class RNG>Disk<RNG>::Disk(std::array<float,3> centre,std::array<float,3> normal,float radius) :
+		m_centre(centre),
+		m_radius(radius)
+{
+	std::tie(m_normalVectors[0],m_normalVectors[1]) = SSE::normalsTo(SSE::UnitVector3(normal));
+}
+
+template<class RNG>std::array<float,3> Disk<RNG>::position(RNG& rng)
+{
+	float rnd0 = *rng.floatU01();
+	SSE::UnitVector2 uv = SSE::UnitVector2(_mm_loadu_ps(rng.uvect2D()));
+
+	float r = std::sqrt(rnd0)*m_radius;
+
+	return (m_centre + (m_normalVectors[0]*SSE::Scalar(uv[0]) + m_normalVectors[1]*SSE::Scalar(uv[1]))*SSE::Scalar(r)).array();
+}
 };
 
 #endif /* KERNELS_SOFTWARE_EMITTERS_DISK_HPP_ */

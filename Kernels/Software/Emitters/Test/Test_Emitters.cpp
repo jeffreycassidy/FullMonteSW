@@ -24,6 +24,7 @@
 #include <FullMonteSW/Geometry/TetraMesh.hpp>
 
 #include "../TetraMeshEmitterFactory.hpp"
+#include "../TetraMeshEmitterFactory.cpp"
 
 
 #include "../Base.hpp"
@@ -38,7 +39,6 @@
 #include <boost/random/uniform_01.hpp>
 
 #include <FullMonteSW/Storage/TIMOS/TIMOSAntlrParser.hpp>
-
 
 const TetraMesh mouse;
 
@@ -125,6 +125,12 @@ BOOST_FIXTURE_TEST_CASE(isops,IsoPS)
 	write("isops");
 }
 
+
+
+
+/** Test isotropic point source using the fixture.
+ */
+
 BOOST_FIXTURE_TEST_CASE(dummyps, IsoPS)
 {
 	std::array<float,3> p{ 1.0, 2.0, 3.0 };
@@ -136,6 +142,54 @@ BOOST_FIXTURE_TEST_CASE(dummyps, IsoPS)
 
 	write("dummyps");
 }
+
+
+
+#include <FullMonteSW/Kernels/Software/Emitters/Cone.hpp>
+//#include <FullMonteSW/Kernels/Software/Emitters/Disk.hpp>
+
+/** Test cut-end fiber source using the fixture
+ * Writes cone.dir.vtk cone.combined.vtk and cone.pos.vtk
+ */
+
+#include "DiskFixture.hpp"
+#include "ConeFixture.hpp"
+#include "../Disk.hpp"
+
+typedef SourceFixture<DiskFixture,ConeFixture> ConeSourceFixture;
+
+BOOST_FIXTURE_TEST_CASE(conesource, ConeSourceFixture)
+{
+	const float angleDeg = 45.0f;
+
+	const std::array<float,3> pos { 10.0f, -20.0f, 30.3f };
+	const std::array<float,3> n { 0.5f, -0.5f, std::sqrt(0.5f) };
+	const float halfAngleRadians = angleDeg * boost::math::constants::pi<float>() / 180.0f;
+
+	const float r = 2.0f;
+
+	positionFixture = DiskFixture(pos,n,r);
+	directionFixture = ConeFixture(n,halfAngleRadians);
+
+	Emitter::Cone<RNG_SFMT_AVX> C(normalize(SSE::Vector3(n)),halfAngleRadians);
+	Emitter::Disk<RNG_SFMT_AVX> D(pos,n,r);
+
+	cout << "Cut-end fiber source" << endl;
+	for(unsigned i=0;i<100000;++i)
+	{
+		PacketDirection dir = C.direction(rng);
+		std::array<float,3> P = D.position(rng);
+		LaunchPacket lpkt;
+		lpkt.dir=dir;
+		lpkt.pos=SSE::Point3(P);
+
+		testPacket(lpkt);
+	}
+
+	write("cut_end_fiber");
+}
+
+
 
 #include "TetraFixture.hpp"
 
@@ -238,11 +292,11 @@ BOOST_FIXTURE_TEST_CASE(pencil,Pencil)
 }
 
 #include "LineFixture.hpp"
-#include "DiskFixture.hpp"
+#include "PlaneFixture.hpp"
 #include "../Line.hpp"
-#include "../Disk.hpp"
+#include "../RandomInPlane.hpp"
 
-typedef SourceFixture<LineFixture,DiskFixture> Line;
+typedef SourceFixture<LineFixture,PlaneFixture> Line;
 
 BOOST_FIXTURE_TEST_CASE(line,Line)
 {
@@ -253,7 +307,7 @@ BOOST_FIXTURE_TEST_CASE(line,Line)
 	std::array<float,3> n = p1-p0;
 
 	positionFixture = LineFixture(p0,p1);
-	directionFixture = DiskFixture(n);
+	directionFixture = PlaneFixture(n);
 
 	Source::Line L(1.0f,p0,p1);
 	L.pattern(Source::Line::Normal);

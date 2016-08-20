@@ -42,7 +42,10 @@ struct PacketDirection
 
 inline PacketDirection PacketDirection::scatter(SSE::Vector2 theta,SSE::Vector2 phi) const
 {
-	return scatter(SSE::Vector<4>(_mm_movehl_ps(__m128(theta),__m128(phi))));
+
+	return scatter(SSE::Vector<4>(
+			_mm_movelh_ps(__m128(theta),__m128(phi)))		// _mm_movelh_ps(a,b) moves lower 2 elements from b to higher 2 of a
+			);
 }
 
 

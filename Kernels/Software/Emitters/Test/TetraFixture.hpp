@@ -18,11 +18,11 @@ struct TetraFixture
 	TetraFixture(){};
 	~TetraFixture(){};
 
-	typedef std::array<float,3> Point3;
+	typedef Test::Tetra::Point3 Point3;
 
 	TetraFixture(Point3 A,Point3 B,Point3 C,Point3 D) : T(A,B,C,D){}
 
-	Test::Tetra<float> T;
+	Test::Tetra T;
 
 	void testPosition(Point3 p)
 	{

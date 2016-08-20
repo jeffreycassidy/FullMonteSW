@@ -59,7 +59,7 @@
 //# define ALIGN16_END __attribute__((aligned(16)))
 //#endif
 
-# include <emmintrin.h>
+#include <emmintrin.h>
 #include <immintrin.h>
 
 /* declare some SSE constants -- why can't I figure a better way to do that? */
@@ -91,9 +91,13 @@ static const __m256 _ps_inv_sign_mask = _mm256_castsi256_ps(_mm256_set1_epi32(~0
 //_PS_CONST_TYPE(inv_sign_mask, int, ~0x80000000);
 
 
-
-
-#ifndef HAVE_AVX2
+inline __m256i _mm256_set_m128i(__m128i hi,__m128i lo)
+{
+	return _mm256_insertf128_si256(
+			_mm256_castsi128_si256(lo),
+			hi,
+			1);
+}
 
 
 inline __m256 _mm256_set_m128(__m128 hi,__m128 lo)
@@ -104,13 +108,9 @@ inline __m256 _mm256_set_m128(__m128 hi,__m128 lo)
 			1);
 }
 
-inline __m256i _mm256_set_m128i(__m128i hi,__m128i lo)
-{
-	return _mm256_insertf128_si256(
-			_mm256_castsi128_si256(lo),
-			hi,
-			1);
-}
+
+#ifndef HAVE_AVX2
+
 
 inline __m256 _mm256_abs_ps(__m256 x)
 {
@@ -303,6 +303,9 @@ inline __m256 log_ps(__m256 x) {
   emm0hi = _mm_sub_epi32(emm0hi,_mm_set1_epi32(0x7f));
 
   __m256 e = _mm256_cvtepi32_ps(_mm256_set_m128i(emm0hi,emm0lo));
+
+
+
 //#endif
 
   e = _mm256_add_ps(e, one);

@@ -15,6 +15,20 @@ using namespace std;
 namespace SSE
 {
 
+class SSEKernel
+{
+public:
+	template<std::size_t D>class Vector;
+	template<std::size_t D>class Point;
+	template<std::size_t D>class UnitVector;
+
+	using Vector3 = Vector<3>;
+	using Vector2 = Vector<2>;
+
+	using UnitVector3 = UnitVector<3>;
+	using UnitVector2 = UnitVector<2>;
+};
+
 pair<SSE::UnitVector3,SSE::UnitVector3> normalsTo(SSE::UnitVector3 v)
 {
 	const array<float,3> d = v.array();
@@ -38,5 +52,7 @@ pair<SSE::UnitVector3,SSE::UnitVector3> normalsTo(SSE::UnitVector3 v)
 			a,
 			SSE::UnitVector3(cross(v,a),SSE::Assert));
 }
+
+
 
 };

@@ -12,8 +12,7 @@
 
 #include <cmath>
 
-namespace SSE
-{
+namespace SSE {
 
 class SSEBase
 {
@@ -205,6 +204,7 @@ enum Checking { NoCheck, Assert, Except, Normalize, Silent };
 template<std::size_t D>class UnitVector : public Vector<D>
 {
 public:
+	UnitVector(const UnitVector&) = default;
 
 	template<typename FT>UnitVector(std::array<FT,D> a,Checking c) :
 		Vector<D>(a)
@@ -232,7 +232,7 @@ public:
 
 		__m128 k = _mm_sqrt_ss(__m128(norm2));
 
-		return _mm_div_ps(__m128(v),_mm_shuffle_ps(k,k,_MM_SHUFFLE(0,0,0,0)));
+		return SSE::UnitVector<D>(_mm_div_ps(__m128(v),_mm_shuffle_ps(k,k,_MM_SHUFFLE(0,0,0,0))));
 	}
 
 	static UnitVector normalize_approx(Vector<D> v)
@@ -279,7 +279,7 @@ public:
 
 		BOOST_STATIC_ASSERT(i < D);
 
-		return _mm_shuffle_ps(one,one,_MM_SHUFFLE(i!=3, i!=2, i!=1, i!=0));
+		return UnitVector(_mm_shuffle_ps(one,one,_MM_SHUFFLE(i!=3, i!=2, i!=1, i!=0)));
 	}
 
 	static UnitVector basis(unsigned i)
@@ -290,9 +290,10 @@ public:
 		return _mm_load_ps(f);
 	}
 
-protected:
-	UnitVector(__m128 v) : Vector<D>(v){}
-	UnitVector(Vector<D> v) : Vector<D>(v){}		// protect because this waives checking or normalization
+public:
+	explicit UnitVector(__m128 v) : Vector<D>(v){}
+	explicit UnitVector(Vector<D> v) : Vector<D>(v){}		// protect because this waives checking or normalization
+	explicit UnitVector(std::array<float,D> v) : Vector<D>(v){}
 };
 
 using UnitVector3 = UnitVector<3>;
@@ -310,6 +311,11 @@ std::pair<UnitVector3,UnitVector3> normalsTo(UnitVector3 v);
 template<std::size_t D>UnitVector<D> normalize(Vector<D> v)
 {
 	return UnitVector<D>::normalize(v);
+}
+
+template<std::size_t D>float normSquared(Vector<D> v)
+{
+	return float(dot(v,v));
 }
 
 };

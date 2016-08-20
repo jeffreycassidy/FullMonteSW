@@ -1,40 +1,57 @@
 /*
  * DiskFixture.hpp
  *
- *  Created on: Jan 31, 2016
+ *  Created on: Aug 19, 2016
  *      Author: jcassidy
  */
 
 #ifndef KERNELS_SOFTWARE_EMITTERS_TEST_DISKFIXTURE_HPP_
 #define KERNELS_SOFTWARE_EMITTERS_TEST_DISKFIXTURE_HPP_
 
+#include <array>
 #include <boost/test/floating_point_comparison.hpp>
 
-/** Checks that the direction lies within a 2D disk by |dot(n_disk, d)| < eps */
+#include <FullMonteSW/Geometry/StandardArrayKernel.hpp>
 
 struct DiskFixture
 {
-	DiskFixture(){}
-	DiskFixture(std::array<float,3> n) : normal(n)
-	{
-		float nn=0.0f;
-		for(unsigned i=0;i<3;++i)
-			nn += normal[i];
-		float k=1.0/std::sqrt(nn);
-		for(unsigned i=0;i<3;++i)
-			normal[i] *= k;
-	}
+	DiskFixture();
+	~DiskFixture();
 
-	void testDirection(std::array<float,3> dir)
-	{
-		float dot = dir[0]*normal[0] + dir[1]*normal[1] + dir[2]*normal[2];
-		BOOST_CHECK_SMALL(dot,m_maxOutOfPlane);
-	}
+	DiskFixture(std::array<float,3> centre,std::array<float,3> normal,float radius);
 
-	std::array<float,3> normal;
-	float m_maxOutOfPlane=1e-5;
+	void testPosition(std::array<float,3> p);
+
+	std::array<float,3>	m_centre;
+	std::array<float,3>	m_normal;
+	float				m_radiusSquared;
 };
 
+DiskFixture::DiskFixture()
+{
+
+}
+
+DiskFixture::~DiskFixture()
+{
+
+}
+
+DiskFixture::DiskFixture(std::array<float,3> centre,std::array<float,3> normal,float radius) :
+		m_centre(centre),
+		m_normal(normal),
+		m_radiusSquared(radius*radius)
+{
+}
+
+void DiskFixture::testPosition(std::array<float,3> p)
+{
+	// check that point lies in plane
+	BOOST_CHECK_SMALL(dot(m_normal,p-m_centre),1e-5f);
+
+	// check that point is sufficiently close to centre
+	BOOST_CHECK_LE(norm2(p-m_centre), m_radiusSquared);
+}
 
 
 #endif /* KERNELS_SOFTWARE_EMITTERS_TEST_DISKFIXTURE_HPP_ */

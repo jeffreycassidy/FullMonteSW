@@ -13,7 +13,6 @@
 #include "Isotropic.hpp"
 #include "Triangle.hpp"
 #include "Line.hpp"
-#include "Disk.hpp"
 #include "Tetra.hpp"
 #include "Composite.hpp"
 
@@ -41,6 +40,7 @@
 #include <iomanip>
 
 #include <FullMonteSW/Kernels/Software/RNG_SFMT_AVX.hpp>
+#include "RandomInPlane.hpp"
 
 namespace Emitter
 {
@@ -272,7 +272,7 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Line* l)
 		ls = new PositionDirectionEmitter<RNG,Line<RNG>,Isotropic<RNG>>(P,Isotropic<RNG>());
 		break;
 	case Source::Line::Normal:
-		ls = new PositionDirectionEmitter<RNG,Line<RNG>,Disk<RNG>>(P,Disk<RNG>(P.displacement()));
+		ls = new PositionDirectionEmitter<RNG,Line<RNG>,RandomInPlane<RNG>>(P,RandomInPlane<RNG>(P.displacement()));
 		break;
 	default:
 		throw std::logic_error("TetraEmitterFactory<RNG>::visit(Source::Line*) unsupported emission pattern");

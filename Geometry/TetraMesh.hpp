@@ -77,6 +77,7 @@ struct RTIntersection
 class TetraMesh : public TetraMeshBase
 {
 public:
+	TetraMesh(){}
 	TetraMesh(const TetraMeshBase& Mb) : TetraMeshBase(Mb)
 		{ buildTetrasAndFaces(); }
 

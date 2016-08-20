@@ -13,7 +13,7 @@ struct LaunchPacket
 	LaunchPacket(){}
 
 	PacketDirection		dir;
-	SSE::Vector3		pos;
+	SSE::Point3			pos;
 	unsigned			element;
 };
 

@@ -17,7 +17,18 @@
 
 #include "PacketDirectionFixture.hpp"
 
-/** A test fixture that combines a position with a direction distribution, as well as orthogonality checking for ther packet */
+/** A test fixture that combines a position with a direction distribution, as well as orthogonality checking for the packet
+ *
+ * checks packet direction (orthonormality)
+ * checks packet direction distribution	 vis DirectionFixture::testDirection
+ * checks packet position distribution   via PositionFixture::testPosition
+ *
+ * write("foo") outputs VTK files showing the distribution:
+ *
+ * 		1)	foo.dir.vtk			points as ray directions
+ * 		2)	foo.pos.vtk			points as ray origins
+ * 		3)	foo.combined.vtk	points as ray directions, with normals indicating direction
+ */
 
 template<class PositionFixture,class DirectionFixture>struct SourceFixture : public PacketDirectionFixture
 {
@@ -60,7 +71,7 @@ template<class PositionFixture,class DirectionFixture>struct SourceFixture : pub
 		pcdir.write(fn+".dir.vtk");
 		pcpos.write(fn+".pos.vtk");
 
-		lc.write(fn+".lc.vtk");
+		lc.write(fn+".combined.vtk");
 #endif
 	}
 

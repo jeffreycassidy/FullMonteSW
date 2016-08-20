@@ -15,18 +15,17 @@ class vtkFloatArray;
 #include <string>
 #include <array>
 
-/** Creates a point cloud for testing 3D statistical distributions
- * Typical usage: illustrating rays emerging from a source
- **/
+/** Creates a set of rays as VTK polydata vertices at the points with normals pointing in the direction of the ray.
+ */
 
 class VTKLineCluster
 {
 public:
 	VTKLineCluster();
-	void write(const std::string& fn);
+	void write(const std::string& fn);							///< Write to vtk polydata as lines
 	void clear();
 
-	void add(std::array<float,3> p,std::array<float,3> d);
+	void add(std::array<float,3> p,std::array<float,3> d);		///< Insert ray (position,direction) into the cluster
 	void add(std::array<double,3> p,std::array<double,3> d);
 
 

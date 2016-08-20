@@ -14,17 +14,18 @@ class vtkPolyData;
 #include <string>
 #include <array>
 
-/** Creates a point cloud for testing 3D statistical distributions */
+/** Creates a point cloud for testing 3D statistical distributions
+ */
 
 class VTKPointCloud
 {
 public:
 	VTKPointCloud();
-	void write(const std::string& fn);
+	void write(const std::string& fn);		///< Write points to a .vtk polydata file as verts
 	void clear();
 
-	void add(std::array<float,3> p);
-	void add(std::array<double,3> p);
+	void add(std::array<float,3> p);		///< Insert a point
+	void add(std::array<double,3> p);		///< Insert a point
 
 
 private:
