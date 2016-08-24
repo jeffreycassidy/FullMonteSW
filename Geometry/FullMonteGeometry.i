@@ -57,6 +57,8 @@ namespace Source { namespace detail { template<class Base,class Derived>class cl
 #include <sstream>
 #include <FullMonteSW/Geometry/Filters/TetraMeshBaseFilter.hpp>
 #include <FullMonteSW/Geometry/Filters/TriFilterRegionBounds.hpp>
+#include <FullMonteSW/Geometry/Filters/TetraFilterByRegion.hpp>
+#include <FullMonteSW/Geometry/Filters/PlaneCrossingFilter.hpp>
 %}
 
 %nodefaultctor TetraMesh;
@@ -68,8 +70,11 @@ namespace Source { namespace detail { template<class Base,class Derived>class cl
 %template(FilterBaseI) FilterBase<int>;
 %template(FilterBaseU) FilterBase<unsigned>;
 %include "Filters/TetraMeshBaseFilter.hpp"
-%include "Filters/TetraMeshFilter.hpp"
+%include "Filters/TetraMeshFilterBase.hpp"
 %include "Filters/TriFilterRegionBounds.hpp"
+%include "Filters/TetraFilterByRegion.hpp"
+
+%include "Filters/PlaneCrossingFilter.hpp"
 
 
 

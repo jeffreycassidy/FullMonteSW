@@ -1,4 +1,4 @@
-ADD_LIBRARY(FullMonteData SHARED FluenceConverter.cpp OutputDataSummarize.cpp MCConservationCounts.cpp OutputData.cpp MCEventCounts.cpp AbsorptionSum.cpp DirectionalSurface.cpp FluenceLineQuery.cpp DoseSurfaceHistogramGenerator.cpp)
+ADD_LIBRARY(FullMonteData SHARED FluenceConverter.cpp OutputDataSummarize.cpp MCConservationCounts.cpp OutputData.cpp MCEventCounts.cpp AbsorptionSum.cpp DirectionalSurface.cpp FluenceLineQuery.cpp DoseSurfaceHistogramGenerator.cpp DoseVolumeHistogramGenerator.cpp)
 TARGET_LINK_LIBRARIES(FullMonteData FullMonteGeometry)
 
 IF (WRAP_TCL)

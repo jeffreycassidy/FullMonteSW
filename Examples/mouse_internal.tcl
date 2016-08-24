@@ -79,6 +79,11 @@ TriFilterRegionBounds TF
     TF includeRegion 3  1
 
 
+TetraFilterByRegion MF
+    MF mesh $mesh
+    MF include 12 1
+
+
 
 $mesh setFacesForFluenceCounting TF
 
@@ -102,10 +107,6 @@ vtkMergeDataObjectFilter mergeVolume
 vtkUnstructuredGridWriter VW
     VW SetInputConnection [mergeVolume GetOutputPort]
     VW SetFileName "mouse.volume.vtk"
-
-
-FluenceConverter FC
-    FC mesh $mesh
 
 
 
@@ -149,10 +150,15 @@ DoseSurfaceHistogramGenerator DSHG
     DSHG mesh $mesh
     DSHG filter TF
 
+DoseVolumeHistogramGenerator DVHG
+    DVHG mesh $mesh
+    DVHG filter MF
+
 BidirectionalFluence BF
 
 FluenceConverter FC
     FC mesh $mesh
+    FC materials $opt
 
 for { set i 0 } { $i < $N } { incr i } {
 
@@ -177,6 +183,8 @@ for { set i 0 } { $i < $N } { incr i } {
 
     set Emap [FC convertToEnergyDensity [k getVolumeAbsorbedEnergyMap]]
 
+    set phiV [FC convertToFluence [k getVolumeAbsorbedEnergyMap]]
+
     vtkFullMonteArrayAdaptor EmapAdaptor
         EmapAdaptor source $Emap
 
@@ -200,6 +208,13 @@ for { set i 0 } { $i < $N } { incr i } {
     volumeFieldData AddArray [PhiAdaptor result]
 
     $dsh print
+
+    DVHG fluence $phiV
+    set dvh [DVHG result]
+
+    puts "DVH generated"
+
+    $dvh print
 
     VTKW SetFileName "internalsurface.vtk"
     VTKW Update

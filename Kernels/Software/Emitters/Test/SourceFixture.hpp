@@ -17,7 +17,7 @@
 
 #include "PacketDirectionFixture.hpp"
 
-/** A test fixture that combines a position with a direction distribution, as well as orthogonality checking for the packet
+/** A test fixture that combines a position fixture with a direction fixture, as well as orthogonality checking for the packet
  *
  * checks packet direction (orthonormality)
  * checks packet direction distribution	 vis DirectionFixture::testDirection

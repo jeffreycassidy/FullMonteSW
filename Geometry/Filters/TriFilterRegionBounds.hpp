@@ -8,9 +8,9 @@
 #ifndef GEOMETRY_FILTERS_TRIFILTERREGIONBOUNDS_HPP_
 #define GEOMETRY_FILTERS_TRIFILTERREGIONBOUNDS_HPP_
 
-#include "TetraMeshFilter.hpp"
 #include "FilterBase.hpp"
 #include <vector>
+#include "TetraMeshFilterBase.hpp"
 
 class TetraMesh;
 
@@ -18,11 +18,11 @@ class TetraMesh;
  * also captures entering.
  */
 
-class TriFilterRegionBounds : public TetraMeshFilter, public FilterBase<int>
+class TriFilterRegionBounds : public TetraMeshFilterBase, public FilterBase<int>
 {
 public:
 	/// Default-construct including all materials
-	explicit TriFilterRegionBounds(const TetraMesh* m=nullptr) : TetraMeshFilter(m)
+	explicit TriFilterRegionBounds(const TetraMesh* m=nullptr) : TetraMeshFilterBase(m)
 	{
 	}
 

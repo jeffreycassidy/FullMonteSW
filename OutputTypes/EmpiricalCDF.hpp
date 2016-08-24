@@ -37,7 +37,7 @@ public:
 	EmpiricalCDF(const std::vector<std::pair<Value,Weight>>& v,const Comp& comp=Comp());
 
 	/// Load EmpiricalCDF from pre-processed values (already sorted and accumulated: values are sorted (x,F(x))
-	static EmpiricalCDF<Value,Weight,Comp> load(const std::vector<std::pair<Value,Weight>>& v,const Comp& comp=Comp());
+	//static EmpiricalCDF<Value,Weight,Comp> load(const std::vector<std::pair<Value,Weight>>& v,const Comp& comp=Comp());
 
 	/// Return the percentile (0-100%) for a given value
 	float percentileOfValue(Value v) const;
