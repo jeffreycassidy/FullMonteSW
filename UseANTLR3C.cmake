@@ -1,3 +1,4 @@
+FIND_PACKAGE(ANTLR3 REQUIRED)
 FIND_PACKAGE(Java REQUIRED)
 
 # Disable some harmless warnings thrown by Clang and G++
