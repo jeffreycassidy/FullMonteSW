@@ -30,6 +30,12 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-missing-braces")
 
 MESSAGE("Arch: ${ARCH}")
 
+## Require .so extension (Mac likes to make it .dylib, causing a lot of the TCL scripts to bomb)
+
+IF(APPLE)
+    SET(CMAKE_SHARED_LIBRARY_SUFFIX ".so")
+ENDIF()
+
 IF("${ARCH}" STREQUAL "avx2")
     ADD_DEFINITIONS(-DUSE_AVX2 -DHAVE_AVX2)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")

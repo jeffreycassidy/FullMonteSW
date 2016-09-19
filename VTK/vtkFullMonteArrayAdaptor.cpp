@@ -40,18 +40,26 @@ void vtkFullMonteArrayAdaptor::source(const char *mptr)
 			source(static_cast<const VolumeAbsorbedEnergyDensityMap*>(pInfo.p));
 		else if (type == "VolumeFluenceMap")
 			source(static_cast<const VolumeFluenceMap*>(pInfo.p));
+		else if (type == "SurfaceFluenceMap")
+			source(static_cast<const SurfaceFluenceMap*>(pInfo.p));
 		else
 		{
 			cout << "ERROR: SWIG pointer '" << mptr << "' is not a VolumeAbsorbedEnergyDensityMap" << endl;
 			source((const VolumeFluenceMap*)nullptr);
 		}
-
 	}
 	else
 	{
 		cout << "ERROR: Failed to convert SWIG pointer '" << mptr << "'" << endl;
 		source((const VolumeFluenceMap*)nullptr);
 	}
+}
+
+void vtkFullMonteArrayAdaptor::source(const SurfaceFluenceMap* phi)
+{
+	m_type=SurfaceFluence;
+	m_fullMonteFluenceS=phi;
+	update();
 }
 
 void vtkFullMonteArrayAdaptor::source(const VolumeFluenceMap* phi)
@@ -70,9 +78,22 @@ void vtkFullMonteArrayAdaptor::source(const VolumeAbsorbedEnergyDensityMap* E)
 
 void vtkFullMonteArrayAdaptor::update()
 {
-	m_vtkArray->SetNumberOfTuples(m_type == Energy ? (*m_fullMonteArray)->dim() : (*m_fullMonteFluence)->dim());
+	switch(m_type)
+	{
+	case Energy:
+		m_vtkArray->SetNumberOfTuples((*m_fullMonteArray)->dim()); break;
+	case Fluence:
+		m_vtkArray->SetNumberOfTuples((*m_fullMonteFluence)->dim()); break;
+	case SurfaceFluence:
+		m_vtkArray->SetNumberOfTuples((*m_fullMonteFluenceS)->dim()); break;
+	default:
+		throw std::logic_error("Unexpected array type");
+	}
 
 	vtkFloatArray* arrayF = vtkFloatArray::SafeDownCast(m_vtkArray);
+
+	if (!m_vtkArray)
+		throw std::logic_error("Null pointer for m_vtkArray in vtkFullMonteArrayAdaptor::update()");
 
 	if (m_type == Energy)
 	{
@@ -81,12 +102,22 @@ void vtkFullMonteArrayAdaptor::update()
 
 		m_vtkArray->SetName("Absorbed Energy Density J/cm3");
 
-	} else 	{
+	}
+	else if (m_type == SurfaceFluence)
+	{
+		for(const auto i : (*m_fullMonteFluenceS)->nonzeros())
+			arrayF->SetValue(i.first,i.second);
+
+		m_vtkArray->SetName("Fluence J/cm2");
+	}
+	else if (m_type == Fluence)	{
 		for(const auto i : (*m_fullMonteFluence)->nonzeros())
 			arrayF->SetValue(i.first,i.second);
 
 		m_vtkArray->SetName("Fluence J/cm2");
 	}
+	else
+		throw std::logic_error("Invalid fluence type in vtkFullMonteArrayAdaptor");
 
 	Modified();
 }
