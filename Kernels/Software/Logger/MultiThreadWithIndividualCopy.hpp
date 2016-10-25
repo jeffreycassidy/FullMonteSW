@@ -11,77 +11,49 @@
 #include <mutex>
 #include <type_traits>
 
-/** Converts a single-thread logger into a multi-threaded one.
+#include "AbstractScorer.hpp"
+
+template<typename T>void clear(T&);
+
+/** MultiThreadWithIndividualCopy creates a Scorer from a simple single-threaded Logger type.
  *
- * SingleThreadLogger:
- * 		meets requirements of Logger
- * 			clear() clears state
- * 			state() returns a const& to the current state
- * 			default-constructible into same state as clear()
+ * It derives a new Logger type from the base, with an additional commit(AbstractScorer* S) method that merges
+ * the results to the parent and clears the copy. Merging is protected by a mutex to avoid hazards, and by
+ * default uses the += operator on the Logger::State type.
  *
- * Parent:
- * 		merge(SingleThreadLogger::State&) adds results in a thread-safe manner
- * 		get_worker() returns a ThreadWorker referenced to this object
- * 						derived from SingleThreadLogger and handling the same events
- * 						call to commit() calls parent's merge method, then clears the state
+ * Logger concept requirements:
+ *
+ * 		typedef State		State type held by the Logger
+ *
+ * 		Logger State concept requirements:
+ *
+ * 			operator+=(const State&)
+ * 			void clear(State&)
+ *
+ * 			OutputData* createOutputData(const State&)			Package up the output data
  */
 
-
-template<class SingleThreadLogger>class MultiThreadWithIndividualCopy
+template<class SingleThreadLoggerT>class MultiThreadWithIndividualCopy : public AbstractScorer
 {
 public:
 	MultiThreadWithIndividualCopy(){}
-	MultiThreadWithIndividualCopy(MultiThreadWithIndividualCopy&& base) :
-		m_state(std::move(base.m_state)),
-		m_mutex()
-	{}
 
-	typedef std::true_type is_logger;
+	/// The SingleThreadLoggerT with an added commit(AbstractScorer*) override
+	class Logger;
 
-	typedef typename SingleThreadLogger::State					State;
-	typedef MultiThreadWithIndividualCopy<SingleThreadLogger> 	Parent;
+	typedef SingleThreadLoggerT									SingleThreadLogger;
+	typedef typename SingleThreadLoggerT::State					State;
+	typedef MultiThreadWithIndividualCopy<SingleThreadLoggerT>	Parent;
 
-	class ThreadWorker : public SingleThreadLogger
-	{
-	public:
-		ThreadWorker(Parent& p) : m_parent(p){}
-		ThreadWorker(const ThreadWorker& t) : m_parent(t.m_parent){}
+	Logger get_logger(){ return Logger(); }
 
-		typedef std::true_type is_logger;
+	virtual void clear() override;								///< Clear the values in the parent state
+	virtual std::list<OutputData*> results() const override;	///< Package our state up and export it
 
-		~ThreadWorker(){ }
+	const State& state() const;
 
-		void commit()
-		{
-			m_parent.merge(this->SingleThreadLogger::state());
-			SingleThreadLogger::clear();
-		}
-
-		void eventCommit(){ commit(); }
-
-	private:
-		Parent&		m_parent;
-	};
-
-	ThreadWorker get_worker(){ return ThreadWorker(*this); }
-
-	void clear()
-	{
-		m_state = State();
-	}
-
-	void eventClear()
-	{
-		m_state = State();
-	}
-
-	void merge(const State& st)
-	{
-		std::unique_lock<std::mutex> L(m_mutex);
-		m_state += st;
-	}
-
-	std::list<OutputData*> results() const { return	SingleThreadLogger::results(m_state); }
+protected:
+	void merge(State& st);
 
 private:
 	std::mutex	m_mutex;
@@ -90,6 +62,40 @@ private:
 
 
 
+template<class SingleThreadLoggerT>const typename SingleThreadLoggerT::State& MultiThreadWithIndividualCopy<SingleThreadLoggerT>::state() const
+{
+	return m_state;
+}
 
+template<class SingleThreadLoggerT>void MultiThreadWithIndividualCopy<SingleThreadLoggerT>::merge(typename SingleThreadLoggerT::State& st)
+{
+	{
+		std::unique_lock<std::mutex> L(m_mutex);
+		m_state += st;
+	}
+	::clear(st);
+}
+
+template<class SingleThreadLoggerT>void MultiThreadWithIndividualCopy<SingleThreadLoggerT>::clear()
+{
+	::clear(m_state);
+}
+
+template<class SingleThreadLoggerT>class MultiThreadWithIndividualCopy<SingleThreadLoggerT>::Logger : public SingleThreadLoggerT
+{
+	public:
+		Logger(){}
+
+		void commit(AbstractScorer& S)
+		{
+			auto& parent = static_cast<Parent&>(S);
+			parent.merge(SingleThreadLoggerT::m_state);
+		}
+};
+
+template<class SingleThreadLoggerT>std::list<OutputData*> MultiThreadWithIndividualCopy<SingleThreadLoggerT>::results() const
+{
+	return std::list<OutputData*>{createOutputData(state())};
+}
 
 #endif /* KERNELS_SOFTWARE_LOGGER_MULTITHREADWITHINDIVIDUALCOPY_HPP_ */

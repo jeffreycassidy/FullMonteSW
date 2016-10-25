@@ -15,11 +15,14 @@ namespace Source {
 
 /** Source specified as a triangle of three point IDs */
 
-class SurfaceTri : public Source::detail::cloner<Surface,SurfaceTri> {
+class SurfaceTri : public Surface
+{
 public:
 	SurfaceTri(float w,std::array<unsigned,3> triPointIDs) :
-		cloner(w,-1U),
+		Surface(w,-1U),
 		m_triPointIDs(triPointIDs){}
+
+	DERIVED_SOURCE_MACRO(Abstract,SurfaceTri);
 
 	void 					triPointIDs(std::array<unsigned,3> ids)			{ m_triPointIDs=ids; 	}
 	std::array<unsigned,3>	triPointIDs()							const	{ return m_triPointIDs; }

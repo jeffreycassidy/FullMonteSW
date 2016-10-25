@@ -11,73 +11,40 @@
 #include "TetraMCKernel.hpp"
 #include "RNG_SFMT_AVX.hpp"
 
-#include <boost/align/aligned_alloc.hpp>
-
-#include <FullMonteSW/Kernels/Software/Logger/LoggerTuple.hpp>
-#include <FullMonteSW/Kernels/Software/Logger/LoggerEvent.hpp>
-#include <FullMonteSW/Kernels/Software/Logger/LoggerConservation.hpp>
-#include <FullMonteSW/Kernels/Software/Logger/LoggerSurface.hpp>
-#include <FullMonteSW/Kernels/Software/Logger/LoggerInternalSurface.hpp>
-#include <FullMonteSW/Kernels/Software/Logger/AccumulationArray.hpp>
-
-#include <FullMonteSW/Kernels/Software/Logger/MultiThreadWithIndividualCopy.hpp>
-
 #include "TetraMCKernelThread.hpp"
 
-#include <utility>
+#include "Logger/LoggerTuple.hpp"
+#include "Logger/SurfaceExitScorer.hpp"
+#include "Logger/ConservationScorer.hpp"
+#include "Logger/EventScorer.hpp"
 
-//extern template class Emitter::TetraEmitterFactory<RNG_SFMT_AVX>;
+typedef std::tuple<
+		EventScorer,
+		ConservationScorer,
+		SurfaceExitScorer>
+		TetraSurfaceScorer;
 
-class TetraSurfaceKernel : public TetraMCKernel<RNG_SFMT_AVX>
+class TetraSurfaceKernel : public TetraMCKernel<RNG_SFMT_AVX,TetraSurfaceScorer>
 {
-private:
-	typedef std::tuple<
-			MultiThreadWithIndividualCopy<LoggerEvent>,
-			MultiThreadWithIndividualCopy<LoggerConservation>,
-			LoggerSurface<QueuedAccumulatorMT<double> >
-			>
-			Logger;
-
-	typedef std::tuple<
-			MultiThreadWithIndividualCopy<LoggerEvent>::ThreadWorker,
-			MultiThreadWithIndividualCopy<LoggerConservation>::ThreadWorker,
-			LoggerSurface<QueuedAccumulatorMT<double>>::ThreadWorker>
-	Worker;
-
 public:
-	typedef RNG_SFMT_AVX RNG;
-	TetraSurfaceKernel(const TetraMesh* mesh) :
-		TetraMCKernel<RNG>(mesh)
-	{
-		get<2>(m_logger).resize(mesh->getNf()+1);
-		get<2>(m_logger).qSize(1<<14);
+	TetraSurfaceKernel(const TetraMesh* mesh);
 
-	}
-
-	ThreadedMCKernelBase::Thread* makeThread() override
-	{
-		void *p = boost::alignment::aligned_alloc(32,sizeof(TetraMCKernel<RNG>::Thread<Worker>));
-
-		if (!p)
-			throw std::bad_alloc();
-
-		// create the thread-local state
-		Thread<Worker>* t = new (p) TetraMCKernel<RNG>::Thread<Worker>(*this,get_worker(m_logger));
-
-		// seed its RNG
-		t->seed(getUnsignedRNGSeed());
-
-		return t;
-	}
-
-	/// Convenience function for retrieving the surface fluence
-	SurfaceFluenceMap getSurfaceFluenceMap() const;
+	const EventScorer& 				eventScorer() 			const { return get<0>(m_scorer); }
+	const ConservationScorer& 		conservationScorer() 	const { return get<1>(m_scorer); }
+	const SurfaceExitScorer& 		surfaceScorer() 		const { return get<2>(m_scorer); }
 
 private:
+	EventScorer& 				eventScorer()			{ return get<0>(m_scorer); }
+	ConservationScorer& 		conservationScorer() 	{ return get<1>(m_scorer); }
+	SurfaceExitScorer& 			surfaceScorer() 		{ return get<2>(m_scorer); }
+
 	virtual void postfinish() override;
 	virtual void prestart() override;
 
-	Logger m_logger;
+	virtual void prepareScorer() override
+	{
+		surfaceScorer().dim(mesh()->getNf()+1);
+	}
 };
 
 

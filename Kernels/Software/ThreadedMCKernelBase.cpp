@@ -42,6 +42,7 @@ void ThreadedMCKernelBase::prepare_()
 {
 	// get the parent class (shared state) ready
 	parentPrepare();
+	prepareScorer();
 
 	// create individual thread instances but do not start them yet
 	m_workers.resize(Nth_);
@@ -77,15 +78,9 @@ void ThreadedMCKernelBase::Thread::awaitFinish()
 	m_thread.join();
 }
 
-#include <sstream>
-
 void ThreadedMCKernelBase::Thread::threadFunction(ThreadedMCKernelBase::Thread* t)
 {
-	//std::stringstream ss;
-	//ss << "Starting a thread with " << t->m_nPktReq << " packets" << std::endl;
-	//std::cout << ss.str();
 	t->m_done=false;
 	t->doWork();
-	//std::cout << "  and we're done" << std::endl;
 	t->m_done=true;
 }

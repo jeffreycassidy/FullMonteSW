@@ -28,6 +28,8 @@ SET(ARCH avx2 CACHE STRING "Architecture flag for -m option")
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-missing-braces")
 
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+
 MESSAGE("Arch: ${ARCH}")
 
 ## Require .so extension (Mac likes to make it .dylib, causing a lot of the TCL scripts to bomb)
@@ -72,6 +74,8 @@ OPTION(WRAP_VTK ON)
 IF(WRAP_TCL)
     FIND_PACKAGE(SWIG REQUIRED)
     INCLUDE(${SWIG_USE_FILE})
+    
+    SET(CMAKE_SWIG_FLAGS ${CMAKE_SWIG_FLAGS} -Wall)
 
 	FIND_PACKAGE(TCL REQUIRED)
 	INCLUDE_DIRECTORIES(${TCL_INCLUDE_PATH})
@@ -83,7 +87,7 @@ ENDIF()
 
 
 ## Boost required components
-FIND_PACKAGE(Boost 1.58.0 REQUIRED COMPONENTS unit_test_framework serialization system program_options)
+FIND_PACKAGE(Boost 1.58.0 REQUIRED COMPONENTS unit_test_framework serialization system program_options timer)
 
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 LINK_DIRECTORIES(${Boost_LIBRARY_DIRS})
@@ -101,5 +105,4 @@ ADD_SUBDIRECTORY(Geometry)
 ADD_SUBDIRECTORY(Storage)
 ADD_SUBDIRECTORY(Kernels)
 ADD_SUBDIRECTORY(OutputTypes)
-
-
+ADD_SUBDIRECTORY(Queries)

@@ -56,11 +56,11 @@ set opt [R materials_simple]
 
 
 
-###### Configure source
+###### Configure source (Ball source with given centre and radius)
 
-set B [Ball_New]
-$B centre "10 40 11"
-$B radius 2
+Ball B
+B centre "10 40 11"
+B radius 2
 
 
 
@@ -70,7 +70,7 @@ $B radius 2
 
 TetraSurfaceKernel k $mesh
 
-k source $B
+k source B
     # the source to launch from
 
 k energy             50
@@ -114,19 +114,10 @@ k threadCount        8
 vtkFullMonteTetraMeshWrapper VTKM
     VTKM mesh $mesh
 
-# extract volume mesh with regions labelled
-vtkFieldData volumeFieldData
-    volumeFieldData AddArray [VTKM regions]
-
-
 # Create fluence wrapper
-vtkFullMonteSpatialMapWrapperFU vtkPhi
-
-set surfaceFluenceArray [vtkPhi array]
-    $surfaceFluenceArray SetName "Surface Fluence (au)"
+vtkFullMonteArrayAdaptor vtkPhi
 
 vtkFieldData surfaceFieldData
-    surfaceFieldData AddArray $surfaceFluenceArray
 
 vtkDataObject surfaceData
     surfaceData SetFieldData surfaceFieldData
@@ -143,10 +134,12 @@ TriFilterRegionBounds TF
     TF bidirectional 1
     TF includeRegion 0 1
 
+# create an ID list from the filter
 vtkFullMonteFilterTovtkIdList surfaceTriIDs 
     surfaceTriIDs mesh $mesh
     surfaceTriIDs filter [TF self]
 
+# extract the faces with listed IDs
 vtkExtractCells extractSurface
     extractSurface SetInputConnection [mergeFluence GetOutputPort]
     extractSurface SetCellList [surfaceTriIDs idList]
@@ -156,7 +149,7 @@ vtkExtractCells extractSurface
 vtkGeometryFilter geom
     geom SetInputConnection [extractSurface GetOutputPort]
 
-# write out the poly data
+# set up writer for the output poly data
 vtkPolyDataWriter VTKW
     VTKW SetInputConnection [geom GetOutputPort]
 
@@ -185,19 +178,19 @@ proc progresstimer {} {
 
 ###### Run N experiments with different source placements
 
-set N 9
+set N 5
 
 for { set i 0 } { $i < $N } { incr i } {
 
     puts "Trial $i of $N"
-    
+
     # set the random seed
 	k randSeed           $i
 
     # arbitrarily perturb the radius and centre of the ball source
-    $B radius [expr $i * 0.1 + 2.0]
-    $B centre "[expr $i * 1.0 + 10.0] 42 10"
-	k source $B
+    B radius [expr $i * 0.1 + 2.0]
+    B centre "[expr $i * 1.0 + 10.0] 42 10"
+	k source B
 
     # launch kernel, display progress timer, and await finish
 
@@ -205,9 +198,21 @@ for { set i 0 } { $i < $N } { incr i } {
     progresstimer
 	k finishAsync
 
-    # extract the fluence map from the finished kernel
-    vtkPhi source [k getSurfaceFluenceMap]
+    OutputDataSummarize OS
+
+    for { set r 0 } { $r < [k getResultCount] } { incr r } {
+        puts ""
+        puts "Result $r"
+        puts "  [k getResultByIndex $r]"
+        #puts "  [[k getResultByIndex $r] typeString]"
+        OS visit [k getResultByIndex $r]
+    }
+
+    vtkPhi source [k getResultByIndex 2]
     vtkPhi update
+    set A [vtkPhi array]
+
+    surfaceFieldData AddArray $A
 
     # Write the surface fluence data out to a .vtk file (binary format)
     #   updating the fluence map's VTK adaptor (vtkPhi) will ripple through the VTK pipeline when Update is called
@@ -215,4 +220,6 @@ for { set i 0 } { $i < $N } { incr i } {
     VTKW SetFileName "mouse.$i.surf.vtk"
     VTKW SetFileTypeToBinary
     VTKW Update
+
+    surfaceFieldData RemoveArray $A
 }

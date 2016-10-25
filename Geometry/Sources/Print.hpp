@@ -8,13 +8,13 @@
 #ifndef GEOMETRY_SOURCES_PRINT_HPP_
 #define GEOMETRY_SOURCES_PRINT_HPP_
 
-#include "Base.hpp"
+#include "Abstract.hpp"
 #include <iostream>
 
 namespace Source
 {
 
-std::ostream& operator<<(std::ostream& os,const Base& b);
+std::ostream& operator<<(std::ostream& os,const Abstract& b);
 
 }
 

@@ -47,7 +47,7 @@ namespace Emitter
 
 /** Set up an isotropic point source by locating the tetra enclosing it */
 
-template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::PointSource* ps)
+template<class RNG>void TetraEmitterFactory<RNG>::doVisit(Source::Point* ps)
 {
 	unsigned elHint = ps->elementHint(),el=-1U;
 
@@ -71,7 +71,7 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::PointSource* ps)
 
 /** Set up a pencil beam by locating the face on which it impinges */
 
-template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::PencilBeam* pb)
+template<class RNG>void TetraEmitterFactory<RNG>::doVisit(Source::PencilBeam* pb)
 {
 	SSE::Point3 position(pb->position());	// position input
 	std::array<float,3> pos;				// the position after advancing to the face
@@ -188,7 +188,7 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::PencilBeam* pb)
 	m_emitters.push_back(make_pair(pb->power(),pbs));
 }
 
-template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::SurfaceTri* st)
+template<class RNG>void TetraEmitterFactory<RNG>::doVisit(Source::SurfaceTri* st)
 {
 //	// find face in TetraMesh
 //	IDf = m.getFaceID(f);
@@ -217,10 +217,10 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::SurfaceTri* st)
 //
 //	m_emitters.push_back(make_pair(st->power(),sts));
 
-	throw std::logic_error("TetraEmitterFactory<RNG>::visit - unsupported (SurfaceTri)");
+	throw std::logic_error("TetraEmitterFactory<RNG>::doVisit - unsupported (SurfaceTri)");
 }
 
-template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Volume* vs)
+template<class RNG>void TetraEmitterFactory<RNG>::doVisit(Source::Volume* vs)
 {
 	unsigned IDt=vs->elementID();
 
@@ -239,7 +239,7 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Volume* vs)
 
 using namespace std;
 
-template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Line* l)
+template<class RNG>void TetraEmitterFactory<RNG>::doVisit(Source::Line* l)
 {
 	Emitter::EmitterBase<RNG>* ls=nullptr;
 
@@ -275,30 +275,30 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Line* l)
 		ls = new PositionDirectionEmitter<RNG,Line<RNG>,RandomInPlane<RNG>>(P,RandomInPlane<RNG>(P.displacement()));
 		break;
 	default:
-		throw std::logic_error("TetraEmitterFactory<RNG>::visit(Source::Line*) unsupported emission pattern");
+		throw std::logic_error("TetraEmitterFactory<RNG>::doVisit(Source::Line*) unsupported emission pattern");
 	}
 
 	m_emitters.push_back(make_pair(l->power(),ls));
 }
 
-template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Composite* c)
+template<class RNG>void TetraEmitterFactory<RNG>::doVisit(Source::Composite* c)
 {
-	for(Source::Base* el : c->elements())
+	for(Source::Abstract* el : c->elements())
 		el->acceptVisitor(this);
 }
 
-template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Surface* s)
+template<class RNG>void TetraEmitterFactory<RNG>::doVisit(Source::Surface* s)
 {
-	throw std::logic_error("TetraEmitterFactory<RNG>::visit - unsupported (Surface)");
+	throw std::logic_error("TetraEmitterFactory<RNG>::doVisit - unsupported (Surface)");
 }
 
-template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Base* s)
+template<class RNG>void TetraEmitterFactory<RNG>::doVisit(Source::Abstract* s)
 {
-	throw std::logic_error("TetraEmitterFactory<RNG>::visit - unsupported (Source::Base variant called for unknown type)");
+	throw std::logic_error("TetraEmitterFactory<RNG>::doVisit - unsupported (Source::Base variant called for unknown type)");
 }
 
 
-template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Ball* bs)
+template<class RNG>void TetraEmitterFactory<RNG>::doVisit(Source::Ball* bs)
 {
 	vector<unsigned> Ts = m_mesh->tetras_close_to(bs->centre(),bs->radius());
 	vector<float> w(Ts.size(), 0.0f);
@@ -313,7 +313,7 @@ template<class RNG>void TetraEmitterFactory<RNG>::visit(Source::Ball* bs)
 	for(unsigned i=0;i<Ts.size();++i)
 	{
 		Source::Volume vs(w[i]/wsum,Ts[i]);
-		visit(&vs);
+		doVisit(&vs);
 	}
 }
 

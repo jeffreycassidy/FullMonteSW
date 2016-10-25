@@ -1,7 +1,6 @@
 #include "OStreamObserver.hpp"
-#include <FullMonteSW/Kernels/Software/Logger/Logger.hpp>
-
 #include <FullMonteSW/OutputTypes/OutputData.hpp>
+#include "Software/Logger/BaseLogger.hpp"
 
 void OStreamObserver::notify_create(const Kernel& k)
 {
@@ -20,6 +19,6 @@ void OStreamObserver::notify_finish(const Kernel& k)
 
 void OStreamObserver::notify_result(const Kernel& k,const OutputData* lr)
 {
-	os << "Result available: " << lr->typeString() << endl;
+	//os << "Result available: " << lr->typeString() << endl;
 }
 

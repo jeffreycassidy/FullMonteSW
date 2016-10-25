@@ -86,7 +86,7 @@ using namespace std;
 //		throw write_exception("TIMOSWriter::write(std::vector<Material>&) writing failed");
 //}
 
-void TIMOSWriter::SourceVisitor::startVisit(Source::Base* b)
+void TIMOSWriter::SourceVisitor::visit(Source::Abstract* b)
 {
 	const auto f = m_os.flags();
 	m_os << setprecision(4) << fixed << right;
@@ -94,7 +94,7 @@ void TIMOSWriter::SourceVisitor::startVisit(Source::Base* b)
 	m_os.flags(f);
 }
 
-void TIMOSWriter::SourceVisitor::visit(Source::PointSource* p)
+void TIMOSWriter::SourceVisitor::doVisit(Source::Point* p)
 {
 	std::array<float,3> pos = p->position();
 	m_os << std::setw(2) << TIMOS::SourceDef::Point << ' ' <<
@@ -102,13 +102,13 @@ void TIMOSWriter::SourceVisitor::visit(Source::PointSource* p)
 			std::setw(10) << (unsigned long long)(p->power()) << endl;
 }
 
-void TIMOSWriter::SourceVisitor::visit(Source::Volume* v)
+void TIMOSWriter::SourceVisitor::doVisit(Source::Volume* v)
 {
 	m_os << std::setw(2) << TIMOS::SourceDef::Volume << ' ' << std::setw(7) << v->elementID() << ' ' <<
 			std::setw(10) << (unsigned long long)(v->power()) << std::endl;
 }
 
-void TIMOSWriter::SourceVisitor::visit(Source::SurfaceTri* st)
+void TIMOSWriter::SourceVisitor::doVisit(Source::SurfaceTri* st)
 {
 	std::array<unsigned,3> f = st->triPointIDs();
 	m_os << std::setw(2) << TIMOS::SourceDef::Face << ' ' <<
@@ -118,14 +118,14 @@ void TIMOSWriter::SourceVisitor::visit(Source::SurfaceTri* st)
 			std::setw(10) << (unsigned long long)(st->power()) << std::endl;
 }
 
-void TIMOSWriter::SourceVisitor::visit(Source::Composite* c)
+void TIMOSWriter::SourceVisitor::doVisit(Source::Composite* c)
 {
 	m_os << c->count() << endl;
-	for(Source::Base * s : c->elements())
+	for(Source::Abstract * s : c->elements())
 		s->acceptVisitor(this);
 }
 
-void TIMOSWriter::SourceVisitor::visit(Source::PencilBeam* pb)
+void TIMOSWriter::SourceVisitor::doVisit(Source::PencilBeam* pb)
 {
 	std::array<float,3> pos = pb->position();
 	std::array<float,3> dir = pb->direction();
@@ -136,17 +136,17 @@ void TIMOSWriter::SourceVisitor::visit(Source::PencilBeam* pb)
 		std::setw(10) << (unsigned long long)(pb->power()) << endl;
 }
 
-void TIMOSWriter::SourceVisitor::visit(Source::Ball* b)
+void TIMOSWriter::SourceVisitor::doVisit(Source::Ball* b)
 {}
-void TIMOSWriter::SourceVisitor::visit(Source::Line* l)
+void TIMOSWriter::SourceVisitor::doVisit(Source::Line* l)
 {}
-void TIMOSWriter::SourceVisitor::visit(Source::Base* b)
+void TIMOSWriter::SourceVisitor::doVisit(Source::Abstract* b)
 {}
-void TIMOSWriter::SourceVisitor::visit(Source::Surface* s)
+void TIMOSWriter::SourceVisitor::doVisit(Source::Surface* s)
 {}
 
 
-void TIMOSWriter::write(Source::Base* b)
+void TIMOSWriter::write(Source::Abstract* b)
 {
 	ostream* os;
 
@@ -158,7 +158,7 @@ void TIMOSWriter::write(Source::Base* b)
 	writeUserComments(*os,m_comment);
 
 	SourceVisitor SV(*os);
-	SV.startVisit(b);
+	SV.visit(b);
 
 	if (os != &cout)
 		delete os;

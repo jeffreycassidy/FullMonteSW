@@ -1,6 +1,5 @@
 #include "MCConservationCounts.hpp"
-
-template<>const std::string clonable<OutputData,MCConservationCountsOutput,OutputData::Visitor>::s_typeString = "conservation_counts";
+#include "OutputData.hpp"
 
 /// Add another ConservationCounts object to the current
 MCConservationCounts& MCConservationCounts::operator+=(const MCConservationCounts& cc)
@@ -16,4 +15,7 @@ MCConservationCounts& MCConservationCounts::operator+=(const MCConservationCount
 	return *this;
 }
 
-
+OutputData* createOutputData(const MCConservationCounts& C)
+{
+	return new MCConservationCountsOutput(C);
+}

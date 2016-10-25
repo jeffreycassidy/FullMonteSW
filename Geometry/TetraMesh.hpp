@@ -11,6 +11,8 @@
 
 #include <boost/functional/hash.hpp>
 
+#include <boost/timer/timer.hpp>
+
 #include "newgeom.hpp"
 
 template<typename T>class FilterBase;
@@ -213,6 +215,8 @@ private:
     	if(Archive::is_loading::value)		// reconstruct from the TetraMeshBase
     		buildTetrasAndFaces();
     }
+
+    boost::timer::cpu_timer m_timer;
 
     friend boost::serialization::access;
 };

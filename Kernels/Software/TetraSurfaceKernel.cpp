@@ -9,37 +9,35 @@
 #include <FullMonteSW/Kernels/Software/Logger/LoggerTuple.hpp>
 #include "TetraMCKernelThread.hpp"
 
-#include <FullMonteSW/OutputTypes/FluenceConverter.hpp>
-
-void TetraSurfaceKernel::postfinish()
-{
-	std::list<OutputData*> res = get<0>(m_logger).results();
-	res.splice(res.end(), get<1>(m_logger).results());
-	res.splice(res.end(), get<2>(m_logger).results());
-
-	dynamic_cast<SurfaceExitEnergyMap&>(*res.back()).totalEmitted(packetCount());
-
-	for(auto r : res)
-		addResults(r);
-}
+#include <iostream>
+using namespace std;
 
 void TetraSurfaceKernel::prestart()
 {
-	get<0>(m_logger).clear();
-	get<1>(m_logger).clear();
-	get<2>(m_logger).clear();
 }
 
-SurfaceFluenceMap TetraSurfaceKernel::getSurfaceFluenceMap() const
+void TetraSurfaceKernel::postfinish()
 {
-	const SurfaceExitEnergyMap *E = getResultByType<SurfaceExitEnergyMap>();
+	cout << "TetraSurfaceKernel is finished" << endl;
 
-	FluenceConverter FC;
-	FC.mesh(mesh());
-	FC.cmPerOutputLengthUnit(1.0f);
-	FC.scaleTotalEmittedTo(energy());
-	SurfaceFluenceMap phi = FC.convertToFluence(*E);
+	cout << dec << fixed << setprecision(5);
 
-	return phi;
+	cout << "  Energy launched: " << conservationScorer().state().w_launch << endl;
+
+	cout << "  SurfaceExitScorer stats" << endl;
+	cout << "     Accumulations: " << surfaceScorer().accumulator().accumulationCount() << endl;
+	cout << "       Expected exit count: " << eventScorer().state().Nexit << endl;
+	cout << "     Retries:       " << surfaceScorer().accumulator().retryCount() << endl;
+
+	unsigned Nf = mesh()->getNf()+1;
+
+	cout << "     Total energy:  " << surfaceScorer().total() << endl;
+	cout << "       Expected:    " << conservationScorer().state().w_exit << endl;
+
+	cout << "       Face 0: " << surfaceScorer().accumulator()[Nf] << endl;
 }
 
+TetraSurfaceKernel::TetraSurfaceKernel(const TetraMesh* mesh) :
+	TetraMCKernel<RNG,TetraSurfaceScorer>(mesh)
+{
+}

@@ -15,7 +15,7 @@ class PlacementBase;
  * Concrete instances are responsible for setting the underlying source's parameters when update() is called.
  */
 
-namespace Source { class Base; }
+namespace Source { class Abstract; }
 
 
 class PlacementMediatorBase
@@ -26,14 +26,14 @@ public:
 	void					placement(PlacementBase* p);
 	PlacementBase*			placement()							const	{ return m_placement;	}
 
-	void					source(Source::Base* s)						{ m_source=s;			}
-	Source::Base*			source()							const	{ return m_source;		}
+	void					source(Source::Abstract* s)						{ m_source=s;			}
+	Source::Abstract*			source()							const	{ return m_source;		}
 
 	virtual void			update()=0;
 
 private:
 	PlacementBase*		m_placement=nullptr;
-	Source::Base*		m_source=nullptr;
+	Source::Abstract*		m_source=nullptr;
 };
 
 

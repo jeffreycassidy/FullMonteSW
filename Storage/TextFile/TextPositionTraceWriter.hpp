@@ -1,0 +1,15 @@
+/*
+ * TextPositionTraceWriter.hpp
+ *
+ *  Created on: Sep 26, 2016
+ *      Author: jcassidy
+ */
+
+#ifndef STORAGE_TEXTFILE_TEXTPOSITIONTRACEWRITER_HPP_
+#define STORAGE_TEXTFILE_TEXTPOSITIONTRACEWRITER_HPP_
+
+
+
+
+
+#endif /* STORAGE_TEXTFILE_TEXTPOSITIONTRACEWRITER_HPP_ */

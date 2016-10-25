@@ -41,7 +41,7 @@ BOOST_AUTO_TEST_CASE(mouse)
 	R.setSourceFileName("/Users/jcassidy/src/FullMonteSW/data/mouse.source");
 
 	TetraMesh M = R.mesh();
-	Source::Base* src = R.sources();
+	Source::Abstract* src = R.sources();
 
 	Emitter::TetraEmitterFactory<RNG_SFMT_AVX> factory(&M);
 
@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE(mouse)
 
 #include <FullMonteSW/Geometry/Placement/PlanePlacement.hpp>
 
-#include <FullMonteSW/Geometry/Sources/Base.hpp>
+#include <FullMonteSW/Geometry/Sources/Abstract.hpp>
 
 #include <FullMonteSW/Geometry/Filters/TetraFilterByRegion.hpp>
 #include <FullMonteSW/Geometry/Filters/TriFilterRegionBounds.hpp>

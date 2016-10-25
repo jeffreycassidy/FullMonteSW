@@ -11,9 +11,9 @@
 #include <FullMonteSW/Geometry/Sources/PencilBeam.hpp>
 #include "TIMOS.hpp"
 
-Source::Base*	TIMOS::convertToSource(const TIMOS::SourceDef tSrc)
+Source::Abstract*	TIMOS::convertToSource(const TIMOS::SourceDef tSrc)
 {
-	Source::Base* src=nullptr;
+	Source::Abstract* src=nullptr;
 
 	switch(tSrc.type)
 	{
@@ -36,7 +36,7 @@ Source::Base*	TIMOS::convertToSource(const TIMOS::SourceDef tSrc)
 		break;
 
 	case TIMOS::SourceDef::Types::Point:
-		src = new Source::PointSource(
+		src = new Source::Point(
 				tSrc.w,
 				tSrc.details.point.pos);
 		break;
@@ -48,7 +48,7 @@ Source::Base*	TIMOS::convertToSource(const TIMOS::SourceDef tSrc)
 	return src;
 }
 
-TIMOS::SourceDef TIMOS::convertFromSource(const Source::Base* src)
+TIMOS::SourceDef TIMOS::convertFromSource(const Source::Abstract* src)
 {
 	TIMOS::SourceDef tSrc;
 
@@ -70,7 +70,7 @@ TIMOS::SourceDef TIMOS::convertFromSource(const Source::Base* src)
 		tSrc.type=TIMOS::SourceDef::Types::Volume;
 		tSrc.details.vol.tetID = vol->elementID();
 	}
-	else if (const Source::PointSource *pt = dynamic_cast<const Source::PointSource*>(src))
+	else if (const Source::Point *pt = dynamic_cast<const Source::Point*>(src))
 	{
 		tSrc.type=TIMOS::SourceDef::Types::Point;
 		tSrc.details.point.pos = pt->position();

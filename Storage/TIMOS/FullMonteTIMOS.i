@@ -8,7 +8,7 @@
 
 %{
 #include "TIMOS.hpp"
-#include <FullMonteSW/Geometry/Sources/Base.hpp>
+#include <FullMonteSW/Geometry/Sources/Abstract.hpp>
 #include <FullMonteSW/Geometry/TetraMesh.hpp>
 #include <FullMonteSW/Geometry/SimpleMaterial.hpp>
 #include <FullMonteSW/Storage/TIMOS/TIMOS.hpp>

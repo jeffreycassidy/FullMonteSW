@@ -1,6 +1,7 @@
 INCLUDE(${VTK_USE_FILE})
 
-SET(MODULES vtkFullMonteTetraMeshWrapper;vtkFullMonteTetraMeshBaseWrapper;vtkFullMonteSpatialMapWrapperFU;vtkFullMonteFilterTovtkIdList;vtkFullMonteFluenceLineQueryWrapper;vtkFullMonteArrayAdaptor)
+#SET(MODULES vtkFullMonteTetraMeshWrapper;vtkFullMonteTetraMeshBaseWrapper;vtkFullMonteFluenceLineQueryWrapper)
+SET(MODULES vtkFullMonteTetraMeshWrapper;vtkFullMonteTetraMeshBaseWrapper;vtkFullMonteFilterTovtkIdList;vtkFullMonteArrayAdaptor;vtkDoseHistogramWrapper)
 
 FOREACH(MOD ${MODULES})
 	LIST(APPEND MODULECPP "${MOD}.cpp")
@@ -9,7 +10,7 @@ ENDFOREACH()
 MESSAGE("MODULECPP = ${MODULECPP}")
 
 ADD_LIBRARY(FullMonteVTK SHARED ${MODULECPP} SwigWrapping.cpp)
-TARGET_LINK_LIBRARIES(FullMonteVTK ${VTK_LIBRARIES})
+TARGET_LINK_LIBRARIES(FullMonteVTK ${VTK_LIBRARIES} FullMonteData)
 
 IF(WRAP_TCL)
     FIND_PACKAGE(VTKWrapTcl REQUIRED)

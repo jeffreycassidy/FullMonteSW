@@ -5,7 +5,7 @@
  *      Author: jcassidy
  */
 
-#include <FullMonteSW/OutputTypes/FluenceLineQuery.hpp>
+#include <FullMonteSW/Queries/FluenceLineQuery.hpp>
 #include "vtkFullMonteFluenceLineQueryWrapper.h"
 
 #include <vtkPoints.h>

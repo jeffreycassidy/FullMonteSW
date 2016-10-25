@@ -7,7 +7,7 @@ load libFullMonteDataTCL.so
 
 load libFullMonteSWKernelTCL.so
 load libFullMonteKernelsTCL.so
-load libFullMonteVTKTCL.dylib
+load libFullMonteVTKTCL.so
 
 #default file prefix
 set pfx "/Users/jcassidy/src/FullMonteSW/data/TIM-OS/mouse/mouse"

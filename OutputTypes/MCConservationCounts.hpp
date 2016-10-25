@@ -10,6 +10,8 @@
 
 #include <boost/serialization/nvp.hpp>
 
+class OutputData;
+
 struct MCConservationCounts
 {
 	MCConservationCounts(){}
@@ -27,29 +29,27 @@ struct MCConservationCounts
     /// Add another ConservationCounts
     MCConservationCounts& operator+=(const MCConservationCounts&);
 
+    void clear(){ *this = MCConservationCounts(); }
 };
+
+OutputData* createOutputData(const MCConservationCounts&);
 
 #include "OutputData.hpp"
 
-//template<class Wrapped>class OutputDataWrapper : public clonable<OutputData,Wrapped>, public Wrapped
-//{
-//public:
-//
-//private:
-//	void acceptVisitor(OutputData::Visitor* v){ v->doVisit(this); }
-//};
-
-//typedef OutputDataWrapper<MCConservationCounts> MCConservationCountsOutput;
 
 
-class MCConservationCountsOutput : public clonable<OutputData,MCConservationCountsOutput,OutputData::Visitor>, public MCConservationCounts
+class MCConservationCountsOutput :
+		public OutputData,
+		public MCConservationCounts
 {
 public:
 	MCConservationCountsOutput() : MCConservationCounts(){}
 	MCConservationCountsOutput(const MCConservationCounts& C) : MCConservationCounts(C){}
 
-private:
-	void acceptVisitor(OutputData::Visitor* v){ v->doVisit(this); }
+	CLONE_METHOD(OutputData,MCConservationCountsOutput)
+	ACCEPT_VISITOR_METHOD(OutputData,MCConservationCountsOutput)
+
+	virtual const char* typeString() const override { return "Conservation Counts"; }
 
 private:
     template<class Archive>void serialize(Archive& ar,const unsigned ver)

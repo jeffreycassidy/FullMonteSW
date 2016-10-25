@@ -13,20 +13,21 @@
 class OutputDataSummarize : public OutputData::Visitor
 {
 public:
-	OutputDataSummarize(std::ostream& os);
+	OutputDataSummarize(std::ostream& os=std::cout);
+	~OutputDataSummarize(){}
 
-	void operator()(OutputData* d){ return visit(d); }
+	void visit(OutputData* d){ d->acceptVisitor(this); }
 
 private:
 	virtual void doVisit(MCConservationCountsOutput*) override;
 	virtual void doVisit(MCEventCountsOutput*) override;
-	virtual void doVisit(OutputData*) override;
-	virtual void doVisit(VolumeAbsorbedEnergyMap*) override;
-	virtual void doVisit(SurfaceExitEnergyMap*) override;
-	virtual void doVisit(SurfaceFluenceMap*) override;
-	virtual void doVisit(VolumeFluenceMap*) override;
-	virtual void doVisit(InternalSurfaceFluenceMap*) override;
-	virtual void doVisit(InternalSurfaceEnergyMap*) override;
+	virtual void doVisit(SpatialMap<float>*) override;
+//	virtual void doVisit(VolumeAbsorbedEnergyMap*) override;
+//	virtual void doVisit(SurfaceExitEnergyMap*) override;
+//	virtual void doVisit(SurfaceFluenceMap*) override;
+//	virtual void doVisit(VolumeFluenceMap*) override;
+//	virtual void doVisit(InternalSurfaceFluenceMap*) override;
+//	virtual void doVisit(InternalSurfaceEnergyMap*) override;
 
 	std::ostream& m_os;
 };

@@ -8,16 +8,18 @@
 #ifndef GEOMETRY_SOURCES_VOLUME_HPP_
 #define GEOMETRY_SOURCES_VOLUME_HPP_
 
-#include "Base.hpp"
+#include "Abstract.hpp"
 
 namespace Source {
 
 /** Source launching from within the volume of a single element, specified by ID */
 
-class Volume : public Source::detail::cloner<Base,Volume>
+class Volume : public Abstract
 {
 public:
-	Volume(float w,unsigned elementID) : cloner(w),m_element(elementID){}
+	Volume(float w,unsigned elementID) : Abstract(w),m_element(elementID){}
+
+	DERIVED_SOURCE_MACRO(Abstract,Volume)
 
 	unsigned 	elementID()				const	{ return m_element; }
 	void 		elementID(unsigned e)			{ m_element=e; 		}

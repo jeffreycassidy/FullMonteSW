@@ -11,57 +11,86 @@
 #include <tuple>
 #include <type_traits>
 
+/** log_event definition for tuple of Loggers std::tuple<L0,L1,...>: just dispatch to each one by calling log_event for each element */
+
 // dispatches the event to all members of a tuple
-template<std::size_t I=0,class LoggerTuple,class EventTag,typename... Args>inline
-	typename std::enable_if<( I < std::tuple_size<LoggerTuple>::value),void>::type log_event(LoggerTuple& l,EventTag e,Args... args)
+template<std::size_t I=0,class LoggerTuple,class ScorerTuple,class EventTag,typename... Args>inline
+	typename std::enable_if<( I < std::tuple_size<LoggerTuple>::value),void>::type log_event(LoggerTuple& l,ScorerTuple& s,EventTag e,Args... args)
 {
-	log_event(get<I>(l),e,args...);
-	log_event<I+1>(l,e,args...);
+	log_event(get<I>(l),get<I>(s),e,args...);
+	log_event<I+1>(l,s,e,args...);
 }
 
 // base case (I==tuple size, ie. one past end so do nothing)
-template<std::size_t I,class LoggerTuple,class EventTag,typename... Args>inline
-	typename std::enable_if<(I==std::tuple_size<LoggerTuple>::value),void>::type log_event(LoggerTuple& l,EventTag e,Args... args)
-{}
-
-// Good idea from Stack Overflow
-
-struct append_results
+template<std::size_t I,class LoggerTuple,class ScorerTuple,class EventTag,typename... Args>inline
+	typename std::enable_if<(I==std::tuple_size<LoggerTuple>::value),void>::type log_event(LoggerTuple& l,ScorerTuple& s,EventTag e,Args... args)
 {
-	append_results(std::list<OutputData*>& l_) : l(l_){};
-	template<typename L>void operator()(const L& i) const { l.splice(l.end(), i.results()); }
-private:
-	std::list<OutputData*>& l;
-};
-
-template<std::size_t I=0,typename FuncT,typename... Tp>inline typename std::enable_if<I==sizeof...(Tp),void>::type
-		tuple_for_each(const std::tuple<Tp...>&,FuncT){}
-
-template<std::size_t I=0,typename FuncT,typename... Tp>inline typename std::enable_if<I < sizeof...(Tp),void>::type
-		tuple_for_each(const std::tuple<Tp...>& t,FuncT f)
-{
-	f(std::get<I>(t));
-	tuple_for_each<I+1,FuncT,Tp...>(t,f);
 }
 
 
-// Defines get_worker
+
+// dispatches the event to all members of a tuple
+template<std::size_t I=0,class LoggerTuple,class ScorerTuple>inline
+	typename std::enable_if<( I < std::tuple_size<LoggerTuple>::value),void>::type commit(LoggerTuple& l,ScorerTuple& s)
+{
+	get<I>(l).commit(get<I>(s));
+	commit<I+1>(l,s);
+}
+
+// base case (I==tuple size, ie. one past end so do nothing)
+template<std::size_t I,class LoggerTuple,class ScorerTuple>inline
+	typename std::enable_if<(I==std::tuple_size<LoggerTuple>::value),void>::type commit(LoggerTuple& l,ScorerTuple& s)
+{
+}
+
+
+// dispatches the event to all members of a tuple
+template<std::size_t I=0,class... Loggers>inline
+	typename std::enable_if<( I < std::tuple_size<std::tuple<Loggers...>>::value),void>::type clear(std::tuple<Loggers...>& l)
+{
+	get<I>(l).clear();
+	clear<I+1>(l);
+}
+
+// base case (I==tuple size, ie. one past end so do nothing)
+template<std::size_t I,class... Loggers>inline
+	typename std::enable_if<(I==std::tuple_size<std::tuple<Loggers...>>::value),void>::type clear(std::tuple<Loggers...>& l)
+{
+}
+
+
+// Defines get_logger
 // TODO: Clean this up (use variadic args); probably needs a helper class to get the types right without infinite recursion
 
-template<class LA>std::tuple<typename LA::ThreadWorker> get_worker(std::tuple<LA>& t)
-		{ return make_tuple(get<0>(t).get_worker()); }
+template<class LA>std::tuple<typename LA::Logger> get_logger(std::tuple<LA>& t)
+		{ return std::tuple<typename LA::Logger>(
+					std::move(get<0>(t).get_logger())); }
 
-template<class LA,class LB>std::tuple<typename LA::ThreadWorker,typename LB::ThreadWorker> get_worker(std::tuple<LA,LB>& t)
-		{ return make_tuple(get<0>(t).get_worker(),get<1>(t).get_worker()); }
+template<class LA,class LB>std::tuple<typename LA::Logger,typename LB::Logger> get_logger(std::tuple<LA,LB>& t)
+		{ return std::tuple<typename LA::Logger,typename LB::Logger>(
+					std::move(get<0>(t).get_logger()),
+					std::move(get<1>(t).get_logger())); }
 
-template<class LA,class LB,class LC>std::tuple<typename LA::ThreadWorker,typename LB::ThreadWorker,typename LC::ThreadWorker> get_worker(std::tuple<LA,LB,LC>& t)
-		{ return make_tuple(get<0>(t).get_worker(),get<1>(t).get_worker(),get<2>(t).get_worker()); }
+template<class LA,class LB,class LC>std::tuple<typename LA::Logger,typename LB::Logger,typename LC::Logger> get_logger(std::tuple<LA,LB,LC>& t)
+		{ return std::tuple<typename LA::Logger,typename LB::Logger,typename LC::Logger>(
+					get<0>(t).get_logger(),
+					get<1>(t).get_logger(),
+					get<2>(t).get_logger()); }
 
-template<class LA,class LB,class LC,class LD>std::tuple<typename LA::ThreadWorker,typename LB::ThreadWorker,typename LC::ThreadWorker,typename LD::ThreadWorker> get_worker(std::tuple<LA,LB,LC,LD>& t)
-		{ return make_tuple(get<0>(t).get_worker(),get<1>(t).get_worker(),get<2>(t).get_worker(),get<3>(t).get_worker()); }
+template<class LA,class LB,class LC,class LD>std::tuple<typename LA::Logger,typename LB::Logger,typename LC::Logger,typename LD::Logger> get_logger(std::tuple<LA,LB,LC,LD>& t)
+		{ return std::tuple<typename LA::Logger,typename LB::Logger,typename LC::Logger,typename LD::Logger>(
+				std::move(get<0>(t).get_logger()),
+				std::move(get<1>(t).get_logger()),
+				std::move(get<2>(t).get_logger()),
+				std::move(get<3>(t).get_logger())); }
 
-template<class LA,class LB,class LC,class LD,class LE>std::tuple<typename LA::ThreadWorker,typename LB::ThreadWorker,typename LC::ThreadWorker,typename LD::ThreadWorker,typename LE::ThreadWorker> get_worker(std::tuple<LA,LB,LC,LD,LE>& t)
-		{ return make_tuple(get<0>(t).get_worker(),get<1>(t).get_worker(),get<2>(t).get_worker(),get<3>(t).get_worker(),get<4>(t).get_worker()); }
+template<class LA,class LB,class LC,class LD,class LE>std::tuple<typename LA::Logger,typename LB::Logger,typename LC::Logger,typename LD::Logger,typename LE::Logger> get_logger(std::tuple<LA,LB,LC,LD,LE>& t)
+		{ return std::tuple<typename LA::Logger,typename LB::Logger,typename LC::Logger,typename LD::Logger,typename LE::Logger>(
+				std::move(get<0>(t).get_logger()),
+				std::move(get<1>(t).get_logger()),
+				std::move(get<2>(t).get_logger()),
+				std::move(get<3>(t).get_logger()),
+				std::move(get<4>(t).get_logger())); }
 
 
 

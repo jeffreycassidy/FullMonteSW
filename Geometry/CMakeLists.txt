@@ -1,7 +1,10 @@
 ADD_SUBDIRECTORY(Placement)
 ADD_SUBDIRECTORY(Modifiers)
 
+ADD_SUBDIRECTORY(Units)
+
 ADD_LIBRARY(FullMonteGeometry SHARED TetraMeshBase.cpp TetraMesh.cpp Face.cpp newgeom.cpp Sources/Print.cpp Filters/TetraFilterByRegion.cpp Filters/TetraMeshBaseFilter.cpp Filters/TetraMeshFilterBase.cpp RayWalk.cpp Filters/TriFilterRegionBounds.cpp Basis.cpp MeshChecker.cpp Filters/PlaneCrossingFilter.cpp)
+TARGET_LINK_LIBRARIES(FullMonteGeometry ${Boost_TIMER_LIBRARIES})
 
 IF(WRAP_VTK)
 	ADD_EXECUTABLE(CheckMesh CheckMesh.cpp)
@@ -30,3 +33,4 @@ IF(WRAP_VTK)
 	INCLUDE_DIRECTORIES(${VTK_INCLUDE_DIRS})
 	LINK_DIRECTORIES(${VTK_LIBRARY_DIRS} ${ANTLR3_LIB_DIR})
 ENDIF()
+

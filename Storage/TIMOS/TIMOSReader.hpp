@@ -27,7 +27,7 @@ public:
 	/// Just load the basic mesh
 	virtual TetraMeshBase					mesh_base() const;
 
-	virtual Source::Base*					sources() const;
+	virtual Source::Abstract*					sources() const;
 
 	virtual std::vector<SimpleMaterial>		materials_simple() const;
 #ifndef SWIG

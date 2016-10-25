@@ -294,4 +294,27 @@ template<typename Value,typename Index>template<class ValueRange>SparseVector<Va
 	construct();
 }
 
+
+//template<typename Value,typename Index>SpatialMapBase<Value,Index>* SpatialMapBase<Value,Index>::newFromVector(std::vector<Value>&& v)
+//{
+//	unsigned nnz=0;
+//	for(const auto val : v)
+//		nnz += nonzero(val);
+//
+//	unsigned Nbsparse = (sizeof(Value)+sizeof(Index))*nnz;
+//	unsigned Nbdense  = sizeof(Value)*v.size();
+//
+//	SpatialMapBase<Value,Index>* m=nullptr;
+//
+//	if (Nbsparse < Nbdense)
+//	{
+//		m = new SpatialMapContainer<SparseVector<Value,Index>>(value_range_t(), v, nnz);
+//		v.clear();
+//	}
+//	else
+//		m = new SpatialMapContainer<DenseVector<Value,Index>>(std::move(v));
+//
+//	return m;
+//}
+
 #endif /* OUTPUTTYPES_SPARSEVECTOR_HPP_ */

@@ -8,7 +8,7 @@
 #ifndef GEOMETRY_SOURCES_LINE_HPP_
 #define GEOMETRY_SOURCES_LINE_HPP_
 
-#include "Base.hpp"
+#include "Abstract.hpp"
 
 #include <FullMonteSW/Geometry/StandardArrayKernel.hpp>
 
@@ -17,14 +17,19 @@
 
 namespace Source {
 
-class Line : public Source::detail::cloner<Base,Line>
+class Line : public Abstract
 {
 
 public:
 	enum Pattern { Isotropic, Normal };
 
-	explicit Line(float w=1.0) : cloner(w){}
-	Line(float w,std::array<float,3> ep0,std::array<float,3> ep1) : cloner(w), m_endpoint{ep0,ep1}{}
+	explicit Line(float w=1.0) : Abstract(w)
+		{}
+	Line(float w,std::array<float,3> ep0,std::array<float,3> ep1) :
+		Abstract(w),
+		m_endpoint{ep0,ep1}{}
+
+	DERIVED_SOURCE_MACRO(Abstract,Line)
 
 	std::array<float,3>			endpoint(unsigned i)						const	{ return m_endpoint[i]; }
 	void						endpoint(unsigned i,std::array<float,3> p)			{ m_endpoint[i]=p;		}

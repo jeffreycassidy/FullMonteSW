@@ -9,7 +9,7 @@
 #include <vector>
 #include <iostream>
 
-namespace Source { class Base; };
+namespace Source { class Abstract; };
 
 class TIMOS
 {
@@ -80,8 +80,8 @@ protected:
 		float n_ext=NAN;
 	};
 
-	static Source::Base* 	convertToSource(SourceDef);
-	static SourceDef 		convertFromSource(const Source::Base*);
+	static Source::Abstract* 	convertToSource(SourceDef);
+	static SourceDef 		convertFromSource(const Source::Abstract*);
 
 	std::string sourceFn_,optFn_,meshFn_,legendFn_;
 

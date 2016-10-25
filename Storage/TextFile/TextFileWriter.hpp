@@ -20,8 +20,10 @@ public:
 
 
 private:
-	virtual void doVisit(FluenceLineQuery* lq) override;
+//	virtual void doVisit(FluenceLineQuery* lq) override;
+	virtual void doVisit(OutputData* lq) override;
 	std::string m_fnPfx="output";
+
 };
 
 

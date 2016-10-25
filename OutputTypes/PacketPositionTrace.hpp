@@ -8,86 +8,54 @@
 #ifndef OUTPUTTYPES_PACKETPOSITIONTRACE_HPP_
 #define OUTPUTTYPES_PACKETPOSITIONTRACE_HPP_
 
-#include <iostream>
-#include <fstream>
 #include <array>
 #include <vector>
 
-struct TraceStep
-	{
-		std::array<float,3>		pos;
-		float					w;
-	};
+#include <FullMonteSW/Kernels/Event.hpp>
 
-
-/** Holds the trace of one packet, as a series of (pos,w) steps.
+/** Position trace of a single packet providing a series of steps (pos, weight, lengthTravelled, timeTravelled)
  *
  */
 
 class PacketPositionTrace
 {
-
 public:
-
-	PacketPositionTrace(){}
-
-	PacketPositionTrace(std::vector<TraceStep>&& tr) : trace_(std::move(tr)){}
-
-	static std::vector<PacketPositionTrace> loadTextFile(const std::string fn)
+	typedef std::array<float,3> Point3;
+	struct Step
 	{
-		std::vector<PacketPositionTrace> 	v;
-		std::vector<TraceStep>   	traceSteps;
+		Point3				pos;	///< Position
 
-		std::size_t Ntr,Nst;
+		float				w;		///< Weight (0..1)
+		float				l;		///< Cumulative length traveled
+		float 				t;		///< Time (simulation units)
 
-		std::ifstream is (fn.c_str());
+		KernelEvent::Type 	event;
+	};
 
-		std::string s;
+	PacketPositionTrace();
+	PacketPositionTrace(std::vector<Step>&& tr);
 
-		if (!is.good())
-			throw std::logic_error("Failed to open file");
+	~PacketPositionTrace();
 
-		// strip leading comments
+	float 		length() 						const;	///< Physical length of the trace
+	unsigned 	count() 						const;	///< Count of the number of steps
+	float		duration() 						const;	///< Time duration of the trace
 
-		char c;
+	Point3 		positionAtTime(float t) 		const;	///< Position after traveling a given amount of time
+	Point3 		positionAfterLength(float l) 	const;	///< Position after traveling a given length
 
-		while((c=is.peek()), !is.eof() && (c == '%' || c == '#'))
-		{
-			std::getline(is,s);
-			std::cout << "INFO: comment line '" << s << "'" << std::endl;
-		}
+	const Step&	operator[](unsigned i)			const;	///< The i'th step
 
-		is >> Ntr;
-
-		v.resize(Ntr);
-
-		std::cout << "  Has " << Ntr << " traces" << std::endl;
-
-		for(unsigned tr=0;tr < Ntr && !is.eof(); ++tr)
-		{
-			is >> Nst;
-
-			std::cout << "    " << Nst << " steps" << std::endl;
-
-			traceSteps.resize(Nst);
-
-			for(unsigned i=0;i<Nst && !is.eof(); ++i)
-				is >> traceSteps[i].pos[0] >> traceSteps[i].pos[1] >> traceSteps[i].pos[2] >> traceSteps[i].w;
-			v[tr] = PacketPositionTrace(std::move(traceSteps));
-		}
-
-		return v;
-	}
-
-	std::vector<TraceStep>::const_iterator begin() const { return trace_.begin(); }
-	std::vector<TraceStep>::const_iterator end() const { return trace_.end(); }
-
-	const std::vector<TraceStep>& steps() const { return trace_; }
+	std::vector<Step>::const_iterator begin() const { return m_trace.begin(); }
+	std::vector<Step>::const_iterator end()   const { return m_trace.end();   }
 
 private:
-	std::vector<TraceStep> trace_;
+	static bool compareTime(const Step& s,float t);
+	static bool compareLength(const Step& s,float l);
 
+	std::vector<Step> m_trace;
 };
+
 
 
 

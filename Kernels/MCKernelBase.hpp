@@ -44,6 +44,7 @@ protected:
 	virtual void prepare_() override=0;
 	virtual void start_() override=0;
 
+
 	unsigned long long Npkt_=1000000;
 	unsigned Nstep_max_=10000;
 	unsigned Nhit_max_=10000;

@@ -8,27 +8,31 @@
 #ifndef GEOMETRY_SOURCES_COMPOSITE_HPP_
 #define GEOMETRY_SOURCES_COMPOSITE_HPP_
 
-#include "Base.hpp"
+#include "Abstract.hpp"
 #include <vector>
 #include <boost/range.hpp>
 
+#include <FullMonteSW/OutputTypes/clonable.hpp>
+
 namespace Source {
 
-class Composite : public Source::detail::cloner<Base,Composite>
+class Composite : public Abstract
 {
 public:
-	explicit Composite(float w=1.0) : cloner(w){}
-	Composite(float w,std::vector<Base*>&& srcs) : cloner(w),m_elements(srcs){}
+	explicit Composite(float w=1.0) : Abstract(w){}
+	Composite(float w,std::vector<Abstract*>&& srcs) : Abstract(w),m_elements(srcs){}
 
-	boost::iterator_range<std::vector<Source::Base*>::iterator> elements()
+	DERIVED_SOURCE_MACRO(Abstract,Composite)
+
+	boost::iterator_range<std::vector<Source::Abstract*>::iterator> elements()
 		{
-		return boost::iterator_range<std::vector<Source::Base*>::iterator>( m_elements.begin(), m_elements.end() );
+		return boost::iterator_range<std::vector<Source::Abstract*>::iterator>( m_elements.begin(), m_elements.end() );
 		}
 
 	unsigned count() const { return m_elements.size(); }
 
 private:
-	std::vector<Base*>		m_elements;
+	std::vector<Abstract*>		m_elements;
 };
 
 };

@@ -1,6 +1,6 @@
 ADD_SUBDIRECTORY(Emitters)
 
-ADD_LIBRARY(FullMonteSWKernel SHARED TetraVolumeKernel.cpp TetraSurfaceKernel.cpp TetraSVKernel.cpp SSEMath.cpp ThreadedMCKernelBase.cpp PacketDirection.cpp HenyeyGreenstein.cpp TetraMCKernel.cpp)
+ADD_LIBRARY(FullMonteSWKernel SHARED TetraVolumeKernel.cpp TetraSurfaceKernel.cpp TetraSVKernel.cpp SSEMath.cpp ThreadedMCKernelBase.cpp PacketDirection.cpp HenyeyGreenstein.cpp TetraMCKernel.cpp TraceKernel.cpp Logger/BaseLogger.cpp Logger/VolumeAbsorptionScorer.cpp Logger/SurfaceExitScorer.cpp Logger/AbstractScorer.cpp Logger/DirectedSurfaceScorer.cpp)
 TARGET_LINK_LIBRARIES(FullMonteSWKernel SFMT FullMonteKernelBase FullMonteData ${Boost_LIBRARIES})
 
 INSTALL(TARGETS FullMonteSWKernel
@@ -29,7 +29,7 @@ if (ANTLR3C_INCLUDE_DIR)
 		
 		SET_SOURCE_FILES_PROPERTIES(FullMonteSWKernel.i PROPERTIES CPLUSPLUS ON)
     	SWIG_ADD_MODULE(FullMonteSWKernelTCL tcl FullMonteSWKernel.i)
-    	SWIG_LINK_LIBRARIES(FullMonteSWKernelTCL ${TCL_LIBRARY} FullMonteGeometry FullMonteSWKernel)
+    	SWIG_LINK_LIBRARIES(FullMonteSWKernelTCL ${TCL_LIBRARY} FullMonteGeometry FullMonteSWKernel FullMonteData)
 
         INSTALL(TARGETS FullMonteSWKernelTCL
             DESTINATION lib)

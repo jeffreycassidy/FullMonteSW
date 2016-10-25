@@ -12,7 +12,7 @@
 
 #include <FullMonteSW/Geometry/TetraMesh.hpp>
 #include <FullMonteSW/Geometry/newgeom.hpp>
-#include <FullMonteSW/Geometry/Sources/Visitor.hpp>
+#include <FullMonteSW/Geometry/Sources/Abstract.hpp>
 #include <FullMonteSW/Geometry/Sources/SurfaceTri.hpp>
 #include <FullMonteSW/Geometry/Sources/Volume.hpp>
 #include <FullMonteSW/Geometry/Sources/PencilBeam.hpp>
@@ -31,7 +31,7 @@ public:
 
 	virtual ~TIMOSWriter(){}
 
-	void write(Source::Base*);
+	void write(Source::Abstract*);
 
 	virtual void writeSurfFluence(std::string fn,const TetraMesh& mesh,const std::vector<double>& phi_s,std::string) const;
 	virtual void writeVolFluence(std::string fn,const TetraMesh& mesh,const std::vector<double>& phi_s,std::string) const;
@@ -50,27 +50,27 @@ private:
 
 #ifndef SWIG
 
-class TIMOSWriter::SourceVisitor : public Source::Visitor
+class TIMOSWriter::SourceVisitor : public Source::Abstract::Visitor
 {
 public:
 	SourceVisitor(std::ostream& os) : m_os(os){}
 
-	void print(Source::Base* b);
+	void print(Source::Abstract* b);
 
-	void startVisit(Source::Base* b);
+	void visit(Source::Abstract* b);
 
-	virtual void visit(Source::PointSource* p) 		override;
+	virtual void doVisit(Source::Point* p) 		override;
 
-	virtual void visit(Source::Volume* v) 		override;
+	virtual void doVisit(Source::Volume* v) 		override;
 
-	virtual void visit(Source::SurfaceTri* st) 	override;
-	virtual void visit(Source::Composite* c) 	override;
-	virtual void visit(Source::PencilBeam* pb) 	override;
+	virtual void doVisit(Source::SurfaceTri* st) 	override;
+	virtual void doVisit(Source::Composite* c) 	override;
+	virtual void doVisit(Source::PencilBeam* pb) 	override;
 
-	virtual void visit(Source::Ball* b)			override;
-	virtual void visit(Source::Line* l)			override;
-	virtual void visit(Source::Base* b)			override;
-	virtual void visit(Source::Surface* s)		override;
+	virtual void doVisit(Source::Ball* b)			override;
+	virtual void doVisit(Source::Line* l)			override;
+	virtual void doVisit(Source::Abstract* b)			override;
+	virtual void doVisit(Source::Surface* s)		override;
 
 private:
 	std::ostream& m_os;

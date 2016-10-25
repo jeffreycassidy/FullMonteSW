@@ -1,5 +1,5 @@
 /*
- * MCEventCount.cpp
+ * MCEventCounts.cpp
  *
  *  Created on: Feb 5, 2016
  *      Author: jcassidy
@@ -7,7 +7,7 @@
 
 #include "MCEventCounts.hpp"
 
-template<>const std::string clonable<OutputData,MCEventCountsOutput,OutputData::Visitor>::s_typeString = "mc_events";
+//template<>const std::string clonable<OutputData,MCEventCountsOutput,OutputData::Visitor>::s_typeString = "mc_events";
 
 MCEventCounts& MCEventCounts::operator+=(const MCEventCounts& rhs)
 {
@@ -26,6 +26,11 @@ MCEventCounts& MCEventCounts::operator+=(const MCEventCounts& rhs)
     Ntime       += rhs.Ntime;
     Nnohit      += rhs.Nnohit;
     return *this;
+}
+
+OutputData* createOutputData(const MCEventCounts& C)
+{
+	return new MCEventCountsOutput(C);
 }
 
 #include <boost/serialization/export.hpp>

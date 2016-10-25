@@ -9,34 +9,20 @@
 #include "TetraMCKernelThread.hpp"
 
 #include <FullMonteSW/OutputTypes/OutputDataSummarize.hpp>
-#include <FullMonteSW/OutputTypes/FluenceConverter.hpp>
-#include <FullMonteSW/OutputTypes/OutputDataSummarize.hpp>
 #include <boost/range/adaptor/indexed.hpp>
 
 #include <list>
 
+void TetraVolumeKernel::prestart()
+{
+}
+
 void TetraVolumeKernel::postfinish()
 {
-	std::list<OutputData*> res = get<0>(m_logger).results();
-	res.splice(res.end(), get<1>(m_logger).results());
-	res.splice(res.end(), get<2>(m_logger).results());
-
-	dynamic_cast<VolumeAbsorbedEnergyMap&>(*res.back()).totalEmitted(packetCount());
-
-	for(auto r : res)
-		addResults(r);
 }
 
-VolumeFluenceMap TetraVolumeKernel::getVolumeFluenceMap() const
+TetraVolumeKernel::TetraVolumeKernel(const TetraMesh* mesh) :
+	TetraMCKernel<RNG_SFMT_AVX,TetraVolumeScorer>(mesh)
 {
-	const VolumeAbsorbedEnergyMap *E = getResultByType<VolumeAbsorbedEnergyMap>();
-
-	FluenceConverter FC;
-	FC.mesh(mesh());
-	FC.cmPerOutputLengthUnit(1.0f);
-	FC.scaleTotalEmittedTo(energy());
-	FC.materials(&m_materials);
-	VolumeFluenceMap phi = FC.convertToFluence(*E);
-
-	return phi;
 }
+

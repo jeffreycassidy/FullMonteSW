@@ -8,7 +8,7 @@
 #include "OutputDataSummarize.hpp"
 #include "MCConservationCounts.hpp"
 #include "MCEventCounts.hpp"
-#include "FluenceMapBase.hpp"
+#include "SpatialMap.hpp"
 
 #include <iostream>
 
@@ -47,21 +47,22 @@ void OutputDataSummarize::doVisit(MCConservationCountsOutput* cc)
     m_os << "  Excessive steps: " << cc->w_abnormal << endl;
 }
 
-void OutputDataSummarize::doVisit(OutputData* d)
+void OutputDataSummarize::doVisit(SpatialMap<float>* M)
 {
-	m_os << "OutputDataSummarize visitor not defined for OutputData of type '" << d->typeString() << "'" << endl;
+	m_os << "SpatialMap<float>, dimension " << M->dim() << endl;
 }
 
-void OutputDataSummarize::doVisit(VolumeAbsorbedEnergyMap* em)
-{
-	m_os << "Volume absorbed energy map of dimension " << (*em)->dim() << " with total " << (*em)->sum() << " (" << (*em)->nnz() << " nonzeros, " << em->totalEmitted() << " emitted)" << endl;
-}
-
-void OutputDataSummarize::doVisit(SurfaceExitEnergyMap* sm)
-{
-	m_os << "Surface exit energy map of dimension " << (*sm)->dim() << " with total " << (*sm)->sum() << " (" << (*sm)->nnz() << " nonzeros, " << sm->totalEmitted() << " emitted)" << endl;
-}
-
+//
+//void OutputDataSummarize::doVisit(VolumeAbsorbedEnergyMap* em)
+//{
+//	m_os << "Volume absorbed energy map of dimension " << (*em)->dim() << " with total " << (*em)->sum() << " (" << (*em)->nnz() << " nonzeros, " << em->totalEmitted() << " emitted)" << endl;
+//}
+//
+//void OutputDataSummarize::doVisit(SurfaceExitEnergyMap* sm)
+//{
+//	m_os << "Surface exit energy map of dimension " << (*sm)->dim() << " with total " << (*sm)->sum() << " (" << (*sm)->nnz() << " nonzeros, " << sm->totalEmitted() << " emitted)" << endl;
+//}
+//
 
 void OutputDataSummarize::doVisit(MCEventCountsOutput* ec)
 {
@@ -90,26 +91,26 @@ void OutputDataSummarize::doVisit(MCEventCountsOutput* ec)
     m_os << "Balance ([launch] - [die + exit]): " << ec->Nlaunch-ec->Ndie-ec->Nexit-ec->Ntime-ec->Nabnormal-ec->Nnohit << endl;
 }
 
-void OutputDataSummarize::doVisit(SurfaceFluenceMap* sf)
-{
-
-	m_os << "OutputDataSummarize visitor not defined for OutputData of type '" << sf->typeString() << "'" << endl;
-}
-
-void OutputDataSummarize::doVisit(VolumeFluenceMap* vf)
-{
-
-	m_os << "OutputDataSummarize visitor not defined for OutputData of type '" << vf->typeString() << "'" << endl;
-}
-
-void OutputDataSummarize::doVisit(InternalSurfaceFluenceMap* sf)
-{
-
-	m_os << "OutputDataSummarize visitor not defined for OutputData of type '" << sf->typeString() << "'" << endl;
-}
-
-void OutputDataSummarize::doVisit(InternalSurfaceEnergyMap* se)
-{
-
-	m_os << "OutputDataSummarize visitor not defined for OutputData of type '" << se->typeString() << "'" << endl;
-}
+//void OutputDataSummarize::doVisit(SurfaceFluenceMap* sf)
+//{
+//
+//	m_os << "OutputDataSummarize visitor not defined for OutputData of type '" << sf->typeString() << "'" << endl;
+//}
+//
+//void OutputDataSummarize::doVisit(VolumeFluenceMap* vf)
+//{
+//
+//	m_os << "OutputDataSummarize visitor not defined for OutputData of type '" << vf->typeString() << "'" << endl;
+//}
+//
+//void OutputDataSummarize::doVisit(InternalSurfaceFluenceMap* sf)
+//{
+//
+//	m_os << "OutputDataSummarize visitor not defined for OutputData of type '" << sf->typeString() << "'" << endl;
+//}
+//
+//void OutputDataSummarize::doVisit(InternalSurfaceEnergyMap* se)
+//{
+//
+//	m_os << "OutputDataSummarize visitor not defined for OutputData of type '" << se->typeString() << "'" << endl;
+//}

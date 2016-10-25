@@ -8,17 +8,20 @@
 #ifndef GEOMETRY_SOURCES_SURFACE_HPP_
 #define GEOMETRY_SOURCES_SURFACE_HPP_
 
-#include "Base.hpp"
+#include "Abstract.hpp"
 
 namespace Source {
 
 /** Source specified as a surface element */
 
-class Surface : public Source::detail::cloner<Base,Surface> {
+class Surface : public Abstract
+{
 public:
-	Surface(float w,unsigned surfaceElement) :
-		cloner(w),
+	Surface(float w=1.0f,unsigned surfaceElement=-1U) :
+		Abstract(w),
 		m_surfaceElement(surfaceElement){}
+
+	DERIVED_SOURCE_MACRO(Abstract,Surface)
 
 	unsigned 	surfaceID()				const	{ return m_surfaceElement; 	}
 	void 		surfaceID(unsigned s)			{ m_surfaceElement=s; 		}

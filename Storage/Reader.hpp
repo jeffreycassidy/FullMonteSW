@@ -17,7 +17,7 @@ class Reader {
 public:
 	Reader(){}
 	virtual TetraMesh 						mesh()			const=0;
-	virtual std::vector<Source::Base*> 		sources()		const=0;
+	virtual std::vector<Source::Abstract*> 		sources()		const=0;
 
 	virtual ~Reader(){}
 

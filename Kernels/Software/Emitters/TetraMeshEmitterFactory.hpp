@@ -8,7 +8,7 @@
 #ifndef KERNELS_SOFTWARE_EMITTERS_TETRAMESHEMITTERFACTORY_HPP_
 #define KERNELS_SOFTWARE_EMITTERS_TETRAMESHEMITTERFACTORY_HPP_
 
-#include <FullMonteSW/Geometry/Sources/Visitor.hpp>
+#include <FullMonteSW/Geometry/Sources/Abstract.hpp>
 
 #include <boost/range.hpp>
 #include <boost/range/any_range.hpp>
@@ -30,28 +30,28 @@ template<typename RNG>class EmitterBase;
  * It inherits from Source::Visitor to generalize over source types.
  */
 
-template<class RNG>class TetraEmitterFactory : public Source::Visitor
+template<class RNG>class TetraEmitterFactory : public Source::Abstract::Visitor
 {
 
 public:
 	TetraEmitterFactory(){}
 	TetraEmitterFactory(const TetraMesh* M) : m_mesh(M){}
 
-	virtual void visit(Source::PointSource* p) 	override;
-	virtual void visit(Source::Ball* b)			override;
-	virtual void visit(Source::Line* l)			override;
-	virtual void visit(Source::Volume* v)		override;
-	virtual void visit(Source::Composite* c)	override;
-	virtual void visit(Source::Surface* s)		override;
-	virtual void visit(Source::SurfaceTri* st)	override;
-	virtual void visit(Source::Base* b)			override;
-	virtual void visit(Source::PencilBeam* b)	override;
+	virtual void doVisit(Source::Point* p) 		override;
+	virtual void doVisit(Source::Ball* b)			override;
+	virtual void doVisit(Source::Line* l)			override;
+	virtual void doVisit(Source::Volume* v)		override;
+	virtual void doVisit(Source::Composite* c)	override;
+	virtual void doVisit(Source::Surface* s)		override;
+	virtual void doVisit(Source::SurfaceTri* st)	override;
+	virtual void doVisit(Source::Abstract* b)		override;
+	virtual void doVisit(Source::PencilBeam* b)	override;
 
 	Emitter::EmitterBase<RNG>* emitter() const;
 
-	boost::iterator_range<std::vector<Source::Base*>::const_iterator> csources() const
+	boost::iterator_range<std::vector<Source::Abstract*>::const_iterator> csources() const
 		{
-			return boost::iterator_range<std::vector<Source::Base*>::const_iterator>(m_sources.cbegin(), m_sources.cend());
+			return boost::iterator_range<std::vector<Source::Abstract*>::const_iterator>(m_sources.cbegin(), m_sources.cend());
 		}
 
 	boost::any_range<
@@ -62,7 +62,7 @@ public:
 			}
 
 private:
-	std::vector<Source::Base*> 									m_sources;
+	std::vector<Source::Abstract*> 									m_sources;
 	std::vector<std::pair<float,Emitter::EmitterBase<RNG>*>>	m_emitters;
 	const TetraMesh*											m_mesh=nullptr;
 

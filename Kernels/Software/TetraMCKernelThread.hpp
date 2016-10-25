@@ -7,8 +7,6 @@
 #include <string>
 #include <iomanip>
 #include <FullMonteSW/Kernels/Software/Emitters/Base.hpp>
-#include <FullMonteSW/Kernels/Software/Logger/Logger.hpp>
-
 #include <FullMonteSW/Geometry/Tetra.hpp>
 
 #include <FullMonteSW/Kernels/Software/TetraMCKernel.hpp>
@@ -20,35 +18,12 @@
 
 #include "SSEConvert.hpp"	// for as_array
 
+#include "AutoStreamBuffer.hpp"
+#include "Logger/BaseLogger.hpp"
+
 #define MAX_MATERIALS 32
 
-class AutoStreamBuffer;
-template<class T>AutoStreamBuffer& operator<<(AutoStreamBuffer& sb,const T& v);
-
-class AutoStreamBuffer
-{
-public:
-	AutoStreamBuffer(std::ostream& os) : m_os(os){}
-	~AutoStreamBuffer()
-	{
-		m_os << m_ss.str();
-	}
-
-private:
-	std::ostream&		m_os;
-	std::stringstream	m_ss;
-
-	template<class T>friend AutoStreamBuffer& operator<<(AutoStreamBuffer&,const T&);
-};
-
-template<class T>AutoStreamBuffer& operator<<(AutoStreamBuffer& sb,const T& v)
-{
-	sb.m_ss << v;
-	return sb;
-}
-
-
-template<class RNGType>template<class Logger> class alignas(32) TetraMCKernel<RNGType>::Thread : public ThreadedMCKernelBase::Thread
+template<class RNGType,class Scorer>class alignas(32) TetraMCKernel<RNGType,Scorer>::Thread : public ThreadedMCKernelBase::Thread
 {
 public:
 	typedef RNGType RNG;
@@ -56,7 +31,7 @@ public:
 	~Thread(){ }
 
     // move-constructs the logger and gets thread ready to run but does not actually start it (call doWork())
-	Thread(const TetraMCKernel<RNGType>& K,Logger&& logger_);
+	Thread(TetraMCKernel<RNGType,Scorer>& K,Logger&& logger_);
 
     /// Main body which does all the work
     void doWork();
@@ -71,7 +46,7 @@ public:
     inline bool scatter(Packet& pkt,const TetraKernelBase::Material& mat,const Tetra& region);
 
 private:
-	const TetraMCKernel<RNG>& 		m_parentKernel;
+	TetraMCKernel<RNG,Scorer>& 			m_parentKernel;
 	Logger 	logger;											///< Logger object
     RNG 	m_rng;											///< Random-number generator
 
@@ -79,7 +54,7 @@ private:
 
 
 // move-constructs the logger and gets thread ready to run but does not actually start it (call start())
-template<class RNG>template<class Logger>TetraMCKernel<RNG>::Thread<Logger>::Thread(const TetraMCKernel<RNG>& K,Logger&& logger_) :
+template<class RNG,class Scorer>TetraMCKernel<RNG,Scorer>::Thread::Thread(TetraMCKernel<RNG,Scorer>& K,Logger&& logger_) :
 	m_parentKernel(K),
 	logger(std::move(logger_))
 {
@@ -90,17 +65,19 @@ template<class RNG>template<class Logger>TetraMCKernel<RNG>::Thread<Logger>::Thr
 		m_rng.gParamSet(i,m_parentKernel.materials()[i].g());
 }
 
-template<class RNG>template<class Logger>void TetraMCKernel<RNG>::Thread<Logger>::doWork()
+template<class RNG,class Scorer>void TetraMCKernel<RNG,Scorer>::Thread::doWork()
 {
 	LaunchPacket lpkt;
 
-	for( ; m_nPktDone < m_nPktReq; ++m_nPktDone)
+	clear(logger);
+
+		for( ; m_nPktDone < m_nPktReq; ++m_nPktDone)
 	{
 		lpkt = m_parentKernel.m_emitter->emit(m_rng);
 		doOnePacket(lpkt);
 	}
 
-	log_event(logger,Events::commit);
+	commit(logger,m_parentKernel.m_scorer);
 }
 
 enum TerminationResult { Continue=0, RouletteWin, RouletteLose, TimeGate, Other=-1  };
@@ -137,7 +114,7 @@ template<class RNG>pair<TerminationResult,double> terminationCheck(const double 
     	return make_pair(Continue,0.0);
 }
 
-template<class RNGType>template<class Logger>inline bool TetraMCKernel<RNGType>::Thread<Logger>::scatter(Packet& pkt,const TetraKernelBase::Material& mat,const Region& region)
+template<class RNGType,class Scorer>inline bool TetraMCKernel<RNGType,Scorer>::Thread::scatter(Packet& pkt,const TetraKernelBase::Material& mat,const Region& region)
 {
 	if (!mat.scatters())
 		return false;
@@ -162,7 +139,7 @@ inline pair<float,float> absorb(const Packet& pkt,const TetraKernelBase::Materia
 }
 
 
-template<class RNG>template<class Logger>int TetraMCKernel<RNG>::Thread<Logger>::doOnePacket(LaunchPacket lpkt)
+template<class RNG,class Scorer>int TetraMCKernel<RNG,Scorer>::Thread::doOnePacket(LaunchPacket lpkt)
 {
     unsigned Nhit,Nstep;
     StepResult stepResult;
@@ -179,7 +156,7 @@ template<class RNG>template<class Logger>int TetraMCKernel<RNG>::Thread<Logger>:
 
     Packet pkt(lpkt);
 
-    log_event(logger,Events::launch,make_pair(pkt.p,__m128(pkt.direction())),IDt,1.0);
+    log_event(logger,m_parentKernel.m_scorer,Events::Launch,std::make_pair(pkt.p,__m128(pkt.direction())),IDt,1.0);
 
     // start another hop
     for(Nstep=0; Nstep < m_parentKernel.Nstep_max_; ++Nstep)
@@ -209,7 +186,7 @@ template<class RNG>template<class Logger>int TetraMCKernel<RNG>::Thread<Logger>:
             		b << "Abnormal condition: stepResult.idx=" << stepResult.idx << ", IDte=" << stepResult.IDte <<
             			"  Terminating packet\n";
             	}
-                log_event(logger,Events::nohit,pkt,currTetra);
+                log_event(logger,m_parentKernel.m_scorer,Events::NoHit,pkt,currTetra);
                 return -1;
             }
             pkt.s = _mm_add_ps(
@@ -221,7 +198,7 @@ template<class RNG>template<class Logger>int TetraMCKernel<RNG>::Thread<Logger>:
             IDm_bound = m_parentKernel.m_mesh->getMaterial(stepResult.IDte);
 
             if (IDm == IDm_bound) { // no material change
-            	log_event(logger,Events::boundary,pkt.p,stepResult.IDfe,IDt,stepResult.IDte);
+            	log_event(logger,m_parentKernel.m_scorer,Events::Boundary,pkt.p,stepResult.IDfe,IDt,stepResult.IDte);
                 IDt_next = stepResult.IDte;
             }
             else // boundary with material change
@@ -231,11 +208,11 @@ template<class RNG>template<class Logger>int TetraMCKernel<RNG>::Thread<Logger>:
 
                 if (n1 == n2) // no refractive index difference
                 {
-                	log_event(logger,Events::boundary,pkt.p,stepResult.IDfe,IDt,stepResult.IDte);
+                	log_event(logger,m_parentKernel.m_scorer,Events::Boundary,pkt.p,stepResult.IDfe,IDt,stepResult.IDte);
                     IDt_next = stepResult.IDte;
                 }
                 else {
-                	log_event(logger,Events::interface,make_pair(pkt.p,__m128(pkt.direction())),stepResult.IDfe,stepResult.IDte);
+                	log_event(logger,m_parentKernel.m_scorer,Events::Interface,make_pair(pkt.p,__m128(pkt.direction())),stepResult.IDfe,stepResult.IDte);
                     __m128 Fn[4];
 
                     Fn[0] = currTetra.nx;
@@ -261,7 +238,7 @@ template<class RNG>template<class Logger>int TetraMCKernel<RNG>::Thread<Logger>:
                     if (_mm_movemask_ps(_mm_cmplt_ss(_mm_set_ss(1.0),_mm_movehl_ps(sini_cosi_sint_cost,sini_cosi_sint_cost)))&1)
                     {
                         newdir = reflect(__m128(pkt.direction()),normal,sini_cosi_sint_cost);
-                        log_event(logger,Events::reflect,pkt.p,__m128(pkt.direction()));
+                        log_event(logger,m_parentKernel.m_scorer,Events::ReflectInternal,pkt.p,__m128(pkt.direction()));
                     }
                     else {
                     	__m128 d_p = _mm_add_ps(
@@ -277,7 +254,7 @@ template<class RNG>template<class Logger>int TetraMCKernel<RNG>::Thread<Logger>:
 										pr))&1)
                         {
                             newdir = reflect(__m128(pkt.direction()),normal,sini_cosi_sint_cost);
-                            log_event(logger,Events::fresnel,pkt.p,__m128(pkt.direction()));
+                            log_event(logger,m_parentKernel.m_scorer,Events::ReflectFresnel,pkt.p,__m128(pkt.direction()));
                         }
                         else {
 						    newdir = _mm_sub_ps(
@@ -287,7 +264,7 @@ template<class RNG>template<class Logger>int TetraMCKernel<RNG>::Thread<Logger>:
 							    _mm_mul_ps(
 								    normal,
 								    _mm_shuffle_ps(sini_cosi_sint_cost,sini_cosi_sint_cost,_MM_SHUFFLE(3,3,3,3))));
-						    log_event(logger,Events::refract,pkt.p,__m128(pkt.direction()));
+						    log_event(logger,m_parentKernel.m_scorer,Events::Refract,pkt.p,__m128(pkt.direction()));
                             IDt_next = stepResult.IDte;
                         } // if: fresnel reflection
                     }
@@ -300,11 +277,11 @@ template<class RNG>template<class Logger>int TetraMCKernel<RNG>::Thread<Logger>:
             // changing tetras
             if (IDt_next != IDt)
             {
-            	log_event(logger,Events::newTetra,pkt,currTetra,stepResult.idx);
+            	log_event(logger,m_parentKernel.m_scorer,Events::NewTetra,pkt,currTetra,stepResult.idx);
 
             	if (IDt_next == 0)				// exiting mesh
             	{
-            		log_event(logger,Events::exit,make_pair(pkt.p,__m128(pkt.direction())),stepResult.IDfe,pkt.w);
+            		log_event(logger,m_parentKernel.m_scorer,Events::Exit,make_pair(pkt.p,__m128(pkt.direction())),stepResult.IDfe,pkt.w);
             		return 0;
             	}
             	else							// not exiting mesh
@@ -331,7 +308,7 @@ template<class RNG>template<class Logger>int TetraMCKernel<RNG>::Thread<Logger>:
         {
         	cerr << "Terminated due to unusual number of interface hits at tetra " << IDt
         			<< "  Nhit=" << Nhit << " dimensionless step remaining=" << as_array(pkt.s)[0]  << " w=" << pkt.w << endl;
-        	log_event(logger,Events::abnormal,pkt,Nstep,Nhit);
+        	log_event(logger,m_parentKernel.m_scorer,Events::Abnormal,pkt,Nstep,Nhit);
         	return -2;
         }
 
@@ -340,7 +317,7 @@ template<class RNG>template<class Logger>int TetraMCKernel<RNG>::Thread<Logger>:
         tie(pkt.w,dw) = absorb(pkt,currMat,currTetra);
 
         if (dw != 0.0)
-        	log_event(logger,Events::absorb,pkt.p,IDt,pkt.w,dw);
+        	log_event(logger,m_parentKernel.m_scorer,Events::Absorb,pkt.p,IDt,pkt.w,dw);
 
         // Termination logic
         TerminationResult term;
@@ -353,16 +330,16 @@ template<class RNG>template<class Logger>int TetraMCKernel<RNG>::Thread<Logger>:
         	break;
 
         case RouletteWin:							// Wins at roulette, dw > 0
-        	log_event(logger,Events::roulettewin,w0,pkt.w);
+        	log_event(logger,m_parentKernel.m_scorer,Events::RouletteWin,w0,pkt.w);
         	break;
 
         case RouletteLose:							// Loses at roulette, dw < 0
-        	log_event(logger,Events::roulettedie,pkt.w);
+        	log_event(logger,m_parentKernel.m_scorer,Events::Die,pkt.w);
         	return 0;
         	break;
 
         case TimeGate:								// Expires due to time gate
-        	log_event(logger,Events::timegate,pkt);
+        	log_event(logger,m_parentKernel.m_scorer,Events::TimeGate,pkt);
         	return 1;
         	break;
 
@@ -372,7 +349,7 @@ template<class RNG>template<class Logger>int TetraMCKernel<RNG>::Thread<Logger>:
         }
 
     	if (scatter(pkt,currMat,currTetra))
-    		log_event(logger,Events::scatter,__m128(pkt.direction()),__m128(pkt.direction()),std::numeric_limits<float>::quiet_NaN());
+    		log_event(logger,m_parentKernel.m_scorer,Events::Scatter,__m128(pkt.direction()),__m128(pkt.direction()),std::numeric_limits<float>::quiet_NaN());
     }
 
     {
@@ -386,7 +363,7 @@ template<class RNG>template<class Logger>int TetraMCKernel<RNG>::Thread<Logger>:
 //    cerr << "p=" << pkt.p << " d=" << __m128(pkt.direction()) << " a=" << pkt.a << " b=" << pkt.b << endl;
 //    cerr << "IDt=" << IDt << " |d|=" << norm(__m128(pkt.direction())) << endl;
 
-    log_event(logger,Events::abnormal,pkt,Nstep,Nhit);
+    log_event(logger,m_parentKernel.m_scorer,Events::Abnormal,pkt,Nstep,Nhit);
     return -1;
 }
 

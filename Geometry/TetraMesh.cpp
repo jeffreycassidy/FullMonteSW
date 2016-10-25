@@ -57,6 +57,7 @@ vector<unsigned> TetraMesh::facesBoundingRegion(unsigned i) const
 void TetraMesh::buildTetrasAndFaces()
 {
 	cout << "Building mesh data structures" << endl;
+	m_timer.start();
 	Point<3,double> O{0.0,0.0,0.0};
 
 	m_pointIDsToFaceMap.clear();
@@ -139,6 +140,8 @@ void TetraMesh::buildTetrasAndFaces()
 				}
 			}
 	}
+
+	cout << "INFO: Faces build at " << m_timer.elapsed().wall*1e-9 << "s" << endl;
 
 	std::size_t Nf_surf = boost::size(m_faceTetras |		 boost::adaptors::filtered([](array<unsigned,2> i){ return i[1]==0; }));
 
@@ -233,6 +236,8 @@ void TetraMesh::makeKernelTetras()
 			printTetra(IDt);
 	}
 
+	cout << "INFO: Checked tetras at " << m_timer.elapsed().wall*1e-9 << 's' << endl;
+
 	for(auto tet : T | boost::adaptors::indexed(0U))
 	{
 		tet.value().IDfs  = m_tetraFaces[tet.index()];
@@ -270,6 +275,8 @@ void TetraMesh::makeKernelTetras()
 		tet.value().nz=_mm_setr_ps(n[0][2],n[1][2],n[2][2],n[3][2]);
 		tet.value().C =_mm_setr_ps(C[0],C[1],C[2],C[3]);
 	}
+
+	cout << "INFO: Kernel tetras build at " << m_timer.elapsed().wall*1e-9 << endl;
 
 	m_tetras=T;
 
@@ -338,6 +345,7 @@ bool TetraMesh::checkFaces() const
 			}
 		}
 	}
+	cout << "INFO: Face check completed at " << m_timer.elapsed().wall*1e-9 << 's' << endl;
 	return status_ok;
 }
 

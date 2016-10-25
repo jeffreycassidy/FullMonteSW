@@ -8,11 +8,13 @@
 #ifndef OUTPUTTYPES_MCEVENTCOUNTS_HPP_
 #define OUTPUTTYPES_MCEVENTCOUNTS_HPP_
 
-
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/nvp.hpp>
 
-struct MCEventCounts {
+class OutputData;
+
+struct MCEventCounts
+{
     unsigned long long Nlaunch=0;
     unsigned long long Nabsorb=0;
     unsigned long long Nscatter=0;
@@ -28,22 +30,29 @@ struct MCEventCounts {
 	unsigned long long Ntime=0;
 	unsigned long long Nnohit=0;
 
-	void clear(){ *this = MCEventCounts(); }
-
 	MCEventCounts& operator +=(const MCEventCounts&);
 
+	void clear(){ *this = MCEventCounts(); }
 };
+
+OutputData* createOutputData(const MCEventCounts& C);
 
 #include "OutputData.hpp"
 
 
-class MCEventCountsOutput : public clonable<OutputData,MCEventCountsOutput,OutputData::Visitor>, public MCEventCounts
+class MCEventCountsOutput :
+		public OutputData,
+		public MCEventCounts
 {
 public:
 	MCEventCountsOutput(const MCEventCounts& C=MCEventCounts()) : MCEventCounts(C){}
 
+	CLONE_METHOD(OutputData,MCEventCountsOutput)
+	ACCEPT_VISITOR_METHOD(OutputData,MCEventCountsOutput)
+
+	virtual const char* typeString() const { return "MC Event Counts"; }
+
 private:
-	void acceptVisitor(OutputData::Visitor* v) override { v->doVisit(this); }
 
 	template<class Archive>void serialize(Archive& ar,const unsigned ver)
 		{

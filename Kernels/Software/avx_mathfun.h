@@ -108,8 +108,12 @@ inline __m256 _mm256_set_m128(__m128 hi,__m128 lo)
 			1);
 }
 
-
 #ifndef HAVE_AVX2
+
+
+
+
+
 
 
 inline __m256 _mm256_abs_ps(__m256 x)

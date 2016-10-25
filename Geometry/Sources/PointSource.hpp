@@ -8,21 +8,21 @@
 #ifndef GEOMETRY_SOURCES_POINTSOURCE_HPP_
 #define GEOMETRY_SOURCES_POINTSOURCE_HPP_
 
-#include "Base.hpp"
+#include "Abstract.hpp"
 #include <array>
 
 namespace Source
 {
 
-class PointSource : public Source::detail::cloner<Source::Base,Source::PointSource>
+class Point : public Abstract
 {
 public:
-	PointSource(float w=1.0,std::array<float,3> p={{0.0,0.0,0.0}},unsigned elementHint=-1U) :
-		cloner(w),
+	Point(float w=1.0,std::array<float,3> p={{0.0,0.0,0.0}},unsigned elementHint=-1U) :
+		Abstract(w),
 		m_pos(p),
 		m_elementHint(elementHint){}
 
-	static PointSource* New(){ return new PointSource(); }
+	DERIVED_SOURCE_MACRO(Abstract,Point)
 
 	std::array<float,3> position() 						const	{ return m_pos; }
 	void 				position(std::array<float,3> p)			{ m_pos=p; }

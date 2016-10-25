@@ -20,10 +20,11 @@
 #include <condition_variable>
 
 #include <string>
+#include <list>
 
 class KernelObserver;
 
-namespace Source { class Base; }
+namespace Source { class Abstract; }
 
 class OutputData;
 
@@ -43,8 +44,8 @@ public:
 	virtual float 	progressFraction() 	const=0;
 
 	// get/set source (multiple sources accommodated by Source::Composite)
-	void				source(const Source::Base* s)			{ m_src=s;			}
-	const Source::Base*	source()						const 	{ return m_src; 	}
+	void				source(const Source::Abstract* s)			{ m_src=s;			}
+	const Source::Abstract*	source()						const 	{ return m_src; 	}
 
 	// get/set total energy emitted
 	void				energy(float E)							{ m_energy=E;		}
@@ -57,15 +58,30 @@ public:
 	void setUnitsToCM(){ L_=1.0;  	}
 	void setUnitsToMM(){ L_=0.1; 	}
 
+	std::size_t 		getResultCount() const
+	{
+		return m_results.size();
+	}
+
+	const OutputData* getResultByIndex(std::size_t i) const
+	{
+		auto it = m_results.begin();
+		std::advance(it,i);
+		return *it;
+	}
+
 	const OutputData* getResultByTypeString(std::string) const;
 
 	template<class Result>const Result* getResultByType() const
 	{
-		const Result* r=nullptr;
-		for(unsigned i=0; i<m_results.size() && !r; ++i)
-			r=dynamic_cast<const Result*>(m_results[i]);
+		for(auto r : m_results)
+		{
+			const Result* p = dynamic_cast<const Result*>(r);
+			if (p)
+				return p;
+		}
 
-		return r;
+		return nullptr;
 	}
 
 	boost::any_range<
@@ -73,13 +89,11 @@ public:
 		boost::forward_traversal_tag> results() const { return boost::any_range<OutputData*,boost::forward_traversal_tag>(m_results); }
 
 protected:
-	const Source::Base*					m_src=nullptr;
+	const Source::Abstract*					m_src=nullptr;
 	std::vector<SimpleMaterial>			m_materials;
 
-	std::vector<OutputData*> 			m_results;
+	std::list<OutputData*> 				m_results;
 
-	void addResults(OutputData*);
-	void clearResults();
 	void awaitStatus(Status st);
 	void updateStatus(Status st);
 
@@ -88,6 +102,8 @@ private:
 	virtual void 	awaitFinish()		=0;
 
 	std::vector<KernelObserver*> m_observers;
+
+	virtual std::list<OutputData*> gatherResults() const=0;
 
 	virtual void prepare_()=0;
 	virtual void start_()=0;

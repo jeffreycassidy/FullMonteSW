@@ -5,14 +5,12 @@
  *      Author: jcassidy
  */
 
-#include "Visitor.hpp"
-
 #include <iostream>
 #include <iomanip>
 #include <array>
 
 #include "Ball.hpp"
-#include "Base.hpp"
+#include "Abstract.hpp"
 #include "PointSource.hpp"
 #include "PencilBeam.hpp"
 #include "Composite.hpp"
@@ -28,21 +26,22 @@ namespace Source
 
 /** Visitor class which prints text descriptions to a std::ostream& */
 
-class Printer : public Source::Visitor
+class Printer :
+		public Abstract::Visitor
 {
 public:
 	Printer(std::ostream& os);
 	~Printer();
 
-	virtual void visit(PointSource* p) 	override;
-	virtual void visit(Ball* b)			override;
-	virtual void visit(Line* l)			override;
-	virtual void visit(Volume* v)		override;
-	virtual void visit(Composite* c)	override;
-	virtual void visit(Surface* s)		override;
-	virtual void visit(SurfaceTri* st)	override;
-	virtual void visit(Base* b)			override;
-	virtual void visit(PencilBeam* b)	override;
+	virtual void doVisit(Point* p) 			override;
+	virtual void doVisit(Ball* b)			override;
+	virtual void doVisit(Line* l)			override;
+	virtual void doVisit(Volume* v)			override;
+	virtual void doVisit(Composite* c)		override;
+	virtual void doVisit(Surface* s)		override;
+	virtual void doVisit(SurfaceTri* st)	override;
+	virtual void doVisit(Abstract* b)		override;
+	virtual void doVisit(PencilBeam* b)		override;
 
 private:
 
@@ -86,7 +85,7 @@ void Printer::printPower(float w)
 	m_os << "power " << setprecision(m_weightPrecision) << setw(m_weightWidth) << w;
 }
 
-void Printer::visit(PointSource* p)
+void Printer::doVisit(Point* p)
 {
 	m_os << "Point source ";
 	printPosition(p->position());
@@ -94,7 +93,7 @@ void Printer::visit(PointSource* p)
 	printPower(p->power());
 }
 
-void Printer::visit(Ball* p)
+void Printer::doVisit(Ball* p)
 {
 	m_os << "Ball source ";
 	printPosition(p->position());
@@ -102,7 +101,7 @@ void Printer::visit(Ball* p)
 	printPower(p->power());
 }
 
-void Printer::visit(Line* l)
+void Printer::doVisit(Line* l)
 {
 	m_os << "Line source ";
 	printPosition(l->endpoint(0));
@@ -112,31 +111,31 @@ void Printer::visit(Line* l)
 	printPower(l->power());
 }
 
-void Printer::visit(Volume* v)
+void Printer::doVisit(Volume* v)
 {
 	m_os << "Volume source in element " << setw(m_idWidth) << v->elementID() << ' ';
 	printPower(v->power());
 }
 
-void Printer::visit(Composite* c)
+void Printer::doVisit(Composite* c)
 {
 	m_os << "Composite source (" << c->count() << " subsources) ";
 	printPower(c->power());
 }
 
-void Printer::visit(Base* b)
+void Printer::doVisit(Abstract* b)
 {
 	m_os << "<unspecified type> ";
 	printPower(b->power());
 }
 
-void Printer::visit(Surface* s)
+void Printer::doVisit(Surface* s)
 {
 	m_os << "Surface patch " << setw(m_idWidth) << s->surfaceID() << ' ';
 	printPower(s->power());
 }
 
-void Printer::visit(SurfaceTri* st)
+void Printer::doVisit(SurfaceTri* st)
 {
 	m_os << "Surface triangle [";
 	std::array<unsigned,3> tri = st->triPointIDs();
@@ -151,7 +150,7 @@ void Printer::visit(SurfaceTri* st)
 	printPower(st->power());
 }
 
-void Printer::visit(PencilBeam* pb)
+void Printer::doVisit(PencilBeam* pb)
 {
 	m_os << "Pencil beam position ";
 	printPosition(pb->position());
@@ -166,10 +165,10 @@ void Printer::visit(PencilBeam* pb)
 	printPower(pb->power());
 }
 
-std::ostream& operator<<(std::ostream& os,const Source::Base& b)
+std::ostream& operator<<(std::ostream& os,const Source::Abstract& b)
 {
 	Source::Printer P(os);
-	((Source::Base&)(b)).acceptVisitor(&P);
+	((Source::Abstract&)(b)).acceptVisitor(&P);
 	return os;
 }
 

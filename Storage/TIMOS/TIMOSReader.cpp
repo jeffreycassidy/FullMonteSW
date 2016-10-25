@@ -66,12 +66,12 @@ std::vector<SimpleMaterial> TIMOSReader::materials_simple() const
 
 
 
-Source::Base* TIMOSReader::sources() const
+Source::Abstract* TIMOSReader::sources() const
 {
 	assert (!sourceFn_.empty() || !"No filename specified for TIMOSReader::sources");
 	std::vector<TIMOS::SourceDef> ts = parse_sources(sourceFn_);
 
-	std::vector<Source::Base*> src(ts.size(),nullptr);
+	std::vector<Source::Abstract*> src(ts.size(),nullptr);
 
 	boost::transform(ts,src.begin(),TIMOSReader::convertToSource);
 

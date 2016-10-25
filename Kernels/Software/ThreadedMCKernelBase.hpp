@@ -27,6 +27,8 @@ public:
 	// Final override: do parent prep and then create thread structures
 	virtual void 				prepare_()						final override;
 
+	virtual void				prepareScorer()=0;
+
 	class Thread;
 
 	unsigned getUnsignedRNGSeed()
@@ -36,6 +38,8 @@ public:
 		return rnd;
 	}
 
+	boost::iterator_range<std::vector<ThreadedMCKernelBase::Thread*>::iterator> workers(){ return m_workers; }
+
 private:
 	virtual void				awaitFinish()					final override;
 	virtual void 				start_() 						final override;
@@ -44,10 +48,10 @@ private:
 	virtual Thread*				makeThread()=0;
 	virtual void				parentPrepare()=0;
 
-	static void runWorkers(ThreadedMCKernelBase* K,unsigned long long n);
+	virtual void prestart()=0;
+	virtual void postfinish()=0;
 
-	virtual void prestart()				=0;
-	virtual void postfinish()			override=0;
+	static void runWorkers(ThreadedMCKernelBase* K,unsigned long long n);
 
 	boost::random::ecuyer1988 					m_seedGenerator;
 

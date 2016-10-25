@@ -7,7 +7,7 @@
 
 #include <stdexcept>
 
-#include <FullMonteSW/Geometry/Sources/Base.hpp>
+#include <FullMonteSW/Geometry/Sources/Abstract.hpp>
 #include <FullMonteSW/Geometry/Sources/Composite.hpp>
 #include <FullMonteSW/Geometry/Placement/PlacementBase.hpp>
 #include <FullMonteSW/Geometry/Placement/PlacementMediatorBase.hpp>
@@ -61,18 +61,18 @@ void PlacementBase::update()
 		pmb->update();
 }
 
-Source::Base* PlacementBase::source()
+Source::Abstract* PlacementBase::source()
 {
 	if (m_sources.size()==0)
 		return nullptr;
 	else if (m_sources.size()==1)
-		return m_sources.front()->source()->cloneSelf();
+		return m_sources.front()->source()->clone();
 	else
 	{
-		vector<Source::Base*> s;
+		vector<Source::Abstract*> s;
 
 		for(const auto m : m_sources)
-			s.push_back(m->source()->cloneSelf());
+			s.push_back(m->source()->clone());
 
 		return new Source::Composite(1.0f,std::move(s));
 	}

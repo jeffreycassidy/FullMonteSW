@@ -14,15 +14,16 @@
 namespace Source
 {
 
-class Ball : public Source::detail::cloner<Source::PointSource,Ball>
+class Ball :
+		public Point
 {
 public:
 	Ball(){}
 	Ball(float w,std::array<float,3> pos,float r) :
-		Source::detail::cloner<Source::PointSource,Ball>(w,pos),
+		Point(w,pos),
 		m_radius(r){}
 
-	static Ball New(){ return Ball(); }
+	DERIVED_SOURCE_MACRO(Abstract,Point)
 
 	std::array<float,3>		centre() 						const 	{ return position(); 	}
 	void					centre(std::array<float,3> p)			{ position(p); 			}

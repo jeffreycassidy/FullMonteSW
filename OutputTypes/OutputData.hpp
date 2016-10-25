@@ -13,128 +13,119 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 
-template<class Base>class clonable_base
-{
-public:
-	virtual ~clonable_base(){}
-
-	virtual Base* clone() const=0;
-
-	virtual const std::string& typeString() const { return s_typeString; }
-
-protected:
-	clonable_base(){}
-
-	static const std::string s_typeString;
-};
-
-template<class Base,class Derived,class Visitor>class clonable : public Base
-{
-public:
-	virtual Base* clone() const override { return new Derived(static_cast<const Derived&>(*this)); }
-	template<typename... Args> clonable(Args... args) : Base(args...){}
-
-	virtual const std::string& typeString() const override { return s_typeString; }
-
-	virtual void acceptVisitor(Visitor* v) override{ v->doVisit((Derived*)this); }
-
-private:
-	static const std::string s_typeString;
-
-	template<class Archive>void serialize(Archive& ar,const unsigned ver)
-		{ ar & boost::serialization::base_object<Base>(*this); }
-
-	friend class boost::serialization::access;
-};
+#include "named_type.hpp"
 
 #include <string>
 #include <stdexcept>
 
 class OutputData;
 
-struct VolumeFluenceMapTraits;
-struct VolumeAbsorbedEnergyMapTraits;
-struct InternalSurfaceFluenceMapTraits;
-struct InternalSurfaceEnergyMapTraits;
-struct SurfaceFluenceMapTraits;
-struct SurfaceExitEnergyMapTraits;
-struct VolumeAbsorbedEnergyDensityMapTraits;
-
-template<typename Traits>class SpatialMapOutputData;
-using VolumeFluenceMap = SpatialMapOutputData<VolumeFluenceMapTraits>;
-using SurfaceExitEnergyMap = SpatialMapOutputData<SurfaceExitEnergyMapTraits>;
-using SurfaceFluenceMap = SpatialMapOutputData<SurfaceFluenceMapTraits>;
-using VolumeAbsorbedEnergyMap = SpatialMapOutputData<VolumeAbsorbedEnergyMapTraits>;
-using InternalSurfaceFluenceMap = SpatialMapOutputData<InternalSurfaceFluenceMapTraits>;
-using VolumeAbsorbedEnergyDensityMap = SpatialMapOutputData<VolumeAbsorbedEnergyDensityMapTraits>;
-using InternalSurfaceEnergyMap = SpatialMapOutputData<InternalSurfaceEnergyMapTraits>;
-
+class AbstractSpatialMap;
 class MCConservationCountsOutput;
 class MCEventCountsOutput;
-class FluenceLineQuery;
 
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/void_cast.hpp>
 
 #include <iostream>
 
-class OutputData : public clonable_base<OutputData>
+#include "clonable.hpp"
+#include "visitable.hpp"
+
+class MCConservationCountsOutput;
+class MCEventCountsOutput;
+template<typename Value>class SpatialMap;
+
+class OutputData
 {
 public:
-	class Visitor;
 	virtual ~OutputData(){}
 
-private:
-	virtual void acceptVisitor(Visitor* v)=0;
+	class Visitor;
+	virtual void acceptVisitor(Visitor* v);
 
-	template<class Archive>void serialize(Archive& ar,const unsigned)
-		{ }
-	friend class boost::serialization::access;
+	virtual OutputData* clone() const=0;
+
+	virtual const char* typeString() const { return "(generic-output-data)"; }
 };
-
 
 class OutputData::Visitor
 {
 public:
+	Visitor(){}
 	virtual ~Visitor(){}
 
-	void visit(OutputData* d){ if(d) d->acceptVisitor(this); }
-
-	// visitor implementations
-	virtual void doVisit(OutputData* d)
-		{ throw std::logic_error("OutputData::Visitor method not implemented: generic case doVisit(OutputData*)"); }
-
-	virtual void doVisit(MCConservationCountsOutput* cc)
-		{ throw std::logic_error("OutputData::Visitor method not implemented: doVisit(MCConservationCountsOutput*)"); }
-
-	virtual void doVisit(MCEventCountsOutput* cc)
-		{ throw std::logic_error("OutputData::Visitor method not implemented: doVisit(MCEventCountsOutput*)"); }
-
-	virtual void doVisit(VolumeAbsorbedEnergyMap* em)
-		{ throw std::logic_error("OutputData::Visitor method not implemented: doVisit(VolumeAbsorbedEnergyMap*)"); }
-
-	virtual void doVisit(SurfaceExitEnergyMap* sm)
-		{ throw std::logic_error("OutputData::Visitor method not implemented: doVisit(SurfaceExitEnergyMap*)"); }
-
-	virtual void doVisit(SurfaceFluenceMap* sm)
-		{ throw std::logic_error("OutputData::Visitor method not implemented: doVisit(SurfaceFluenceMap*)"); }
-
-	virtual void doVisit(VolumeFluenceMap* vm)
-		{ throw std::logic_error("OutputData::Visitor method not implemented: doVisit(VolumeFluenceMap*)"); }
-
-	virtual void doVisit(FluenceLineQuery* flq)
-		{ throw std::logic_error("OutputData::Visitor method not implemented: doVisit(FluenceLineQuery*)"); }
-
-	virtual void doVisit(InternalSurfaceEnergyMap* flq)
-		{ throw std::logic_error("OutputData::Visitor method not implemented: doVisit(InternalSurfaceEnergyMap*)"); }
-
-	virtual void doVisit(InternalSurfaceFluenceMap* flq)
-		{ throw std::logic_error("OutputData::Visitor method not implemented: doVisit(InternalSurfaceFluenceMap*)"); }
-
-protected:
-	Visitor(){}
-
+	virtual void doVisit(MCEventCountsOutput* C)
+	{
+		std::cout << "doVisit(MCEventCountsData*)" << std::endl;
+	}
+	virtual void doVisit(MCConservationCountsOutput* C)
+	{
+		std::cout << "doVisit(MCConservationCountsData*)" << std::endl;
+	}
+	virtual void doVisit(SpatialMap<float>* M)
+	{
+		std::cout << "doVisit(SpatialMap<float>*)" << std::endl;
+	}
+	virtual void doVisit(OutputData* D)
+	{
+		std::cout << "doVisit(OutputData*)" << std::endl;
+	}
+//	virtual void doVisit(void* v)
+//	{
+//		std::cout << "doVisit(void*)" << std::endl;
+//	}
 };
+
+inline void OutputData::acceptVisitor(Visitor* v)
+{
+	v->doVisit(this);
+}
+
+//class OutputData::Visitor
+//{
+//public:
+//	virtual ~Visitor(){}
+//
+//	void visit(OutputData* d){ if(d) d->acceptVisitor(this); }
+//
+//	// visitor implementations
+//	virtual void doVisit(OutputData* d)
+//		{ throw std::logic_error("OutputData::Visitor method not implemented: generic case doVisit(OutputData*)"); }
+//
+//	virtual void doVisit(MCConservationCountsOutput* cc)
+//		{ throw std::logic_error("OutputData::Visitor method not implemented: doVisit(MCConservationCountsOutput*)"); }
+//
+//	virtual void doVisit(MCEventCountsOutput* cc)
+//		{ throw std::logic_error("OutputData::Visitor method not implemented: doVisit(MCEventCountsOutput*)"); }
+//
+//	virtual void doVisit(AbstractSpatialMap* M)
+//		{ throw std::logic_error("OutputData::Visitor method not implemented: doVisit(AbstractSpatialMap*)"); }
+//
+////	virtual void doVisit(VolumeAbsorbedEnergyMap* em)
+////		{ throw std::logic_error("OutputData::Visitor method not implemented: doVisit(VolumeAbsorbedEnergyMap*)"); }
+////
+////	virtual void doVisit(SurfaceExitEnergyMap* sm)
+////		{ throw std::logic_error("OutputData::Visitor method not implemented: doVisit(SurfaceExitEnergyMap*)"); }
+////
+////	virtual void doVisit(SurfaceFluenceMap* sm)
+////		{ throw std::logic_error("OutputData::Visitor method not implemented: doVisit(SurfaceFluenceMap*)"); }
+////
+////	virtual void doVisit(VolumeFluenceMap* vm)
+////		{ throw std::logic_error("OutputData::Visitor method not implemented: doVisit(VolumeFluenceMap*)"); }
+////
+////	virtual void doVisit(FluenceLineQuery* flq)
+////		{ throw std::logic_error("OutputData::Visitor method not implemented: doVisit(FluenceLineQuery*)"); }
+////
+////	virtual void doVisit(InternalSurfaceEnergyMap* flq)
+////		{ throw std::logic_error("OutputData::Visitor method not implemented: doVisit(InternalSurfaceEnergyMap*)"); }
+////
+////	virtual void doVisit(InternalSurfaceFluenceMap* flq)
+////		{ throw std::logic_error("OutputData::Visitor method not implemented: doVisit(InternalSurfaceFluenceMap*)"); }
+//
+//protected:
+//	Visitor(){}
+//};
 
 
 

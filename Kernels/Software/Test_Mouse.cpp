@@ -91,7 +91,7 @@ BOOST_AUTO_TEST_CASE(mouse)
 
 	TetraMesh M = R.mesh();
 	vector<SimpleMaterial> mats = R.materials_simple();
-	Source::Base* src = R.sources();
+	Source::Abstract* src = R.sources();
 
 	BOOST_CHECK_EQUAL(M.getNt(), 306773U);
 	BOOST_CHECK_EQUAL(M.getNf(), 629708U);
@@ -168,7 +168,7 @@ BOOST_AUTO_TEST_CASE(mouse)
 	if (!V)
 		throw std::logic_error("Failed to get VolumeAbsorbedEnergyMap");
 
-	FluenceConverter FC;
+	EnergyToFluence FC;
 	FC.mesh(&M);
 	FC.materials(&mats);
 
@@ -342,7 +342,7 @@ BOOST_AUTO_TEST_CASE(mouseSurf)
 
 	TetraMesh M = R.mesh();
 	vector<SimpleMaterial> mats = R.materials_simple();
-	Source::Base* src = R.sources();
+	Source::Abstract* src = R.sources();
 
 	BOOST_CHECK_EQUAL(M.getNt(), 306773U);
 	BOOST_CHECK_EQUAL(M.getNf(), 629708U);
@@ -419,7 +419,7 @@ BOOST_AUTO_TEST_CASE(mouseSurf)
 	if (!S)
 		throw std::logic_error("Failed to get SurfaceExitEnergyMap");
 
-	FluenceConverter FC;
+	EnergyToFluence FC;
 	FC.mesh(&M);
 
 	SurfaceFluenceMap phiS = FC.convertToFluence(*S);

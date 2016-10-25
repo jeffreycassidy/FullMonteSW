@@ -1,7 +1,8 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include "Logger.hpp"
+
+#include "BaseLogger.hpp"
 
 using namespace std;
 

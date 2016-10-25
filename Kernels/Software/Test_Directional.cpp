@@ -214,7 +214,7 @@ int main(int argc,char **argv)
 
 	////// Fluence conversion
 
-	FluenceConverter FC;
+	EnergyToFluence FC;
 		FC.mesh(&M);
 		FC.joulesPerOutputEnergyUnit(1.0f);
 		FC.cmPerOutputLengthUnit(1.0f);

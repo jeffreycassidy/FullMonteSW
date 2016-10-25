@@ -18,7 +18,7 @@ class PlacementMediatorBase;
  *
  */
 
-namespace Source { class Base; }
+namespace Source { class Abstract; }
 
 class PlacementBase
 {
@@ -41,7 +41,7 @@ public:
 	boost::iterator_range<std::vector<PlacementMediatorBase*>::const_iterator> sources()
 		{ return m_sources; }
 
-	Source::Base*		source();
+	Source::Abstract*		source();
 
 private:
 	std::vector<PlacementMediatorBase*>		m_sources;

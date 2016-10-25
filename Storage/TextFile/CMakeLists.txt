@@ -1,5 +1,12 @@
-ADD_LIBRARY(FullMonteTextFile SHARED TextFileWriter.cpp)
+ADD_LIBRARY(FullMonteTextFile SHARED TextFileWriter.cpp TextFileMeshWriter.cpp TextFile.cpp)
 
-INSTALL(TARGETS FullMonteTextFile
+SET_SOURCE_FILES_PROPERTIES(TextFile.i PROPERTIES CPLUSPLUS ON)
+SWIG_ADD_MODULE(FullMonteTextFileTCL tcl TextFile.i)
+SWIG_LINK_LIBRARIES(FullMonteTextFileTCL ${TCL_LIBRARY} FullMonteTextFile)
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+
+
+TARGET_LINK_LIBRARIES(FullMonteTextFile FullMonteGeometry)
+
+INSTALL(TARGETS FullMonteTextFile FullMonteTextFileTCL
 	DESTINATION lib)
-
