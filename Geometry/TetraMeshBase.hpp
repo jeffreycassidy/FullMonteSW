@@ -209,8 +209,6 @@ template<typename Prop>std::array<decltype(get(std::declval<Prop>(),std::declval
 	return res;
 	}
 
-
-
 #endif
 
 #endif

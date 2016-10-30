@@ -12,7 +12,7 @@ template<typename T>class DirectedSurfaceElement
 {
 public:
 	DirectedSurfaceElement(){}
-	DirectedSurfaceElement(T exit_,T enter_) : m_exit(exit_),m_enter(enter_){}
+	DirectedSurfaceElement(T exit_,T enter_) : m_enter(enter_),m_exit(exit_){}
 
 	T enter() 			const { return m_enter; 	}
 	T exit()			const { return m_exit; 	}

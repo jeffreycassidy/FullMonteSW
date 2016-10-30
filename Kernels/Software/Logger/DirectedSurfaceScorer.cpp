@@ -23,7 +23,7 @@ std::list<OutputData*> DirectedSurfaceScorer::results() const
 {
 	std::vector<DirectedSurfaceElement<float>> se(m_accumulator.size());
 
-	se[0] = DirectedSurfaceElement<float>{ m_accumulator[m_elements], m_accumulator[m_elements] };
+	se[0] = DirectedSurfaceElement<float>{ float(m_accumulator[m_elements]), float(m_accumulator[m_elements]) };
 
 	for(unsigned i=1;i<m_elements;++i)
 		se[i] = DirectedSurfaceElement<float>( float(m_accumulator[m_elements+i]), float(m_accumulator[m_elements-i]) );
