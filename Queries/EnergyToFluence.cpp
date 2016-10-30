@@ -52,7 +52,7 @@ public:
 
 	virtual float operator()(std::size_t i,float x) const override
 	{
-		return x / (m_mesh->getTetraVolume(i) * (*m_materials)[m_mesh->getMaterial(i)].muA());
+		return x / (get(volume,*m_mesh,TetraMeshBase::TetraDescriptor(i)) * (*m_materials)[m_mesh->getMaterial(i)].muA());
 	}
 
 private:

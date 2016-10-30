@@ -43,18 +43,33 @@ public:
 	class Visitor
 	{
 	public:
+		Visitor();
+		virtual ~Visitor();
+
 		virtual void visit(Abstract* B){ B->acceptVisitor(this); }
 
 		virtual void doVisit(Point* p)			=0;
 		virtual void doVisit(Ball* b)			=0;
 		virtual void doVisit(Line* l)			=0;
 		virtual void doVisit(Volume* v)			=0;
-		virtual void doVisit(Composite* c)		=0;
+
+		/// Default visit for Composite type: call pre-visit handler, visit all sub-sources, and then post-visit handler
+		/// Can be overridden.
+		virtual void doVisit(Composite* c);
+
 		virtual void doVisit(Surface* s)		=0;
 		virtual void doVisit(SurfaceTri* st)	=0;
 		virtual void doVisit(Abstract* b)		=0;
 		virtual void doVisit(PencilBeam* b)		=0;
+
+		virtual void preVisitComposite(Composite* C){}
+		virtual void postVisitComposite(Composite* C){}
+
+	private:
+		unsigned	m_compositeLevel=0;
+		unsigned 	m_maxCompositeLevel=-1U;
 	};
+
 	virtual void acceptVisitor(Visitor* v){ v->doVisit(this); }
 #endif
 
@@ -65,8 +80,6 @@ public:
 
 private:
 	float m_power=1.0f;
-
-
 };
 
 };

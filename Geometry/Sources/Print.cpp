@@ -11,7 +11,7 @@
 
 #include "Ball.hpp"
 #include "Abstract.hpp"
-#include "PointSource.hpp"
+#include "Point.hpp"
 #include "PencilBeam.hpp"
 #include "Composite.hpp"
 #include "Surface.hpp"

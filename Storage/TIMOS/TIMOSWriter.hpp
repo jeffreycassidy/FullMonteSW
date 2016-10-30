@@ -16,7 +16,7 @@
 #include <FullMonteSW/Geometry/Sources/SurfaceTri.hpp>
 #include <FullMonteSW/Geometry/Sources/Volume.hpp>
 #include <FullMonteSW/Geometry/Sources/PencilBeam.hpp>
-#include <FullMonteSW/Geometry/Sources/PointSource.hpp>
+#include <FullMonteSW/Geometry/Sources/Point.hpp>
 #include <FullMonteSW/Geometry/Sources/Composite.hpp>
 
 #include <string>

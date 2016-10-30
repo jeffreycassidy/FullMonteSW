@@ -21,15 +21,15 @@ Face::Face(const Point<3,double>& Pa,const Point<3,double>& Pb,const Point<3,dou
     normal(cross(Vector<3,double>(Pa,Pb),Vector<3,double>(Pa,Pc))),
     C (dot(normal,Vector<3,double>(Pa)))
     { }
-
-// creates a Face from four points, ensuring that AD (dot) n > 0, ie A is above ABC
-Face::Face(const Point<3,double>& Pa,const Point<3,double>& Pb,const Point<3,double>& Pc,const Point<3,double>& Pd) :
-	normal(cross(Vector<3,double>(Pa,Pb),Vector<3,double>(Pa,Pc))),
-	C (dot(normal,Vector<3,double>(Pa)))
-{
-	if (pointHeight(Pd) < 0)
-		flip();
-}
+//
+//// creates a Face from four points, ensuring that AD (dot) n > 0, ie A is above ABC
+//Face::Face(const Point<3,double>& Pa,const Point<3,double>& Pb,const Point<3,double>& Pc,const Point<3,double>& Pd) :
+//	normal(cross(Vector<3,double>(Pa,Pb),Vector<3,double>(Pa,Pc))),
+//	C (dot(normal,Vector<3,double>(Pa)))
+//{
+//	if (pointHeight(Pd) < 0)
+//		flip();
+//}
 
 // Intersects a ray with the face plane
 // NOTE: does not guarantee that the point is actually inside the face points

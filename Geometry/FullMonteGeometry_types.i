@@ -15,6 +15,23 @@
 	$1 = p;
 }
 
+%typemap(out) std::array<unsigned,3> {
+	stringstream ss;
+	std::array<unsigned,3> a=$1;
+	for(unsigned i=0;i<3;++i)
+		ss << a[i] << ' ';
+	Tcl_AppendResult(interp,ss.str().c_str(),nullptr);
+}
+
+%typemap(in) std::array<unsigned,3>
+{
+	std::array<unsigned,3> p;
+	stringstream ss(Tcl_GetString($input));
+	for(unsigned i=0;i<3;++i)
+		ss >> p[i];
+	$1 = p;
+}
+
 %typemap(out) Point<3,double> {
 	stringstream ss;
 	Point<3,double> a=$1;

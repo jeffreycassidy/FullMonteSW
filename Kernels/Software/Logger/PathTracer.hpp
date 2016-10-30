@@ -98,8 +98,6 @@ inline void PathTracer::writeEvent(KernelEvent::Type e,const Point3 p,float w,fl
 	if (isPacketTermination(e))
 		m_traces.emplace_back(std::move(m_currentTrace));
 
-	m_pathLength;
-
 	m_lastPos = p;
 	m_lastW = w;
 }

@@ -43,6 +43,20 @@ template<class Range>boost::iterator_range<typename boost::range_iterator<Range>
 		return boost::iterator_range<iterator>(end(r), end(r));
 }
 
+// same as above, but takes range by value (eg. boost::iterator_range)
+
+template<class Iterator>typename boost::iterator_range<Iterator> operator| (boost::iterator_range<Iterator> r,drop d)
+{
+	if (boost::size(r) > d._n)
+	{
+		Iterator new_begin = begin(r);
+		new_begin = std::next(new_begin,d._n);
+		return boost::iterator_range<Iterator>(new_begin, end(r));
+	}
+	else
+		return boost::iterator_range<Iterator>(end(r), end(r));
+}
+
 
 template<class Range>boost::iterator_range<typename boost::range_iterator<Range>::type> operator| (Range& r,take t)
 {

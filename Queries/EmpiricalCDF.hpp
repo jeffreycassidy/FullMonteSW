@@ -138,13 +138,12 @@ template<typename Value,typename Weight,class Comp>void EmpiricalCDF<Value,Weigh
 {
 	cout << setprecision(2) << fixed;
 
-	Weight cw=m_elements.back().cumulativeWeight;
+	//Weight cw=m_elements.back().cumulativeWeight;
 
 	cout << "x         |  F(x) %" << endl;
 
 	for(const auto& e : m_elements)
 		cout << setprecision(4) << scientific << setw(10) << e.value << "  " << fixed << setprecision(3) << 100.0f*e.cumulativeWeight << "% " << endl;
-
 }
 
 

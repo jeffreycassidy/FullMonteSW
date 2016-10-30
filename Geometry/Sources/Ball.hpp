@@ -9,7 +9,7 @@
 #define GEOMETRY_SOURCES_BALL_HPP_
 
 #include <array>
-#include "PointSource.hpp"
+#include "Point.hpp"
 
 namespace Source
 {
@@ -23,7 +23,7 @@ public:
 		Point(w,pos),
 		m_radius(r){}
 
-	DERIVED_SOURCE_MACRO(Abstract,Point)
+	DERIVED_SOURCE_MACRO(Abstract,Ball)
 
 	std::array<float,3>		centre() 						const 	{ return position(); 	}
 	void					centre(std::array<float,3> p)			{ position(p); 			}

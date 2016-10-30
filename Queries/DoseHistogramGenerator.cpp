@@ -51,10 +51,10 @@ OutputData* DoseHistogramGenerator::result() const
 //	cout << "Calculating dose-surface histogram for mesh with " << m_mesh->getNp() << " points and " << m_mesh->getNf() << " faces" << endl;
 //	cout << "  Fluence output has dimension " << m_phi->dim() << endl;
 
-	for(int i=0;i<=m_mesh->getNf();++i)
+	for(unsigned i=0;i<=m_mesh->getNf();++i)
 	{
 		if ((*m_filter)(i))
-			v.emplace_back((*m_phi)[i],m_mesh->getFaceArea(i));
+			v.emplace_back((*m_phi)[i],m_mesh->getFaceArea(int(i)));
 	}
 
 	DoseHistogram* DH = new DoseHistogram(v);

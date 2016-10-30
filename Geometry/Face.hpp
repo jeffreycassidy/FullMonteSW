@@ -9,7 +9,7 @@ class Face
 public:
 	Face() : C(std::numeric_limits<double>::quiet_NaN()) {};
     Face(const Point<3,double>&,const Point<3,double>&,const Point<3,double>&);
-	Face(const Point<3,double>&,const Point<3,double>&,const Point<3,double>&,const Point<3,double>&);
+	//Face(const Point<3,double>&,const Point<3,double>&,const Point<3,double>&,const Point<3,double>&);
 
 	// flip the face orientation
 	void flip(){ C=-C; normal=-normal; }

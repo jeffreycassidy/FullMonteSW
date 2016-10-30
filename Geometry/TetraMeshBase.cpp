@@ -154,4 +154,19 @@ vector<unsigned> TetraMeshBase::tetraMaterialCount() const
 	return Nm;
 }
 
+TetraMeshBase::PointRange TetraMeshBase::points() const
+{
+	return PointRange(
+			PointIterator(PointDescriptor(0U)),
+			PointIterator(PointDescriptor(m_points.size())));
+}
+
+
+double get(volume_tag,const TetraMeshBase& M,TetraMeshBase::TetraDescriptor T)
+{
+	std::array<Point<3,double>,4> Ps = get(point_coords,M,T);
+	return 1.0/6.0*std::abs(scalartriple(Ps[0],Ps[1],Ps[2],Ps[3])/6);
+}
+
+
 

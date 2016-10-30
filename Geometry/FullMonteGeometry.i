@@ -9,10 +9,11 @@
 
 #include <FullMonteSW/Geometry/Sources/Abstract.hpp>
 #include <FullMonteSW/Geometry/Sources/Ball.hpp>
+#include <FullMonteSW/Geometry/Sources/Line.hpp>
 #include <FullMonteSW/Geometry/Sources/Volume.hpp>
 #include <FullMonteSW/Geometry/Sources/Composite.hpp>
 #include <FullMonteSW/Geometry/Sources/Surface.hpp>
-#include <FullMonteSW/Geometry/Sources/PointSource.hpp>
+#include <FullMonteSW/Geometry/Sources/Point.hpp>
 #include <FullMonteSW/Geometry/Sources/SurfaceTri.hpp>
 #include <FullMonteSW/Geometry/Sources/PencilBeam.hpp>
 #include <FullMonteSW/OutputTypes/clonable.hpp>
@@ -22,12 +23,13 @@
 
 %include "Sources/Abstract.hpp"
 %include "Sources/Directed.hpp"
-%include "Sources/PointSource.hpp"
+%include "Sources/Point.hpp"
 %include "Sources/Volume.hpp"
 %include "Sources/Ball.hpp"
 %include "Sources/Composite.hpp"
 %include "Sources/Surface.hpp"
 %include "Sources/SurfaceTri.hpp"
+%include "Sources/Line.hpp"
 %include "Sources/PencilBeam.hpp"
 
 %{

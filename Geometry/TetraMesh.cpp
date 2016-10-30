@@ -20,128 +20,47 @@
 using namespace std;
 
 
-/** Returns a vector<unsigned> of tetra IDs for tetras which have at least one point within a radius r of point p0
- *
- */
-
-vector<unsigned> TetraMesh::tetras_close_to(const Point<3,double> p0,const float r) const
-{
-	vector<unsigned> Tlist;
-	const float r2=r*r;
-
-	for(unsigned i=1;i<m_tetraPoints.size();++i)
-		if (boost::algorithm::any_of(
-				m_tetraPoints[i],
-				[p0,r2,this](unsigned i){ return Vector<3,double>(m_points[i],p0).norm2_l2()<r2; }))
-			Tlist.push_back(i);
-	return Tlist;
-}
-
 TetraMesh::~TetraMesh()
 {
 }
 
-vector<unsigned> TetraMesh::facesBoundingRegion(unsigned i) const
-{
-	vector<unsigned> idx;
-
-
-	for(const auto& f : m_faceTetras | boost::adaptors::indexed(0U))
- 		if (f.value()[0] != f.value()[1] && (f.value()[0]==i || f.value()[1]==i))
-			idx.push_back(f.index());
-	return idx;
-}
-
-
-
-void TetraMesh::buildTetrasAndFaces()
+void TetraMesh::buildTetrasAndFaces(const vector<FaceHint>& hint)
 {
 	cout << "Building mesh data structures" << endl;
 	m_timer.start();
-	Point<3,double> O{0.0,0.0,0.0};
 
-	m_pointIDsToFaceMap.clear();
-	m_pointIDsToTetraMap.clear();
-
-	m_faces.clear();
-	m_facePoints.clear();
-	m_faceTetras.clear();
-
-	m_faces.push_back(Face(O,O,O));
-	m_facePoints.push_back(FaceByPointID(0,0,0));
-	m_faceTetras.push_back(array<unsigned,2>{{0,0}});
-
-	m_tetraFaces = vector<TetraByFaceID>(m_tetraPoints.size(),TetraByFaceID{0,0,0,0});
-
-	vector<double> m_faceAltitudes;
-
-	for(auto T : m_tetraPoints | boost::adaptors::indexed(0U))
+	if (hint.size() == 0)
 	{
-		// sort indices to get canonical order for hash lookup
-		TetraByPointID IDps_sort = T.value();
-		boost::sort(IDps_sort);
+		mapTetrasToFaces();
+		cout << "INFO: Tetra-face mapping finished at " << m_timer.elapsed().wall*1e-9 << "s" << endl;
+	}
+	else
+	{
+		m_facePoints.resize(hint.size());
+		m_faceTetras.resize(hint.size());
 
-		m_pointIDsToTetraMap.insert(make_pair(IDps_sort,T.index()));
+		for(unsigned i=0;i<hint.size();++i)
+		{
+			m_facePoints[i] = hint[i].fIDps;
+			m_faceTetras[i] = hint[i].IDts;
+		}
 
-
-		if (T.index() > 0)
-			for(const auto& perm : tetra_face_opposite_point_indices | boost::adaptors::indexed(0U))
-			{
-				FaceByPointID Ft(
-						IDps_sort[perm.value().faceidx[0]],
-						IDps_sort[perm.value().faceidx[1]],
-						IDps_sort[perm.value().faceidx[2]]);
-
-				unsigned IDp_opposite = IDps_sort[perm.value().oppidx];
-
-				auto p = m_pointIDsToFaceMap.insert(make_pair(Ft,m_faces.size()));
-
-				if(p.second)			// new tuple inserted; ensure face is such that opposite point is above face
-				{
-					// add new face to data structures
-
-					// NOTE: Errors are possible if this is a degenerate (or nearly-degenerate) tetra
-					// (ie. opposite-point altitude nearly 0)
-					//
-					// May settle on wrong orientation, which will imply wrong orientation for the next tetra attached to the face
-					m_faces.push_back(Face(m_points[Ft[0]], m_points[Ft[1]], m_points[Ft[2]], m_points[IDp_opposite]));
-					m_faceAltitudes.push_back(m_faces.back().pointHeight(m_points[IDp_opposite]));
-
-					m_faceTetras.push_back(array<unsigned,2>{(unsigned)T.index(),0});
-					m_facePoints.push_back(Ft);
-
-					m_tetraFaces[T.index()][perm.index()] = p.first->second;			// link the tetra to the face (positive side)
-				}
-				else				// already exists -> up-face already assigned -> this is down-face
-				{
-					// face is already present so link face <-> tetra
-					m_faceTetras[p.first->second][1] = T.index();
-					m_tetraFaces[T.index()][perm.index()] = -p.first->second;
-
-					double h;
-
-					if ((h=m_faces[p.first->second].pointHeight(m_points[IDp_opposite])) > 2e-5)
-					{
-						cout << "WARNING: buildTetrasAndFaces() added second face (ID " << p.first->second << ") but opposite-point altitude unexpectedly positive (h=" <<
-							h << ") with flipside altitude h'=" << m_faceAltitudes[p.first->second] << " in tetra " << T.index() << " bordering tetra " << m_faceTetras[p.first->second][0] << endl;
-
-						// one possible reason for an ill-oriented face is a degenerate tetra with bad numerical behavior
-						// (eg. the cross product is very nearly zero)
-						//
-						// if that is the case, then construct the face from the other tetra which is (we hope) better behaved
-						if (h > m_faceAltitudes[p.first->second])
-						{
-							std::cout << "  Constructing the face from the better-formed second definition" << std::endl;
-							m_faces[p.first->second] = -Face(m_points[Ft[0]],m_points[Ft[1]],m_points[Ft[2]],m_points[IDp_opposite]);
-						}
-						else
-							std::cout << "  Leaving as-is" << std::endl;
-					}
-				}
-			}
+		cout << "INFO: Used face hints to skip tetra-face mapping at " << m_timer.elapsed().wall*1e-9 << endl;
 	}
 
-	cout << "INFO: Faces build at " << m_timer.elapsed().wall*1e-9 << "s" << endl;
+	createFaceNormals();
+	cout << "INFO: Face normals finished at " << m_timer.elapsed().wall*1e-9 << "s" << endl;
+
+	if (hint.size() == 0)
+	{
+		orientFaces();
+		cout << "INFO: Face orientation check finished at " << m_timer.elapsed().wall*1e-9 << "s" << endl;
+	}
+	else
+		cout << "INFO: Using face hints to skip face orientation" << endl;
+
+	makeKernelTetras();
+	cout << "INFO: Kernel tetras built at " << m_timer.elapsed().wall*1e-9 << "s" << endl;
 
 	std::size_t Nf_surf = boost::size(m_faceTetras |		 boost::adaptors::filtered([](array<unsigned,2> i){ return i[1]==0; }));
 
@@ -149,15 +68,9 @@ void TetraMesh::buildTetrasAndFaces()
 			" faces (" << Nf_surf << " surface)" << endl;
 
 	assert(m_tetraPoints.size() == m_tetraFaces.size());
-
-	makeKernelTetras();
 }
 
-
-/** Converts the TetraMesh representation to the packed data structures used by the kernel
- *
- */
-
+/* Works fine but temporarily disabled; should be moved to Tetra class & source file
 void TetraMesh::printTetra(unsigned IDt) const
 {
 	cout << "Tetra ID " << IDt << endl;
@@ -182,6 +95,121 @@ void TetraMesh::printTetra(unsigned IDt) const
 		cout << endl;
 	}
 }
+ */
+
+void TetraMesh::createFaceNormals()
+{
+	m_faces.clear();
+
+	Point<3,double> O{0.0,0.0,0.0};
+
+	m_faces.resize(m_facePoints.size());
+	m_faces[0] = Face(O,O,O);
+
+	for(unsigned i=1;i<m_facePoints.size();++i)
+		m_faces[i] = Face(m_points[m_facePoints[i][0]], m_points[m_facePoints[i][1]], m_points[m_facePoints[i][2]]);
+}
+
+void TetraMesh::orientTetras()
+{
+//	for(const auto t : tetras())
+//	{
+//		std::array<Point<3,double>,4> P = get(point_coords,*this,t);
+//
+//		//if (scalartriple(,,) < 0)
+//	}
+}
+
+void TetraMesh::orientFaces()
+{
+	for(const auto f : faces())
+	{
+		const auto IDtd = get(tetra_below_face,*this,f);
+
+		const auto IDpu = get(point_above_face,*this,f);
+		const auto IDpd = get(point_below_face,*this,f);
+
+		Point<3,double> Pu = get(point_coords,*this,IDpu);
+		Point<3,double> Pd = get(point_coords,*this,IDpd);
+
+		Face F = get(face,*this,f);
+
+		double h_up 	= F.pointHeight(Pu);
+		double h_down 	= F.pointHeight(Pd);
+
+		// If this is a boundary tetra, make sure face is going the right way
+		if (h_up < 0 && IDtd.value() == 0)
+			m_faces[f.value()] = -m_faces[f.value()];
+		// If not a boundary tetra, check if orientation is backwards
+		else if (IDtd.value() && IDpu.value() && IDpd.value() && h_up < h_down)
+			m_faces[f.value()] = -m_faces[f.value()];
+	}
+}
+
+
+void TetraMesh::mapTetrasToFaces()
+{
+	m_facePoints.clear();
+	m_facePoints.push_back(FaceByPointID(0,0,0));
+
+	m_pointIDsToFaceMap.clear();
+
+	Point<3,double> O{0.0,0.0,0.0};
+
+	m_faceTetras.clear();
+	m_faceTetras.push_back(array<unsigned,2>{{0,0}});
+
+	m_tetraFaces = vector<TetraByFaceID>(m_tetraPoints.size(),TetraByFaceID{0,0,0,0});
+
+	for(auto T : m_tetraPoints | boost::adaptors::indexed(0U))
+	{
+		// sort indices to get canonical order for hash lookup
+		TetraByPointID IDps_sort = T.value();
+		boost::sort(IDps_sort);
+
+		if (T.index() > 0)
+			for(const auto& perm : tetra_face_opposite_point_indices | boost::adaptors::indexed(0U))
+			{
+				FaceByPointID Ft(
+						IDps_sort[perm.value().faceidx[0]],
+						IDps_sort[perm.value().faceidx[1]],
+						IDps_sort[perm.value().faceidx[2]]);
+
+				//unsigned IDp_opposite = IDps_sort[perm.value().oppidx];
+
+				auto p = m_pointIDsToFaceMap.insert(make_pair(Ft,m_faceTetras.size()));
+
+				if(p.second)			// new tuple inserted, this is first tetra referenced by the face
+				{
+					// add new face to data structures
+
+					// NOTE: Errors are possible if this is a degenerate (or nearly-degenerate) tetra
+					// (ie. opposite-point altitude nearly 0)
+					//
+					// May settle on wrong orientation, which will imply wrong orientation for the next tetra attached to the face
+
+					m_faceTetras.push_back(array<unsigned,2>{(unsigned)T.index(),0});
+
+					m_tetraFaces[T.index()][perm.index()] = p.first->second;			// link the tetra to the face (positive side)
+				}
+				else				// face already exists -> this tetra is the second attached to the face
+				{
+					// face is already present so link face <-> tetra
+					m_faceTetras[p.first->second][1] = T.index();
+					m_tetraFaces[T.index()][perm.index()] = -p.first->second;
+				}
+			}
+	}
+
+	m_facePoints.resize(m_faceTetras.size());
+	for(const auto p : m_pointIDsToFaceMap)
+		m_facePoints[p.second] = p.first;
+}
+
+/** Converts the TetraMesh representation to the packed data structures used by the kernel
+ *
+ */
+
 
 void TetraMesh::makeKernelTetras()
 {
@@ -232,8 +260,8 @@ void TetraMesh::makeKernelTetras()
 			}
 		}
 
-		if (m_enableVerboseConstruction && !tetOK)
-			printTetra(IDt);
+//		if (m_enableVerboseConstruction && !tetOK)
+//			printTetra(IDt);
 	}
 
 	cout << "INFO: Checked tetras at " << m_timer.elapsed().wall*1e-9 << 's' << endl;
@@ -275,8 +303,6 @@ void TetraMesh::makeKernelTetras()
 		tet.value().nz=_mm_setr_ps(n[0][2],n[1][2],n[2][2],n[3][2]);
 		tet.value().C =_mm_setr_ps(C[0],C[1],C[2],C[3]);
 	}
-
-	cout << "INFO: Kernel tetras build at " << m_timer.elapsed().wall*1e-9 << endl;
 
 	m_tetras=T;
 
@@ -391,13 +417,9 @@ unsigned TetraMesh::findEnclosingTetra(const Point<3,double>& p) const
 	const auto lims = bb.corners();
 
 	cout << "Bounding box is [" << lims.first[0] << ',' << lims.second[0] << "] [" << lims.first[1] << ',' << lims.second[1] << "] [" << lims.first[2] << ',' << lims.second[2] << ']' << endl;
+	cout << "Searching for tetra to enclose " << p[0] << ' ' << p[1] << ' ' << p[2] << endl;
 
 	for(unsigned i=1;i<m_tetras.size(); ++i)
-//		if (m_tetras[i].pointWithin(pv))
-//		{
-//			IDt=i;
-//			++N;
-//		}
 	{
 		array<float,4> h;
 		_mm_store_ps(h.data(), m_tetras[i].heights(pv));
@@ -412,6 +434,12 @@ unsigned TetraMesh::findEnclosingTetra(const Point<3,double>& p) const
 			cout << "  Tetra " << i << " encloses with heights ";
 			for(unsigned j=0;j<4;++j)
 				cout << h[j] << ' ';
+
+			TetraByFaceID IDfs = get(::faces, *this, TetraMeshBase::TetraDescriptor(i) );
+			cout << "    Face|adj tetra: ";
+
+			for(unsigned i=0;i<4;++i)
+				cout << IDfs[i] << '|' << get(tetra_below_face, *this, FaceDescriptor(IDfs[i])).value() << "  ";
 			cout << endl;
 
 			++N;
@@ -443,7 +471,7 @@ RTIntersection TetraMesh::findSurfaceFace(array<float,3> p,array<float,3> d,cons
 	if (!F)
 		throw std::logic_error("TetraMesh::findSurfaceFace(p,d,F) given null filter (not supported)");
 
-	for(int i=1;i<m_faces.size(); ++i)
+	for(unsigned i=1;i<m_faces.size(); ++i)
 	{
 		int IDf;
 
@@ -643,19 +671,6 @@ double TetraMesh::getFaceArea(const FaceByPointID& f) const
 
 
 
-vector<unsigned> TetraMesh::getRegionBoundaryTris(unsigned r) const
-{
-	vector<unsigned> tri;
-    for(unsigned IDf=0; IDf<m_faces.size(); ++IDf)
-    	if(faceBoundsRegion(r,IDf))
-    		tri.push_back(IDf);
-
-    return tri;
-}
-
-
-
-
 /** returns a vector containing (face ID, tetra ID) for each face on the boundary of r0; if r1 is specified, then
  * it also requires that the face bound r1 (ie. is an r0-r1 boundary)
  *
@@ -684,4 +699,74 @@ vector<pair<unsigned,unsigned>> TetraMesh::getRegionBoundaryTrisAndTetras(unsign
 	}
 
 	return v;
+}
+
+FaceByPointID get(points_tag,const TetraMesh& M,TetraMesh::FaceDescriptor IDf)
+{
+	return M.m_facePoints[IDf.value()];
+}
+
+/** Returns the point descriptor that is present int the tetra tIDps but not the face fIDps
+ *
+ */
+
+TetraMesh::PointDescriptor oddOneOut(TetraByPointID tIDps,FaceByPointID fIDps)
+{
+	bool incl[4]{ false,false,false,false };
+
+	for(unsigned t=0;t<4;++t)
+		for(unsigned f=0;f<3;++f)
+			incl[t] |= fIDps[f] == tIDps[t];
+
+	for(unsigned t=0;t<4;++t)
+		if (!incl[t])
+			return TetraMesh::PointDescriptor(tIDps[t]);
+
+	return TetraMesh::PointDescriptor(0);
+}
+
+TetraMesh::PointDescriptor get(point_above_face_tag,const TetraMesh& M,TetraMesh::FaceDescriptor IDf)
+{
+	return oddOneOut(
+			get(points,M,
+				get(tetra_above_face,M,IDf)),
+			get(points,M,IDf));
+}
+
+TetraMesh::PointDescriptor get(point_below_face_tag,const TetraMesh& M,TetraMesh::FaceDescriptor IDf)
+{
+	return oddOneOut(
+			get(points,M,
+				get(tetra_below_face,M,IDf)),
+			get(points,M,IDf));
+}
+
+
+TetraMesh::TetraDescriptor get(tetra_above_face_tag,const TetraMesh& M,TetraMesh::DirectedFaceDescriptor IDf)
+{
+	int i = IDf.value();
+	return TetraMesh::TetraDescriptor(i > 0 ? M.m_faceTetras[i][0] : M.m_faceTetras[-i][1]);
+}
+
+TetraMesh::TetraDescriptor get(tetra_below_face_tag,const TetraMesh& M,TetraMesh::DirectedFaceDescriptor IDf)
+{
+	int i = IDf.value();
+	return TetraMesh::TetraDescriptor(i > 0 ? M.m_faceTetras[i][1] : M.m_faceTetras[-i][0]);
+}
+
+Face get(face_tag,const TetraMesh& M,TetraMesh::FaceDescriptor IDf)
+{
+	unsigned i = IDf.value();
+	return M.m_faces[i];
+}
+
+Face get(face_tag,const TetraMesh& M,TetraMesh::DirectedFaceDescriptor IDf)
+{
+	int i = IDf.value();
+	return i > 0 ? M.m_faces[i] : -M.m_faces[-i];
+}
+
+TetraByFaceID get(faces_tag,const TetraMesh& M,TetraMesh::TetraDescriptor d)
+{
+	return M.m_tetraFaces[d.value()];
 }

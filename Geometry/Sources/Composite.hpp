@@ -31,6 +31,11 @@ public:
 
 	unsigned count() const { return m_elements.size(); }
 
+	void add(Source::Abstract* A)
+	{
+		m_elements.push_back(A);
+	}
+
 private:
 	std::vector<Abstract*>		m_elements;
 };

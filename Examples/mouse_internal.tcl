@@ -32,16 +32,16 @@ R setLegendFileName $legendfn
 set mesh [R mesh]
 set opt [R materials_simple]
 
-set B [Ball_New]
-$B centre "10 40 11"
-$B radius 2
+Ball B
+B centre "10 40 11"
+B radius 2
 
 ## Create sim kernel
 
 TetraSVKernel k $mesh
 
 # Kernel properties
-k source $B
+k source B
 k energy             50
 k materials          $opt
 k setUnitsToMM
@@ -168,9 +168,9 @@ for { set i 0 } { $i < $N } { incr i } {
 	k randSeed           $i
 
     # could equally well play with other stuff
-    $B radius [expr $i * 0.1 + 2.0]
-    $B centre "[expr $i * 1.0 + 10.0] 42 10"
-	k source $B
+    B radius [expr $i * 0.1 + 2.0]
+    B centre "[expr $i * 1.0 + 10.0] 42 10"
+	k source B
 
 	k startAsync
 

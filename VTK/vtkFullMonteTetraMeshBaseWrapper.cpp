@@ -112,11 +112,12 @@ void getVTKPoints(const TetraMeshBase& M,vtkPoints* P)
 	OrthoBoundingBox<double,3> bb;
 
 	vtkIdType i=0;
-	for(Point<3,double> p : M.points())
+	for(const auto p : M.points())
 	{
+		Point<3,double> Pc = get(point_coords,M,p);
 		if (i != 0)
-			bb.insert(p);
-		P->SetPoint(i++,p.data());
+			bb.insert(Pc);
+		P->SetPoint(i++,Pc.data());
 	}
 	P->SetPoint(0,bb.corners().first.data());
 }
@@ -200,7 +201,7 @@ vtkIdList* vtkFullMonteTetraMeshBaseWrapper::getTetraIDsFromFilter(const FilterB
 
 	vtkIdList* L = vtkIdList::New();
 
-	for(int i=1;i<m_mesh->getNt()+1;++i)
+	for(unsigned i=1;i<m_mesh->getNt()+1;++i)
 		if ((*F)(i))
 			L->InsertNextId(i);
 

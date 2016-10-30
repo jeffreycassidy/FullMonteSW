@@ -116,8 +116,8 @@ void TextFileMeshWriter::writeFaces(std::ostream& os) const
 	unsigned nnz=0,Nf=mesh()->getNf();
 
 	if (m_faceFilter)
-		for(int IDf=1; IDf <= Nf; ++IDf)
-			nnz += (*m_faceFilter)(IDf);
+		for(unsigned IDf=1; IDf <= Nf; ++IDf)
+			nnz += (*m_faceFilter)(int(IDf));
 	else
 		nnz = Nf;
 
@@ -153,11 +153,11 @@ void TextFileMeshWriter::writeFaces(std::ostream& os) const
 
 	os << Nf << ' ' << (m_showFaceID + 3) << endl;
 
-	for(int IDf=1; IDf <= Nf; ++IDf)
+	for(unsigned IDf=1; IDf <= Nf; ++IDf)
 	{
-		if (!m_faceFilter || (*m_faceFilter)(IDf))
+		if (!m_faceFilter || (*m_faceFilter)(int(IDf)))
 		{
-			FaceByPointID IDps = mesh()->getFacePointIDs(IDf);
+			FaceByPointID IDps = mesh()->getFacePointIDs(int(IDf));
 			if (m_showFaceID)
 				os << setw(m_faceIDWidth) << IDf;
 
@@ -199,7 +199,9 @@ void TextFileMeshWriter::writeTetras(std::ostream& os) const
 
 	if (m_showTetraID)
 		os << "<IDt> ";
-	os << "<p0> <p1> <p2> <p3>";
+	os << "<p0> <p1> <p2> <p3> ";
+	if (m_showMaterial)
+		os << "<material>" << endl;
 	os << endl;
 
 	if(m_showTetraID)
@@ -218,10 +220,13 @@ void TextFileMeshWriter::writeTetras(std::ostream& os) const
 		{
 			TetraByPointID IDps = mesh()->getTetraPointIDs(IDt);
 			if (m_showTetraID)
-				os << setw(m_tetraIDWidth) << IDt;
+				os << setw(m_tetraIDWidth) << IDt << ' ';
 
 			for(unsigned i=0;i<4;++i)
 				os << setw(m_pointIDWidth) << IDps[i] << ' ';
+
+			if (m_showMaterial)
+				os << mesh()->getMaterial(IDt);
 
 			os << endl;
 		}
@@ -395,4 +400,24 @@ void TextFileMeshWriter::write() const
 
 	if (m_showTetras)
 		writeTetras(os);
+}
+
+void TextFileMeshWriter::writeHintFile() const
+{
+	std::ofstream os(("hint."+fileName()).c_str());
+
+	os << "# Hint file for faster reconstruction of meshes." << endl;
+	os << "# <Nf>" << endl;
+	os << "# <IDp0> <IDp1> <IDp2> <IDt_above> <IDt_below>" << endl;
+
+	os << mesh()->getNf() << endl;
+
+	for(const auto f : mesh()->faces())
+	{
+		FaceByPointID IDps = get(points,*mesh(),f);
+		TetraMeshBase::TetraDescriptor IDtu = get(tetra_above_face,*mesh(),f);
+		TetraMeshBase::TetraDescriptor IDtd = get(tetra_below_face,*mesh(),f);
+
+		os << IDps[0] << ' ' << IDps[1] << ' ' << IDps[2] << ' ' << IDtu.value() << ' ' << IDtd.value() << endl;
+	}
 }

@@ -36,7 +36,15 @@ public:
 
 	virtual void clear() {};
 
+	void hintFileName(std::string fn);
+
 private:
+
+	std::vector<TetraMesh::FaceHint> readHintFile(const std::string fn) const;
+
+	bool m_useHintFileWhenAvailable=true;
+
+	std::string m_hintFileName;
 
 	virtual Optical 					parse_optical(std::string fn) const=0;
 	virtual std::vector<SourceDef>		parse_sources(std::string fn) const=0;

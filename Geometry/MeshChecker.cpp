@@ -43,7 +43,7 @@ bool MeshChecker::pointHeights(unsigned IDt) const
 	array<array<float,3>,4> tetraPointCoords;
 
 	for(unsigned i=0;i<4;++i)
-		tetraPointCoords[i] = m_mesh->points()[IDps[i]].as_array_of<float>();
+		tetraPointCoords[i] = get(point_coords,*m_mesh,TetraMeshBase::PointDescriptor(IDps[i])).as_array_of<float>();
 
 	bool tet_ok=true;
 	for(int f=0;f<4;++f)

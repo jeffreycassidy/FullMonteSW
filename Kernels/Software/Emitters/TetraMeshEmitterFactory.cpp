@@ -20,7 +20,7 @@
 
 // Source descriptions
 #include <FullMonteSW/Geometry/Sources/Composite.hpp>
-#include <FullMonteSW/Geometry/Sources/PointSource.hpp>
+#include <FullMonteSW/Geometry/Sources/Point.hpp>
 #include <FullMonteSW/Geometry/Sources/Line.hpp>
 #include <FullMonteSW/Geometry/Sources/Ball.hpp>
 #include <FullMonteSW/Geometry/Sources/Volume.hpp>
@@ -29,6 +29,7 @@
 #include <FullMonteSW/Geometry/Sources/Surface.hpp>
 
 #include <FullMonteSW/Geometry/Filters/TriFilterRegionBounds.hpp>
+#include <FullMonteSW/Geometry/Filters/TetrasNearPoint.hpp>
 #include <FullMonteSW/Geometry/RayWalk.hpp>
 
 #include <FullMonteSW/Geometry/Convenience.hpp>
@@ -300,19 +301,27 @@ template<class RNG>void TetraEmitterFactory<RNG>::doVisit(Source::Abstract* s)
 
 template<class RNG>void TetraEmitterFactory<RNG>::doVisit(Source::Ball* bs)
 {
-	vector<unsigned> Ts = m_mesh->tetras_close_to(bs->centre(),bs->radius());
-	vector<float> w(Ts.size(), 0.0f);
+	TetrasNearPoint TP;
+
+	TP.mesh(m_mesh);
+	TP.centre(bs->centre());
+	TP.radius(bs->radius());
+
+	vector<std::pair<unsigned,float>> w;
 	float wsum=0.0f;
 
-	for(const auto IDt : Ts)
+	for(const auto IDt : m_mesh->tetras())
 	{
-		w.push_back(m_mesh->getTetraVolume(IDt));
-		wsum += w.back();
+		if (TP(IDt.value()))
+		{
+			w.emplace_back(IDt.value(),get(volume,*m_mesh,IDt));
+			wsum += w.back().second;
+		}
 	}
 
-	for(unsigned i=0;i<Ts.size();++i)
+	for(const auto p : w)
 	{
-		Source::Volume vs(w[i]/wsum,Ts[i]);
+		Source::Volume vs(p.second/wsum,p.first);
 		doVisit(&vs);
 	}
 }

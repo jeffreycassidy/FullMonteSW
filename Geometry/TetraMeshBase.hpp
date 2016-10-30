@@ -9,8 +9,46 @@
 #include <boost/serialization/nvp.hpp>
 #include <boost/serialization/access.hpp>
 
+#include <boost/range/counting_range.hpp>
+
 #include <boost/range/algorithm.hpp>
 
+#ifndef SWIG
+typedef struct {} points_tag;
+constexpr points_tag points;
+
+typedef struct {} point_coords_tag;
+constexpr point_coords_tag point_coords;
+
+typedef struct {} volume_tag;
+constexpr volume_tag volume;
+
+template<typename I>class WrappedInteger
+{
+public:
+	WrappedInteger(){}
+	explicit WrappedInteger(I v) : m_value(v){}
+
+	explicit operator I() const { return m_value; }
+
+	bool operator==(const WrappedInteger<I>& rhs) const { return rhs.m_value==m_value; }
+	bool operator!=(const WrappedInteger<I>& rhs) const { return rhs.m_value!=m_value; }
+
+	WrappedInteger& operator++(){ m_value++; return *this; }
+
+	WrappedInteger& operator+=(std::ptrdiff_t rhs)					{ m_value += rhs; return *this; }
+	WrappedInteger  operator+ (const WrappedInteger<I> rhs)	const 	{ return WrappedInteger(rhs.m_value + m_value); }
+	std::ptrdiff_t	operator- (const WrappedInteger<I> rhs)			{ return m_value-rhs.m_value;}
+
+	WrappedInteger& operator=(const WrappedInteger<I>&) = default;
+
+	I value() const { return m_value; }
+
+protected:
+	I m_value=I();
+};
+
+#endif
 
 /** TetraMeshBase contains the bare essentials of a tetrahedral mesh: points, tetras (by 4 point indices) and a region code for
  * each tetra. Generally tetra 0 and point 0 are dummy entries, to facilitate conversion between 0-based and 1-based indexing.
@@ -40,7 +78,6 @@ public:
 	virtual void Delete(){ delete this; }
 	virtual ~TetraMeshBase(){}
 
-	const std::vector<Point<3,double>>& 	points() const 	 	{ return m_points; }
 	const std::vector<TetraByPointID>& 	tetrasByID() const 	{ return m_tetraPoints; }
 
 	void remapMaterial(unsigned from,unsigned to);
@@ -54,11 +91,6 @@ public:
 	const TetraByPointID&   getTetraPointIDs(unsigned id)  	const { return m_tetraPoints[id]; }
     Point<3,double>         getTetraPoint(unsigned IDt,unsigned i) const { return m_points[m_tetraPoints[IDt][i]]; }
 
-    double                  getTetraVolume(TetraByPointID IDps) const
-        { return std::abs(scalartriple(m_points[IDps[0]],m_points[IDps[1]],m_points[IDps[2]],m_points[IDps[3]])/6); }
-
-    double                  getTetraVolume(unsigned IDt) const { return getTetraVolume(m_tetraPoints[IDt]); }
-
     const std::vector<Point<3,double> >& getPoints() const { return m_points; }
     const std::vector<TetraByPointID>& getTetrasByPointID() const { return m_tetraPoints; }
 
@@ -68,6 +100,8 @@ public:
     }
 
     void apply(const AffineTransform<float,3>& T);
+
+
 
 
     unsigned                		getMaterial(unsigned IDt) const { return m_tetraMaterials[IDt]; }
@@ -85,6 +119,30 @@ public:
     	return p;
     }
 
+    class PointDescriptor;
+
+    typedef boost::counting_iterator<
+    		PointDescriptor,
+			std::random_access_iterator_tag,
+			std::ptrdiff_t>	PointIterator;
+
+    typedef boost::iterator_range<PointIterator> 			PointRange;
+
+
+
+    class TetraDescriptor;
+
+    typedef boost::counting_iterator<
+        			TetraDescriptor,
+        			std::random_access_iterator_tag,
+        			std::ptrdiff_t> TetraIterator;
+
+    typedef  boost::iterator_range<TetraIterator> TetraRange;
+
+#ifndef SWIG
+    PointRange points() const;
+#endif
+
 protected:
 	std::vector<Point<3,double> >    	m_points;          	///< Point vector
 	std::vector<TetraByPointID>      	m_tetraPoints;    	///< Tetra -> 4 point IDs
@@ -97,6 +155,62 @@ private:
 		{	ar & BOOST_SERIALIZATION_NVP(m_points) & BOOST_SERIALIZATION_NVP(m_tetraPoints) & BOOST_SERIALIZATION_NVP(m_tetraMaterials); }
 
 	friend class boost::serialization::access;
+
+
+    friend Point<3,double> 	get(point_coords_tag,	const TetraMeshBase&,PointDescriptor);
+    friend TetraByPointID 	get(points_tag,			const TetraMeshBase&,TetraDescriptor);
 };
+
+class TetraMeshBase::PointDescriptor : public WrappedInteger<unsigned>
+{
+public:
+	explicit PointDescriptor(unsigned i=0) : WrappedInteger<unsigned>(i){}
+
+};
+
+class TetraMeshBase::TetraDescriptor : public WrappedInteger<unsigned>
+{
+public:
+	explicit TetraDescriptor(unsigned i=0) : WrappedInteger<unsigned>(i){}
+};
+
+#ifndef SWIG
+
+inline TetraByPointID 	get(points_tag,			const TetraMeshBase& M,TetraMeshBase::TetraDescriptor IDt)	{ return M.m_tetraPoints[IDt.value()]; 	}
+inline Point<3,double> 	get(point_coords_tag,	const TetraMeshBase& M,TetraMeshBase::PointDescriptor IDt)	{ return M.m_points[IDt.value()]; 		}
+
+double get(volume_tag,const TetraMeshBase& M,TetraMeshBase::TetraDescriptor T);
+
+/** Write instance for getting a property for all points of a tetra */
+
+//template<typename Prop,typename Mesh>
+//	std::array<decltype(get(std::declval<Prop>(), std::declval<const Mesh&>(), TetraMeshBase::PointDescriptor())),4>
+//	get(Prop p,const Mesh& M,TetraByPointID IDps)
+//	{
+//		typedef decltype(get(p, M, TetraMeshBase::PointDescriptor())) Result;
+//		std::array<Result,4> res;
+//
+//		for(unsigned i=0;i<4;++i)
+//			res[i] = get(p,M,TetraMeshBase::PointDescriptor(IDps[i]));
+//
+//		return res;
+//	}
+
+template<typename Prop>std::array<decltype(get(std::declval<Prop>(),std::declval<const TetraMeshBase&>(),TetraMeshBase::PointDescriptor())),4>
+	get(Prop p,const TetraMeshBase& M,TetraMeshBase::TetraDescriptor IDt)
+	{
+	typedef decltype(get(p, M, TetraMeshBase::PointDescriptor())) Result;
+	TetraByPointID IDps = get(points,M,IDt);
+	std::array<Result,4> res;
+
+	for(unsigned i=0;i<4;++i)
+		res[i] = get(p,M,TetraMeshBase::PointDescriptor(IDps[i]));
+
+	return res;
+	}
+
+
+
+#endif
 
 #endif

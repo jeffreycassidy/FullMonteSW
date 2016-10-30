@@ -5,8 +5,8 @@
  *      Author: jcassidy
  */
 
-#ifndef GEOMETRY_SOURCES_POINTSOURCE_HPP_
-#define GEOMETRY_SOURCES_POINTSOURCE_HPP_
+#ifndef GEOMETRY_SOURCES_POINT_HPP_
+#define GEOMETRY_SOURCES_POINT_HPP_
 
 #include "Abstract.hpp"
 #include <array>
@@ -38,4 +38,4 @@ private:
 };
 
 
-#endif /* GEOMETRY_SOURCES_POINTSOURCE_HPP_ */
+#endif /* GEOMETRY_SOURCES_POINT_HPP_ */

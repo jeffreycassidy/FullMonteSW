@@ -84,8 +84,9 @@ void MatlabWriter::writeFaces(const std::string fn) const
 	if (pointPerm_.empty())
 		for(const auto& p : M_->points() | drop(1))
 		{
+			const auto pc = get(point_coords,*M_,p);
 			for(unsigned j=0;j<3;++j)						// Drop dummy point 0; Matlab starts index at 1 so will line up
-				os << setw(10) << p[j] << ' ';
+				os << setw(10) << pc[j] << ' ';
 			os << endl;
 		}
 	else

@@ -208,7 +208,7 @@ void TIMOSWriter::writeVolFluence(const std::string fn,const TetraMesh& mesh,con
 	for(unsigned i=1; i<=mesh.getNt(); ++i)
 		if (phi_v[i] > 0.0)
 			os << setw(7) << delim{""," ",""} << mesh.getTetraPointIDs(i) <<
-					fixed << setprecision(4) << setw(8) << mesh.getTetraVolume(i) << ' ' <<
+					fixed << setprecision(4) << setw(8) << get(volume,mesh,TetraMeshBase::TetraDescriptor(i)) << ' ' <<
 					scientific << setprecision(5) << setw(8) << phi_v[i] << endl;
 }
 

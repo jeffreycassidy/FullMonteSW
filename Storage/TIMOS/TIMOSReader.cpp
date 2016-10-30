@@ -11,18 +11,24 @@
 #include "TIMOS.hpp"
 #include "TIMOSReader.hpp"
 
-#include <FullMonteSW/Geometry/Sources/PointSource.hpp>
+#include <FullMonteSW/Geometry/Sources/Point.hpp>
 #include <FullMonteSW/Geometry/Sources/SurfaceTri.hpp>
 #include <FullMonteSW/Geometry/Sources/PencilBeam.hpp>
 #include <FullMonteSW/Geometry/Sources/Volume.hpp>
 #include <FullMonteSW/Geometry/Sources/Composite.hpp>
+
+#include <fstream>
 
 using namespace std;
 
 TetraMesh TIMOSReader::mesh() const
 {
 	TetraMeshBase tmb = mesh_base();
-	return TetraMesh(tmb);
+
+	if (m_useHintFileWhenAvailable && m_hintFileName.length() != 0)
+		return TetraMesh(tmb,readHintFile(m_hintFileName));
+	else
+		return TetraMesh(tmb);
 }
 
 TetraMeshBase TIMOSReader::mesh_base() const
@@ -46,6 +52,33 @@ TetraMeshBase TIMOSReader::mesh_base() const
 
 	TetraMeshBase M(P,T,T_m);
 	return M;
+}
+
+
+vector<TetraMesh::FaceHint> TIMOSReader::readHintFile(const std::string fn) const
+{
+	std::ifstream is(fn.c_str());
+	unsigned Nf=0;
+	string L;
+
+	while(is.peek() == '#' && !is.eof())
+		getline(is,L);
+
+	is >> Nf;
+
+	vector<TetraMesh::FaceHint> H(Nf+1);
+
+	H[0].fIDps = FaceByPointID{0U,0U,0U};
+	H[0].IDts = array<unsigned,2>{0U,0U};
+
+	for(unsigned i=1;i<=Nf && !is.eof();++i)
+	{
+		for(unsigned j=0;j<3;++j)
+			is >> H[i].fIDps[j];
+		for(unsigned j=0;j<2;++j)
+			is >> H[i].IDts[j];
+	}
+	return H;
 }
 
 std::vector<SimpleMaterial> TIMOSReader::materials_simple() const
@@ -95,4 +128,8 @@ std::vector<TIMOS::LegendEntry> TIMOSReader::legend() const
 	return L;
 }
 
+void TIMOSReader::hintFileName(const std::string fn)
+{
+	m_hintFileName=fn;
+}
 

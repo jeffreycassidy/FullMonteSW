@@ -21,6 +21,8 @@ public:
 	/// Write the file
 	void write() const;
 
+	void writeHintFile() const;
+
 	void 					faceFilter(const FilterBase<int>* F);
 	const FilterBase<int>* 	faceFilter() 							const;
 
@@ -45,6 +47,7 @@ private:
 	bool m_showPoints=true;
 	bool m_showFaces=true;
 	bool m_showTetras=true;
+	bool m_showMaterial=true;
 };
 
 

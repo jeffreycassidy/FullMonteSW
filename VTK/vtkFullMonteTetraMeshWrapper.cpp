@@ -161,8 +161,8 @@ vtkIdList* vtkFullMonteTetraMeshWrapper::getTriangleIDsFromFilter(const FilterBa
 
 	vtkIdList* L = vtkIdList::New();
 
-	for(int i=1;i<mesh()->getNf()+1;++i)
-		if ((*F)(i))
+	for(unsigned i=1;i<mesh()->getNf()+1;++i)
+		if ((*F)(int(i)))
 			L->InsertNextId(i);
 
 	return L;

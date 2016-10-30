@@ -10,7 +10,7 @@
 
 #include "Abstract.hpp"
 #include "Directed.hpp"
-#include "PointSource.hpp"
+#include "Point.hpp"
 
 #include <limits>
 

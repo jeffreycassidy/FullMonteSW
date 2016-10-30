@@ -11,9 +11,14 @@
 
 #include <boost/functional/hash.hpp>
 
+#include <boost/iterator/counting_iterator.hpp>
+
+#include <iterator>
+
 #include <boost/timer/timer.hpp>
 
 #include "newgeom.hpp"
+
 
 template<typename T>class FilterBase;
 
@@ -55,6 +60,7 @@ constexpr std::array<std::array<unsigned char,2>,6> tetra_edge_indices {
 	std::array<unsigned char,2>{{ 2, 3}}
 };
 
+
 using namespace std;
 
 #endif // SWIG
@@ -68,6 +74,8 @@ struct RTIntersection
 	unsigned				IDt;
 };
 
+
+
 /** Holds a tetrahedral mesh including face and tetra information.
  *
  */
@@ -76,22 +84,37 @@ struct RTIntersection
 %nodefaultctor TetraMesh;
 #endif
 
+
+typedef struct {} point_above_face_tag;
+typedef struct {} point_below_face_tag;
+typedef struct {} tetra_above_face_tag;
+typedef struct {} tetra_below_face_tag;
+typedef struct {} face_tag;
+typedef struct {} faces_tag;
+
 class TetraMesh : public TetraMeshBase
 {
 public:
+	struct FaceHint
+		{
+			FaceByPointID fIDps;
+			array<unsigned,2> IDts;
+		};
+
 	TetraMesh(){}
-	TetraMesh(const TetraMeshBase& Mb) : TetraMeshBase(Mb)
-		{ buildTetrasAndFaces(); }
+	TetraMesh(const TetraMeshBase& Mb,const std::vector<FaceHint>& H=std::vector<FaceHint>()) : TetraMeshBase(Mb)
+		{ buildTetrasAndFaces(H); }
 
 #ifndef SWIG
-	TetraMesh(TetraMeshBase&& Mb) : TetraMeshBase(Mb)
-		{ buildTetrasAndFaces(); }
+	TetraMesh(TetraMeshBase&& Mb,const std::vector<FaceHint>& H=std::vector<FaceHint>()) : TetraMeshBase(Mb)
+		{ buildTetrasAndFaces(H); }
 #endif
 
-	TetraMesh(const vector<Point<3,double> >& P_,const vector<TetraByPointID>& T_p_,const vector<unsigned>& T_m_)
-	: TetraMeshBase(P_,T_p_,T_m_) { buildTetrasAndFaces(); }
 
-	TetraMesh(const vector<std::array<float,3>>& P_,const vector<TetraByPointID>& T_p_,const vector<unsigned>& T_m_)
+	TetraMesh(const vector<Point<3,double> >& P_,const vector<TetraByPointID>& T_p_,const vector<unsigned>& T_m_,const vector<FaceHint>& hint=vector<FaceHint>())
+	: TetraMeshBase(P_,T_p_,T_m_) { buildTetrasAndFaces(hint); }
+
+	TetraMesh(const vector<std::array<float,3>>& P_,const vector<TetraByPointID>& T_p_,const vector<unsigned>& T_m_,const vector<FaceHint>& hint=vector<FaceHint>())
 	{
 		std::vector<Point<3,double>> Pd(P_.size());
 		std::vector<TetraByPointID> T_p(T_p_.size());
@@ -99,13 +122,11 @@ public:
 		for(unsigned i=0;i<Pd.size();++i)
 			Pd[i] = Point<3,double>{ P_[i][0], P_[i][1], P_[i][2] };
 
-		*this = TetraMesh(TetraMeshBase(Pd,T_p_,T_m_));
+		*this = TetraMesh(Pd,T_p_,T_m_,hint);
 	}
 
 	~TetraMesh();
 	virtual void Delete(){ delete this; }
-
-    vector<unsigned> facesBoundingRegion(unsigned i) const;
 
 	// query size of mesh
 	unsigned getNf() const { return m_faces.size()-1; }
@@ -116,11 +137,6 @@ public:
 
 	const TetraByFaceID&    getTetraByFaceID(unsigned id)   const { return m_tetraFaces[id]; }
     unsigned                getTetraFromFace(int IDf)       const;
-
-    unsigned                getTetraID(TetraByPointID IDt) const {
-        auto it = m_pointIDsToTetraMap.find(IDt);
-        return (it == m_pointIDsToTetraMap.end() ? 0 : it->second);
-    }
 
     Tetra                   getTetra(unsigned IDt) const { return m_tetras[IDt]; }
 
@@ -144,18 +160,7 @@ public:
 	// checks if faces are oriented correctly
 	bool checkFaces() const;
 
-	std::vector<unsigned> tetras_close_to(Point<3,double> p0,float) const;
-
-	bool faceBoundsRegion(unsigned region,int IDf) const
-	{
-		array<unsigned,2> p = m_faceTetras[abs(IDf)];		// Get the two incident m_tetras
-		unsigned r0 = m_tetraMaterials[p[0]], r1 = m_tetraMaterials[p[1]];				// check material types
-		return r0!=r1 && (r1==region || r0==region);
-	}
-
 	void setFacesForFluenceCounting(const FilterBase<int>* TF);		/// Predicate specifying if a given face should have its fluence counted
-
-    std::vector<unsigned> getRegionBoundaryTris(unsigned r) const;
 
     /// Extracts the face IDs and tetra IDs corresponding to a given surface
     vector<pair<unsigned,unsigned>> getRegionBoundaryTrisAndTetras(unsigned r0,unsigned r1=-1U) const;
@@ -166,15 +171,33 @@ public:
     TetraMesh* self() { return this; }
 
 
-protected:
-//#ifndef SWIG
-//    TetraMesh(){}
-//#endif
+    class 				DirectedFaceDescriptor;
+
+    typedef boost::counting_iterator<
+			DirectedFaceDescriptor,
+			std::random_access_iterator_tag,
+			std::ptrdiff_t> DirectedFaceIterator;
+
+    typedef boost::iterator_range<DirectedFaceIterator> DirectedFaceRange;
+
+    class 				FaceDescriptor;
+
+    typedef boost::counting_iterator<
+			FaceDescriptor,
+			std::random_access_iterator_tag,
+			std::ptrdiff_t> FaceIterator;
+
+    typedef  boost::iterator_range<FaceIterator> FaceRange;
+
+
+    TetraRange tetras() const;
+
+    FaceRange faces() const;
+
+
+
 
 private:
-
-    void printTetra(unsigned IDt) const;		// Debug method
-
 	vector<TetraByFaceID>	    	m_tetraFaces;       // tetra -> 4 face IDs
     vector<FaceByPointID>       	m_facePoints;       // face ID -> 3 point IDs
 	vector<Face>			    	m_faces;          	// faces (with normals and constants)
@@ -199,26 +222,128 @@ private:
     /// Tolerance to allow when checking for correct face orientation; if dot(p,n)-C < -m_pointHeightTolerance then flag an issue
     double m_pointHeightTolerance=2e-5;
 
-    std::unordered_map<TetraByPointID,unsigned,boost::hash<std::array<unsigned,4>>> m_pointIDsToTetraMap;
     std::unordered_map<FaceByPointID, unsigned,boost::hash<std::array<unsigned,3>>> m_pointIDsToFaceMap;
 
+
+    /** For each tetra, create tetra <-> face mappings based solely on ID:
+     *
+     * 		m_pointIDsToFaceMap			3 points -> face
+     * 		m_tetraFaces				tetra -> 4 faces
+     * 		m_facePoints				face -> point ID
+     * 		m_faceTetras				face -> 2 tetras
+     */
+    void mapTetrasToFaces();
+
+
+    /** Fix orientation of tetras so they are all counterclockwise and in minimal lexicographical order
+     *
+     */
+
+    void orientTetras();
+
+
+    /** For each existing face, build the plane (normal/constant) representation. Orientation for face (A,B,C)
+     * is right-handed (ie. normal is ABxAC)
+     *
+     */
+
+	void createFaceNormals();
+
+
+    /** Check that face orientation is correct (requires that face normals already be constructed)
+     *
+     */
+
+    void orientFaces();
+
+
+
     /// Build tetras and faces from the point & connectivity lists
-	void buildTetrasAndFaces();
+	void buildTetrasAndFaces(const std::vector<FaceHint>& hint=std::vector<FaceHint>());
 
 	/// Build the kernel tetra representation from the point, connectivity, and face lists
 	void makeKernelTetras();
 
-    template<class Archive>void serialize(Archive& ar,const unsigned ver)
-    {
-    	ar & boost::serialization::base_object<TetraMeshBase>(*this);
-
-    	if(Archive::is_loading::value)		// reconstruct from the TetraMeshBase
-    		buildTetrasAndFaces();
-    }
-
     boost::timer::cpu_timer m_timer;
 
-    friend boost::serialization::access;
+    //template<typename Result,typename Prop,typename...Args>friend Result get(Prop,const TetraMesh&,Args...);
+
+    friend FaceByPointID 	get(points_tag,const TetraMesh& M,FaceDescriptor);
+
+    friend TetraDescriptor	get(tetra_above_face_tag,const TetraMesh& M,DirectedFaceDescriptor);
+    friend TetraDescriptor	get(tetra_below_face_tag,const TetraMesh& M,DirectedFaceDescriptor);
+
+    friend Face				get(face_tag,			const TetraMesh& M,FaceDescriptor);
+    friend Face				get(face_tag,			const TetraMesh& M,DirectedFaceDescriptor);
+
+    friend TetraByFaceID	get(faces_tag,			const TetraMesh& M,TetraDescriptor);
 };
+
+class TetraMesh::FaceDescriptor : public WrappedInteger<unsigned>
+{
+public:
+	explicit FaceDescriptor(unsigned i) : WrappedInteger<unsigned>(i){}
+	FaceDescriptor(){}
+
+private:
+	friend class DirectedFaceDescriptor;
+};
+
+class TetraMesh::DirectedFaceDescriptor : public WrappedInteger<int>
+{
+public:
+	/// Allow implicit conversion of FaceDescriptor into DirectedFaceDescriptor
+	DirectedFaceDescriptor(const FaceDescriptor& F,bool invert=false) :
+		WrappedInteger<int>(invert ? -F.m_value : F.m_value){}
+	DirectedFaceDescriptor(){}
+
+	FaceDescriptor undirected() const { return FaceDescriptor(std::abs(WrappedInteger<int>::m_value)); }
+
+
+};
+
+#ifndef SWIG
+
+constexpr point_above_face_tag point_above_face;
+TetraMesh::PointDescriptor get(point_above_face_tag,const TetraMesh& M,TetraMesh::FaceDescriptor);
+
+constexpr point_below_face_tag point_below_face;
+TetraMesh::PointDescriptor get(point_below_face_tag,const TetraMesh& M,TetraMesh::FaceDescriptor);
+
+constexpr tetra_above_face_tag tetra_above_face;
+
+constexpr tetra_below_face_tag tetra_below_face;
+
+constexpr face_tag face;
+Face get(face_tag,const TetraMesh& M,TetraMesh::FaceDescriptor);
+
+constexpr faces_tag faces;
+TetraByFaceID get(faces_tag,const TetraMesh& M,TetraMesh::TetraDescriptor);
+
+inline TetraMesh::FaceRange TetraMesh::faces() const
+{
+	return FaceRange(FaceIterator(FaceDescriptor(0)),FaceIterator(FaceDescriptor(m_faces.size())));
+}
+
+inline TetraMesh::TetraRange TetraMesh::tetras() const
+{
+	return TetraRange(
+			TetraIterator(TetraDescriptor(0U)),
+			TetraIterator(TetraDescriptor(m_tetraPoints.size())));
+}
+template<typename Prop>std::array<decltype(get(std::declval<Prop>(),std::declval<const TetraMesh&>(),TetraMeshBase::PointDescriptor())),3>
+	get(Prop p,const TetraMesh& M,TetraMesh::FaceDescriptor IDf)
+	{
+	typedef decltype(get(p, M, TetraMesh::PointDescriptor())) Result;
+	FaceByPointID IDps = get(points,M,IDf);
+	std::array<Result,3> res;
+
+	for(unsigned i=0;i<3;++i)
+		res[i] = get(p,M,TetraMesh::PointDescriptor(IDps[i]));
+
+	return res;
+	}
+
+#endif
 
 #endif
