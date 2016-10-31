@@ -42,6 +42,7 @@ void Kernel::runSync()
 
 	awaitFinish();
 
+	m_results = gatherResults();
 	postfinish();
 
 	updateStatus(Finished);
@@ -50,7 +51,7 @@ void Kernel::runSync()
 	for(const auto o : m_observers)
 		o->notify_finish(*this);
 
-	m_results = gatherResults();
+
 
 	// share the results
 	for(const auto r : m_results)
@@ -92,15 +93,10 @@ void Kernel::awaitStatus(Status status)
 
 const OutputData* Kernel::getResultByTypeString(const std::string typeStr) const
 {
-	const auto R = results();
-	//const auto it = boost::find_if(R, [typeStr](OutputData* d){ return d->typeString() == typeStr; });
+	const auto it = boost::find_if(m_results, [&typeStr](OutputData* d){ return d->typeString() == typeStr; });
 
-//	if (it == end(R))
-//	{
-//		cerr << "Failed to find results of type '" << typeStr << '\'' << endl;
-//		return nullptr;
-//	}
-//	else
-//		return *it;
-	return nullptr;
+	if (it == end(m_results))
+		return nullptr;
+	else
+		return *it;
 }

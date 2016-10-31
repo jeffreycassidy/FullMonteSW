@@ -16,6 +16,8 @@
 #include <FullMonteSW/Geometry/TetraMesh.hpp>
 #include <FullMonteSW/Geometry/SimpleMaterial.hpp>
 
+#include <FullMonteSW/Geometry/Units/BaseUnit.hpp>
+
 class EnergyToFluence::Converter
 {
 public:
@@ -147,6 +149,9 @@ void EnergyToFluence::update()
 	}
 	else
 		cout << "ERROR: EnergyToFluence::results() requested but input array type is not recognized" << endl;
+
+	m_output->quantity(&Units::fluence);
+	m_output->units(&Units::packet);
 
 	delete C;
 }

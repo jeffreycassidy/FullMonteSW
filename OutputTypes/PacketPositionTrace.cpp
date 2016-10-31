@@ -7,8 +7,13 @@
 
 #include "PacketPositionTrace.hpp"
 #include <algorithm>
+#include <FullMonteSW/Geometry/StandardArrayKernel.hpp>
 
 PacketPositionTrace::PacketPositionTrace()
+{
+}
+
+PacketPositionTrace::PacketPositionTrace(const std::vector<Step>& tr) : m_trace(tr)
 {
 }
 
@@ -37,13 +42,21 @@ float PacketPositionTrace::duration() const
 
 std::array<float,3> PacketPositionTrace::positionAtTime(float t) const
 {
-	std::lower_bound(m_trace.begin(), m_trace.end(), t, compareTime);
+	const auto lb = std::lower_bound(m_trace.begin(), m_trace.end(), t, compareTime);
 
+	if (lb == m_trace.end())
+		return std::array<float,3>{NAN,NAN,NAN};
+	else
+	{
+		float w =  (t - lb->t) / ((lb+1)->t - lb->t);
+		return w*(lb+1)->pos + (1-w)*lb->pos;
+	}
 }
 
 std::array<float,3> PacketPositionTrace::positionAfterLength(float l) const
 {
-	std::lower_bound(m_trace.begin(), m_trace.end(), l, compareLength);
+	//std::lower_bound(m_trace.begin(), m_trace.end(), l, compareLength);
+	return std::array<float,3>{0.0f,0.0f,0.0f};
 }
 
 const PacketPositionTrace::Step& PacketPositionTrace::operator[](unsigned i) const

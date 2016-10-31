@@ -12,6 +12,8 @@
 
 #include "Unit.hpp"
 
+namespace Units {
+
 class UnitPrefix;
 
 class PrefixedUnit : public Unit
@@ -33,6 +35,6 @@ private:
 	const Unit*			m_unit;
 };
 
-
+};
 
 #endif /* GEOMETRY_UNITS_PREFIXEDUNIT_HPP_ */

@@ -10,6 +10,8 @@
 #include <FullMonteSW/OutputTypes/OutputData.hpp>
 #include <FullMonteSW/OutputTypes/SpatialMap.hpp>
 
+#include <FullMonteSW/Geometry/Units/BaseUnit.hpp>
+
 #include <cassert>
 #include <boost/range/algorithm.hpp>
 
@@ -25,6 +27,8 @@ void SurfaceExitScorer::dim(std::size_t N)
 {
 	m_elements=N;
 	m_acc.resize(2*N+1);
+
+	std::cout << "Underlying accumulator is of size " << m_acc.size() << endl;
 }
 
 std::list<OutputData*> SurfaceExitScorer::results() const
@@ -41,6 +45,8 @@ std::list<OutputData*> SurfaceExitScorer::results() const
 
 	// create vector
 	SpatialMap<float> *smap = new SpatialMap<float>(std::move(vf),AbstractSpatialMap::Surface,AbstractSpatialMap::Scalar);
+	smap->quantity(&Units::energy);
+	smap->units(&Units::packet);
 	return std::list<OutputData*>{smap};
 }
 

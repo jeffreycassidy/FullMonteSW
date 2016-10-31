@@ -40,7 +40,10 @@ template<typename Acc,typename Delta=Acc>class AtomicMultiThreadAccumulator
 public:
 	////// MultiThreadAccumulator concept requirements
 	explicit AtomicMultiThreadAccumulator(std::size_t N=0);
-	AtomicMultiThreadAccumulator(AtomicMultiThreadAccumulator&&);
+
+	AtomicMultiThreadAccumulator(const AtomicMultiThreadAccumulator&)=delete;
+	AtomicMultiThreadAccumulator(AtomicMultiThreadAccumulator&&)=delete;
+	AtomicMultiThreadAccumulator& operator=(const AtomicMultiThreadAccumulator&)=delete;
 	~AtomicMultiThreadAccumulator();
 
 	std::size_t size() const;
@@ -77,22 +80,22 @@ private:
 };
 
 template<typename Acc,typename Delta>AtomicMultiThreadAccumulator<Acc,Delta>::AtomicMultiThreadAccumulator(std::size_t N) :
-	m_values(new std::atomic<Acc>[N]),
+	m_values(N > 0 ? new std::atomic<Acc>[N] : nullptr),
 	m_size(N)
 {
 	clear();
 }
-
-template<typename Acc,typename Delta>AtomicMultiThreadAccumulator<Acc,Delta>::AtomicMultiThreadAccumulator(AtomicMultiThreadAccumulator&& A) :
-		m_values(A.m_values),
-		m_size(A.m_size),
-		m_retries(A.m_retries),
-		m_accumulations(A.m_accumulations)
-{
-	A.m_values=nullptr;
-	A.m_size=0;
-	A.m_retries=A.m_accumulations=0;
-}
+//
+//template<typename Acc,typename Delta>AtomicMultiThreadAccumulator<Acc,Delta>::AtomicMultiThreadAccumulator(AtomicMultiThreadAccumulator&& A) :
+//		m_values(A.m_values),
+//		m_size(A.m_size),
+//		m_retries(A.m_retries),
+//		m_accumulations(A.m_accumulations)
+//{
+//	A.m_values=nullptr;
+//	A.m_size=0;
+//	A.m_retries=A.m_accumulations=0;
+//}
 
 
 template<typename Acc,typename Delta>AtomicMultiThreadAccumulator<Acc,Delta>::~AtomicMultiThreadAccumulator()
@@ -109,6 +112,8 @@ template<typename Acc,typename Delta>void AtomicMultiThreadAccumulator<Acc,Delta
 {
 	delete[] m_values;
 	m_values = new std::atomic<Acc>[i];
+	if (!m_values)
+		throw std::bad_alloc();
 	m_size=i;
 	clear();
 }
@@ -128,8 +133,6 @@ template<typename Acc,typename Delta>Acc AtomicMultiThreadAccumulator<Acc,Delta>
 
 template<typename Acc,typename Delta>void AtomicMultiThreadAccumulator<Acc,Delta>::accumulate(std::size_t i,Delta delta)
 {
-	double oldVal = m_values[i];
-
 	// atomic_compare_exchange_weak(&a,&b,c) atomically:
 	//	reads a
 	//	compares a to b
@@ -137,6 +140,8 @@ template<typename Acc,typename Delta>void AtomicMultiThreadAccumulator<Acc,Delta
 	//		if !=, replaces b with the current value of a and returns false
 
 	// the weak variant may fail spuriously but runs faster "on some platforms"
+
+	double oldVal = m_values[i];
 
 	while(!std::atomic_compare_exchange_weak(&m_values[i], &oldVal, oldVal + delta))
 		++m_retries;

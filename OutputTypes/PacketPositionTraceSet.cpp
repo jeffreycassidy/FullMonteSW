@@ -11,11 +11,27 @@ PacketPositionTraceSet::PacketPositionTraceSet()
 {
 }
 
+PacketPositionTraceSet::PacketPositionTraceSet(const std::list<PacketPositionTrace*>& traces) :
+		m_traces(traces)
+{
+
+}
+
+
+PacketPositionTraceSet::PacketPositionTraceSet(std::list<PacketPositionTrace*>&& traces) :
+		m_traces(std::move(traces))
+{
+
+}
+
 unsigned PacketPositionTraceSet::nPoints() const
 {
 	unsigned Np=0;
 	for(const auto& tr : m_traces)
-		Np += tr.count();
+		if (tr)
+			Np += tr->count();
+		else
+			std::cout << "INFO: Skipping null trace" << std::endl;
 	return Np;
 }
 

@@ -5,6 +5,9 @@
 #include "clonable.hpp"
 #include "visitable.hpp"
 
+#include <FullMonteSW/Geometry/Units/Unit.hpp>
+#include <FullMonteSW/Geometry/Units/Quantity.hpp>
+
 #include "OutputData.hpp"
 
 using namespace std;
@@ -26,9 +29,18 @@ public:
 	SpaceType spatialType() const { return m_spaceType; }
 	ValueType valueType() const { return m_valueType; }
 
+	const Units::Quantity*		quantity() const	{ return m_quantity;	 	}
+	const Units::Unit*			units() 	const 	{ return m_units; 			}
+
+	void				quantity(const Units::Quantity* Q){ m_quantity=Q; }
+	void				units(const Units::Unit* U){ m_units=U; }
+
 private:
 	SpaceType					m_spaceType=UnknownSpaceType;
 	ValueType					m_valueType=UnknownValueType;
+
+	const Units::Quantity*		m_quantity=nullptr;
+	const Units::Unit*			m_units=nullptr;
 };
 
 #endif

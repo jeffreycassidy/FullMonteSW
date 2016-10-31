@@ -11,6 +11,8 @@
 
 using namespace std;
 
+namespace Units {
+
 const UnitPrefix pico{1e-12f,"pico","p"};
 const UnitPrefix nano{1e-9f,"nano","n"};
 const UnitPrefix micro{1e-6f,"micro","u"};
@@ -45,3 +47,4 @@ const std::string& UnitPrefix::prefix() const
 	return m_prefix;
 }
 
+};

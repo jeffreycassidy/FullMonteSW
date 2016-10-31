@@ -11,6 +11,8 @@
 #include <array>
 #include <vector>
 
+#include <boost/range.hpp>
+
 #include <FullMonteSW/Kernels/Event.hpp>
 
 /** Position trace of a single packet providing a series of steps (pos, weight, lengthTravelled, timeTravelled)
@@ -28,11 +30,10 @@ public:
 		float				w;		///< Weight (0..1)
 		float				l;		///< Cumulative length traveled
 		float 				t;		///< Time (simulation units)
-
-		KernelEvent::Type 	event;
 	};
 
 	PacketPositionTrace();
+	PacketPositionTrace(const std::vector<Step>& tr);
 	PacketPositionTrace(std::vector<Step>&& tr);
 
 	~PacketPositionTrace();
@@ -45,6 +46,8 @@ public:
 	Point3 		positionAfterLength(float l) 	const;	///< Position after traveling a given length
 
 	const Step&	operator[](unsigned i)			const;	///< The i'th step
+
+	boost::iterator_range<std::vector<Step>::const_iterator> steps() const { return boost::iterator_range<std::vector<Step>::const_iterator>(m_trace.cbegin(),m_trace.cend()); }
 
 	std::vector<Step>::const_iterator begin() const { return m_trace.begin(); }
 	std::vector<Step>::const_iterator end()   const { return m_trace.end();   }

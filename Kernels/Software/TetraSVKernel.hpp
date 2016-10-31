@@ -53,13 +53,7 @@ private:
 	DirectedSurfaceScorer&		directedSurfaceScorer()	{ return get<4>(m_scorer); }
 
 
-	virtual void prepareScorer() override
-	{
-		get<2>(m_scorer).dim(mesh()->getNt()+1);
-		get<3>(m_scorer).dim(mesh()->getNf()+1);
-		get<4>(m_scorer).dim(mesh()->getNf()+1);
-	}
-
+	virtual void prepareScorer() override;
 	virtual void prestart() override;
 	virtual void postfinish() override;
 };

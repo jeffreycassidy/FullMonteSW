@@ -13,24 +13,8 @@
 #include <iostream>
 #include "BaseUnit.hpp"
 
-//const Quantity mass{Quantity::Scalar,"mass","m"};
-//const Quantity length{Quantity::Scalar,"length","l"};
-//const Quantity area{Quantity::Scalar,"area","A"};
-//const Quantity volume{Quantity::Scalar,"volume","V"};
-////const Quantity time{Quantity::Scalar,"time","t"};
-//
-//////// Derived units
-//const Quantity fluence{Quantity::Scalar,"fluence","phi"};
-//const Quantity radiance{Quantity::Vector,"radiance","L"};
-//const Quantity area{Quantity::Scalar,"area","A"};
-//
-//Quantity::Quantity(Quantity::Type type,std::string name,std::string sym) :
-//		m_type(type),
-//		m_name(name),
-//		m_textSym(sym)
-//{
-//
-//}
+namespace Units {
+
 
 Unit::Unit()
 {
@@ -151,3 +135,4 @@ DerivedUnit DerivedUnit::operator*(const DerivedUnit& rhs) const
 	return D;
 }
 
+};

@@ -19,18 +19,6 @@ DirectionalSurface::DirectionalSurface()
 
 }
 
-vector<int> DirectionalSurface::faces() const
-{
-	return m_faces;
-}
-
-vector<unsigned> DirectionalSurface::facesU() const
-{
-	vector<unsigned> o(m_faces.size());
-	boost::transform(m_faces,o.begin(), [](int i){ return std::abs(i); });
-	return o;
-}
-
 void DirectionalSurface::update()
 {
 	m_faces.clear();
@@ -76,7 +64,11 @@ OutputData* DirectionalSurface::result() const
 
 	cout << "DirectionalSurface::result() returned a vector of dimension " << o.size() << " totaling " << sum << endl;
 
-	return new SpatialMap<float>(std::move(o),AbstractSpatialMap::Surface,AbstractSpatialMap::Scalar);
+	SpatialMap<float> *out = new SpatialMap<float>(std::move(o),AbstractSpatialMap::Surface,AbstractSpatialMap::Scalar);
+	out->quantity(m_data->quantity());
+	out->units(m_data->units());
+
+	return out;
 }
 
 DirectedSurfaceElement<float> DirectionalSurface::valueAtFace(int IDf) const

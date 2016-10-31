@@ -16,6 +16,8 @@
  * in terms of any other unit).
  */
 
+namespace Units {
+
 class BaseUnit : public Unit
 {
 public:
@@ -42,5 +44,9 @@ extern const BaseUnit ampere;
 extern const BaseUnit kelvin;
 extern const BaseUnit candela;
 extern const BaseUnit mole;
+
+extern const BaseUnit packet;
+
+};
 
 #endif /* GEOMETRY_UNITS_BASEUNIT_HPP_ */

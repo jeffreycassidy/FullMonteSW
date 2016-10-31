@@ -198,15 +198,18 @@ for { set i 0 } { $i < $N } { incr i } {
     progresstimer
 	k finishAsync
 
+    puts "Kernel is done"
+
     OutputDataSummarize OS
 
     for { set r 0 } { $r < [k getResultCount] } { incr r } {
         puts ""
         puts "Result $r"
-        puts "  [k getResultByIndex $r]"
-        #puts "  [[k getResultByIndex $r] typeString]"
+        puts "  [k getResultByIndex $r] [[k getResultByIndex $r] typeString]"
         OS visit [k getResultByIndex $r]
     }
+
+    puts "** end summary **"
 
     vtkPhi source [k getResultByIndex 2]
     vtkPhi update

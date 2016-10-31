@@ -40,11 +40,8 @@ private:
 
 	virtual void postfinish() override;
 	virtual void prestart() override;
+	virtual void prepareScorer() override;
 
-	virtual void prepareScorer() override
-	{
-		surfaceScorer().dim(mesh()->getNf()+1);
-	}
 };
 
 

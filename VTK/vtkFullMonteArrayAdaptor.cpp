@@ -68,7 +68,8 @@ void vtkFullMonteArrayAdaptor::source(const OutputData* D)
 void vtkFullMonteArrayAdaptor::update()
 {
 	// TODO: Inefficient if array is already the right size & type
-	m_vtkArray->Delete();
+	if (m_vtkArray)
+		m_vtkArray->Delete();
 
 	if (!m_fullMonteArray)
 	{
@@ -76,13 +77,13 @@ void vtkFullMonteArrayAdaptor::update()
 		return;
 	}
 
-//	const AbstractSpatialMap* M = dynamic_cast<const AbstractSpatialMap*>(m_fullMonteArray);
-//
-//	if (!M)
-//	{
-//		cout << "ERROR: vtkFullMonteArrayAdaptor::update() cannot downcast m_fullMonteArray to AbstractSpatialMap" << endl;
-//		return;
-//	}
+	const AbstractSpatialMap* M = dynamic_cast<const AbstractSpatialMap*>(m_fullMonteArray);
+
+	if (!M)
+	{
+		cout << "ERROR: vtkFullMonteArrayAdaptor::update() cannot downcast m_fullMonteArray to AbstractSpatialMap" << endl;
+		return;
+	}
 
 
 	if (const SpatialMap<double>* md = dynamic_cast<const SpatialMap<double>*>(m_fullMonteArray))
@@ -102,59 +103,45 @@ void vtkFullMonteArrayAdaptor::update()
 		for(const auto f : mf->values() | boost::adaptors::indexed(0U))
 			static_cast<vtkFloatArray*>(m_vtkArray)->SetValue(f.index(), f.value());
 	}
+	else
+	{
+		cout << "ERROR! Failed to cast result in vtkFullMonteArrayAdaptor" << endl;
+		return;
+	}
 
-//	stringstream ss;
-//
-//	switch(M->spatialType())
-//	{
-//	case AbstractSpatialMap::Surface:
-//		ss << "Surface";
-//		break;
-//
-//	case AbstractSpatialMap::Volume:
-//		ss << "Volume";
-//		break;
-//
-//	case AbstractSpatialMap::Line:
-//		ss << "Line";
-//		break;
-//
-//	case AbstractSpatialMap::Point:
-//		ss << "Point";
-//		break;
-//
-//	default:
-//		ss << "(unknown-spatial-type)";
-//		cout << "Warning: unknown type in AbstractSpatialMap" << endl;
-//	}
-//
-//	m_vtkArray->SetName(ss.str().c_str());
+	stringstream ss;
 
-	m_vtkArray->SetName("Manually-specified-name");
+	switch(M->spatialType())
+	{
+	case AbstractSpatialMap::Surface:
+		ss << "Surface";
+		break;
 
-//	if (m_type == Energy)
-//	{
-//		for(const auto i : (*m_fullMonteArray)->nonzeros())
-//			arrayF->SetValue(i.first,i.second);
-//
-//		m_vtkArray->SetName("Absorbed Energy Density J/cm3");
-//
-//	}
-//	else if (m_type == SurfaceFluence)
-//	{
-//		for(const auto i : (*m_fullMonteFluenceS)->nonzeros())
-//			arrayF->SetValue(i.first,i.second);
-//
-//		m_vtkArray->SetName("Fluence J/cm2");
-//	}
-//	else if (m_type == Fluence)	{
-//		for(const auto i : (*m_fullMonteFluence)->nonzeros())
-//			arrayF->SetValue(i.first,i.second);
-//
-//		m_vtkArray->SetName("Fluence J/cm2");
-//	}
-//	else
-//		throw std::logic_error("Invalid fluence type in vtkFullMonteArrayAdaptor");
+	case AbstractSpatialMap::Volume:
+		ss << "Volume";
+		break;
+
+	case AbstractSpatialMap::Line:
+		ss << "Line";
+		break;
+
+	case AbstractSpatialMap::Point:
+		ss << "Point";
+		break;
+
+	default:
+		ss << "(unknown-spatial-type)";
+		cout << "Warning: unknown type in AbstractSpatialMap" << endl;
+	}
+
+	ss << ' ' << M->quantity()->name();
+
+	if (!M->units())
+		throw std::logic_error("No units specified in vtkFullMonteArrayAdaptor::update()");
+
+	ss << " (" << M->units()->name() << ')';
+
+	m_vtkArray->SetName(ss.str().c_str());
 
 	Modified();
 	m_vtkArray->Modified();
@@ -166,4 +153,3 @@ vtkAbstractArray* vtkFullMonteArrayAdaptor::array()
 }
 
 vtkStandardNewMacro(vtkFullMonteArrayAdaptor)
-

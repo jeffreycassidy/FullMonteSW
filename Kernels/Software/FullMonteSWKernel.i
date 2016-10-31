@@ -15,7 +15,7 @@
 #include <FullMonteSW/Kernels/Software/TetraSVKernel.hpp>
 #include <FullMonteSW/Kernels/Software/TetraVolumeKernel.hpp>
 #include <FullMonteSW/Kernels/Software/TetraSurfaceKernel.hpp>
-#include <FullMonteSW/Kernels/Software/TraceKernel.hpp>
+#include <FullMonteSW/Kernels/Software/TetraTraceKernel.hpp>
 %}
 
 %include "../Kernel.hpp"
@@ -29,8 +29,9 @@
 %template (TetraMCKernelAVX_V) TetraMCKernel<RNG_SFMT_AVX,TetraVolumeScorer>;
 %template (TetraMCKernelAVX_S) TetraMCKernel<RNG_SFMT_AVX,TetraSurfaceScorer>;
 %template (TetraMCKernelAVX_SV) TetraMCKernel<RNG_SFMT_AVX,SVScorer>;
-%include "TraceKernel.hpp"
+%template (TetraMCKernelAVX_T) TetraMCKernel<RNG_SFMT_AVX,TraceScorer>;
 
+%include "TetraTraceKernel.hpp"
 %include "TetraSVKernel.hpp"
 %include "TetraVolumeKernel.hpp"
 %include "TetraSurfaceKernel.hpp"

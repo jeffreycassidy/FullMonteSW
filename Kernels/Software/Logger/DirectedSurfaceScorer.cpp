@@ -10,6 +10,9 @@
 #include <FullMonteSW/OutputTypes/DirectedSurfaceElement.hpp>
 #include <FullMonteSW/OutputTypes/SpatialMap.hpp>
 
+#include <FullMonteSW/Geometry/Units/Quantity.hpp>
+#include <FullMonteSW/Geometry/Units/BaseUnit.hpp>
+
 DirectedSurfaceScorer::DirectedSurfaceScorer()
 {
 }
@@ -28,7 +31,11 @@ std::list<OutputData*> DirectedSurfaceScorer::results() const
 	for(unsigned i=1;i<m_elements;++i)
 		se[i] = DirectedSurfaceElement<float>( float(m_accumulator[m_elements+i]), float(m_accumulator[m_elements-i]) );
 
-	return std::list<OutputData*>{ new SpatialMap<DirectedSurfaceElement<float>>(se,AbstractSpatialMap::Surface,AbstractSpatialMap::UnknownValueType) };
+	auto m = new SpatialMap<DirectedSurfaceElement<float>>(se,AbstractSpatialMap::Surface,AbstractSpatialMap::UnknownValueType);
+	m->quantity(&Units::energy);
+	m->units(&Units::packet);
+
+	return std::list<OutputData*>{ m };
 }
 
 void DirectedSurfaceScorer::dim(std::size_t N)

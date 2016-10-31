@@ -8,6 +8,8 @@
 #include "UnitPrefix.hpp"
 #include "PrefixedUnit.hpp"
 
+namespace Units {
+
 PrefixedUnit::PrefixedUnit(const UnitPrefix* pfx,const Unit* unit) :
 		m_prefix(pfx),
 		m_unit(unit)
@@ -44,3 +46,4 @@ DerivedUnit PrefixedUnit::canonicalize() const
 	D.scale *= m_prefix->scale();
 	return D;
 }
+};

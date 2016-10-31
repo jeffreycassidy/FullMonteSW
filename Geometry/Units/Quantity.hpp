@@ -8,6 +8,10 @@
 #ifndef GEOMETRY_UNITS_QUANTITY_HPP_
 #define GEOMETRY_UNITS_QUANTITY_HPP_
 
+#include <string>
+
+namespace Units {
+
 class Unit;
 
 
@@ -21,6 +25,7 @@ public:
 	enum Type { Scalar, Vector };
 
 	Quantity(Type t,std::string name,std::string sym);
+	~Quantity();
 
 	virtual std::string name() 		const;
 	virtual std::string symbol() 	const;
@@ -29,8 +34,6 @@ private:
 	Type										m_type;
 	std::string									m_name;
 	std::string									m_textSym;
-
-	//std::list<std::pair<int,const Quantity*>>	m_baseQuantity;
 };
 
 
@@ -48,5 +51,9 @@ extern const Quantity current;
 //extern const Quantity mole;
 //extern const Quantity kelvin;
 
+////// Derived quantities
+extern const Quantity fluence;
+extern const Quantity energy;
 
+};
 #endif /* GEOMETRY_UNITS_QUANTITY_HPP_ */

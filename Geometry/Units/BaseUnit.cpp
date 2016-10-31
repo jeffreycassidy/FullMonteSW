@@ -7,6 +7,8 @@
 
 #include "BaseUnit.hpp"
 
+namespace Units {
+
 BaseUnit::BaseUnit(std::string name,std::string sym) :
 		m_name(name),
 		m_textSym(sym)
@@ -45,3 +47,7 @@ const BaseUnit ampere{"Ampere","A"};
 const BaseUnit kelvin{"Kelvin","K"};
 const BaseUnit candela{"candela","cd"};
 const BaseUnit mole{"mole","mol"};
+
+const BaseUnit packet{"packet","au"};
+
+};

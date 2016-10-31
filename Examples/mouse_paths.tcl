@@ -1,4 +1,3 @@
-
 ###### Import VTK TCL package
 package require vtk
 
@@ -59,9 +58,9 @@ set opt [R materials_simple]
 
 ###### Configure source
 
-set B [Ball_New]
-$B centre "10 40 11"
-$B radius 2
+Ball B
+B centre "10 40 11"
+B radius 2
 
 
 
@@ -69,9 +68,9 @@ $B radius 2
 
 ###### Create and configure simulation kernel with surface scoring
 
-TraceKernel k $mesh
+TetraTraceKernel k $mesh
 
-k source $B
+k source B
     # the source to launch from
 
 k energy             50
@@ -98,7 +97,7 @@ k maxSteps           10000
 k maxHits            100
     # maximum number of boundaries a single step can take
 
-k packetCount        400
+k packetCount        1024
     # number of packets to simulate (more -> better quality, longer run)
 
 k threadCount        8
@@ -129,17 +128,26 @@ proc progresstimer {} {
 
 ##### Run it
 
-    # arbitrarily perturb the radius and centre of the ball source
-    $B radius 2.1
-    $B centre "10 42 10"
-	k source $B
-
     # launch kernel, display progress timer, and await finish
 
 	k startAsync
     progresstimer
 	k finishAsync
 
-    set paths [k traceResult]
+for { set i 0 } { $i < [k getResultCount] } { incr i } { puts "  [[k getResultByIndex $i] typeString]" }
 
-}
+set paths [k getResultByTypeString "PacketPositionTraceSet"]
+
+puts "paths=$paths"
+#puts "Returned a path with [$paths nTraces] traces and a total of [$paths nPoints] points"
+
+vtkFullMontePacketPositionTraceSetToPolyData O
+    O source $paths
+    O update
+
+
+vtkPolyDataWriter W
+    W SetInputData [O getPolyData]
+    W SetFileName "traces.vtk"
+    W Update
+    W Delete

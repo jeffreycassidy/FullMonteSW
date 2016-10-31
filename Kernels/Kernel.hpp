@@ -84,10 +84,6 @@ public:
 		return nullptr;
 	}
 
-	boost::any_range<
-		OutputData*,
-		boost::forward_traversal_tag> results() const { return boost::any_range<OutputData*,boost::forward_traversal_tag>(m_results); }
-
 protected:
 	const Source::Abstract*					m_src=nullptr;
 	std::vector<SimpleMaterial>			m_materials;

@@ -13,6 +13,8 @@
 
 #include <boost/rational.hpp>
 
+namespace Units {
+
 class Unit;
 class BaseUnit;
 
@@ -67,6 +69,8 @@ public:
 
 	/// Convert to canonical representation (in terms of product of fundamental units)
 	virtual DerivedUnit canonicalize() const=0;
+};
+
 };
 
 #endif /* GEOMETRY_UNITS_UNIT_HPP_ */

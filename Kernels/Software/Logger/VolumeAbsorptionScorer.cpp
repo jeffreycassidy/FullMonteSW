@@ -10,6 +10,7 @@
 #include <FullMonteSW/OutputTypes/SpatialMap.hpp>
 
 #include <FullMonteSW/OutputTypes/OutputData.hpp>
+#include <FullMonteSW/Geometry/Units/BaseUnit.hpp>
 
 VolumeAbsorptionScorer::VolumeAbsorptionScorer()
 {
@@ -21,7 +22,9 @@ VolumeAbsorptionScorer::~VolumeAbsorptionScorer()
 
 void VolumeAbsorptionScorer::dim(unsigned N)
 {
+	std::cout << "Resizing VolumeAbsorptionScorer accumulation array to " << N << endl;
 	m_acc.resize(N);
+	std::cout << " size after: " << m_acc.size() << endl;
 }
 
 void VolumeAbsorptionScorer::queueSize(unsigned q)
@@ -39,6 +42,9 @@ std::list<OutputData*> VolumeAbsorptionScorer::results() const
 
 	// create vector
 	SpatialMap<float> *vmap = new SpatialMap<float>(std::move(vf),AbstractSpatialMap::Volume,AbstractSpatialMap::Scalar);
+
+	vmap->quantity(&Units::energy);
+	vmap->units(&Units::packet);
 	return std::list<OutputData*>{vmap};
 }
 

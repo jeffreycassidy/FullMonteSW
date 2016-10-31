@@ -25,9 +25,11 @@ public:
 	typedef AtomicMultiThreadAccumulator<double,float> Accumulator;
 
 	SurfaceExitScorer();
+	SurfaceExitScorer(SurfaceExitScorer&&)=delete;
 	~SurfaceExitScorer();
 
 	void dim(std::size_t N);
+	std::size_t dim() const { return (m_acc.size()-1)>>1; }
 
 	double total() const;
 

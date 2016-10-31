@@ -1,7 +1,7 @@
 ADD_SUBDIRECTORY(Emitters)
 
-ADD_LIBRARY(FullMonteSWKernel SHARED TetraVolumeKernel.cpp TetraSurfaceKernel.cpp TetraSVKernel.cpp SSEMath.cpp ThreadedMCKernelBase.cpp PacketDirection.cpp HenyeyGreenstein.cpp TetraMCKernel.cpp TraceKernel.cpp Logger/BaseLogger.cpp Logger/VolumeAbsorptionScorer.cpp Logger/SurfaceExitScorer.cpp Logger/AbstractScorer.cpp Logger/DirectedSurfaceScorer.cpp)
-TARGET_LINK_LIBRARIES(FullMonteSWKernel SFMT FullMonteKernelBase FullMonteData ${Boost_LIBRARIES})
+ADD_LIBRARY(FullMonteSWKernel SHARED TetraVolumeKernel.cpp TetraSurfaceKernel.cpp TetraSVKernel.cpp SSEMath.cpp ThreadedMCKernelBase.cpp PacketDirection.cpp HenyeyGreenstein.cpp TetraMCKernel.cpp Logger/BaseLogger.cpp Logger/VolumeAbsorptionScorer.cpp Logger/SurfaceExitScorer.cpp Logger/AbstractScorer.cpp Logger/DirectedSurfaceScorer.cpp Logger/PathScorer.cpp TetraTraceKernel.cpp)
+TARGET_LINK_LIBRARIES(FullMonteSWKernel SFMT FullMonteGeometry FullMonteKernelBase FullMonteData ${Boost_LIBRARIES})
 
 INSTALL(TARGETS FullMonteSWKernel
     DESTINATION lib)

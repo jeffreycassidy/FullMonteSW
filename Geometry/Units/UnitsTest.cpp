@@ -19,6 +19,7 @@
 #include <iostream>
 
 using namespace std;
+using namespace Units;
 
 //// Check that unit lhs can be converted into k rhs units
 

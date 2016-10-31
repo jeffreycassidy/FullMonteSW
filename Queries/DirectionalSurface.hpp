@@ -68,8 +68,8 @@ public:
 
 
 	/// Check which faces are included (return unsigned, ie. |IDf|)
-	vector<unsigned>					facesU() const;
-	std::vector<int>					faces() const;
+//	vector<unsigned>					facesU() const;
+//	std::vector<int>					faces() const;
 
 
 private:

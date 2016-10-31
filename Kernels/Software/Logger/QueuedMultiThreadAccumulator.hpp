@@ -176,7 +176,10 @@ template<class Acc,class Delta>void QueuedMultiThreadAccumulator<Acc,Delta>::Thr
 		for(auto p = m_queuedValues.begin(); p != m_curr && p->first != -1U; ++p)
 		{
 			if (p->first >= master.m_values.size())
-				throw std::logic_error("Accumulator out of bounds!");
+			{
+				std::cout << "Oops! Accumulation to element " << p->first << " exceeds bound (" << master.m_values.size() << ")" << std::endl;
+				throw std::logic_error("QueuedMultiThreadAccumulator<Acc,Delta>::ThreadHandle::commit - Accumulator out of bounds!");
+			}
 			else
 				master.m_values.at(p->first) += p->second;
 		}

@@ -10,6 +10,8 @@
 
 #include <string>
 
+namespace Units {
+
 /** Class holding unit prefixes (eg. milli, micro, etc) with the associated scalar value, full name, and symbol
  */
 
@@ -41,5 +43,7 @@ extern const UnitPrefix giga;
 extern const UnitPrefix tera;
 extern const UnitPrefix peta;
 extern const UnitPrefix exa;
+
+};
 
 #endif /* GEOMETRY_UNITS_UNITPREFIX_HPP_ */

@@ -1,9 +1,8 @@
 ADD_SUBDIRECTORY(Placement)
 ADD_SUBDIRECTORY(Modifiers)
-
 ADD_SUBDIRECTORY(Units)
 
-ADD_LIBRARY(FullMonteGeometry SHARED TetraMeshBase.cpp TetraMesh.cpp Face.cpp newgeom.cpp Sources/Print.cpp Filters/TetraFilterByRegion.cpp Filters/TetraMeshBaseFilter.cpp Filters/TetraMeshFilterBase.cpp RayWalk.cpp Filters/TriFilterRegionBounds.cpp Basis.cpp MeshChecker.cpp Filters/PlaneCrossingFilter.cpp Filters/TetrasNearPoint.cpp Sources/Abstract.cpp)
+ADD_LIBRARY(FullMonteGeometry SHARED TetraMeshBase.cpp TetraMesh.cpp Face.cpp newgeom.cpp Sources/Print.cpp Filters/TetraFilterByRegion.cpp Filters/TetraMeshBaseFilter.cpp Filters/TetraMeshFilterBase.cpp RayWalk.cpp Filters/TriFilterRegionBounds.cpp Basis.cpp MeshChecker.cpp Filters/PlaneCrossingFilter.cpp Filters/TetrasNearPoint.cpp Sources/Abstract.cpp Units/Unit.cpp Units/Quantity.cpp Units/BaseUnit.cpp)
 TARGET_LINK_LIBRARIES(FullMonteGeometry ${Boost_TIMER_LIBRARIES})
 
 IF(WRAP_VTK)

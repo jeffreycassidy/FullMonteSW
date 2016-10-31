@@ -42,8 +42,10 @@ public:
 
 	VolumeAbsorptionScorer();
 	~VolumeAbsorptionScorer();
+
 	void dim(unsigned N);
 	std::size_t dim() const { return m_acc.size(); }
+
 	void queueSize(unsigned q);
 
 	virtual std::list<OutputData*> results() const override;

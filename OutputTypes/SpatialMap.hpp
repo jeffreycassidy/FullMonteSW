@@ -91,7 +91,7 @@ template<typename Value>Value& SpatialMap<Value>::operator[](std::size_t i)
 
 template<typename Value>Value SpatialMap<Value>::sum() const
 {
-	Value s();
+	Value s = Value();
 	for(const auto v : m_values)
 		s += v;
 	return s;

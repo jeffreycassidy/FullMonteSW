@@ -34,7 +34,7 @@ vtkFullMonteTetraMeshBaseWrapper::vtkFullMonteTetraMeshBaseWrapper()
 	m_tetras=vtkCellArray::New();
 
 	m_regions=vtkUnsignedShortArray::New();
-		m_regions->SetName("Tissue Type");
+		m_regions->SetName("Region");
 }
 
 vtkFullMonteTetraMeshBaseWrapper::~vtkFullMonteTetraMeshBaseWrapper()

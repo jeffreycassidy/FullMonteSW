@@ -12,11 +12,14 @@
 
 class vtkPolyData;
 class PacketPositionTraceSet;
+class vtkUnsignedShortArray;
 class vtkFloatArray;
 
 class vtkFullMontePacketPositionTraceSetToPolyData : public vtkObject
 {
 public:
+	vtkTypeMacro(vtkFullMontePacketPositionTraceSetToPolyData,vtkObject)
+
 	virtual ~vtkFullMontePacketPositionTraceSetToPolyData();
 
 	static vtkFullMontePacketPositionTraceSetToPolyData* New();
@@ -41,16 +44,16 @@ protected:
 private:
 	bool						m_includeWeight=true;
 	bool						m_includeTime=false;
-	bool						m_includeLength=false;
-	bool 						m_includeSteps=false;
+	bool						m_includeLength=true;
+	bool 						m_includeSteps=true;
 
-	PacketPositionTraceSet*		m_traces=nullptr;
-	vtkPolyData*				m_vtkPD=nullptr;
+	const PacketPositionTraceSet*	m_traces=nullptr;
+	vtkPolyData*					m_vtkPD=nullptr;
 
-	vtkFloatArray*				m_vtkWeight=nullptr;
-	vtkFloatArray*				m_vtkTime=nullptr;
-	vtkFloatArray*				m_vtkLength=nullptr;
-	vtkUnsignedShortArray*		m_vtkStepCount=nullptr;
+	vtkFloatArray*					m_vtkWeight=nullptr;
+	vtkFloatArray*					m_vtkTime=nullptr;
+	vtkFloatArray*					m_vtkLength=nullptr;
+	vtkUnsignedShortArray*			m_vtkStepCount=nullptr;
 };
 
 

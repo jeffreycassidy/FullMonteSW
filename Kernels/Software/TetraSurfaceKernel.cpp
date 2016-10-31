@@ -41,3 +41,8 @@ TetraSurfaceKernel::TetraSurfaceKernel(const TetraMesh* mesh) :
 	TetraMCKernel<RNG,TetraSurfaceScorer>(mesh)
 {
 }
+
+void TetraSurfaceKernel::prepareScorer()
+{
+	surfaceScorer().dim(mesh()->getNf()+1);
+}
