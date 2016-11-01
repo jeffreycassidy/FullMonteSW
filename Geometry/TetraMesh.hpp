@@ -111,6 +111,10 @@ public:
 #endif
 
 
+
+
+	static TetraMesh buildLayered(const std::vector<float>& thickness);
+
 	TetraMesh(const vector<Point<3,double> >& P_,const vector<TetraByPointID>& T_p_,const vector<unsigned>& T_m_,const vector<FaceHint>& hint=vector<FaceHint>())
 	: TetraMeshBase(P_,T_p_,T_m_) { buildTetrasAndFaces(hint); }
 
@@ -159,6 +163,8 @@ public:
 
 	// checks if faces are oriented correctly
 	bool checkFaces() const;
+
+
 
 	void setFacesForFluenceCounting(const FilterBase<int>* TF);		/// Predicate specifying if a given face should have its fluence counted
 
@@ -257,12 +263,21 @@ private:
     void orientFaces();
 
 
+	/// Build the kernel tetra representation from the point, connectivity, and face lists
+	void makeKernelTetras();
+
+
+	/** Check that the face representation within kernel tetras is correct
+	 *
+	 */
+
+	bool checkKernelFaces() const;
+
+
 
     /// Build tetras and faces from the point & connectivity lists
 	void buildTetrasAndFaces(const std::vector<FaceHint>& hint=std::vector<FaceHint>());
 
-	/// Build the kernel tetra representation from the point, connectivity, and face lists
-	void makeKernelTetras();
 
     boost::timer::cpu_timer m_timer;
 

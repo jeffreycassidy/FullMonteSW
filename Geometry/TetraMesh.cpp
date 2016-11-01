@@ -206,15 +206,10 @@ void TetraMesh::mapTetrasToFaces()
 		m_facePoints[p.second] = p.first;
 }
 
-/** Converts the TetraMesh representation to the packed data structures used by the kernel
- *
- */
 
-
-void TetraMesh::makeKernelTetras()
+bool TetraMesh::checkFaces() const
 {
-	vector<Tetra> T(m_tetraPoints.size());
-
+	unsigned err=0;
 	assert(T.size()   == m_tetraPoints.size());
 	assert(m_tetraFaces.size() == m_tetraPoints.size());
 	assert(m_tetraMaterials.size() == m_tetraPoints.size());
@@ -223,7 +218,7 @@ void TetraMesh::makeKernelTetras()
 	assert(m_faceTetras.size() == m_facePoints.size());
 
 	if (m_enableVerboseConstruction)
-		cout << "INFO TetraMesh::makeKernelTetras() checking " << m_tetraPoints.size() << " tetras' faces for correct orientation" << endl;
+		cout << "INFO TetraMesh::checkFaces() checking " << m_tetraPoints.size() << " tetras' faces for correct orientation" << endl;
 
 	for(unsigned IDt=1;IDt < m_tetraPoints.size();++IDt)
 	{
@@ -254,8 +249,9 @@ void TetraMesh::makeKernelTetras()
 				if (h[f][p] < -1e-4)
 				{
 					if (m_enableVerboseConstruction)
-						cout << "  NOTE: Flipping face" << endl;
-					F[f].flip();
+						cout << "  NOTE: Face should be flipped" << endl;
+					++err;
+//					F[f].flip();
 				}
 			}
 		}
@@ -264,7 +260,24 @@ void TetraMesh::makeKernelTetras()
 //			printTetra(IDt);
 	}
 
-	cout << "INFO: Checked tetras at " << m_timer.elapsed().wall*1e-9 << 's' << endl;
+	return err==0;
+
+	cout << "INFO: checkFaces() done at " << m_timer.elapsed().wall*1e-9 << 's' << endl;
+}
+
+
+
+
+/** Converts the TetraMesh representation to the packed data structures used by the kernel.
+ *
+ * Uses: m_faces, m_tetraFaces, m_tetraFaces, m_tetraMaterials
+ * Produces: m_tetras
+ *
+ */
+
+void TetraMesh::makeKernelTetras()
+{
+	vector<Tetra> T(m_tetraPoints.size());
 
 	for(auto tet : T | boost::adaptors::indexed(0U))
 	{
@@ -295,7 +308,6 @@ void TetraMesh::makeKernelTetras()
 				tet.value().adjTetras[f] = IDts_adj[0];
 			else
 				assert(tet.index()==0);
-
 		}
 
 		tet.value().nx=_mm_setr_ps(n[0][0],n[1][0],n[2][0],n[3][0]);
@@ -307,8 +319,8 @@ void TetraMesh::makeKernelTetras()
 	m_tetras=T;
 
 	if (m_enableFaceChecks)
-		if (!checkFaces())
-			cerr << "WARNING: Failure in TetraMesh::checkFaces" << endl;
+		if (!checkKernelFaces())
+			cerr << "WARNING: Failure in TetraMesh::checkKernelFaces" << endl;
 }
 
 void TetraMesh::setFacesForFluenceCounting(const FilterBase<int>* TF)
@@ -329,7 +341,13 @@ void TetraMesh::setFacesForFluenceCounting(const FilterBase<int>* TF)
 	}
 }
 
-bool TetraMesh::checkFaces() const
+
+
+/** Validates the orientation of faces within the kernel tetra structure.
+ *
+ */
+
+bool TetraMesh::checkKernelFaces() const
 {
 	bool status_ok=true;
 
@@ -769,4 +787,50 @@ Face get(face_tag,const TetraMesh& M,TetraMesh::DirectedFaceDescriptor IDf)
 TetraByFaceID get(faces_tag,const TetraMesh& M,TetraMesh::TetraDescriptor d)
 {
 	return M.m_tetraFaces[d.value()];
+}
+
+
+/** Builds a layered representation similar to MCML. Face normals point up (0,0,1).
+ * N layers of thickness t_i, i = 1..N cover depths [z_(i-1), z_i]
+ *
+ * Layer 0 			is the semi-infinite space above z=0
+ * Layer i (1..N)	is the slab of thickness t_i between [z_i, z_(i+1)] with z_1=0
+ * Layer N+1		is the semi-infinite space below z=z_N
+ *
+ * Slabs i and i+1 are separated by face i+1 at depth z_i
+ *
+ * NOTE: Point representations of the tetras are not valid.
+ * Scoring should be done using spatial coordinates, not tetra/face IDs.
+ */
+
+
+TetraMesh TetraMesh::buildLayered(const std::vector<float>& thickness,std::array<float,3> normal)
+{
+	float tz=0.0f;
+	std::vector<float> z(thickness.size()+1);
+
+	// generate depths z_i
+	z[0] = 0.0f;
+	for(unsigned i=0;i<thickness.size();++i)
+		z[i+1] = (tz += thickness[i]);
+
+	m_tetraPoints.clear();
+	m_facePoints.clear();
+	m_points.clear();
+
+	for(unsigned i=0;i<thickness.size();++i)
+	{
+		m_tetraFaces[i][0] =
+		m_tetraFaces[i][1] =
+		m_tetraFaces[i][2] = m_tetraFaces[i][3] = 0;
+
+		m_tetraMaterials[i]=
+
+		m_faces[i] =
+
+		m_faceTetras[i][0] =
+		m_faceTetras[i][1] =
+		m_tetras[i] =
+	}
+
 }
