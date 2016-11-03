@@ -51,7 +51,7 @@ IF(${CMAKE_CXX_COMPILER_ID} MATCHES "GNU")
     # Required to avoid an error in colliding mangled names
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fabi-version=6")
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-psabi")
-ELSEIF(${CMAKE_CXX_COMPILER_ID} MATCHES "CLANG")
+ELSEIF(${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
     # Required to avoid all kinds of (harmless) warnings due to Boost concept checks
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-local-typedef")
 ENDIF()

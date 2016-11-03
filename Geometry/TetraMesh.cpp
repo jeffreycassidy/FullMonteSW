@@ -791,13 +791,13 @@ TetraByFaceID get(faces_tag,const TetraMesh& M,TetraMesh::TetraDescriptor d)
 
 
 /** Builds a layered representation similar to MCML. Face normals point up (0,0,1).
- * N layers of thickness t_i, i = 1..N cover depths [z_(i-1), z_i]
+ * N layers of thickness t_i, i = 0..N-1 cover depths [z_i, z_(i+1)]
  *
  * Layer 0 			is the semi-infinite space above z=0
- * Layer i (1..N)	is the slab of thickness t_i between [z_i, z_(i+1)] with z_1=0
+ * Layer i (1..N)	is the slab of thickness t_i between [z_(i-1), z_i] with z_0=0
  * Layer N+1		is the semi-infinite space below z=z_N
  *
- * Slabs i and i+1 are separated by face i+1 at depth z_i
+ * Layers i-1 and i are separated by face i-1 at depth z_(i-1)
  *
  * NOTE: Point representations of the tetras are not valid.
  * Scoring should be done using spatial coordinates, not tetra/face IDs.
@@ -806,6 +806,8 @@ TetraByFaceID get(faces_tag,const TetraMesh& M,TetraMesh::TetraDescriptor d)
 
 TetraMesh TetraMesh::buildLayered(const std::vector<float>& thickness,std::array<float,3> normal)
 {
+	TetraMesh M;
+
 	float tz=0.0f;
 	std::vector<float> z(thickness.size()+1);
 
@@ -814,17 +816,13 @@ TetraMesh TetraMesh::buildLayered(const std::vector<float>& thickness,std::array
 	for(unsigned i=0;i<thickness.size();++i)
 		z[i+1] = (tz += thickness[i]);
 
-	m_tetraPoints.clear();
-	m_facePoints.clear();
-	m_points.clear();
-
 	for(unsigned i=0;i<thickness.size();++i)
 	{
 		m_tetraFaces[i][0] =
 		m_tetraFaces[i][1] =
 		m_tetraFaces[i][2] = m_tetraFaces[i][3] = 0;
 
-		m_tetraMaterials[i]=
+		m_tetraMaterials[i] = i+1;
 
 		m_faces[i] =
 
@@ -833,4 +831,5 @@ TetraMesh TetraMesh::buildLayered(const std::vector<float>& thickness,std::array
 		m_tetras[i] =
 	}
 
+	return M;
 }

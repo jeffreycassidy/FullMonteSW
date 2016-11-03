@@ -9,7 +9,7 @@
 #define OUTPUTTYPES_VISITABLE_HPP_
 
 #ifndef SWIG
-#define ACCEPT_VISITOR_METHOD(Base,Derived) virtual void acceptVisitor(Base::Visitor* v){ v->doVisit(static_cast<Derived*>(this)); }
+#define ACCEPT_VISITOR_METHOD(Base,Derived) virtual void acceptVisitor(Base::Visitor* v) override { v->doVisit(static_cast<Derived*>(this)); }
 #else
 #define ACCEPT_VISITOR_METHOD(Base,Derived) //virtual void acceptVisitor(Base::Visitor* v) override;
 #endif

@@ -14,13 +14,19 @@
 #include <boost/range/algorithm.hpp>
 
 #ifndef SWIG
-typedef struct {} points_tag;
-constexpr points_tag points;
+template<typename Mesh,typename Prop>struct mesh_property_traits;
 
-typedef struct {} point_coords_tag;
+
+struct points_tag { constexpr points_tag(){} };
+constexpr points_tag points = points_tag{};
+
+struct point_coords_tag {
+	constexpr point_coords_tag(){}
+	typedef Point<3,double>						type;
+};
 constexpr point_coords_tag point_coords;
 
-typedef struct {} volume_tag;
+struct volume_tag { constexpr volume_tag(){} };
 constexpr volume_tag volume;
 
 template<typename I>class WrappedInteger
@@ -49,6 +55,8 @@ protected:
 };
 
 #endif
+
+
 
 /** TetraMeshBase contains the bare essentials of a tetrahedral mesh: points, tetras (by 4 point indices) and a region code for
  * each tetra. Generally tetra 0 and point 0 are dummy entries, to facilitate conversion between 0-based and 1-based indexing.
@@ -196,12 +204,19 @@ double get(volume_tag,const TetraMeshBase& M,TetraMeshBase::TetraDescriptor T);
 //		return res;
 //	}
 
-template<typename Prop>std::array<decltype(get(std::declval<Prop>(),std::declval<const TetraMeshBase&>(),TetraMeshBase::PointDescriptor())),4>
-	get(Prop p,const TetraMeshBase& M,TetraMeshBase::TetraDescriptor IDt)
+//template<>mesh_property_traits<TetraMeshBase,points_tag>		{ typedef Point<3,double> type; }
+template<>struct mesh_property_traits<TetraMeshBase,point_coords_tag>	{ typedef Point<3,double> type; };
+
+template<typename Prop>std::array<typename Prop::type,4> get(
+			Prop p,
+			const TetraMeshBase& M,
+				// disables infinite recursion in case getting points from
+				// G++ 4.9.2 didn't complain but it seems to have messed up the Eclipse indexer and Clang
+			typename TetraMeshBase::TetraDescriptor IDt)
 	{
-	typedef decltype(get(p, M, TetraMeshBase::PointDescriptor())) Result;
+	typedef decltype(get(p,M,std::declval<TetraMeshBase::PointDescriptor>())) result_type;
+	std::array<result_type,4> res;
 	TetraByPointID IDps = get(points,M,IDt);
-	std::array<Result,4> res;
 
 	for(unsigned i=0;i<4;++i)
 		res[i] = get(p,M,TetraMeshBase::PointDescriptor(IDps[i]));

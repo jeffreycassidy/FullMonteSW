@@ -19,7 +19,6 @@
 
 #include "newgeom.hpp"
 
-
 template<typename T>class FilterBase;
 
 /** In lexicographical order, gives the point indices of all four faces */
@@ -84,13 +83,14 @@ struct RTIntersection
 %nodefaultctor TetraMesh;
 #endif
 
+#define CREATE_PROPERTY_TAG(prop) struct prop##_tag { constexpr prop##_tag(){} }; constexpr prop##_tag prop;
 
-typedef struct {} point_above_face_tag;
-typedef struct {} point_below_face_tag;
-typedef struct {} tetra_above_face_tag;
-typedef struct {} tetra_below_face_tag;
-typedef struct {} face_tag;
-typedef struct {} faces_tag;
+CREATE_PROPERTY_TAG(point_above_face)
+CREATE_PROPERTY_TAG(point_below_face)
+CREATE_PROPERTY_TAG(tetra_above_face)
+CREATE_PROPERTY_TAG(tetra_below_face)
+CREATE_PROPERTY_TAG(face)
+CREATE_PROPERTY_TAG(faces)
 
 class TetraMesh : public TetraMeshBase
 {
@@ -110,10 +110,12 @@ public:
 		{ buildTetrasAndFaces(H); }
 #endif
 
-
-
-
-	static TetraMesh buildLayered(const std::vector<float>& thickness);
+#ifndef SWIG
+	static TetraMesh buildLayered(const std::vector<float>& thickness,std::array<float,3> normal=std::array<float,3>{0,0,0});
+#else
+	// SWIG seems not to like brace-initializers for arrays as default arguments
+	static TetraMesh buildLayered(const std::vector<float>& thickness,std::array<float,3> normal);
+#endif
 
 	TetraMesh(const vector<Point<3,double> >& P_,const vector<TetraByPointID>& T_p_,const vector<unsigned>& T_m_,const vector<FaceHint>& hint=vector<FaceHint>())
 	: TetraMeshBase(P_,T_p_,T_m_) { buildTetrasAndFaces(hint); }
@@ -319,20 +321,9 @@ public:
 
 #ifndef SWIG
 
-constexpr point_above_face_tag point_above_face;
 TetraMesh::PointDescriptor get(point_above_face_tag,const TetraMesh& M,TetraMesh::FaceDescriptor);
-
-constexpr point_below_face_tag point_below_face;
 TetraMesh::PointDescriptor get(point_below_face_tag,const TetraMesh& M,TetraMesh::FaceDescriptor);
-
-constexpr tetra_above_face_tag tetra_above_face;
-
-constexpr tetra_below_face_tag tetra_below_face;
-
-constexpr face_tag face;
 Face get(face_tag,const TetraMesh& M,TetraMesh::FaceDescriptor);
-
-constexpr faces_tag faces;
 TetraByFaceID get(faces_tag,const TetraMesh& M,TetraMesh::TetraDescriptor);
 
 inline TetraMesh::FaceRange TetraMesh::faces() const
@@ -346,15 +337,26 @@ inline TetraMesh::TetraRange TetraMesh::tetras() const
 			TetraIterator(TetraDescriptor(0U)),
 			TetraIterator(TetraDescriptor(m_tetraPoints.size())));
 }
-template<typename Prop>std::array<decltype(get(std::declval<Prop>(),std::declval<const TetraMesh&>(),TetraMeshBase::PointDescriptor())),3>
-	get(Prop p,const TetraMesh& M,TetraMesh::FaceDescriptor IDf)
+
+
+
+/** Create template to fetch an array<P,3> from the properties of the points of a face
+ *
+ */
+
+template<typename Prop>std::array<typename Prop::type,3> get(
+			Prop p,
+			const TetraMeshBase& M,
+				// disables infinite recursion in case getting points from
+				// G++ 4.9.2 didn't complain but it seems to have messed up the Eclipse indexer and Clang
+			typename TetraMesh::FaceDescriptor IDf)
 	{
-	typedef decltype(get(p, M, TetraMesh::PointDescriptor())) Result;
+	typedef decltype(get(p,M,std::declval<TetraMeshBase::PointDescriptor>())) result_type;
+	std::array<result_type,3> res;
 	FaceByPointID IDps = get(points,M,IDf);
-	std::array<Result,3> res;
 
 	for(unsigned i=0;i<3;++i)
-		res[i] = get(p,M,TetraMesh::PointDescriptor(IDps[i]));
+		res[i] = get(p,M,TetraMeshBase::PointDescriptor(IDps[i]));
 
 	return res;
 	}

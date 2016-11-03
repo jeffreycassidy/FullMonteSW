@@ -32,8 +32,8 @@ using namespace Units;
 
 BOOST_AUTO_TEST_CASE(mmToM)
 {
-	PrefixedUnit mm{&::milli,&metre};
-	PrefixedUnit cm{&::centi,&metre};
+	PrefixedUnit mm{&Units::milli,&metre};
+	PrefixedUnit cm{&Units::centi,&metre};
 
 	cout << "The " << mm.name() << " is equivalent to " << mm.scale() << " " << mm.base()->name() << endl;
 

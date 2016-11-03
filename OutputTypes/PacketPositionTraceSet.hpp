@@ -26,7 +26,7 @@ public:
 
 	CLONE_METHOD(OutputData,PacketPositionTraceSet)
 
-	virtual const char* typeString() const { return "PacketPositionTraceSet"; }
+	virtual const char* typeString() const override { return "PacketPositionTraceSet"; }
 
 	unsigned nPoints() const;
 	unsigned nTraces() const;

@@ -50,7 +50,7 @@ public:
 	CLONE_METHOD(OutputData,MCEventCountsOutput)
 	ACCEPT_VISITOR_METHOD(OutputData,MCEventCountsOutput)
 
-	virtual const char* typeString() const { return "MC Event Counts"; }
+	virtual const char* typeString() const override { return "MC Event Counts"; }
 
 private:
 
