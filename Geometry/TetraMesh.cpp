@@ -806,6 +806,8 @@ TetraByFaceID get(faces_tag,const TetraMesh& M,TetraMesh::TetraDescriptor d)
 
 TetraMesh TetraMesh::buildLayered(const std::vector<float>& thickness,std::array<float,3> normal)
 {
+	TetraMesh M;
+
 	float tz=0.0f;
 	std::vector<float> z(thickness.size()+1);
 
@@ -814,23 +816,21 @@ TetraMesh TetraMesh::buildLayered(const std::vector<float>& thickness,std::array
 	for(unsigned i=0;i<thickness.size();++i)
 		z[i+1] = (tz += thickness[i]);
 
-	m_tetraPoints.clear();
-	m_facePoints.clear();
-	m_points.clear();
+//	for(unsigned i=0;i<thickness.size();++i)
+//	{
+//		m_tetraFaces[i][0] =
+//		m_tetraFaces[i][1] =
+//		m_tetraFaces[i][2] = m_tetraFaces[i][3] = 0;
+//
+//		m_tetraMaterials[i]=
+//
+//		m_faces[i] =
+//
+//		m_faceTetras[i][0] =
+//		m_faceTetras[i][1] =
+//		m_tetras[i] =
+//	}
 
-	for(unsigned i=0;i<thickness.size();++i)
-	{
-		m_tetraFaces[i][0] =
-		m_tetraFaces[i][1] =
-		m_tetraFaces[i][2] = m_tetraFaces[i][3] = 0;
-
-		m_tetraMaterials[i]=
-
-		m_faces[i] =
-
-		m_faceTetras[i][0] =
-		m_faceTetras[i][1] =
-		m_tetras[i] =
-	}
+	return M;
 
 }

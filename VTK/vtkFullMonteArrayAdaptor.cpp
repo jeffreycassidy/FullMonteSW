@@ -92,7 +92,7 @@ void vtkFullMonteArrayAdaptor::update()
 		m_vtkArray->SetNumberOfTuples(md->dim());
 
 		for(const auto d : md->values() | boost::adaptors::indexed(0U))
-			static_cast<vtkFloatArray*>(m_vtkArray)->SetValue(d.index(), d.value());
+			static_cast<vtkFloatArray*>(m_vtkArray)->SetValue(d.index(), isnan(d.value()) ? 0.0 : d.value());
 
 	}
 	else if (const SpatialMap<float>* mf = dynamic_cast<const SpatialMap<float>*>(m_fullMonteArray))
@@ -101,7 +101,7 @@ void vtkFullMonteArrayAdaptor::update()
 		m_vtkArray->SetNumberOfTuples(mf->dim());
 
 		for(const auto f : mf->values() | boost::adaptors::indexed(0U))
-			static_cast<vtkFloatArray*>(m_vtkArray)->SetValue(f.index(), f.value());
+			static_cast<vtkFloatArray*>(m_vtkArray)->SetValue(f.index(), isnan(f.value()) ? 0.0f : f.value());
 	}
 	else
 	{
