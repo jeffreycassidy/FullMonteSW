@@ -1,7 +1,7 @@
 ###### Import VTK TCL package
 package require vtk
 
-
+puts "loaded vtk"
 
 
 ###### Load required FullMonte libraries
@@ -23,12 +23,14 @@ load libFullMonteDataTCL.so
 load libFullMonteVTKTCL.so
 
 
+puts "loaded libs"
+
 
 
 ###### Basic parameters: file names
 
 #default file prefix
-set pfx "/usr/local/share/fullmontesw/examples/mousebli/mouse"
+set pfx "/Users/jcassidy/src/FullMonteSW/data/TIM-OS/mouse/mouse"
 
 
 #override with 1st cmdline arg

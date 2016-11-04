@@ -29,6 +29,9 @@ constexpr point_coords_tag point_coords;
 struct volume_tag { constexpr volume_tag(){} };
 constexpr volume_tag volume;
 
+struct id_tag { constexpr id_tag(){} };
+constexpr id_tag id;
+
 template<typename I>class WrappedInteger
 {
 public:

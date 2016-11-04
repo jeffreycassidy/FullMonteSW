@@ -117,6 +117,7 @@ public:
 	static TetraMesh buildLayered(const std::vector<float>& thickness,std::array<float,3> normal);
 #endif
 
+
 	TetraMesh(const vector<Point<3,double> >& P_,const vector<TetraByPointID>& T_p_,const vector<unsigned>& T_m_,const vector<FaceHint>& hint=vector<FaceHint>())
 	: TetraMeshBase(P_,T_p_,T_m_) { buildTetrasAndFaces(hint); }
 
@@ -360,6 +361,9 @@ template<typename Prop>std::array<typename Prop::type,3> get(
 
 	return res;
 	}
+
+inline unsigned get(id_tag,const TetraMeshBase&,TetraMeshBase::TetraDescriptor IDt){ return IDt.value(); }
+inline unsigned get(id_tag,const TetraMesh&,TetraMesh::FaceDescriptor IDf){ return IDf.value(); }
 
 #endif
 

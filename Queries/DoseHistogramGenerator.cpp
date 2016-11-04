@@ -51,15 +51,29 @@ OutputData* DoseHistogramGenerator::result() const
 //	cout << "Calculating dose-surface histogram for mesh with " << m_mesh->getNp() << " points and " << m_mesh->getNf() << " faces" << endl;
 //	cout << "  Fluence output has dimension " << m_phi->dim() << endl;
 
-	for(unsigned i=0;i<=m_mesh->getNf();++i)
+	if (m_phi->spatialType() == AbstractSpatialMap::Surface)
 	{
-		if ((*m_filter)(i))
-			v.emplace_back((*m_phi)[i],m_mesh->getFaceArea(int(i)));
+		for(unsigned i=0;i<=m_mesh->getNf();++i)
+		{
+			if ((*m_filter)(i))
+				v.emplace_back((*m_phi)[i],m_mesh->getFaceArea(int(i)));
+		}
+	}
+	else if (m_phi->spatialType() == AbstractSpatialMap::Volume)
+	{
+		for(const auto t : m_mesh->tetras())
+		{
+			unsigned i = get(id,*m_mesh,t);
+			if ((*m_filter)(i))
+				v.emplace_back((*m_phi)[i], get(volume,*m_mesh,t));
+		}
+	}
+	else
+	{
+		std::cout << "ERROR in DoseHistogramGenerator::result(): Unknown spatial type for input data" << std::endl;
 	}
 
 	DoseHistogram* DH = new DoseHistogram(v);
-
-	//DH->print();
 
 	return DH;
 }

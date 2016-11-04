@@ -816,20 +816,15 @@ TetraMesh TetraMesh::buildLayered(const std::vector<float>& thickness,std::array
 	for(unsigned i=0;i<thickness.size();++i)
 		z[i+1] = (tz += thickness[i]);
 
-	for(unsigned i=0;i<thickness.size();++i)
-	{
-		m_tetraFaces[i][0] =
-		m_tetraFaces[i][1] =
-		m_tetraFaces[i][2] = m_tetraFaces[i][3] = 0;
-
-		m_tetraMaterials[i] = i+1;
-
-		m_faces[i] =
-
-		m_faceTetras[i][0] =
-		m_faceTetras[i][1] =
-		m_tetras[i] =
-	}
+//	for(unsigned i=0;i<thickness.size();++i)
+//	{
+//		m_tetraFaces[i][0] =
+//		m_tetraFaces[i][1] =
+//		m_tetraFaces[i][2] = m_tetraFaces[i][3] = 0;
+//
+//		m_tetraMaterials[i] = i+1;
+//
+//		m_faces[i] =
 
 	return M;
 }

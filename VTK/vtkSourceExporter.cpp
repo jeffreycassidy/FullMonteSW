@@ -192,7 +192,6 @@ void ExportVisitor::doVisit(Source::Surface* S)
 	m_vtkUG->InsertNextCell(VTK_TRIANGLE,3,id);
 	m_vtkS->InsertNextValue(m_sourceCount++);
 }
-`
 void ExportVisitor::doVisit(Source::SurfaceTri* S)
 {
 	if(!m_mesh)
