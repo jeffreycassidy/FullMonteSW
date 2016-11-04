@@ -19,6 +19,7 @@
 
 #include "newgeom.hpp"
 
+#ifndef SWIG
 
 template<typename T>class FilterBase;
 
@@ -85,12 +86,18 @@ struct RTIntersection
 #endif
 
 
-typedef struct {} point_above_face_tag;
-typedef struct {} point_below_face_tag;
-typedef struct {} tetra_above_face_tag;
-typedef struct {} tetra_below_face_tag;
-typedef struct {} face_tag;
-typedef struct {} faces_tag;
+#define CREATE_GEOMETRY_PROPERTY_TAG(prop) struct prop##_tag { constexpr prop##_tag(){} }; constexpr prop##_tag prop;
+
+#ifndef SWIG
+
+CREATE_GEOMETRY_PROPERTY_TAG(point_above_face)
+CREATE_GEOMETRY_PROPERTY_TAG(point_below_face)
+CREATE_GEOMETRY_PROPERTY_TAG(tetra_above_face)
+CREATE_GEOMETRY_PROPERTY_TAG(tetra_below_face)
+CREATE_GEOMETRY_PROPERTY_TAG(face)
+CREATE_GEOMETRY_PROPERTY_TAG(faces)
+
+#endif
 
 class TetraMesh : public TetraMeshBase
 {
@@ -102,16 +109,16 @@ public:
 		};
 
 	TetraMesh(){}
-	TetraMesh(const TetraMeshBase& Mb,const std::vector<FaceHint>& H=std::vector<FaceHint>()) : TetraMeshBase(Mb)
-		{ buildTetrasAndFaces(H); }
 
 #ifndef SWIG
 	TetraMesh(TetraMeshBase&& Mb,const std::vector<FaceHint>& H=std::vector<FaceHint>()) : TetraMeshBase(Mb)
 		{ buildTetrasAndFaces(H); }
+	TetraMesh(const TetraMeshBase& Mb,const std::vector<FaceHint>& H=std::vector<FaceHint>()) : TetraMeshBase(Mb)
+			{ buildTetrasAndFaces(H); }
+#else
+	TetraMesh(const TetraMeshBase& Mb) : TetraMeshBase(Mb)
+		{ buildTetrasAndFaces(); }
 #endif
-
-
-
 
 	static TetraMesh buildLayered(const std::vector<float>& thickness,std::array<float,3> normal);
 
@@ -199,7 +206,6 @@ public:
     TetraRange tetras() const;
 
     FaceRange faces() const;
-
 
 
 
@@ -294,6 +300,8 @@ private:
     friend TetraByFaceID	get(faces_tag,			const TetraMesh& M,TetraDescriptor);
 };
 
+#ifndef SWIG
+
 class TetraMesh::FaceDescriptor : public WrappedInteger<unsigned>
 {
 public:
@@ -317,22 +325,12 @@ public:
 
 };
 
+#endif
+
 #ifndef SWIG
-
-constexpr point_above_face_tag point_above_face;
 TetraMesh::PointDescriptor get(point_above_face_tag,const TetraMesh& M,TetraMesh::FaceDescriptor);
-
-constexpr point_below_face_tag point_below_face;
 TetraMesh::PointDescriptor get(point_below_face_tag,const TetraMesh& M,TetraMesh::FaceDescriptor);
-
-constexpr tetra_above_face_tag tetra_above_face;
-
-constexpr tetra_below_face_tag tetra_below_face;
-
-constexpr face_tag face;
 Face get(face_tag,const TetraMesh& M,TetraMesh::FaceDescriptor);
-
-constexpr faces_tag faces;
 TetraByFaceID get(faces_tag,const TetraMesh& M,TetraMesh::TetraDescriptor);
 
 inline TetraMesh::FaceRange TetraMesh::faces() const

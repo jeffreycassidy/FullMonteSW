@@ -13,8 +13,6 @@
 #include <boost/serialization/access.hpp>
 #include <boost/serialization/base_object.hpp>
 
-#include "named_type.hpp"
-
 #include <string>
 #include <stdexcept>
 

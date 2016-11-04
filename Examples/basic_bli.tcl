@@ -36,8 +36,6 @@ if { $argc >= 1 } { set pfx [lindex $argv 0] }
 
 set optfn "$pfx.opt"
 set meshfn "$pfx.mesh"
-set legendfn "$pfx.legend"
-set ofn "fluence.out"
 
 
 
