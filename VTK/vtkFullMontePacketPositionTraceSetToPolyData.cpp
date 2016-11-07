@@ -19,6 +19,7 @@
 
 #include "SwigWrapping.hpp"
 
+#include <cmath>
 #include <string>
 using namespace std;
 
@@ -43,6 +44,13 @@ vtkFullMontePacketPositionTraceSetToPolyData::vtkFullMontePacketPositionTraceSet
 		m_vtkWeight->SetName("Packet Weight");
 		m_vtkPD->GetPointData()->AddArray(m_vtkWeight);
 	}
+
+	if(m_includeLogWeight)
+		{
+			m_vtkLogWeight = vtkFloatArray::New();
+			m_vtkLogWeight->SetName("log(Packet Weight)");
+			m_vtkPD->GetPointData()->AddArray(m_vtkLogWeight);
+		}
 
 	if(m_includeTime)
 	{
@@ -129,6 +137,9 @@ void vtkFullMontePacketPositionTraceSetToPolyData::update()
 	if (m_includeWeight)
 		m_vtkWeight->SetNumberOfTuples(Np);
 
+	if (m_includeLogWeight)
+		m_vtkLogWeight->SetNumberOfTuples(Np);
+
 	if (m_includeTime)
 		m_vtkTime->SetNumberOfTuples(Np);
 
@@ -169,6 +180,9 @@ void vtkFullMontePacketPositionTraceSetToPolyData::update()
 			if (m_includeSteps)
 				m_vtkLength->SetValue(IDp,++Nstep);
 
+			if (m_includeLogWeight)
+				m_vtkLogWeight->SetValue(IDp,std::log(step.w));
+
 			++IDp;
 			++i;
 		}
@@ -190,6 +204,11 @@ vtkPolyData* vtkFullMontePacketPositionTraceSetToPolyData::getPolyData() const
 void vtkFullMontePacketPositionTraceSetToPolyData::includeWeight(bool e)
 {
 	m_includeWeight=e;
+}
+
+void vtkFullMontePacketPositionTraceSetToPolyData::includeLogWeight(bool e)
+{
+	m_includeLogWeight=e;
 }
 
 void vtkFullMontePacketPositionTraceSetToPolyData::includeTime(bool e)

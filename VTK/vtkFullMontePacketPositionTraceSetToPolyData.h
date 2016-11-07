@@ -34,6 +34,7 @@ public:
 	vtkPolyData* getPolyData() const;
 
 	void includeWeight(bool e);
+	void includeLogWeight(bool e);
 	void includeTime(bool e);
 	void includeLength(bool e);
 	void includeSteps(bool e);
@@ -46,11 +47,13 @@ private:
 	bool						m_includeTime=false;
 	bool						m_includeLength=true;
 	bool 						m_includeSteps=true;
+	bool						m_includeLogWeight=true;
 
 	const PacketPositionTraceSet*	m_traces=nullptr;
 	vtkPolyData*					m_vtkPD=nullptr;
 
 	vtkFloatArray*					m_vtkWeight=nullptr;
+	vtkFloatArray*					m_vtkLogWeight=nullptr;
 	vtkFloatArray*					m_vtkTime=nullptr;
 	vtkFloatArray*					m_vtkLength=nullptr;
 	vtkUnsignedShortArray*			m_vtkStepCount=nullptr;
