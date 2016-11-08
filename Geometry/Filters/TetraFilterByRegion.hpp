@@ -32,6 +32,4 @@ private:
 };
 
 
-
-
 #endif /* GEOMETRY_FILTERS_TETRAFILTERBYREGION_HPP_ */

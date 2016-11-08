@@ -20,10 +20,14 @@ namespace Source
 class PencilBeam : public Point, public detail::Directed
 {
 public:
+#ifdef SWIG
 	PencilBeam() :
 		Point(1.0f,std::array<float,3>{std::numeric_limits<float>::quiet_NaN(),std::numeric_limits<float>::quiet_NaN(),std::numeric_limits<float>::quiet_NaN()},-1U),
 		Directed(std::array<float,3>{std::numeric_limits<float>::quiet_NaN(),std::numeric_limits<float>::quiet_NaN(),std::numeric_limits<float>::quiet_NaN()})
 		{}
+#else
+	PencilBeam(){}
+#endif
 
 	PencilBeam(float w,std::array<float,3> pos,std::array<float,3> dir,unsigned elementHint=-1U) :
 		Point(w,pos,elementHint),

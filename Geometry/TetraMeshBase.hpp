@@ -74,9 +74,13 @@ class TetraMeshBase
 public:
 	TetraMeshBase(){};
 
+#ifndef SWIG
+	// Some versions of SWIG (eg. 3.0.2) seem to have trouble with C++11 move constructors
 	TetraMeshBase(TetraMeshBase&& M) : m_points(std::move(M.m_points)),m_tetraPoints(std::move(M.m_tetraPoints)),m_tetraMaterials(std::move(M.m_tetraMaterials)){}
-	TetraMeshBase(const TetraMeshBase& M) = default;
 	TetraMeshBase& operator=(TetraMeshBase&&) = default;
+#endif
+	TetraMeshBase(const TetraMeshBase& M) = default;
+
 	TetraMeshBase& operator=(const TetraMeshBase&) = default;
 
 	TetraMeshBase(const std::vector<Point<3,double> >& P_,const std::vector<TetraByPointID>& T_p_,const std::vector<unsigned>& T_m_=std::vector<unsigned>())
@@ -172,6 +176,10 @@ private:
     friend TetraByPointID 	get(points_tag,			const TetraMeshBase&,TetraDescriptor);
 };
 
+
+
+#ifndef SWIG
+
 class TetraMeshBase::PointDescriptor : public WrappedInteger<unsigned>
 {
 public:
@@ -184,8 +192,6 @@ class TetraMeshBase::TetraDescriptor : public WrappedInteger<unsigned>
 public:
 	explicit TetraDescriptor(unsigned i=0) : WrappedInteger<unsigned>(i){}
 };
-
-#ifndef SWIG
 
 inline TetraByPointID 	get(points_tag,			const TetraMeshBase& M,TetraMeshBase::TetraDescriptor IDt)	{ return M.m_tetraPoints[IDt.value()]; 	}
 inline Point<3,double> 	get(point_coords_tag,	const TetraMeshBase& M,TetraMeshBase::PointDescriptor IDt)	{ return M.m_points[IDt.value()]; 		}

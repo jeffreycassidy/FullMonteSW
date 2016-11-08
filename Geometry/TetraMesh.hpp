@@ -1,7 +1,6 @@
 #ifndef TETRAMESH_HPP_INCLUDED_
 #define TETRAMESH_HPP_INCLUDED_
 
-#ifndef SWIG
 #include <vector>
 #include <unordered_map>
 
@@ -18,6 +17,8 @@
 #include <boost/timer/timer.hpp>
 
 #include "newgeom.hpp"
+
+#ifndef SWIG
 
 template<typename T>class FilterBase;
 
@@ -79,18 +80,18 @@ struct RTIntersection
  *
  */
 
-#ifdef SWIG
-%nodefaultctor TetraMesh;
+#ifndef SWIG
+
+#define CREATE_GEOMETRY_PROPERTY_TAG(prop) struct prop##_tag { constexpr prop##_tag(){} }; constexpr prop##_tag prop;
+
+CREATE_GEOMETRY_PROPERTY_TAG(point_above_face)
+CREATE_GEOMETRY_PROPERTY_TAG(point_below_face)
+CREATE_GEOMETRY_PROPERTY_TAG(tetra_above_face)
+CREATE_GEOMETRY_PROPERTY_TAG(tetra_below_face)
+CREATE_GEOMETRY_PROPERTY_TAG(face)
+CREATE_GEOMETRY_PROPERTY_TAG(faces)
+
 #endif
-
-#define CREATE_PROPERTY_TAG(prop) struct prop##_tag { constexpr prop##_tag(){} }; constexpr prop##_tag prop;
-
-CREATE_PROPERTY_TAG(point_above_face)
-CREATE_PROPERTY_TAG(point_below_face)
-CREATE_PROPERTY_TAG(tetra_above_face)
-CREATE_PROPERTY_TAG(tetra_below_face)
-CREATE_PROPERTY_TAG(face)
-CREATE_PROPERTY_TAG(faces)
 
 class TetraMesh : public TetraMeshBase
 {
@@ -102,12 +103,15 @@ public:
 		};
 
 	TetraMesh(){}
-	TetraMesh(const TetraMeshBase& Mb,const std::vector<FaceHint>& H=std::vector<FaceHint>()) : TetraMeshBase(Mb)
-		{ buildTetrasAndFaces(H); }
 
 #ifndef SWIG
 	TetraMesh(TetraMeshBase&& Mb,const std::vector<FaceHint>& H=std::vector<FaceHint>()) : TetraMeshBase(Mb)
 		{ buildTetrasAndFaces(H); }
+	TetraMesh(const TetraMeshBase& Mb,const std::vector<FaceHint>& H=std::vector<FaceHint>()) : TetraMeshBase(Mb)
+			{ buildTetrasAndFaces(H); }
+#else
+	TetraMesh(const TetraMeshBase& Mb) : TetraMeshBase(Mb)
+		{ buildTetrasAndFaces(); }
 #endif
 
 #ifndef SWIG
@@ -205,7 +209,6 @@ public:
 
 
 
-
 private:
 	vector<TetraByFaceID>	    	m_tetraFaces;       // tetra -> 4 face IDs
     vector<FaceByPointID>       	m_facePoints;       // face ID -> 3 point IDs
@@ -297,6 +300,8 @@ private:
     friend TetraByFaceID	get(faces_tag,			const TetraMesh& M,TetraDescriptor);
 };
 
+#ifndef SWIG
+
 class TetraMesh::FaceDescriptor : public WrappedInteger<unsigned>
 {
 public:
@@ -319,8 +324,6 @@ public:
 
 
 };
-
-#ifndef SWIG
 
 TetraMesh::PointDescriptor get(point_above_face_tag,const TetraMesh& M,TetraMesh::FaceDescriptor);
 TetraMesh::PointDescriptor get(point_below_face_tag,const TetraMesh& M,TetraMesh::FaceDescriptor);

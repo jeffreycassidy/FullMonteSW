@@ -210,7 +210,7 @@ void TetraMesh::mapTetrasToFaces()
 bool TetraMesh::checkFaces() const
 {
 	unsigned err=0;
-	assert(T.size()   == m_tetraPoints.size());
+	//assert(T.size()   == m_tetraPoints.size());
 	assert(m_tetraFaces.size() == m_tetraPoints.size());
 	assert(m_tetraMaterials.size() == m_tetraPoints.size());
 

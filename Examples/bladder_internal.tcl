@@ -7,12 +7,12 @@ load libFullMonteDataTCL.so
 
 load libFullMonteSWKernelTCL.so
 load libFullMonteKernelsTCL.so
-load libFullMonteVTKTCL.dylib
+load libFullMonteVTKTCL.so
 load libFullMonteVTKFileTCL.so
 
 #default file prefix
-set meshfn "/Users/jcassidy/src/FullMonteSW/FullMonteSW/bladder&rectum&prostate.mesh.vtk"
-set optfn  "/Users/jcassidy/src/FullMonteSW/FullMonteSW/bladder.opt"
+set meshfn "/Users/jcassidy/src/FullMonteSW/data/bladder/bladder_rectum_prostate_14M.mesh.bin.vtk"
+set optfn  "/Users/jcassidy/src/FullMonteSW/data/bladder/bladder_fake.opt"
 
 #override with 1st cmdline arg
 if { $argc >= 1 } { set pfx [lindex $argv 0] }

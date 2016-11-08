@@ -19,6 +19,7 @@
 
 #include <boost/range/adaptor/indexed.hpp>
 
+#include <cmath>
 #include <sstream>
 #include <iostream>
 
@@ -92,7 +93,7 @@ void vtkFullMonteArrayAdaptor::update()
 		m_vtkArray->SetNumberOfTuples(md->dim());
 
 		for(const auto d : md->values() | boost::adaptors::indexed(0U))
-			static_cast<vtkFloatArray*>(m_vtkArray)->SetValue(d.index(), isnan(d.value()) ? 0.0 : d.value());
+			static_cast<vtkFloatArray*>(m_vtkArray)->SetValue(d.index(), std::isnan(d.value()) ? 0.0 : d.value());
 
 	}
 	else if (const SpatialMap<float>* mf = dynamic_cast<const SpatialMap<float>*>(m_fullMonteArray))
