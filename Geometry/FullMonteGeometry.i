@@ -56,7 +56,3 @@
 %include "Filters/TetraFilterByRegion.hpp"
 
 %include "Filters/PlaneCrossingFilter.hpp"
-
-
-
-
