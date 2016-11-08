@@ -1,5 +1,9 @@
+###### Load libraries
+
+# Load the VTK package for visualization
 package require vtk
 
+# Load the necessary FullMonte libraries
 load libFullMonteTIMOSTCL.so
 load libFullMonteGeometryTCL.so
 load libFullMonteMatlabTCL.so
@@ -10,52 +14,57 @@ load libFullMonteKernelsTCL.so
 load libFullMonteVTKTCL.dylib
 load libFullMonteVTKFileTCL.so
 
-#default file prefix
+
+
+###### Set file names and load files
+
 set meshfn "/Users/jcassidy/src/FullMonteSW/FullMonteSW/bladder&rectum&prostate.mesh.vtk"
 set optfn  "/Users/jcassidy/src/FullMonteSW/FullMonteSW/bladder.opt"
 
-#override with 1st cmdline arg
-if { $argc >= 1 } { set pfx [lindex $argv 0] }
 
-# create and set up the reader
-
+# create and set up the mesh reader - file is saved as a VTK "legacy" .vtk file (directly loadable in VTK/Paraview)
+# there is a scalar field denoting tissue type 
 VTKLegacyReader VTKR
     VTKR setFileName $meshfn
     VTKR addZeroPoint 1
     VTKR addZeroCell 1
 
-TIMOSAntlrParser R
-
-R setOpticalFileName $optfn
-
-
 set MB [VTKR mesh]
 
-set mesh [TetraMesh foo $MB]
+# read optical properties in TIM-OS format text file (described at https://sites.google.com/site/haioushen/software)
+TIMOSAntlrParser R
+    R setOpticalFileName $optfn
 
 set opt [R materials_simple]
 
-set P [PointSource_New]
-$P position "-8.6 49.7 -1418.70"
 
-## Create sim kernel
+
+###### Instantiate and configure simulation kernel (SV kernel -> score Surface & Volume)
 
 TetraSVKernel k $mesh
 
+# Create and place source (units are mm, referenced to the input geometry)
+# This placement was derived by loading the mesh in Paraview and manipulating a point source
+Point P
+P position "-8.6 49.7 -1418.70"
+
 # Kernel properties
-k source $P
-k energy             50
-k materials          $opt
-k setUnitsToMM
+    k source $P
+    k energy             50
+    k materials          $opt
+    k setUnitsToMM
 
+# Monte Carlo kernel properties (standard, unlikely to need change)
+    k roulettePrWin      0.1
+    k rouletteWMin       1e-5
+    k maxSteps           10000
+    k maxHits            10000
 
-# Monte Carlo kernel properties
-k roulettePrWin      0.1
-k rouletteWMin       1e-5
-k maxSteps           10000
-k maxHits            10000
-k packetCount        1000000
-k threadCount        8
+# Number of packets to simulate. More -> higher quality, longer run time. Try 10^6 to start.
+    k packetCount        1000000
+
+# Thread count should be number of cores on the machine, or 2x number of cores with SMT (aka. "Hyperthreading")
+    k threadCount        8
 
 
 proc progresstimer {} {
@@ -67,43 +76,50 @@ proc progresstimer {} {
 	puts [format "\rProgress %6.2f%%" 100.0]
 }
 
-set N 1
 
 
-# Set up internal fluence counting
+###### Select the internal surfaces for fluence counting
 
+# bidirectional=1 -> count fluence entering and exiting
 TriFilterRegionBounds TF
     TF mesh $mesh
     TF bidirectional 1
-
-# designate regions whose boundaries should be monitored
     TF includeRegion 1 1
-
-
 
 $mesh setFacesForFluenceCounting TF
 
+
+
+###### VTK volume data visualization pipeline
+
+# Make FullMonte mesh data structure available to VTK
 vtkFullMonteTetraMeshWrapper VTKM
     VTKM mesh $mesh
 
-
-
-## Writer pipeline for volume field data (regions & vol fluence)
-
+# vtkFieldData stores multiple named arrays which hold one entry per geometry element (in this case tetrahedron)
 vtkFieldData volumeFieldData
     volumeFieldData AddArray [VTKM regions]
 
+# data object holds the field data
 vtkDataObject volumeDataObject
     volumeDataObject SetFieldData volumeFieldData
 
+
+
+# Set up VTK filter to merge the provided data (region & fluence) onto the provided mesh
 vtkMergeDataObjectFilter mergeVolume
     mergeVolume SetDataObjectInputData volumeDataObject
     mergeVolume SetInputData [VTKM blankMesh]
     mergeVolume SetOutputFieldToCellDataField
 
+# Set up VTK writer to write the resulting volume data to a file
 vtkUnstructuredGridWriter VW
     VW SetInputConnection [mergeVolume GetOutputPort]
     VW SetFileName "bladder.volume.vtk"
+
+
+
+###### VTK surface data visualization pipeline
 
 
 
