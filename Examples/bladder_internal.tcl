@@ -1,5 +1,12 @@
+###### Load libraries
+
+# Load the VTK package for visualization
 package require vtk
 
+# Stop Tk from popping up an empty window
+wm withdraw .
+
+# Load the necessary FullMonte libraries
 load libFullMonteTIMOSTCL.so
 load libFullMonteGeometryTCL.so
 load libFullMonteMatlabTCL.so
@@ -7,55 +14,58 @@ load libFullMonteDataTCL.so
 
 load libFullMonteSWKernelTCL.so
 load libFullMonteKernelsTCL.so
+load libFullMonteQueriesTCL.so
 load libFullMonteVTKTCL.so
 load libFullMonteVTKFileTCL.so
 
-#default file prefix
-set meshfn "/Users/jcassidy/src/FullMonteSW/data/bladder/bladder_rectum_prostate_14M.mesh.bin.vtk"
-set optfn  "/Users/jcassidy/src/FullMonteSW/data/bladder/bladder_fake.opt"
 
-#override with 1st cmdline arg
-if { $argc >= 1 } { set pfx [lindex $argv 0] }
+###### Set file names and load files
+set datapath "/Users/jcassidy/src/FullMonteSW/data/bladder"
+set meshfn "$datapath/bladder_rectum_prostate_14M.mesh.bin.vtk"
+set opt_clear  "$datapath/bladder_clear.opt"
+set opt_intra "$datapath/bladder_intralipid.opt"
 
-# create and set up the reader
-
+# create and set up the mesh reader - file is saved as a VTK "legacy" .vtk file (directly loadable in VTK/Paraview)
+# there is a scalar field denoting tissue type 
 VTKLegacyReader VTKR
     VTKR setFileName $meshfn
     VTKR addZeroPoint 1
     VTKR addZeroCell 1
 
-TIMOSAntlrParser R
-
-R setOpticalFileName $optfn
-
-
 set MB [VTKR mesh]
-
 set mesh [TetraMesh foo $MB]
 
-set opt [R materials_simple]
+# read optical properties in TIM-OS format text file (described at https://sites.google.com/site/haioushen/software)
+TIMOSAntlrParser R
+    R setOpticalFileName $opt_clear
 
-set P [PointSource_New]
-$P position "-8.6 49.7 -1418.70"
 
-## Create sim kernel
+
+###### Instantiate and configure simulation kernel (SV kernel -> score Surface & Volume)
 
 TetraSVKernel k $mesh
 
+# Create and place source (units are mm, referenced to the input geometry)
+# This placement was derived by loading the mesh in Paraview and manipulating a point source
+Point P
+P position "-8.6 49.7 -1418.70"
+
 # Kernel properties
-k source $P
-k energy             50
-k materials          $opt
-k setUnitsToMM
+    k source P
+    k energy             50
+    k setUnitsToMM
 
+# Monte Carlo kernel properties (standard, unlikely to need change)
+    k roulettePrWin      0.1
+    k rouletteWMin       1e-5
+    k maxSteps           10000
+    k maxHits            10000
 
-# Monte Carlo kernel properties
-k roulettePrWin      0.1
-k rouletteWMin       1e-5
-k maxSteps           10000
-k maxHits            10000
-k packetCount        1000000
-k threadCount        8
+# Number of packets to simulate. More -> higher quality, longer run time. Try 10^6 to start.
+    k packetCount        1000000
+
+# Thread count should be number of cores on the machine, or 2x number of cores with SMT (aka. "Hyperthreading")
+    k threadCount        8
 
 
 proc progresstimer {} {
@@ -67,53 +77,86 @@ proc progresstimer {} {
 	puts [format "\rProgress %6.2f%%" 100.0]
 }
 
-set N 1
 
 
-# Set up internal fluence counting
+###### Select the internal surfaces for fluence counting
 
+# bidirectional=1 -> count fluence entering and exiting
 TriFilterRegionBounds TF
     TF mesh $mesh
     TF bidirectional 1
-
-# designate regions whose boundaries should be monitored
     TF includeRegion 1 1
 
-
+TetraFilterByRegion TETF
+	TETF mesh $mesh
+	TETF excludeAll
+	TETF include 1 1
 
 $mesh setFacesForFluenceCounting TF
 
+
+
+###### Output conversion and processing
+
+# Convert energy exiting through each face to fluence (divide by area)
+EnergyToFluence EFS
+	EFS mesh $mesh
+
+# Convert energy absorbed in each tetra to fluence (divide by area*mu_a)
+EnergyToFluence EFV
+	EFV mesh $mesh
+
+# sum the entering and exiting fluence at each surface to get bidirectional fluence
+DirectionalSurface DS
+	DS mesh $mesh
+	DS direction 2
+	DS tetraFilter TETF
+
+#DoseSurfaceHistogramGenerator DSHG
+#    DSHG mesh $mesh
+#    DSHG filter TF
+
+
+
+###### VTK file write pipeline
+
+# Make FullMonte mesh data structure available to VTK
 vtkFullMonteTetraMeshWrapper VTKM
     VTKM mesh $mesh
 
 
+### VOLUME DATA
 
-## Writer pipeline for volume field data (regions & vol fluence)
+vtkFullMonteArrayAdaptor vtkPhiV
 
+# vtkFieldData stores multiple named arrays which hold one entry per geometry element (here, tetrahedron)
+# first add an array "Tissue Type" from the mesh regions
+# we will later add fluence for each tetrahedral volume element
 vtkFieldData volumeFieldData
     volumeFieldData AddArray [VTKM regions]
 
+# data object holds the field data
 vtkDataObject volumeDataObject
     volumeDataObject SetFieldData volumeFieldData
 
+# Merge the mesh geometry with the field data object
 vtkMergeDataObjectFilter mergeVolume
     mergeVolume SetDataObjectInputData volumeDataObject
     mergeVolume SetInputData [VTKM blankMesh]
     mergeVolume SetOutputFieldToCellDataField
 
+# write the resulting volume data to a file
 vtkUnstructuredGridWriter VW
     VW SetInputConnection [mergeVolume GetOutputPort]
     VW SetFileName "bladder.volume.vtk"
 
 
 
-vtkFullMonteSpatialMapWrapperFU vtkPhi
+### SURFACE DATA
 
-set surfaceFluenceArray [vtkPhi array]
-    $surfaceFluenceArray SetName "Surface Fluence (au)"
+vtkFullMonteArrayAdaptor vtkPhiS
 
 vtkFieldData surfaceFieldData
-    surfaceFieldData AddArray $surfaceFluenceArray
 
 vtkDataObject surfaceData
     surfaceData SetFieldData surfaceFieldData
@@ -123,6 +166,7 @@ vtkMergeDataObjectFilter mergeFluence
     mergeFluence SetInputData [VTKM faces]
     mergeFluence SetOutputFieldToCellDataField
 
+# filter out only the triangles that were selected
 vtkFullMonteFilterTovtkIdList surfaceTriIDs 
     surfaceTriIDs mesh $mesh
     surfaceTriIDs filter [TF self]
@@ -131,70 +175,59 @@ vtkExtractCells extractSurface
     extractSurface SetInputConnection [mergeFluence GetOutputPort]
     extractSurface SetCellList [surfaceTriIDs idList]
 
+# convert vtkUnstructuredGrid output of extractcells (has only triangles anyway) to vtkPolyData
 vtkGeometryFilter geom
     geom SetInputConnection [extractSurface GetOutputPort]
 
 vtkPolyDataWriter VTKW
     VTKW SetInputConnection [geom GetOutputPort]
 
-DoseSurfaceHistogramGenerator DSHG
-    DSHG mesh $mesh
-    DSHG filter TF
 
-BidirectionalFluence BF
+foreach case { bladder_clear bladder_intralipid } {
 
-FluenceConverter FC
-    FC mesh $mesh
+	set optfn $datapath/$case.opt
+puts "$optfn"
 
-for { set i 0 } { $i < $N } { incr i } {
+# load the appropriate optical properties
+	R setOpticalFileName $optfn
+	set opt [R materials_simple]
+	k materials $opt
 
-    puts "Trial $i of $N"
-    
-    # set the random seed
-	k randSeed           $i
+	EFV materials $opt
 
-	k source $P
-
+# start the kernel, show the progress timer, and wait until the kernel is done
 	k startAsync
-
     progresstimer
-
 	k finishAsync
 
-    set Emap [FC convertToEnergyDensity [k getVolumeAbsorbedEnergyMap]]
+# update volume fluence converted with volume absorption data, write to file
+	EFV source [k getResultByIndex 2]
+	EFV update
 
-    vtkFullMonteArrayAdaptor EmapAdaptor
-        EmapAdaptor source $Emap
+	vtkPhiV source [EFV result]
+	volumeFieldData AddArray [vtkPhiV array]
 
-    vtkFullMonteArrayAdaptor PhiAdaptor
-        PhiAdaptor source [k getVolumeFluenceMap]
+	VW SetFileName "$case.volume.bin.vtk"
+	VW SetFileTypeToBinary
+	VW Update
 
-    puts "Simulation finished"
+# update surface fluence conversion with surface exit data, write to file
+	DS data [k getResultByIndex 4]
+	DS update
 
-    BF source [k getInternalSurfaceFluenceMap]
+	EFS source [DS result]
+	EFS update
 
-    set phi [BF result]
-    vtkPhi source $phi
-    vtkPhi update
+	vtkPhiS source [EFS result]
+	surfaceFieldData AddArray [vtkPhiS array]
 
-    puts "vtkPhi update done"
+#    DSHG fluence $phi
+#    set dsh [DSHG result]
 
-    geom Update
+#    $dsh print
 
-    DSHG fluence $phi
-    set dsh [DSHG result]
-
-    $dsh print
-
-    puts "Geom update done"
-
-    VTKW SetFileName "internalsurface.bin.vtk"
+    VTKW SetFileName "$case.surface.bin.vtk"
     VTKW SetFileTypeToBinary
     VTKW Update
 
-
-    volumeFieldData AddArray [EmapAdaptor result]
-    volumeFieldData AddArray [PhiAdaptor result]
-
-    VW Update
 }

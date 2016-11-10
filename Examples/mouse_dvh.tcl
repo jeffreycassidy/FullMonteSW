@@ -1,8 +1,7 @@
 ###### Import VTK TCL package
 package require vtk
 
-###### Close the default tcl/tk window
-wm withdraw .
+
 
 
 ###### Load required FullMonte libraries
@@ -19,19 +18,18 @@ load libFullMonteKernelsTCL.so
 
 # Data output manipulation
 load libFullMonteDataTCL.so
+load libFullMonteQueriesTCL.so
 
 # VTK interface
 load libFullMonteVTKTCL.so
 
-
-puts "loaded libs"
 
 
 
 ###### Basic parameters: file names
 
 #default file prefix
-set pfx "/Users/jcassidy/src/FullMonteSW/data/TIM-OS/mouse/mouse"
+set pfx "/usr/local/share/fullmontesw/examples/mousebli/mouse"
 
 
 #override with 1st cmdline arg
@@ -61,19 +59,15 @@ set opt [R materials_simple]
 
 ###### Configure source
 
-Ball B
-B centre "10 40 11"
-B radius 2
+Line L
 
 
 
+###### Create and configure simulation kernel with volume scoring
 
+TetraVolumeKernel k $mesh
 
-###### Create and configure simulation kernel with surface scoring
-
-TetraTraceKernel k $mesh
-
-k source B
+k source L
     # the source to launch from
 
 k energy             50
@@ -100,13 +94,51 @@ k maxSteps           10000
 k maxHits            100
     # maximum number of boundaries a single step can take
 
-k packetCount        1024
+k packetCount        1000000
     # number of packets to simulate (more -> better quality, longer run)
 
 k threadCount        8
     # number of threads (set to number of cores, or 2x number of cores if hyperthreading)
 
 
+
+EnergyToFluence EF
+    EF mesh $mesh
+    EF materials $opt
+
+vtkFullMonteArrayAdaptor vtkPhi
+
+###### VTK visualization & result export
+
+vtkFullMonteTetraMeshWrapper VTKM
+    VTKM mesh $mesh
+
+## Writer pipeline for volume field data (regions & vol fluence)
+
+vtkFieldData volumeFieldData
+    volumeFieldData AddArray [VTKM regions]
+
+vtkDataObject volumeDataObject
+    volumeDataObject SetFieldData volumeFieldData
+
+vtkMergeDataObjectFilter mergeVolume
+    mergeVolume SetDataObjectInputData volumeDataObject
+    mergeVolume SetInputData [VTKM blankMesh]
+    mergeVolume SetOutputFieldToCellDataField
+
+vtkUnstructuredGridWriter W
+    W SetInputConnection [mergeVolume GetOutputPort]
+
+#DoseHistogramGenerator DVHG
+#    DVHG mesh $mesh
+#    DVHG filter TF
+
+
+
+vtkSourceExporter SE
+
+
+vtkUnstructuredGridWriter SW
 
 
 
@@ -129,28 +161,65 @@ proc progresstimer {} {
 
 
 
-##### Run it
+
+## Bounding box
+#x [7,17]
+#y [35.5, 45.5]
+#z [6.5 16.5]
+
+proc runsim { case } { 
+    ## Set up source location
+    
+    if { $case == "good" } {
+        puts "good case" 
+
+        # good 
+        L endpoint 0 "11.4 42.4 10.4"
+        L endpoint 1 "11.7 41.6 11.0"
+    } elseif { $case == "bad" } {
+        puts "bad case"
+
+        # bad
+        L endpoint 0 "11.5 40.0 10.4"
+        L endpoint 1 "12.5 45.1 12.1"
+    } else {
+        puts "ERROR: Invalid"
+    }
 
     # launch kernel, display progress timer, and await finish
-
 	k startAsync
     progresstimer
 	k finishAsync
 
-for { set i 0 } { $i < [k getResultCount] } { incr i } { puts "  [[k getResultByIndex $i] typeString]" }
+    set volume [k getResultByTypeString "SpatialMap"]
 
-set paths [k getResultByTypeString "PacketPositionTraceSet"]
+    puts "volume=$volume"
 
-puts "paths=$paths"
-#puts "Returned a path with [$paths nTraces] traces and a total of [$paths nPoints] points"
+    EF source $volume
+    EF update
 
-vtkFullMontePacketPositionTraceSetToPolyData O
-    O source $paths
-    O update
+    vtkPhi source [EF result]
+    vtkPhi update
 
+    volumeFieldData AddArray [vtkPhi array]
 
-vtkPolyDataWriter W
-    W SetInputData [O getPolyData]
-    W SetFileName "traces.vtk"
+    W SetFileName "mouse.$case.vtk"
+
+    volumeFieldData RemoveArray [vtkPhi array]
+
     W Update
-    W Delete
+
+
+    ## Write out sources
+    SW SetFileName "mouse.sources.$case.vtk"
+    SE source L
+    SW SetInputData [SE output]
+    SW Update
+}
+
+
+###### Actually run the sims
+
+runsim good
+runsim bad
+
