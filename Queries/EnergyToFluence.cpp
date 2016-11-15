@@ -15,6 +15,7 @@
 
 #include <FullMonteSW/Geometry/TetraMesh.hpp>
 #include <FullMonteSW/Geometry/SimpleMaterial.hpp>
+#include <FullMonteSW/OutputTypes/DirectedSurfaceElement.hpp>
 
 #include <FullMonteSW/Geometry/Units/BaseUnit.hpp>
 
@@ -41,8 +42,23 @@ public:
 		return x / m_mesh->getFaceArea(unsigned(i));
 	}
 
-private:
+protected:
 	const TetraMesh* m_mesh=nullptr;
+};
+
+class EnergyToFluence::DirectedSurfaceConverter : public EnergyToFluence::SurfaceConverter
+{
+public:
+	DirectedSurfaceConverter(const TetraMesh* M) : SurfaceConverter(M){}
+	~DirectedSurfaceConverter(){}
+
+	virtual DirectedSurfaceElement<float> operator()(std::size_t i,DirectedSurfaceElement<float> x) const override
+	{
+		float k = 1.0 / m_mesh->getFaceArea(unsigned(i));
+		return DirectedSurfaceElement<float>(
+				k*x.enter(),
+				k*x.exit());
+	}
 };
 
 class EnergyToFluence::VolumeConverter : public EnergyToFluence::Converter
@@ -77,6 +93,8 @@ void EnergyToFluence::source(OutputData* M)
 	m_values=dynamic_cast<AbstractSpatialMap*>(M);
 	if (!m_values)
 		cout << "ERROR: EnergyToFluence::source(OutputData* M) input cannot be cast to AbstractSpatialMap" << endl;
+	else
+		cout << "INFO: EnergyToFluence::source(OutputData*) updated source with dim=" << m_values->dim() << endl;
 }
 
 const AbstractSpatialMap* EnergyToFluence::source() const
@@ -104,7 +122,10 @@ void EnergyToFluence::update()
 			cout << "ERROR: EnergyToFluence::results() requested but no attached mesh" << endl;
 			return;
 		}
-		C = new SurfaceConverter(m_mesh);
+		if (auto p = dynamic_cast<const SpatialMap<DirectedSurfaceElement<float>>*>(m_values))
+			C = new DirectedSurfaceConverter(m_mesh);
+		else if (auto p = dynamic_cast<const SpatialMap<float>*>(m_values))
+			C = new SurfaceConverter(m_mesh);
 		break;
 
 	case AbstractSpatialMap::Volume:
@@ -131,6 +152,7 @@ void EnergyToFluence::update()
 
 	// Clone input to get same dimensions and type
 	m_output = static_cast<AbstractSpatialMap*>(m_values->clone());
+	m_output->quantity(&Units::fluence);
 
 	if (auto mf = dynamic_cast<const SpatialMap<float>*>(m_values))
 	{
@@ -146,18 +168,20 @@ void EnergyToFluence::update()
 	{
 		for(unsigned i=0;i<m_values->dim();++i)
 			static_cast<SpatialMap<DirectedSurfaceElement<float>>&>(*m_output)[i] = (*C)(i,(*mdir)[i]);
+		m_output->quantity(&Units::directedFluence);
 	}
 	else
 		cout << "ERROR: EnergyToFluence::results() requested but input array type is not recognized" << endl;
-
-	m_output->quantity(&Units::fluence);
-	m_output->units(&Units::packet);
 
 	delete C;
 }
 
 OutputData* EnergyToFluence::result() const
 {
-	return m_output;
+	if (m_output)
+		return m_output;
+
+	cout << "ERROR! Returning a null pointer from EnergyToFluence::result()" << endl;
+	return nullptr;
 }
 

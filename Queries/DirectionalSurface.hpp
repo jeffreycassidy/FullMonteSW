@@ -25,7 +25,7 @@ template<typename T>class FilterBase;
  * The face orientations can be queried with faces() and facesU(). Where faces() value is negative, enter/exit need to be inverted.
  */
 
-enum FaceDirection { Enter, Exit, Bidirectional };
+enum FaceDirection { Enter, Exit, Bidirectional, Directed };
 
 class DirectionalSurface
 {

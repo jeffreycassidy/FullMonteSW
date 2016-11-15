@@ -106,11 +106,19 @@ EnergyToFluence EFS
 EnergyToFluence EFV
 	EFV mesh $mesh
 
+EnergyToFluence EFDS
+	EFDS mesh $mesh
+
 # sum the entering and exiting fluence at each surface to get bidirectional fluence
 DirectionalSurface DS
 	DS mesh $mesh
 	DS direction 2
 	DS tetraFilter TETF
+
+DirectionalSurface BI
+	BI mesh $mesh
+	BI direction 3
+	BI tetraFilter TETF
 
 #DoseSurfaceHistogramGenerator DSHG
 #    DSHG mesh $mesh
@@ -155,6 +163,8 @@ vtkUnstructuredGridWriter VW
 ### SURFACE DATA
 
 vtkFullMonteArrayAdaptor vtkPhiS
+
+vtkFullMonteArrayAdaptor vtkPhiDS
 
 vtkFieldData surfaceFieldData
 
@@ -221,13 +231,25 @@ puts "$optfn"
 	vtkPhiS source [EFS result]
 	surfaceFieldData AddArray [vtkPhiS array]
 
+	puts "EFS done"
+
+# add directed surface fluence
+	EFDS source [k getResultByIndex 4]
+	EFDS update
+
+	BI data [EFDS result]
+	BI update
+
+	vtkPhiDS source [BI result]
+	surfaceFieldData AddArray [vtkPhiDS array]
+
 #    DSHG fluence $phi
 #    set dsh [DSHG result]
 
 #    $dsh print
 
     VTKW SetFileName "$case.surface.bin.vtk"
-    VTKW SetFileTypeToBinary
+#    VTKW SetFileTypeToBinary
     VTKW Update
 
 }

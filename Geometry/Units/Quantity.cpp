@@ -16,6 +16,7 @@ const Quantity volume		{Quantity::Scalar,"volume",	"V"};
 const Quantity time			{Quantity::Scalar,"time",	"t"};
 
 const Quantity fluence		{Quantity::Scalar,"fluence",		"phi"};
+const Quantity directedFluence {Quantity::Scalar,"directed fluence","phi_d"};
 const Quantity fluenceRate	{Quantity::Scalar,"fluence rate",	"phi"};
 const Quantity irradiance	{Quantity::Scalar,"irradiance",		"I"};
 

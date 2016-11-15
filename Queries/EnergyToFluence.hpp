@@ -37,6 +37,7 @@ private:
 
 	class VolumeConverter;
 	class SurfaceConverter;
+	class DirectedSurfaceConverter;
 
 	const TetraMesh*					m_mesh=nullptr;
 	const std::vector<SimpleMaterial>*	m_materials=nullptr;

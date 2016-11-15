@@ -45,30 +45,49 @@ void DirectionalSurface::update()
 
 OutputData* DirectionalSurface::result() const
 {
-	vector<float> o(m_mesh->getNf()+1,0.0f);
+	AbstractSpatialMap* result;
 	double sum=0.0;
 
-	for(int IDf : m_faces)
+	if (m_direction == Directed)
 	{
-		unsigned IDfu = std::abs(IDf);
+		vector<DirectedSurfaceElement<float>> o(m_mesh->getNf()+1, DirectedSurfaceElement<float>());
+		for(int IDf : m_faces)
+		{
+			unsigned IDfu = std::abs(IDf);
+			o[IDfu] = (*m_data)[IDfu];
+			if (IDf < 0)
+				o[IDfu].flip();
+			sum += o[IDfu].enter() + o[IDfu].exit();
+		}
+		result = new SpatialMap<DirectedSurfaceElement<float>>(std::move(o),
+				AbstractSpatialMap::Surface, AbstractSpatialMap::Scalar);
+	}
+	else
+	{
+		vector<float> o(m_mesh->getNf()+1,0.0f);
+		for(int IDf : m_faces)
+		{
+			unsigned IDfu = std::abs(IDf);
 
-		if (m_direction == Bidirectional)
-			o[IDfu] = (*m_data)[IDfu].bidirectional();
-		else if ((m_direction == Exit) ^ (IDf < 0))			// IDf < 0 -> invert the face
-			o[IDfu] = (*m_data)[IDfu].exit();
-		else
-			o[IDfu] = (*m_data)[IDfu].enter();
+			if (m_direction == Bidirectional)
+				o[IDfu] = (*m_data)[IDfu].bidirectional();
+			else if ((m_direction == Exit) ^ (IDf < 0))			// IDf < 0 -> invert the face
+				o[IDfu] = (*m_data)[IDfu].exit();
+			else
+				o[IDfu] = (*m_data)[IDfu].enter();
 
-		sum += o[IDfu];
+			sum += o[IDfu];
+		}
+
+		//cout << "DirectionalSurface::result() returned a vector of dimension " << o.size() << " totaling " << sum << endl;
+
+		result = new SpatialMap<float>(std::move(o),AbstractSpatialMap::Surface,AbstractSpatialMap::Scalar);
 	}
 
-	cout << "DirectionalSurface::result() returned a vector of dimension " << o.size() << " totaling " << sum << endl;
+	result->quantity(m_data->quantity());
+	result->units(m_data->units());
 
-	SpatialMap<float> *out = new SpatialMap<float>(std::move(o),AbstractSpatialMap::Surface,AbstractSpatialMap::Scalar);
-	out->quantity(m_data->quantity());
-	out->units(m_data->units());
-
-	return out;
+	return result;
 }
 
 DirectedSurfaceElement<float> DirectionalSurface::valueAtFace(int IDf) const

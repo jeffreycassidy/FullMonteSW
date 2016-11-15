@@ -22,9 +22,7 @@ VolumeAbsorptionScorer::~VolumeAbsorptionScorer()
 
 void VolumeAbsorptionScorer::dim(unsigned N)
 {
-	std::cout << "Resizing VolumeAbsorptionScorer accumulation array to " << N << endl;
 	m_acc.resize(N);
-	std::cout << " size after: " << m_acc.size() << endl;
 }
 
 void VolumeAbsorptionScorer::queueSize(unsigned q)

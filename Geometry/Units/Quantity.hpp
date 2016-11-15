@@ -53,6 +53,7 @@ extern const Quantity current;
 
 ////// Derived quantities
 extern const Quantity fluence;
+extern const Quantity directedFluence;
 extern const Quantity energy;
 
 };

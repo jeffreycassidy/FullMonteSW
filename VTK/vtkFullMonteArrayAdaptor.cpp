@@ -7,6 +7,8 @@
 
 #include "vtkFullMonteArrayAdaptor.h"
 
+#include <memory>
+
 #include <vtkFloatArray.h>
 #include <vtkAbstractArray.h>
 #include <vtkObjectFactory.h>
@@ -16,6 +18,7 @@
 
 #include <FullMonteSW/OutputTypes/AbstractSpatialMap.hpp>
 #include <FullMonteSW/OutputTypes/SpatialMap.hpp>
+#include <FullMonteSW/OutputTypes/DirectedSurfaceElement.hpp>
 
 #include <boost/range/adaptor/indexed.hpp>
 
@@ -39,6 +42,8 @@ void vtkFullMonteArrayAdaptor::source(const char *mptr)
 {
 	SwigPointerInfo pInfo = readSwigPointer(mptr);
 	string type(pInfo.type.first, pInfo.type.second-pInfo.type.first);
+
+	cout << "vtkFullMonteArrayAdaptor::source(const char*) - SWIG pointer of type " << type << endl;
 
 	if (pInfo.p)
 	{
@@ -68,6 +73,8 @@ void vtkFullMonteArrayAdaptor::source(const OutputData* D)
 
 void vtkFullMonteArrayAdaptor::update()
 {
+	cout << "vtkFullMonteArrayAdaptor::update()" << flush << endl;
+
 	// TODO: Inefficient if array is already the right size & type
 	if (m_vtkArray)
 		m_vtkArray->Delete();
@@ -103,6 +110,22 @@ void vtkFullMonteArrayAdaptor::update()
 
 		for(const auto f : mf->values() | boost::adaptors::indexed(0U))
 			static_cast<vtkFloatArray*>(m_vtkArray)->SetValue(f.index(), isnan(f.value()) ? 0.0f : f.value());
+	}
+	else if (const SpatialMap<DirectedSurfaceElement<float>>* ds = dynamic_cast<const SpatialMap<DirectedSurfaceElement<float>>*>(m_fullMonteArray))
+	{
+		m_vtkArray = vtkFloatArray::New();
+		m_vtkArray->SetNumberOfComponents(2);		// 2 components: entering and exiting for each face
+		m_vtkArray->SetComponentName(0,"Entering");
+		m_vtkArray->SetComponentName(1,"Exiting");
+
+		m_vtkArray->SetNumberOfTuples(ds->dim());
+
+		for(const auto e : ds->values() | boost::adaptors::indexed(0U))
+		{
+			if (e.index() > m_vtkArray->GetNumberOfTuples())
+				throw std::out_of_range("vtkFullMonteArrayAdaptor::update()");
+			static_cast<vtkFloatArray*>(m_vtkArray)->SetTuple2(e.index(), e.value().enter(), e.value().exit());
+		}
 	}
 	else
 	{
