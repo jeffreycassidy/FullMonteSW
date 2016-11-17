@@ -37,11 +37,12 @@ public:
 	virtual void doVisit(Ball* b)			override;
 	virtual void doVisit(Line* l)			override;
 	virtual void doVisit(Volume* v)			override;
-	virtual void doVisit(Composite* c)		override;
 	virtual void doVisit(Surface* s)		override;
 	virtual void doVisit(SurfaceTri* st)	override;
-	virtual void doVisit(Abstract* b)		override;
 	virtual void doVisit(PencilBeam* b)		override;
+
+	virtual void preVisitComposite(Composite* C) override;
+	virtual void postVisitComposite(Composite* C) override;
 
 private:
 
@@ -117,16 +118,15 @@ void Printer::doVisit(Volume* v)
 	printPower(v->power());
 }
 
-void Printer::doVisit(Composite* c)
+void Printer::preVisitComposite(Composite* c)
 {
 	m_os << "Composite source (" << c->count() << " subsources) ";
 	printPower(c->power());
 }
 
-void Printer::doVisit(Abstract* b)
+void Printer::postVisitComposite(Composite* C)
 {
-	m_os << "<unspecified type> ";
-	printPower(b->power());
+
 }
 
 void Printer::doVisit(Surface* s)

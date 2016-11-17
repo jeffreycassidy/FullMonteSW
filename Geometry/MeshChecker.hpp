@@ -8,7 +8,7 @@
 #ifndef GEOMETRY_MESHCHECKER_HPP_
 #define GEOMETRY_MESHCHECKER_HPP_
 
-struct Tetra;
+class Tetra;
 
 class MeshChecker
 {

@@ -33,7 +33,7 @@ int main(int argc,char **argv)
 
 	AffineTransform3f T = AffineTransform3f::scale(
 			std::pow(1.3f,0.3333f),
-			std::array<float,3>{53.7f, -59.7f, 135.3f });
+			std::array<float,3>{{53.7f, -59.7f, 135.3f }});
 
 	MB.apply(T);
 

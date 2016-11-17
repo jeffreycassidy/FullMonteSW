@@ -63,7 +63,7 @@ void PathScorer::Logger::launch(__m128 pos)
 	array<float,4> p;
 	_mm_store_ps(p.data(),pos);
 	m_length=0.0f;
-	m_trace.emplace_back( Step{array<float,3>{p[0],p[1],p[2]}, 1.0f, 0.0f, 0.0f} );
+	m_trace.emplace_back( Step{array<float,3>{{p[0],p[1],p[2]}}, 1.0f, 0.0f, 0.0f} );
 }
 
 void PathScorer::Logger::propagate(Point3 posvf,float w,float t)

@@ -282,20 +282,14 @@ template<class RNG>void TetraEmitterFactory<RNG>::doVisit(Source::Line* l)
 	m_emitters.push_back(make_pair(l->power(),ls));
 }
 
-template<class RNG>void TetraEmitterFactory<RNG>::doVisit(Source::Composite* c)
-{
-	for(Source::Abstract* el : c->elements())
-		el->acceptVisitor(this);
-}
-
 template<class RNG>void TetraEmitterFactory<RNG>::doVisit(Source::Surface* s)
 {
 	throw std::logic_error("TetraEmitterFactory<RNG>::doVisit - unsupported (Surface)");
 }
 
-template<class RNG>void TetraEmitterFactory<RNG>::doVisit(Source::Abstract* s)
+template<class RNG>void TetraEmitterFactory<RNG>::undefinedVisitMethod(Source::Abstract* s)
 {
-	throw std::logic_error("TetraEmitterFactory<RNG>::doVisit - unsupported (Source::Base variant called for unknown type)");
+	throw std::logic_error("TetraEmitterFactory<RNG>::doVisit - unsupported source type");
 }
 
 

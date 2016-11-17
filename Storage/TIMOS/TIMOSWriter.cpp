@@ -11,6 +11,16 @@
 
 #include <boost/range/adaptor/filtered.hpp>
 #include <boost/range/adaptor/indexed.hpp>
+#include "../Matlab/take_drop.hpp"
+
+#include <FullMonteSW/Geometry/Sources/Abstract.hpp>
+#include <FullMonteSW/Geometry/Sources/Composite.hpp>
+#include <FullMonteSW/Geometry/Sources/SurfaceTri.hpp>
+#include <FullMonteSW/Geometry/Sources/Surface.hpp>
+#include <FullMonteSW/Geometry/Sources/Volume.hpp>
+#include <FullMonteSW/Geometry/Sources/Line.hpp>
+#include <FullMonteSW/Geometry/Sources/Point.hpp>
+#include <FullMonteSW/Geometry/Sources/PencilBeam.hpp>
 
 #include <sstream>
 
@@ -31,6 +41,26 @@ delim_stream operator<<(std::ostream& os,delim D)
 	return delim_stream{ D, os };
 }
 
+class TIMOSWriter::SourceVisitor : public Source::Abstract::Visitor
+{
+public:
+	SourceVisitor(std::ostream& os) : m_os(os){}
+
+	void print(Source::Abstract* b);
+
+	virtual void doVisit(Source::Point* p) 		override;
+
+	virtual void doVisit(Source::Volume* v) 		override;
+
+	virtual void doVisit(Source::SurfaceTri* st) 	override;
+	virtual void doVisit(Source::PencilBeam* pb) 	override;
+
+	virtual void preVisitComposite(Source::Composite*) override;
+
+private:
+	std::ostream& m_os;
+};
+
 template<typename T,size_t N>std::ostream& operator<<(const delim_stream ds,const std::array<T,N> a)
 {
 	auto w = ds.os.width();
@@ -45,25 +75,31 @@ template<typename T,size_t N>std::ostream& operator<<(const delim_stream ds,cons
 
 using namespace std;
 
-//void TIMOSWriter::write(const TetraMesh& M) const
-//{
-//    ofstream os(meshFn_.c_str());
-//
-//    if(!os.good())
-//    	throw open_for_write_exception("TIMOSWriter::write(TetraMeshBase&) failed to open file for writing");
-//
-//    os << boost::size(M.points())-1 << endl << boost::size(M.tetrasByID())-1 << endl;
-//
-//    for(Point<3,double> p : M.points() | drop(1))
-//    	os << delim{""," ",""} << p << endl;
-//
-//    for(TetraByPointID t : M.tetrasByID() | drop(1))
-//    	os << delim{""," ",""} << t << endl;
-//
-//    if (os.fail())
-//    	throw write_exception("TIMOSWriter::write(TetraMeshBase&) writing failed");
-//}
-//
+void TIMOSWriter::writeMesh(const TetraMesh& M) const
+{
+    ofstream os(meshFn_.c_str());
+
+    if(!os.good())
+    {
+    	cout << "ERROR - TIMOSWriter::writeMesh(const TetraMesh&) failed to open file '" << meshFn_ << "' for writing" << endl;
+    	return;
+    }
+
+    os << boost::size(M.points())-1 << endl << boost::size(M.tetrasByID())-1 << endl;
+
+    for(const auto p : M.points() | drop(1))
+    	os << delim{""," ",""} << get(point_coords,M,p) << endl;
+
+    for(TetraByPointID t : M.tetrasByID() | drop(1))
+    	os << delim{""," ",""} << t << endl;
+
+    if (os.fail())
+    {
+    	cout << "ERROR - TIMOSWriter::writeMesh(const TetraMesh&) failure during writing of file '" << meshFn_ << "'" << endl;
+    	return;
+    }
+}
+
 //// TODO: factor this into Material -> TIMOS::Optical conversion followed by writing
 //
 //void TIMOSWriter::write(const std::vector<Material>& mat) const
@@ -86,13 +122,13 @@ using namespace std;
 //		throw write_exception("TIMOSWriter::write(std::vector<Material>&) writing failed");
 //}
 
-void TIMOSWriter::SourceVisitor::visit(Source::Abstract* b)
-{
-	const auto f = m_os.flags();
-	m_os << setprecision(4) << fixed << right;
-	b->acceptVisitor(this);
-	m_os.flags(f);
-}
+//void TIMOSWriter::SourceVisitor::visit(Source::Abstract* b)
+//{
+//	const auto f = m_os.flags();
+//	m_os << setprecision(4) << fixed << right;
+//	b->acceptVisitor(this);
+//	m_os.flags(f);
+//}
 
 void TIMOSWriter::SourceVisitor::doVisit(Source::Point* p)
 {
@@ -118,12 +154,12 @@ void TIMOSWriter::SourceVisitor::doVisit(Source::SurfaceTri* st)
 			std::setw(10) << (unsigned long long)(st->power()) << std::endl;
 }
 
-void TIMOSWriter::SourceVisitor::doVisit(Source::Composite* c)
+
+void TIMOSWriter::SourceVisitor::preVisitComposite(Source::Composite* C)
 {
-	m_os << c->count() << endl;
-	for(Source::Abstract * s : c->elements())
-		s->acceptVisitor(this);
+	m_os << C->count() << endl;
 }
+
 
 void TIMOSWriter::SourceVisitor::doVisit(Source::PencilBeam* pb)
 {
@@ -135,15 +171,15 @@ void TIMOSWriter::SourceVisitor::doVisit(Source::PencilBeam* pb)
 		std::setw(7) << dir[0] << ' ' << std::setw(7) << dir[1] << ' ' << std::setw(7) << dir[2] << ' ' <<
 		std::setw(10) << (unsigned long long)(pb->power()) << endl;
 }
-
-void TIMOSWriter::SourceVisitor::doVisit(Source::Ball* b)
-{}
-void TIMOSWriter::SourceVisitor::doVisit(Source::Line* l)
-{}
-void TIMOSWriter::SourceVisitor::doVisit(Source::Abstract* b)
-{}
-void TIMOSWriter::SourceVisitor::doVisit(Source::Surface* s)
-{}
+//
+//void TIMOSWriter::SourceVisitor::doVisit(Source::Ball* b)
+//{}
+//void TIMOSWriter::SourceVisitor::doVisit(Source::Line* l)
+//{}
+//void TIMOSWriter::SourceVisitor::doVisit(Source::Abstract* b)
+//{}
+//void TIMOSWriter::SourceVisitor::doVisit(Source::Surface* s)
+//{}
 
 
 void TIMOSWriter::write(Source::Abstract* b)

@@ -141,10 +141,10 @@ pair<vector<array<float,3>>,vector<array<unsigned,3>>> VTKLegacyReader::readSurf
 	vector<array<unsigned,3>> T(pd->GetNumberOfPolys()+(m_addZeroCell?1:0));
 
 	if (m_addZeroPoint)
-		P[0] = array<float,3>{0,0,0};
+		P[0] = array<float,3>{{0,0,0}};
 
 	if(m_addZeroCell)
-		T[0] = array<unsigned,3>{0,0,0};
+		T[0] = array<unsigned,3>{{0,0,0}};
 
 	for(unsigned i=0;i<pd->GetNumberOfPoints();++i)
 	{

@@ -24,12 +24,12 @@ template<typename T>class FilterBase;
 
 /** In lexicographical order, gives the point indices of all four faces */
 
-constexpr std::array<std::array<unsigned char,3>,4> tetra_face_indices {
+constexpr std::array<std::array<unsigned char,3>,4> tetra_face_indices {{
 	std::array<unsigned char,3>{{ 0, 1, 2 }},
 	std::array<unsigned char,3>{{ 0, 1, 3 }},
 	std::array<unsigned char,3>{{ 0, 2, 3 }},
 	std::array<unsigned char,3>{{ 1, 2, 3 }}
-};
+}};
 
 
 
@@ -40,25 +40,25 @@ struct face_opposite {
 	unsigned oppidx;
 };
 
-constexpr std::array<face_opposite,4> tetra_face_opposite_point_indices {
+constexpr std::array<face_opposite,4> tetra_face_opposite_point_indices {{
 	face_opposite{std::array<unsigned char,3>{{ 0, 1, 2 }},3},
 	face_opposite{std::array<unsigned char,3>{{ 0, 1, 3 }},2},
 	face_opposite{std::array<unsigned char,3>{{ 0, 2, 3 }},1},
 	face_opposite{std::array<unsigned char,3>{{ 1, 2, 3 }},0}
-};
+}};
 
 
 
 /** In lexicographical order, gives the point indices of all six edge pairs of a tetra */
 
-constexpr std::array<std::array<unsigned char,2>,6> tetra_edge_indices {
+constexpr std::array<std::array<unsigned char,2>,6> tetra_edge_indices {{
 	std::array<unsigned char,2>{{ 0, 1}},
 	std::array<unsigned char,2>{{ 0, 2}},
 	std::array<unsigned char,2>{{ 0, 3}},
 	std::array<unsigned char,2>{{ 1, 2}},
 	std::array<unsigned char,2>{{ 1, 3}},
 	std::array<unsigned char,2>{{ 2, 3}}
-};
+}};
 
 
 using namespace std;
@@ -115,7 +115,7 @@ public:
 #endif
 
 #ifndef SWIG
-	static TetraMesh buildLayered(const std::vector<float>& thickness,std::array<float,3> normal=std::array<float,3>{0,0,0});
+	static TetraMesh buildLayered(const std::vector<float>& thickness,std::array<float,3> normal=std::array<float,3>{{0,0,0}});
 #else
 	// SWIG seems not to like brace-initializers for arrays as default arguments
 	static TetraMesh buildLayered(const std::vector<float>& thickness,std::array<float,3> normal);

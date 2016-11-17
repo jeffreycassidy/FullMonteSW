@@ -134,7 +134,7 @@ private:
 	void finishStepExterior();
 
 	const TetraMesh* 		m_mesh=nullptr;									// the mesh being walked
-	std::array<float,3> 	m_dir=std::array<float,3>{NAN,NAN,NAN};		// the direction of walk
+	std::array<float,3> 	m_dir=std::array<float,3>{{NAN,NAN,NAN}};		// the direction of walk
 
 	WalkSegment				m_currSeg;										// current segment (dereference value)
 	unsigned				nextTet_=0;

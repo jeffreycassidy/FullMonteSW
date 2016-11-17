@@ -56,7 +56,7 @@ template<class RNG>std::pair<unsigned,SSE::Point3> Tetra<RNG>::position(RNG& rng
 
     // TODO: SSEify the items below? Fold into RNG to parallelize?
 
-    std::array<float,3> rnd{ *rng.floatU01(), *rng.floatU01(), *rng.floatU01() };
+    std::array<float,3> rnd{{ *rng.floatU01(), *rng.floatU01(), *rng.floatU01() }};
     if (rnd[0]+rnd[1] > 1.0)
     {
         rnd[0] = 1.0-rnd[0];

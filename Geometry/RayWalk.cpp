@@ -63,10 +63,10 @@ array<float,3> LineQuery::direction() const
 
 void LineQuery::destination(std::array<float,3> p1)
 {
-	array<float,3> delta{ p1[0]-m_origin[0], p1[1]-m_origin[1], p1[2]-m_origin[2]};
+	array<float,3> delta{{ p1[0]-m_origin[0], p1[1]-m_origin[1], p1[2]-m_origin[2]}};
 	float k = std::sqrt(delta[0]*delta[0] + delta[1]*delta[1] + delta[2]*delta[2]);
 
-	m_direction = array<float,3>{ delta[0]/k, delta[1]/k, delta[2]/k };
+	m_direction = array<float,3>{{ delta[0]/k, delta[1]/k, delta[2]/k }};
 	m_length = k;
 }
 
@@ -85,8 +85,6 @@ boost::any_range<const WalkSegment,boost::forward_traversal_tag,const WalkSegmen
 {
 	RayWalkIterator rwi = RayWalkIterator::init(*m_mesh,m_origin,m_direction);
 	RayWalkIterator rwend;
-
-	float d0=0.0f;
 
 	// inclusion filter for first elements (false -> skip)
 	std::function<bool(const WalkSegment&)> f = std::function<bool(const WalkSegment&)>(
@@ -274,7 +272,7 @@ void RayWalkIterator::finishStepInTetra()
 	float t[4];
 	_mm_store_ps(t,sr.Pe);
 
-	m_currSeg.f1.p =  array<float,3>{t[0],t[1],t[2]};
+	m_currSeg.f1.p =  array<float,3>{{t[0],t[1],t[2]}};
 	m_currSeg.f1.IDf= sr.IDfe;
 
 	// there's always something to intersect when inside a tetra

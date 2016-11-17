@@ -26,7 +26,7 @@ public:
 private:
 	virtual void postMeshUpdate() override;
 
-	std::array<float,3>		m_normal = std::array<float,3>{0.0f,0.0f,0.0f};
+	std::array<float,3>		m_normal = std::array<float,3>{{0.0f,0.0f,0.0f}};
 	float					m_constant=0;
 
 	std::vector<bool> m_pointAbovePlane;		///< Map for all mesh points, true if above plane

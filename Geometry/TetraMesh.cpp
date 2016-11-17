@@ -188,7 +188,7 @@ void TetraMesh::mapTetrasToFaces()
 					//
 					// May settle on wrong orientation, which will imply wrong orientation for the next tetra attached to the face
 
-					m_faceTetras.push_back(array<unsigned,2>{(unsigned)T.index(),0});
+					m_faceTetras.push_back(array<unsigned,2>{{(unsigned)T.index(),0}});
 
 					m_tetraFaces[T.index()][perm.index()] = p.first->second;			// link the tetra to the face (positive side)
 				}
@@ -503,7 +503,7 @@ RTIntersection TetraMesh::findSurfaceFace(array<float,3> p,array<float,3> d,cons
 		Face f = m_faces[i];
 
 		const auto nd = f.getNormal();
-		array<float,3> n{float(nd[0]),float(nd[1]),float(nd[2])};
+		array<float,3> n{{float(nd[0]),float(nd[1]),float(nd[2])}};
 		float c = f.getConstant();
 
 		Point<3,double> T[3] = {

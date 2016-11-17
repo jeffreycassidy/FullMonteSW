@@ -12,12 +12,9 @@
 
 #include <FullMonteSW/Geometry/TetraMesh.hpp>
 #include <FullMonteSW/Geometry/newgeom.hpp>
-#include <FullMonteSW/Geometry/Sources/Abstract.hpp>
-#include <FullMonteSW/Geometry/Sources/SurfaceTri.hpp>
-#include <FullMonteSW/Geometry/Sources/Volume.hpp>
-#include <FullMonteSW/Geometry/Sources/PencilBeam.hpp>
-#include <FullMonteSW/Geometry/Sources/Point.hpp>
-#include <FullMonteSW/Geometry/Sources/Composite.hpp>
+
+#include <FullMonteSW/Geometry/Sources/ForwardDecl.hpp>
+
 
 #include <string>
 #include <vector>
@@ -32,6 +29,7 @@ public:
 	virtual ~TIMOSWriter(){}
 
 	void write(Source::Abstract*);
+	void writeMesh(const TetraMesh& M) const;
 
 	virtual void writeSurfFluence(std::string fn,const TetraMesh& mesh,const std::vector<double>& phi_s,std::string) const;
 	virtual void writeVolFluence(std::string fn,const TetraMesh& mesh,const std::vector<double>& phi_s,std::string) const;
@@ -48,35 +46,7 @@ private:
 	std::string m_comment;
 };
 
-#ifndef SWIG
 
-class TIMOSWriter::SourceVisitor : public Source::Abstract::Visitor
-{
-public:
-	SourceVisitor(std::ostream& os) : m_os(os){}
-
-	void print(Source::Abstract* b);
-
-	void visit(Source::Abstract* b);
-
-	virtual void doVisit(Source::Point* p) 		override;
-
-	virtual void doVisit(Source::Volume* v) 		override;
-
-	virtual void doVisit(Source::SurfaceTri* st) 	override;
-	virtual void doVisit(Source::Composite* c) 	override;
-	virtual void doVisit(Source::PencilBeam* pb) 	override;
-
-	virtual void doVisit(Source::Ball* b)			override;
-	virtual void doVisit(Source::Line* l)			override;
-	virtual void doVisit(Source::Abstract* b)			override;
-	virtual void doVisit(Source::Surface* s)		override;
-
-private:
-	std::ostream& m_os;
-};
-
-#endif
 
 #endif /* TIMOSWRITER_HPP_ */
 

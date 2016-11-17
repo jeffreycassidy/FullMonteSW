@@ -19,7 +19,7 @@ using namespace std;
 
 bool MeshChecker::dihedrals(unsigned IDt) const
 {
-	Tetra T = m_mesh->getTetra(IDt);
+	//Tetra T = m_mesh->getTetra(IDt);
 	bool tetOK=true;
 //
 //	for(unsigned i=0;i<4;++i)

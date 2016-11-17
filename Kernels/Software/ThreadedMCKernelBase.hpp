@@ -49,7 +49,7 @@ private:
 	virtual void				parentPrepare()=0;
 
 	virtual void prestart()=0;
-	virtual void postfinish()=0;
+	virtual void postfinish() override =0;
 
 	static void runWorkers(ThreadedMCKernelBase* K,unsigned long long n);
 

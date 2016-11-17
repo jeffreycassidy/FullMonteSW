@@ -50,7 +50,8 @@ public:
 	virtual void doVisit(Source::Surface*) override;
 	virtual void doVisit(Source::PencilBeam*) override;
 	virtual void doVisit(Source::Ball*) override;
-	virtual void doVisit(Source::Abstract*) override;
+
+	virtual void undefinedVisitMethod(Source::Abstract* A) override;
 
 	vtkUnstructuredGrid* 	output() const;
 
@@ -220,9 +221,8 @@ void ExportVisitor::doVisit(Source::PencilBeam* PB)
 	m_vtkS->InsertNextValue(m_sourceCount++);
 }
 
-void ExportVisitor::doVisit(Source::Abstract* A)
+void ExportVisitor::undefinedVisitMethod(Source::Abstract* A)
 {
-
 	cout << "ERROR: Unknown source type in vtkSourceExport::ExportVisitor" << endl;
 }
 

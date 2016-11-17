@@ -60,7 +60,7 @@ void PlaneCrossingFilter::postMeshUpdate()
 	for(unsigned i=1;i<=mesh()->getNp();++i)
 	{
 		Point<3,double> P = mesh()->getPoint(i);
-		array<float,3> Pf{ float(P[0]), float(P[1]), float(P[2]) };
+		array<float,3> Pf{{ float(P[0]), float(P[1]), float(P[2]) }};
 
 		m_pointAbovePlane[i] = dot(m_normal,Pf) > m_constant;
 	}

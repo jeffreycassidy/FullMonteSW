@@ -27,7 +27,7 @@ public:
 
 	Logger get_logger();
 
-	std::list<OutputData*>	results() const;
+	std::list<OutputData*>	results() const override;
 
 	void commit(Logger& L);
 

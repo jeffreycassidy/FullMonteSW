@@ -122,18 +122,18 @@ BOOST_AUTO_TEST_CASE(knee)
 
 	VR.setFileName(meshfn);
 
-	const Point3 tibia { 53.7f, -59.7f, 160.6f	};
+	const Point3 tibia {{ 53.7f, -59.7f, 160.6f	}};
 
 	////// Define source positions
 
 	vector<SourceDef> srcs{
-		SourceDef{"L1",array<float,3>{  45.5f, -56.9f, 135.3f }},
-		SourceDef{"L2",array<float,3>{  42.5f, -64.0f, 135.3f }},
-		SourceDef{"L3",array<float,3>{  45.9f, -69.4f, 135.3f }},
-		SourceDef{"M1",array<float,3>{  55.7f, -50.9f, 135.3f }},
-		SourceDef{"M2",array<float,3>{  60.0f, -54.7f, 135.3f }},
-		SourceDef{"M3",array<float,3>{  61.4f, -60.1f, 135.3f }},
-		SourceDef{"P",array<float,3> {  55.7f, -67.5f, 135.5f }}
+		SourceDef{"L1",array<float,3>{{  45.5f, -56.9f, 135.3f }}},
+		SourceDef{"L2",array<float,3>{{  42.5f, -64.0f, 135.3f }}},
+		SourceDef{"L3",array<float,3>{{  45.9f, -69.4f, 135.3f }}},
+		SourceDef{"M1",array<float,3>{{  55.7f, -50.9f, 135.3f }}},
+		SourceDef{"M2",array<float,3>{{  60.0f, -54.7f, 135.3f }}},
+		SourceDef{"M3",array<float,3>{{  61.4f, -60.1f, 135.3f }}},
+		SourceDef{"P",array<float,3> {{  55.7f, -67.5f, 135.5f }}}
 	};
 
 	array<float,3> centre{ 53.7f, -59.7f, 135.3f };		// joint center

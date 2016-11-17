@@ -47,7 +47,8 @@ typedef struct {
  * Face IDs are such that if IDf > 0 then m_faces[IDf] holds the face. If IDf <0 then m_faces[-IDf] holds the inverted face.
  */
 
-struct Tetra {
+class Tetra {
+public:
     __m128 nx,ny,nz,C;      	/// Normal components (4 x 16B = 64B)
     TetraByFaceID   IDfs;   	/// Face IDs (4 x 4B = 16 B)
     unsigned adjTetras[4];  	/// Adjacent tetras for each face (4 x 4B = 16 B)
@@ -90,7 +91,7 @@ inline std::array<float,3> Tetra::face_normal(unsigned i) const
 	_mm_store_ps(x,nx);
 	_mm_store_ps(y,ny);
 	_mm_store_ps(z,nz);
-	return std::array<float,3>{ x[i], y[i], z[i] };
+	return std::array<float,3>{{ x[i], y[i], z[i] }};
 }
 
 inline __m128 Tetra::dots(const __m128 d) const

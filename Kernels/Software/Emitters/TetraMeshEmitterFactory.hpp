@@ -37,15 +37,15 @@ public:
 	TetraEmitterFactory(){}
 	TetraEmitterFactory(const TetraMesh* M) : m_mesh(M){}
 
-	virtual void doVisit(Source::Point* p) 		override;
-	virtual void doVisit(Source::Ball* b)			override;
-	virtual void doVisit(Source::Line* l)			override;
-	virtual void doVisit(Source::Volume* v)		override;
-	virtual void doVisit(Source::Composite* c)	override;
-	virtual void doVisit(Source::Surface* s)		override;
-	virtual void doVisit(Source::SurfaceTri* st)	override;
-	virtual void doVisit(Source::Abstract* b)		override;
-	virtual void doVisit(Source::PencilBeam* b)	override;
+	virtual void doVisit(Source::Point* p) 				override;
+	virtual void doVisit(Source::Ball* b)				override;
+	virtual void doVisit(Source::Line* l)				override;
+	virtual void doVisit(Source::Volume* v)				override;
+	virtual void doVisit(Source::Surface* s)			override;
+	virtual void doVisit(Source::SurfaceTri* st)		override;
+	virtual void doVisit(Source::PencilBeam* b)			override;
+
+	virtual void undefinedVisitMethod(Source::Abstract*) override;
 
 	Emitter::EmitterBase<RNG>* emitter() const;
 
@@ -62,7 +62,7 @@ public:
 			}
 
 private:
-	std::vector<Source::Abstract*> 									m_sources;
+	std::vector<Source::Abstract*> 								m_sources;
 	std::vector<std::pair<float,Emitter::EmitterBase<RNG>*>>	m_emitters;
 	const TetraMesh*											m_mesh=nullptr;
 

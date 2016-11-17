@@ -46,32 +46,34 @@ public:
 		Visitor();
 		virtual ~Visitor();
 
-		virtual void visit(Abstract* B){ B->acceptVisitor(this); }
+		void visit(Abstract* B){ B->acceptVisitor(this); }
 
-		virtual void doVisit(Point* p)			=0;
-		virtual void doVisit(Ball* b)			=0;
-		virtual void doVisit(Line* l)			=0;
-		virtual void doVisit(Volume* v)			=0;
+		void doVisit(Abstract* A){ undefinedVisitMethod(A); }
 
-		/// Default visit for Composite type: call pre-visit handler, visit all sub-sources, and then post-visit handler
-		/// Can be overridden.
-		virtual void doVisit(Composite* c);
+		virtual void doVisit(Point* p);
+		virtual void doVisit(Ball* b);
+		virtual void doVisit(Line* l);
+		virtual void doVisit(Volume* v);
 
-		virtual void doVisit(Surface* s)		=0;
-		virtual void doVisit(SurfaceTri* st)	=0;
-		virtual void doVisit(Abstract* b)		=0;
-		virtual void doVisit(PencilBeam* b)		=0;
+		/// Visit for Composite type: call pre-visit handler, visit all sub-sources, and then post-visit handler
+		void doVisit(Composite* c);
+
+		virtual void doVisit(Surface* s);
+		virtual void doVisit(SurfaceTri* st);
+		virtual void doVisit(PencilBeam* b);
 
 		virtual void preVisitComposite(Composite* C){}
 		virtual void postVisitComposite(Composite* C){}
+
+		virtual void undefinedVisitMethod(Abstract*){}
 
 	private:
 		unsigned	m_compositeLevel=0;
 		unsigned 	m_maxCompositeLevel=-1U;
 	};
-
-	virtual void acceptVisitor(Visitor* v){ v->doVisit(this); }
 #endif
+
+	virtual void acceptVisitor(Visitor* V){ V->doVisit(this); }
 
 	virtual Abstract* clone() const{ return new Abstract(*this); }
 

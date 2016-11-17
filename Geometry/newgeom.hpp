@@ -208,7 +208,7 @@ template<size_t D,class T> Vector<D,T> cross(const Vector<D,T>& a,const Vector<D
 
 template<size_t D,class T>Vector<D,T> Vector<D,T>::cross(const Vector<D,T>& x) const
 {
-	std::array<T,D> cp{ (*this)[1]*x[2]-(*this)[2]*x[1], (*this)[2]*x[0]-x[2]*(*this)[0], (*this)[0]*x[1]-(*this)[1]*x[0] };
+	std::array<T,D> cp{{ (*this)[1]*x[2]-(*this)[2]*x[1], (*this)[2]*x[0]-x[2]*(*this)[0], (*this)[0]*x[1]-(*this)[1]*x[0] }};
 	return Vector<D,T>(cp);
 }
 
