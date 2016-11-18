@@ -46,7 +46,6 @@ TIMOSAntlrParser R
 
 R setMeshFileName $meshfn
 R setOpticalFileName $optfn
-R setLegendFileName $legendfn
 
 set mesh [R mesh]
 set opt [R materials_simple]
