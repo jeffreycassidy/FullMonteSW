@@ -3,6 +3,7 @@ set tStart [clock clicks -milliseconds]
 
 ###### Import VTK TCL package
 package require vtk
+wm withdraw .
 
 
 
@@ -39,6 +40,7 @@ if { $argc >= 1 } { set pfx [lindex $argv 0] }
 
 set optfn "$pfx.opt"
 set meshfn "$pfx.mesh"
+set sourcefn "$pfx.source"
 
 
 
@@ -49,9 +51,11 @@ TIMOSAntlrParser R
 
 R setMeshFileName $meshfn
 R setOpticalFileName $optfn
+R setSourceFileName $sourcefn
 
 set mesh [R mesh]
 set opt [R materials_simple]
+set src [R sources]
 
 
 set tLoaded [clock clicks -milliseconds]
@@ -59,9 +63,9 @@ set tLoaded [clock clicks -milliseconds]
 
 ###### Configure source (Ball source with given centre and radius)
 
-Ball B
-B centre "10 40 11"
-B radius 2
+#Ball B
+#B centre "10 40 11"
+#B radius 2
 
 
 
@@ -71,7 +75,7 @@ B radius 2
 
 TetraSurfaceKernel k $mesh
 
-k source B
+#k source B
     # the source to launch from
 
 k energy             50
@@ -98,7 +102,7 @@ k maxSteps           10000
 k maxHits            100
     # maximum number of boundaries a single step can take
 
-k packetCount        1000000
+k packetCount        10000000
     # number of packets to simulate (more -> better quality, longer run)
 
 k threadCount        8
@@ -177,27 +181,14 @@ proc progresstimer {} {
 
 
 
-###### Run N experiments with different source placements
-
-set N 5
-
-for { set i 0 } { $i < $N } { incr i } {
-
-    puts "Trial $i of $N"
-
-    # set the random seed
-	k randSeed           $i
-
-    # arbitrarily perturb the radius and centre of the ball source
-    B radius [expr $i * 0.1 + 2.0]
-    B centre "[expr $i * 1.0 + 10.0] 42 10"
-	k source B
+	k source $src 
 
     # launch kernel, display progress timer, and await finish
 
 	k startAsync
     progresstimer
 	k finishAsync
+    set tFinish [clock clicks -milliseconds]
 
     puts "Kernel is done"
 
@@ -221,9 +212,14 @@ for { set i 0 } { $i < $N } { incr i } {
     # Write the surface fluence data out to a .vtk file (binary format)
     #   updating the fluence map's VTK adaptor (vtkPhi) will ripple through the VTK pipeline when Update is called
 
-    VTKW SetFileName "mouse.$i.surf.vtk"
+    VTKW SetFileName "mouse.surf.vtk"
     VTKW SetFileTypeToBinary
     VTKW Update
 
     surfaceFieldData RemoveArray $A
-}
+    set tWritten [clock clicks -milliseconds]
+
+puts "Elapsed:   [expr ($tWritten-$tStart)*1e-3]"
+puts "  Loading: [expr ($tLoaded-$tStart)*1e-3]"
+puts "  Running: [expr ($tFinish-$tLoaded)*1e-3]"
+puts "  Writing: [expr ($tWritten-$tFinish)*1e-3]"
