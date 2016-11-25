@@ -35,6 +35,7 @@ class TetraVolumeKernel : public TetraMCKernel<
 	>
 {
 public:
+	TetraVolumeKernel();
 	TetraVolumeKernel(const TetraMesh* mesh);
 
 private:

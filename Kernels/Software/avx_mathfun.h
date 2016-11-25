@@ -89,8 +89,9 @@ static const __m256 _ps_sign_mask = _mm256_castsi256_ps(_mm256_set1_epi32(0x8000
 
 static const __m256 _ps_inv_sign_mask = _mm256_castsi256_ps(_mm256_set1_epi32(~0x80000000));
 //_PS_CONST_TYPE(inv_sign_mask, int, ~0x80000000);
-#ifndef HAVE_AVX2
 
+
+#ifndef _mm256_set_m128i
 inline __m256i _mm256_set_m128i(__m128i hi,__m128i lo)
 {
 	return _mm256_insertf128_si256(
@@ -98,8 +99,9 @@ inline __m256i _mm256_set_m128i(__m128i hi,__m128i lo)
 			hi,
 			1);
 }
+#endif
 
-
+#ifndef _mm256_set_m128
 inline __m256 _mm256_set_m128(__m128 hi,__m128 lo)
 {
 	return _mm256_insertf128_ps(
@@ -107,14 +109,9 @@ inline __m256 _mm256_set_m128(__m128 hi,__m128 lo)
 			hi,
 			1);
 }
+#endif
 
-
-
-
-
-
-
-
+#ifndef HAVE_AVX2
 
 inline __m256 _mm256_abs_ps(__m256 x)
 {
@@ -149,6 +146,11 @@ inline __m256 _mm256_abs_ps(__m256 x)
 #endif
 
 #ifdef HAVE_AVX2
+#ifdef __AVX2__
+#warning "__AVX2__ defined"
+#else
+#warning "HAVE_AVX2 defined but __AVX2__ not"
+#endif
 #else
 
 #ifdef HAVE_AVX

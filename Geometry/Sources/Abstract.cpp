@@ -25,6 +25,11 @@ Abstract::Visitor::~Visitor()
 
 }
 
+void Abstract::acceptVisitor(Visitor* V)
+{
+	V->doVisit(this);
+}
+
 void Abstract::Visitor::doVisit(Source::Composite* C)
 {
 	preVisitComposite(C);

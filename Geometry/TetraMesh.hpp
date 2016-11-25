@@ -71,7 +71,8 @@ struct RTIntersection
 	std::array<float,3>		q;
 	float					d;
 	int						IDf;
-	unsigned				IDt;
+	unsigned				IDt_from;
+	unsigned				IDt_to;
 };
 
 

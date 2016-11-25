@@ -57,13 +57,13 @@ template<class RNGT,class Scorer>void TetraMCKernel<RNGT,Scorer>::parentPrepare(
 {
 	if (!m_src)
 	{
-		cerr << "ERROR: No source specified" << endl;
+		std::cerr << "ERROR: No source specified" << std::endl;
 		throw std::logic_error("TetraMCKernel<RNGT,Scorer>::parentPrepare no sources specified");
 	}
 
 	if (!m_mesh)
 	{
-		cerr << "ERROR: No mesh specified" << endl;
+		std::cerr << "ERROR: No mesh specified" << std::endl;
 		throw std::logic_error("TetraMCKernel<RNGT,Scorer>::parentPrepare no mesh specified");
 	}
 
@@ -103,10 +103,14 @@ template<class RNGT,class Scorer>ThreadedMCKernelBase::Thread* TetraMCKernel<RNG
 	void *p = boost::alignment::aligned_alloc(32,sizeof(typename TetraMCKernel<RNG_SFMT_AVX,Scorer>::Thread));
 
 	if (!p)
+	{
+		cerr << "Allocation failure in TetraMCKernel<RNGT,Scorer>::makeThread()" << endl;
 		throw std::bad_alloc();
+	}
 
 	// create the thread-local state
-	typename TetraMCKernel<RNG_SFMT_AVX,Scorer>::Thread* t = new typename TetraMCKernel<RNG_SFMT_AVX,Scorer>::Thread(*this,get_logger(m_scorer));
+
+	typename TetraMCKernel<RNG_SFMT_AVX,Scorer>::Thread* t = new (p) typename TetraMCKernel<RNG_SFMT_AVX,Scorer>::Thread(*this,get_logger(m_scorer));
 
 	// seed its RNG
 	t->seed(TetraMCKernel<RNG_SFMT_AVX,Scorer>::getUnsignedRNGSeed());

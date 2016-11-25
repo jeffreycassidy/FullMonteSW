@@ -32,15 +32,9 @@ load libFullMonteVTKTCL.so
 ###### Basic parameters: file names
 
 #default file prefix
-set pfx "/usr/local/share/fullmontesw/examples/mousebli/mouse"
+#set path "/Users/jcassidy/src/FullMonteSW/data"
+set path "/home/jcassidy/src/FullMonteSW/data/TIM-OS"
 
-
-#override with 1st cmdline arg
-if { $argc >= 1 } { set pfx [lindex $argv 0] }
-
-set optfn "$pfx.opt"
-set meshfn "$pfx.mesh"
-set sourcefn "$pfx.source"
 
 
 
@@ -49,40 +43,14 @@ set sourcefn "$pfx.source"
 
 TIMOSAntlrParser R
 
-R setMeshFileName $meshfn
-R setOpticalFileName $optfn
-R setSourceFileName $sourcefn
-
-set mesh [R mesh]
-set opt [R materials_simple]
-set src [R sources]
-
-
-set tLoaded [clock clicks -milliseconds]
-
-
-###### Configure source (Ball source with given centre and radius)
-
-#Ball B
-#B centre "10 40 11"
-#B radius 2
-
 
 
 
 
 ###### Create and configure simulation kernel with surface scoring
 
-TetraSurfaceKernel k $mesh
+TetraVolumeKernel k
 
-#k source B
-    # the source to launch from
-
-k energy             50
-    # total energy
-
-k materials          $opt
-    # materials
 
 k setUnitsToMM
     # units for mesh dimensions & optical properties (must match each other)
@@ -117,7 +85,6 @@ k threadCount        8
 
 # wrap FullMonte mesh and make available as vtkPolyData & vtkUnstructuredGrid
 vtkFullMonteTetraMeshWrapper VTKM
-    VTKM mesh $mesh
 
 # Create fluence wrapper
 vtkFullMonteArrayAdaptor vtkPhi
@@ -133,30 +100,24 @@ vtkMergeDataObjectFilter mergeFluence
     mergeFluence SetInputData [VTKM faces]
     mergeFluence SetOutputFieldToCellDataField
 
-# select out only the surface triangles (no fluence scored for interior triangles in this kernel)
-TriFilterRegionBounds TF
-    TF mesh $mesh
-    TF bidirectional 1
-    TF includeRegion 0 1
-
 # create an ID list from the filter
-vtkFullMonteFilterTovtkIdList surfaceTriIDs 
-    surfaceTriIDs mesh $mesh
-    surfaceTriIDs filter [TF self]
+#vtkFullMonteFilterTovtkIdList surfaceTriIDs 
+#    surfaceTriIDs mesh $mesh
+#    surfaceTriIDs filter [TF self]
 
 # extract the faces with listed IDs
-vtkExtractCells extractSurface
-    extractSurface SetInputConnection [mergeFluence GetOutputPort]
-    extractSurface SetCellList [surfaceTriIDs idList]
+#vtkExtractCells extractSurface
+#    extractSurface SetInputConnection [mergeFluence GetOutputPort]
+#    extractSurface SetCellList [surfaceTriIDs idList]
 
 # vtkExtractCells produces a vtkUnstructuredGrid; input is vtkPolyData so output will be too
 #   vtkGeometryFilter will extract the surface triangles from it
-vtkGeometryFilter geom
-    geom SetInputConnection [extractSurface GetOutputPort]
+#vtkGeometryFilter geom
+#    geom SetInputConnection [extractSurface GetOutputPort]
 
 # set up writer for the output poly data
-vtkPolyDataWriter VTKW
-    VTKW SetInputConnection [geom GetOutputPort]
+#vtkPolyDataWriter VTKW
+#    VTKW SetInputConnection [geom GetOutputPort]
 
 
 
@@ -177,20 +138,63 @@ proc progresstimer {} {
 	puts [format "\rProgress %6.2f%%" 100.0]
 }
 
+proc loadsource { srcfn } {
+    global src
+
+    R setSourceFileName $srcfn
+    
+    set src [R sources]
+    set tStart [clock clicks -milliseconds]
+
+    k source $src
+
+    set tSimEnd [clock clicks -milliseconds]
+    puts "  Source load from $srcfn: [expr ($tSimEnd-$tStart)*1e-3] s"
+}
+
+proc loadmaterials { optfn } {
+    global opt
+    set tStart [clock clicks -milliseconds]
+
+    R setOpticalFileName $optfn
+
+    set opt [R materials_simple]
+
+    k materials $opt
+
+    set tSimEnd [clock clicks -milliseconds]
+    puts "  Materials load from $optfn: [expr ($tSimEnd-$tStart)*1e-3] s"
+}
+
+proc loadmesh { meshfn } { 
+    set tStart [clock clicks -milliseconds]
+    global mesh
+
+    R setMeshFileName $meshfn
+
+    set mesh [R mesh]
+
+    k mesh $mesh
+
+    VTKM mesh $mesh
+
+    set tSimEnd [clock clicks -milliseconds]
+    puts "  Mesh load from $meshfn: [expr ($tSimEnd-$tStart)*1e-3] s"
+}
 
 
 
+proc runcase { Npkt outname } { 
 
-	k source $src 
+    k packetCount $Npkt
 
     # launch kernel, display progress timer, and await finish
+    set tSimStart [clock clicks -milliseconds]
 
 	k startAsync
     progresstimer
 	k finishAsync
-    set tFinish [clock clicks -milliseconds]
-
-    puts "Kernel is done"
+    set tSimEnd [clock clicks -milliseconds]
 
     OutputDataSummarize OS
 
@@ -201,8 +205,6 @@ proc progresstimer {} {
         OS visit [k getResultByIndex $r]
     }
 
-    puts "** end summary **"
-
     vtkPhi source [k getResultByIndex 2]
     vtkPhi update
     set A [vtkPhi array]
@@ -212,14 +214,35 @@ proc progresstimer {} {
     # Write the surface fluence data out to a .vtk file (binary format)
     #   updating the fluence map's VTK adaptor (vtkPhi) will ripple through the VTK pipeline when Update is called
 
-    VTKW SetFileName "mouse.surf.vtk"
-    VTKW SetFileTypeToBinary
-    VTKW Update
+#    VTKW SetFileName "$outname.surf.vtk"
+#    VTKW SetFileTypeToBinary
+#    VTKW Update
 
     surfaceFieldData RemoveArray $A
-    set tWritten [clock clicks -milliseconds]
 
-puts "Elapsed:   [expr ($tWritten-$tStart)*1e-3]"
-puts "  Loading: [expr ($tLoaded-$tStart)*1e-3]"
-puts "  Running: [expr ($tFinish-$tLoaded)*1e-3]"
-puts "  Writing: [expr ($tWritten-$tFinish)*1e-3]"
+    puts "  Sim time: [expr ($tSimEnd-$tSimStart)*1e-3]"
+}
+
+
+loadmaterials "$path/mouse/mouse.opt"
+loadmesh "$path/mouse/mouse.mesh"
+loadsource "$path/mouse/mouse.source"
+
+runcase 10000000 "mouse"
+
+loadmesh "$path/cube_5med/cube_5med.mesh"
+loadmaterials "$path/cube_5med/cube_5med.opt"
+loadsource "$path/cube_5med/cube_5med.source"
+
+runcase 10000000 "cube_5med"
+
+loadmesh "$path/fourlayer/FourLayer.mesh"
+loadmaterials "$path/fourlayer/FourLayer.opt"
+loadsource "$path/fourlayer/FourLayer.source"
+
+runcase 10000000 "FourLayer"
+
+#puts "Elapsed:   [expr ($tWritten-$tStart)*1e-3]"
+#puts "  Loading: [expr ($tLoaded-$tStart)*1e-3]"
+#puts "  Running: [expr ($tFinish-$tLoaded)*1e-3]"
+#puts "  Writing: [expr ($tWritten-$tFinish)*1e-3]"

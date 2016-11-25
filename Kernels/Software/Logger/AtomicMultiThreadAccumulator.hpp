@@ -113,7 +113,10 @@ template<typename Acc,typename Delta>void AtomicMultiThreadAccumulator<Acc,Delta
 	delete[] m_values;
 	m_values = new std::atomic<Acc>[i];
 	if (!m_values)
+	{
+		std::cerr << "Allocation failure in AtomicMultiThreadAccumulator<Acc,Delta>::resize with size " << i << std::endl;
 		throw std::bad_alloc();
+	}
 	m_size=i;
 	clear();
 }

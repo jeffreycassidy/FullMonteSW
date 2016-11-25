@@ -21,6 +21,11 @@ void TetraVolumeKernel::postfinish()
 {
 }
 
+TetraVolumeKernel::TetraVolumeKernel() : TetraMCKernel<RNG_SFMT_AVX,TetraVolumeScorer>(nullptr)
+{
+
+}
+
 TetraVolumeKernel::TetraVolumeKernel(const TetraMesh* mesh) :
 	TetraMCKernel<RNG_SFMT_AVX,TetraVolumeScorer>(mesh)
 {

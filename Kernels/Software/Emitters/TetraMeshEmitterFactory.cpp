@@ -110,7 +110,12 @@ template<class RNG>void TetraEmitterFactory<RNG>::doVisit(Source::PencilBeam* pb
 
 	RTIntersection res = m_mesh->findSurfaceFace(pb->position(), pb->direction(), &TF);
 
-	tet = res.IDt;
+	tet = res.IDt_to;
+	unsigned IDt_opposite = res.IDt_from;
+
+	if (res.IDt_to == 0)
+		std::swap(tet,IDt_opposite);
+
 	pos = res.q;
 	m_debug=true;
 
@@ -121,10 +126,10 @@ template<class RNG>void TetraEmitterFactory<RNG>::doVisit(Source::PencilBeam* pb
 
 	if (m_debug)
 	{
-		cout << "INFO: Created pencil beam emitter impinging on face " << res.IDf << " into tetra " << res.IDt << " with material " <<
-			m_mesh->getMaterial(res.IDt) << " at position " << res.q[0] << ',' << res.q[1] << ',' << res.q[2] << endl;
+		cout << "INFO: Created pencil beam emitter impinging on face " << res.IDf << " into tetra " << tet << " with material " <<
+			m_mesh->getMaterial(tet) << " at position " << res.q[0] << ',' << res.q[1] << ',' << res.q[2] << endl;
 
-		unsigned IDt_opposite = m_mesh->getTetraFromFace(-res.IDf);
+		//unsigned IDt_opposite = m_mesh->getTetraFromFace(-res.IDf);
 
 		cout << "INFO:   Opposite face " << -res.IDf << " impinges tet " << IDt_opposite << " material " << m_mesh->getMaterial(IDt_opposite) << endl;
 
@@ -158,14 +163,14 @@ template<class RNG>void TetraEmitterFactory<RNG>::doVisit(Source::PencilBeam* pb
 	SSE::UnitVector3 d = SSE::UnitVector3::normalize(SSE::Vector3((pb->direction())));
 
 	SSE::UnitVector3 a;
-	if (std::abs(a[0]) < std::abs(a[1]))
+	if (std::abs(d[0]) < std::abs(d[1]))
 	{
-		if (std::abs(a[0]) < std::abs(a[2]))
+		if (std::abs(d[0]) < std::abs(d[2]))
 			a = SSE::UnitVector3::normalize(cross(d,SSE::UnitVector3::basis<0>()));
 		else
 			a = SSE::UnitVector3::normalize(cross(d,SSE::UnitVector3::basis<2>()));
 	}
-	else if (std::abs(a[1]) < std::abs(a[2]))
+	else if (std::abs(d[1]) < std::abs(d[2]))
 		a = SSE::UnitVector3::normalize(cross(d,SSE::UnitVector3::basis<1>()));
 	else
 		a = SSE::UnitVector3::normalize(cross(d,SSE::UnitVector3::basis<2>()));

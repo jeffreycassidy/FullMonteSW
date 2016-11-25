@@ -543,11 +543,17 @@ RTIntersection TetraMesh::findSurfaceFace(array<float,3> p,array<float,3> d,cons
 		}
 	}
 
+	//unsigned IDt_from = fMin < 0 ? m_faceTetras[-fMin][1] : m_faceTetras[fMin][0]			// return the tetra from which ray enters
+
+	unsigned IDt_from = m_faceTetras[std::abs(fMin)][fMin < 0];
+	unsigned IDt_to   = m_faceTetras[std::abs(fMin)][fMin > 0];
+
 	return RTIntersection {
 		p + dMin*d,
 		dMin,
 		fMin,
-		fMin < 0 ? m_faceTetras[-fMin][1] : m_faceTetras[fMin][0]			// return the tetra from which ray enters
+		IDt_from,
+		IDt_to
 	};
 }
 

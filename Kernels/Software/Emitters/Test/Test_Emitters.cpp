@@ -406,7 +406,7 @@ BOOST_AUTO_TEST_CASE( mouseSurfaceFaces )
 		vtkIdType triIDs[3]{
 			probeP->InsertNextPoint(mouse.getPoint(IDps[0]).data()), probeP->InsertNextPoint(mouse.getPoint(IDps[1]).data()), probeP->InsertNextPoint(mouse.getPoint(IDps[2]).data()) };
 
-		TetraByPointID tetIDps = mouse.getTetraPointIDs(res.IDt);
+		TetraByPointID tetIDps = mouse.getTetraPointIDs(res.IDt_to);
 		vtkIdType tetIDs[4];
 		for(unsigned i=0;i<4;++i)
 			tetIDs[i] = probeP->InsertNextPoint(mouse.getPoint(tetIDps[i]).data());

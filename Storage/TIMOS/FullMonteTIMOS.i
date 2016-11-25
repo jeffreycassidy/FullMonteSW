@@ -3,7 +3,7 @@
 %include "std_string.i"
 
 %include "std_vector.i"
-%include "../../Geometry/FullMonteGeometry.i"
+//%include "../../Geometry/FullMonteGeometry.i"
 %include "../../Geometry/FullMonteGeometry_types.i"
 
 %{

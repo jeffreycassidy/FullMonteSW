@@ -38,42 +38,9 @@ public:
 	Abstract(float p=1.0f) : m_power(p){}
 	virtual ~Abstract(){}
 
-#ifndef SWIG
-	// Visitor methods
-	class Visitor
-	{
-	public:
-		Visitor();
-		virtual ~Visitor();
+	class Visitor;
 
-		void visit(Abstract* B){ B->acceptVisitor(this); }
-
-		void doVisit(Abstract* A){ undefinedVisitMethod(A); }
-
-		virtual void doVisit(Point* p);
-		virtual void doVisit(Ball* b);
-		virtual void doVisit(Line* l);
-		virtual void doVisit(Volume* v);
-
-		/// Visit for Composite type: call pre-visit handler, visit all sub-sources, and then post-visit handler
-		void doVisit(Composite* c);
-
-		virtual void doVisit(Surface* s);
-		virtual void doVisit(SurfaceTri* st);
-		virtual void doVisit(PencilBeam* b);
-
-		virtual void preVisitComposite(Composite* C){}
-		virtual void postVisitComposite(Composite* C){}
-
-		virtual void undefinedVisitMethod(Abstract*){}
-
-	private:
-		unsigned	m_compositeLevel=0;
-		unsigned 	m_maxCompositeLevel=-1U;
-	};
-#endif
-
-	virtual void acceptVisitor(Visitor* V){ V->doVisit(this); }
+	virtual void acceptVisitor(Visitor* V);
 
 	virtual Abstract* clone() const{ return new Abstract(*this); }
 
@@ -83,6 +50,43 @@ public:
 private:
 	float m_power=1.0f;
 };
+
+
+#ifndef SWIG
+// Visitor methods
+class Abstract::Visitor
+{
+public:
+	Visitor();
+	virtual ~Visitor();
+
+	void visit(Abstract* B){ B->acceptVisitor(this); }
+
+	void doVisit(Abstract* A){ undefinedVisitMethod(A); }
+
+	virtual void doVisit(Point* p);
+	virtual void doVisit(Ball* b);
+	virtual void doVisit(Line* l);
+	virtual void doVisit(Volume* v);
+
+	/// Visit for Composite type: call pre-visit handler, visit all sub-sources, and then post-visit handler
+	void doVisit(Composite* c);
+
+	virtual void doVisit(Surface* s);
+	virtual void doVisit(SurfaceTri* st);
+	virtual void doVisit(PencilBeam* b);
+
+	virtual void preVisitComposite(Composite* C){}
+	virtual void postVisitComposite(Composite* C){}
+
+	virtual void undefinedVisitMethod(Abstract*){}
+
+private:
+	unsigned	m_compositeLevel=0;
+	unsigned 	m_maxCompositeLevel=-1U;
+};
+
+#endif
 
 };
 

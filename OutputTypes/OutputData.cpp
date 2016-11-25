@@ -7,6 +7,11 @@
 
 #include "OutputData.hpp"
 
+void OutputData::acceptVisitor(Visitor* v)
+{
+	v->doVisit(this);
+}
+
 //template<>const std::string clonable_base<OutputData>::s_typeString="<clonable_base:abstract-base-type>";
 //
 //template<>const std::string clonable<OutputData,VolumeAbsorbedEnergyMap,OutputData::Visitor>::s_typeString="volume_energy";

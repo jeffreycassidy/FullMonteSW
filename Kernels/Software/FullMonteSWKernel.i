@@ -20,7 +20,7 @@
 
 %include "../Kernel.hpp"
 
-%include "MCKernelBase.hpp"
+%include "MCKernelBase.hpp" 
 %include "ThreadedMCKernelBase.hpp"
 %include "TetraKernelBase.hpp"
 %include "TetraMCKernel.hpp"
