@@ -69,10 +69,13 @@ P position "-8.6 49.7 -1418.70"
 
 
 proc progresstimer {} {
+    # loop until kernel is done
 	while { ![k done] } {
-	puts -nonewline [format "\rProgress %6.2f%%" [expr 100.0*[k progressFraction]]]
-	flush stdout
-	after 200
+    	puts -nonewline [format "\rProgress %6.2f%%" [expr 100.0*[k progressFraction]]]
+	    flush stdout
+
+        # wait 200ms
+    	after 200
 	}
 	puts [format "\rProgress %6.2f%%" 100.0]
 }
