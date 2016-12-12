@@ -126,9 +126,10 @@ public:
 	TetraMesh(const vector<Point<3,double> >& P_,const vector<TetraByPointID>& T_p_,const vector<unsigned>& T_m_,const vector<FaceHint>& hint=vector<FaceHint>())
 	: TetraMeshBase(P_,T_p_,T_m_) { buildTetrasAndFaces(hint); }
 
-	TetraMesh(const vector<std::array<float,3>>& P_,const vector<TetraByPointID>& T_p_,const vector<unsigned>& T_m_,const vector<FaceHint>& hint=vector<FaceHint>())
+#ifndef SWIG
+	TetraMesh(const vector<std::array<float,3> >& P_,const vector<TetraByPointID>& T_p_,const vector<unsigned>& T_m_,const vector<FaceHint>& hint=vector<FaceHint>())
 	{
-		std::vector<Point<3,double>> Pd(P_.size());
+		std::vector<Point<3,double> > Pd(P_.size());
 		std::vector<TetraByPointID> T_p(T_p_.size());
 
 		for(unsigned i=0;i<Pd.size();++i)
@@ -136,6 +137,7 @@ public:
 
 		*this = TetraMesh(Pd,T_p_,T_m_,hint);
 	}
+#endif
 
 	~TetraMesh();
 	virtual void Delete(){ delete this; }
@@ -177,7 +179,7 @@ public:
 	void setFacesForFluenceCounting(const FilterBase<int>* TF);		/// Predicate specifying if a given face should have its fluence counted
 
     /// Extracts the face IDs and tetra IDs corresponding to a given surface
-    vector<pair<unsigned,unsigned>> getRegionBoundaryTrisAndTetras(unsigned r0,unsigned r1=-1U) const;
+    vector<pair<unsigned,unsigned> > getRegionBoundaryTrisAndTetras(unsigned r0,unsigned r1=-1U) const;
 
     // returns the intersection result and face ID entered (res, IDf) for the next face crossed by ray (p,dir)
     std::tuple<PointIntersectionResult,int> findNextFaceAlongRay(Point<3,double> p,UnitVector<3,double> dir,int IDf_exclude=0) const;
@@ -218,7 +220,7 @@ private:
 	/** For each positive face ID f, m_faceTetras[f] gives the tetra IDs adjacent to the face.
 	 * The normal of m_face[f] points into tetra m_faceTetras[f][0] and out of m_faceTetras[f][1].
 	 */
-	vector<std::array<unsigned,2>>	m_faceTetras;
+	vector<std::array<unsigned,2> >	m_faceTetras;
 
 	/** Packed and aligned tetra representation for the kernel, holding face normals, constants, adjacent tetras,
 	 * bounding faces, material ID, and face flags (for logging).
@@ -235,7 +237,7 @@ private:
     /// Tolerance to allow when checking for correct face orientation; if dot(p,n)-C < -m_pointHeightTolerance then flag an issue
     double m_pointHeightTolerance=2e-5;
 
-    std::unordered_map<FaceByPointID, unsigned,boost::hash<std::array<unsigned,3>>> m_pointIDsToFaceMap;
+    std::unordered_map<FaceByPointID, unsigned,boost::hash<std::array<unsigned,3> > > m_pointIDsToFaceMap;
 
 
     /** For each tetra, create tetra <-> face mappings based solely on ID:

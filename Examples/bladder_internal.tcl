@@ -20,8 +20,8 @@ load libFullMonteVTKFileTCL.so
 
 
 ###### Set file names and load files
-set datapath "/Users/jcassidy/src/FullMonteSW/data/bladder"
-set meshfn "$datapath/bladder_rectum_prostate_14M.mesh.bin.vtk"
+set datapath "/Users/jcassidy/src/FullMonteSW/FullMonteSW/data/bladder"
+set meshfn "$datapath/bladder&rectum&prostate.mesh.vtk"
 set opt_clear  "$datapath/bladder_clear.opt"
 set opt_intra "$datapath/bladder_intralipid.opt"
 

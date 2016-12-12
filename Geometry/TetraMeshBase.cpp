@@ -125,13 +125,13 @@ using namespace std;
 //
 //    return IDps_ok;
 //}
-
-void TetraMeshBase::remapMaterial(unsigned from,unsigned to)
-{
-	for(unsigned& m : m_tetraMaterials)
-		if (m == from)
-			m = to;
-}
+//
+//void TetraMeshBase::remapMaterial(unsigned from,unsigned to)
+//{
+//	for(unsigned& m : m_tetraMaterials)
+//		if (m == from)
+//			m = to;
+//}
 
 void TetraMeshBase::apply(const AffineTransform<float,3>& T)
 {
@@ -141,18 +141,18 @@ void TetraMeshBase::apply(const AffineTransform<float,3>& T)
 		p = Point<3,double>{ y[0],y[1],y[2] };
 	}
 }
-
-vector<unsigned> TetraMeshBase::tetraMaterialCount() const
-{
-	std::vector<unsigned> Nm;
-	for(const auto m : m_tetraMaterials)
-	{
-		if (m > Nm.size())
-			Nm.resize(m+1);
-		Nm[m]++;
-	}
-	return Nm;
-}
+//
+//vector<unsigned> TetraMeshBase::tetraMaterialCount() const
+//{
+//	std::vector<unsigned> Nm;
+//	for(const auto m : m_tetraMaterials)
+//	{
+//		if (m > Nm.size())
+//			Nm.resize(m+1);
+//		Nm[m]++;
+//	}
+//	return Nm;
+//}
 
 TetraMeshBase::PointRange TetraMeshBase::points() const
 {
@@ -166,6 +166,11 @@ double get(volume_tag,const TetraMeshBase& M,TetraMeshBase::TetraDescriptor T)
 {
 	std::array<Point<3,double>,4> Ps = get(point_coords,M,T);
 	return 1.0/6.0*std::abs(scalartriple(Ps[0],Ps[1],Ps[2],Ps[3])/6);
+}
+
+unsigned get(material_tag,const TetraMeshBase& M,TetraMeshBase::TetraDescriptor T)
+{
+	return M.m_tetraMaterials[T.value()];
 }
 
 

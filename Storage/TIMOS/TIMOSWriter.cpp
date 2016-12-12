@@ -85,13 +85,15 @@ void TIMOSWriter::writeMesh(const TetraMesh& M) const
     	return;
     }
 
-    os << boost::size(M.points())-1 << endl << boost::size(M.tetrasByID())-1 << endl;
+    os << boost::size(M.points())-1 << endl << M.getNt() << endl;
 
     for(const auto p : M.points() | drop(1))
     	os << delim{""," ",""} << get(point_coords,M,p) << endl;
 
-    for(TetraByPointID t : M.tetrasByID() | drop(1))
-    	os << delim{""," ",""} << t << endl;
+    for(const auto t : M.tetras() | drop(1))
+    {
+    	os << delim{""," ",""} << get(points,M,t) << endl;
+    }
 
     if (os.fail())
     {

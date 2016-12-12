@@ -25,9 +25,15 @@ public:
 
 	explicit Line(float w=1.0) : Abstract(w)
 		{}
-	Line(float w,std::array<float,3> ep0,std::array<float,3> ep1) :
+
+	Line(float w,std::array<float,3> ep0,std::array<float,3> ep1)
+#ifndef SWIG
+		:
 		Abstract(w),
 		m_endpoint{ep0,ep1}{}
+#else		// SWIG doesn't like C++11 features like brace initializers
+		;
+#endif
 
 	DERIVED_SOURCE_MACRO(Abstract,Line)
 

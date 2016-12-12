@@ -14,11 +14,19 @@
 #include <boost/range/algorithm.hpp>
 
 #ifndef SWIG
+
+#define CREATE_GEOMETRY_PROPERTY_TAG(prop) struct prop##_tag { constexpr prop##_tag(){} }; constexpr prop##_tag prop;
+
 template<typename Mesh,typename Prop>struct mesh_property_traits;
 
+CREATE_GEOMETRY_PROPERTY_TAG(points);
+CREATE_GEOMETRY_PROPERTY_TAG(material);
+//CREATE_GEOMETRY_PROPERTY_TAG(point_coords);
+CREATE_GEOMETRY_PROPERTY_TAG(volume);
+CREATE_GEOMETRY_PROPERTY_TAG(id);
 
-struct points_tag { constexpr points_tag(){} };
-constexpr points_tag points = points_tag{};
+//struct points_tag { constexpr points_tag(){} };
+//constexpr points_tag points = points_tag{};
 
 struct point_coords_tag {
 	constexpr point_coords_tag(){}
@@ -26,11 +34,13 @@ struct point_coords_tag {
 };
 constexpr point_coords_tag point_coords;
 
-struct volume_tag { constexpr volume_tag(){} };
-constexpr volume_tag volume;
 
-struct id_tag { constexpr id_tag(){} };
-constexpr id_tag id;
+//
+//struct volume_tag { constexpr volume_tag(){} };
+//constexpr volume_tag volume;
+//
+//struct id_tag { constexpr id_tag(){} };
+//constexpr id_tag id;
 
 template<typename I>class WrappedInteger
 {
@@ -93,10 +103,10 @@ public:
 	virtual void Delete(){ delete this; }
 	virtual ~TetraMeshBase(){}
 
-	const std::vector<TetraByPointID>& 	tetrasByID() const 	{ return m_tetraPoints; }
+	//const std::vector<TetraByPointID>& 	tetrasByID() const 	{ return m_tetraPoints; }
 
-	void remapMaterial(unsigned from,unsigned to);
-	std::vector<unsigned> tetraMaterialCount() const;
+	//void remapMaterial(unsigned from,unsigned to);
+	//std::vector<unsigned> tetraMaterialCount() const;
 
 	unsigned getNp() const { return m_points.size()-1; };
 	unsigned getNt() const { return m_tetraPoints.size()-1; };
@@ -172,6 +182,7 @@ private:
 	friend class boost::serialization::access;
 
 
+	friend unsigned			get(material_tag,		const TetraMeshBase&,TetraDescriptor);
     friend Point<3,double> 	get(point_coords_tag,	const TetraMeshBase&,PointDescriptor);
     friend TetraByPointID 	get(points_tag,			const TetraMeshBase&,TetraDescriptor);
 };

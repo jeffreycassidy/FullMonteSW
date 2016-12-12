@@ -146,11 +146,6 @@ inline __m256 _mm256_abs_ps(__m256 x)
 #endif
 
 #ifdef HAVE_AVX2
-#ifdef __AVX2__
-#warning "__AVX2__ defined"
-#else
-#warning "HAVE_AVX2 defined but __AVX2__ not"
-#endif
 #else
 
 #ifdef HAVE_AVX

@@ -20,7 +20,9 @@ class Composite : public Abstract
 {
 public:
 	explicit Composite(float w=1.0) : Abstract(w){}
+#ifndef SWIG
 	Composite(float w,std::vector<Abstract*>&& srcs) : Abstract(w),m_elements(srcs){}
+#endif
 
 	DERIVED_SOURCE_MACRO(Abstract,Composite)
 

@@ -153,6 +153,7 @@ void TetraMesh::mapTetrasToFaces()
 	m_facePoints.push_back(FaceByPointID(0,0,0));
 
 	m_pointIDsToFaceMap.clear();
+	m_pointIDsToFaceMap.reserve(2*m_tetras.size());
 
 	Point<3,double> O{0.0,0.0,0.0};
 

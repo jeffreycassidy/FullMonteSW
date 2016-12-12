@@ -1,40 +1,37 @@
-INCLUDE(${VTK_USE_FILE})
+IF(WRAP_TCL)
+	SET(VTK_INSTALL_RUNTIME_DIR ${CMAKE_INSTALL_PREFIX}/bin)
+	SET(VTK_INSTALL_LIBRARY_DIR ${CMAKE_INSTALL_PREFIX}/lib)
+	SET(VTK_INSTALL_ARCHIVE_DIR ${CMAKE_INSTALL_PREFIX}/lib)
+	
+	INCLUDE(vtkModuleMacros)
+	INCLUDE(vtkTclWrapping)
+	
+	SET(BUILD_SHARED_LIBS_PREV ${BUILD_SHARED_LIBS})
+	SET(BUILD_SHARED_LIBS ON)
+	
+	SET(vtkFullMonte_TCL_NAME vtkFullMonte)	
+ENDIF()
 
-#SET(MODULES vtkFullMonteTetraMeshWrapper;vtkFullMonteTetraMeshBaseWrapper;vtkFullMonteFluenceLineQueryWrapper)
 SET(MODULES vtkFullMonteTetraMeshWrapper;vtkFullMonteTetraMeshBaseWrapper;vtkFullMonteFilterTovtkIdList;vtkFullMonteArrayAdaptor;vtkDoseHistogramWrapper;vtkSourceExporter;vtkFullMontePacketPositionTraceSetToPolyData)
 
 FOREACH(MOD ${MODULES})
 	LIST(APPEND MODULECPP "${MOD}.cpp")
 ENDFOREACH()
 
-MESSAGE("MODULECPP = ${MODULECPP}")
-
-ADD_LIBRARY(FullMonteVTK SHARED ${MODULECPP} SwigWrapping.cpp)
-TARGET_LINK_LIBRARIES(FullMonteVTK ${VTK_LIBRARIES} FullMonteData)
+ADD_LIBRARY(vtkFullMonte SHARED ${MODULECPP} SwigWrapping.cpp)
+TARGET_LINK_LIBRARIES(vtkFullMonte ${VTK_LIBRARIES} FullMonteData)
 
 IF(WRAP_TCL)
-    FIND_PACKAGE(VTKWrapTcl REQUIRED)
-	INCLUDE(UseVTKWrapTcl.cmake)
-	
 	FOREACH(MOD ${MODULES})
-		LIST(APPEND CXXFILES ${MOD}_wrap.cxx)
-		VTK_TCL_WRAP(${MOD})
+		LIST(APPEND HFILES ${MOD}.h)
+		LIST(APPEND CXXSRC ${MOD}.cpp)
 	ENDFOREACH()
-	
-	# Create the initialization wrapper		
-	VTK_TCL_WRAP_INIT(${MODULES})
-	
-	# Add generated files to include path		
-	INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
-	
-	# Compile it all		
-	ADD_LIBRARY(FullMonteVTKTCL SHARED ${CXXFILES} vtkTCLInit.cxx)
-	TARGET_LINK_LIBRARIES(FullMonteVTKTCL FullMonteVTK  ${VTK_LIBRARIES} ${TCL_LIBRARY} vtkCommonCoreTCL)
 
-    INSTALL(TARGETS FullMonteVTKTCL
-        DESTINATION lib)
+	vtk_add_tcl_wrapping(vtkFullMonte "${HFILES}" "")
 ENDIF()
 
 INSTALL (
-    TARGETS FullMonteVTK
+    TARGETS vtkFullMonte
     DESTINATION lib)
+
+SET(BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS_PREV})

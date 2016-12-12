@@ -1,7 +1,0 @@
-/** AUTOMATICALLY GENERATED FILE
- * Contains definitions used in unit tests
- */
-
-// path for test meshes
-#define TEST_DATA_PATH "@CMAKE_SOURCE_DIR@/data"
-#define TEST_THREAD_COUNT @THREADCOUNT@

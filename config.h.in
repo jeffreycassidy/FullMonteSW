@@ -1,5 +1,0 @@
-/** AUTOMATICALLY GENERATED FILE
- */
-
-#cmakedefine WRAP_VTK
-#cmakedefine WRAP_TCL
