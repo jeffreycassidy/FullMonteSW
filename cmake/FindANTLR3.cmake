@@ -5,7 +5,8 @@ FIND_PACKAGE(Java REQUIRED)
 FIND_FILE(
     ANTLR3_JAR
     antlr-3.5.2-complete.jar antlr-3.5.2-complete-no-st3.jar
-    PATHS /usr/local/antlrv3 /usr/local/antlr3 /usr/local/ant*
+    PATHS /usr/local/antlrv3 /usr/local/antlr3 /usr/local /usr/local/ant*
+    PATH_SUFFIXES antlrv3 antlr3
     DOC "ANTLR3 jarfile"
     )
 

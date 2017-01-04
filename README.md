@@ -82,7 +82,49 @@ To output VTK files or perform visualization, the `WRAP_VTK` option must be enab
 **Ensure that build type is set to release for full performance. Architecture should be set appropriately to "avx" or "avx2".**
 
 
+## 
 
+### Using G++ on Mac OS
+
+Be aware that G++ and Clang binaries aren't necessarily compatible due to name-mangling, eg. if you build Boost or VTK with Clang
+then you'll need to use Clang to build FullMonte as well.
+
+The compiler can be specified when CMake is _first_ run by using the CMAKE_C_COMPILER and CMAKE_CXX_COMPILER options.
+To change the compiler, you must nuke the build directory and re-run CMake (this is a CMake quirk).
+
+The script below can be used as an example.
+
+```
+mkdir -p FullMonteSW/Build/ReleaseGCC
+cd FullMonteSW/Build/ReleaseGCC
+ccmake \
+    -DCMAKE_MODULE_PATH=/Users/jcassidy/src/FMClean/FullMonteSW/cmake\
+    -DARCH=AVX2 \
+    -DCMAKE_CXX_COMPILER=/sw/bin/g++-fsf-4.9 \
+    -DCMAKE_C_COMPILER=/sw/bin/gcc-fsf-4.9 \
+    -DBOOST_ROOT=/sw/opt/boost-1_58 \
+    -DWRAP_TCL=ON \
+    -DWRAP_VTK=ON \
+    -DCMAKE_BUILD_TYPE=Release\
+    '-DCMAKE_CXX_FLAGS=-Wall -Wa,-q'\
+    '-DCMAKE_C_FLAGS=-Wall -Wa,-q'\
+    ../..
+make
+```
+
+### Broken Tcl wrapping in VTK 6.1.0
+
+VTK's Tcl wrapping export is broken in version 6.1.0 (and possibly others). To fix:
+
+
+/usr/local/lib/cmake/vtk-6.1/vtkWrapTcl.cmake
+
+Remove the COPYONLY argument at line 179 (delete or comment out by prepending #).
+
+
+/usr/local/lib/cmake/vtk-6.1/vtkWrapperInit.data.in
+
+Ensure the variable name enclosed in @@ is all uppercase.
 
 
 
