@@ -29,6 +29,11 @@ SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-missing-braces")
 
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 
+SET(ANTLR_INCLUDE_DIR /usr/local/include)
+SET(ANTLR_LIB_DIR /usr/local/lib)
+SET(ANTLR3_JAR ~/PhD_Research/ANTLR3/antlr-3.5.2-complete.jar)
+
+
 MESSAGE("Arch: ${ARCH}")
 
 ## Require .so extension (Mac likes to make it .dylib, causing a lot of the TCL scripts to bomb)
@@ -86,6 +91,7 @@ ENDIF()
 OPTION(WRAP_VTK ON)
 
 IF (WRAP_VTK)
+    SET(VTK_DIR /usr/local/lib/cmake/vtk-6.3)
 	FIND_PACKAGE(VTK REQUIRED)
 	INCLUDE(${VTK_USE_FILE})
 	ADD_SUBDIRECTORY(VTK)
