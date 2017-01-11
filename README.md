@@ -51,7 +51,7 @@ ANTLR3 (parser generator): - <a href="www.antlr3.org/download.html">java package
 
 ### Optional 
 
-VTK 6.3.0 with Tcl bindings (for visualization and export of VTK/Paraview files) www.vtk.org
+VTK 6.3.0 with Tcl bindings (set 'VTK_TCL_WRAP=ON') (for visualization and export of VTK/Paraview files) www.vtk.org
 
 Paraview (for result visualization; requires VTK) - www.paraview.org
 
@@ -92,7 +92,8 @@ then you'll need to use Clang to build FullMonte as well.
 The compiler can be specified when CMake is _first_ run by using the CMAKE_C_COMPILER and CMAKE_CXX_COMPILER options.
 To change the compiler, you must nuke the build directory and re-run CMake (this is a CMake quirk).
 
-The script below can be used as an example.
+The script below can be used as an example (**Make sure to specify an absolute path whenever a path is needed**).
+**Also, make sure you have an 'include' directory in "/usr/lib/jvn/<any java installation>** If there is not any, re-install the same java version, and then export JAVA_HOME to be the path to that java installation.  
 
 ```
 mkdir -p FullMonteSW/Build/ReleaseGCC
@@ -111,6 +112,10 @@ ccmake \
     ../..
 make
 ```
+
+Some packages that the user should make sure to have are:
+1- libproj-dev
+2- rlwrap
 
 ### Broken Tcl wrapping in VTK 6.1.0
 
