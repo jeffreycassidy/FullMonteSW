@@ -1,6 +1,0 @@
-load libFullMonteGeometryTCL.so
-load libFullMonteKernelsTCL.so
-load libFullMonteSWKernelTCL.so
-load libFullMonteTIMOSTCL.so
-
-set datapath "@CMAKE_SOURCE_DIR@/data"

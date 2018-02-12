@@ -1,6 +1,0 @@
-ADD_LIBRARY(FullMontePlacement SHARED PlacementBase.cpp PlacementMediatorBase.cpp PlanePlacement.cpp PlanePlacementLineSource.cpp PlanePlacementPencilBeam.cpp)
-TARGET_LINK_LIBRARIES(FullMontePlacement FullMonteGeometry)
-
-INSTALL(TARGETS
-	FullMontePlacement
-	DESTINATION lib)

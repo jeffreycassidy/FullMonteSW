@@ -1,1 +1,0 @@
-env LD_LIBRARY_PATH=@CMAKE_BINARY_DIR@/lib rlwrap tclsh $1
